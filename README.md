@@ -8,7 +8,7 @@
 - Administrator, reseller and client login
 - Configuration mirroring and clusters
 - Open Source software (BSD license)
-- 
+
 # ISPConfig-vcs
 
 Easy version control system integration in ISPConfig 3.
@@ -36,21 +36,14 @@ If not, it tries to clone it. If yes, performs a 'git pull' and changes and chow
 * Git repository url (HTTP/HTTPS)
 
 
-## Instalation
+## Installation
 
 I recommend you test this plugin in a non-production enviroment. 
 
 ```
-#Get sources
-git clone http://git.funcli.net:3000/funcli/ISPConfig-vcs.git /tmp/vcs
-cd /tmp/vcs
-
 #Import database table
 mysql -uroot -p dbispconfig < database.sql
 
-#Add files to ISPConfig
-cp -r interface /usr/local/ispconfig/
-cp -r server /usr/local/ispconfig/
 
 #Enable module and plugin
 ln -s /usr/local/ispconfig/server/mods-available/vcs_module.inc.php /usr/local/ispconfig/server/mods-enabled/vcs_module.inc.php
