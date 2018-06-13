@@ -39,15 +39,47 @@ class vcs_plugin {
 
         $app->plugins->registerEvent('web_git_insert', $this->plugin_name, 'insert');
         $app->plugins->registerEvent('web_git_update', $this->plugin_name, 'update');
-        //$app->plugins->registerEvent('git_delete', $this->plugin_name, 'delete');
+        $app->plugins->registerEvent('web_git_delete', $this->plugin_name, 'delete');
 
+		//When a web is deleted, check if it has a web_git associated
+		$app->plugins->registerEvent('web_domain_delete', $this->plugin_name, 'chekRemovedWeb');
+    }
+
+    function chekRemovedWeb($event_name, $data) {
+		global $app, $conf;
+
+		$domain_id = $data['old']['domain_id'];
+
+		if($domain_id) {
+			$array_logs = $app->db->query("DELETE FROM web_git WHERE parent_domain_id = ?", $domain_id);
+		}
+    }
+
+    function delete($event_name, $data) {
+		global $app, $conf;
+
+		//Website
+		$web_id = $data['old']['parent_domain_id'];
+		$website = $app->db->queryOneRecord("SELECT * FROM web_domain WHERE domain_id = ?", $web_id);
+
+		//document_root
+	        $document_root = escapeshellcmd($website['document_root']);
+
+		if($website) {
+			//Document root is a git folder?
+			$path = $document_root . '/web';
+	                $dr_isGit = $this->pathIsGit($path);
+			if($dr_isGit) {
+				$this->_exec('rm -rf ' . $path . '/.git');
+			}
+		}
     }
 
     /* Pull request */
     function update($event_name, $data) {
-	global $app, $conf;
+		global $app, $conf;
 	
-	$this->insert($event_name, $data);
+		$this->insert($event_name, $data);
     }
 
     /* Check if clone the repo or make a pull */
@@ -55,161 +87,161 @@ class vcs_plugin {
         global $app, $conf;
         $this->action = 'insert';
 
-	//Website
-	$web_id = $data['new']['parent_domain_id'];
-	$website = $app->db->queryOneRecord("SELECT * FROM web_domain WHERE domain_id = ?", $web_id);
+		//Website
+		$web_id = $data['new']['parent_domain_id'];
+		$website = $app->db->queryOneRecord("SELECT * FROM web_domain WHERE domain_id = ?", $web_id);
 
-	//user:grup
-	$username = escapeshellcmd($website['system_user']);
+		//user:grup
+		$username = escapeshellcmd($website['system_user']);
         $groupname = escapeshellcmd($website['system_group']);
 
-	//document_root
-	$document_root = escapeshellcmd($website['document_root']);
+		//document_root
+		$document_root = escapeshellcmd($website['document_root']);
 
-	//Git URL
-	$git_url = escapeshellcmd($data['new']['url']);
-	//Git User
-	$git_user = escapeshellcmd($data['new']['username']);
-	//Git pass
-	$git_pass = escapeshellcmd($data['new']['password']);
+		//Git URL
+		$git_url = escapeshellcmd($data['new']['url']);
+		//Git User
+		$git_user = escapeshellcmd($data['new']['username']);
+		//Git pass
+		$git_pass = escapeshellcmd($data['new']['password']);
 
-	if($website) {
-		//Document root is a git folder?
-		$dr_isGit = $this->pathIsGit($document_root . '/web');
-		if($dr_isGit) {
-			$this->pull_request($data['new'], $website);
-		} else {
-			$this->setup_git($data['new'], $website);
+		if($website) {
+			//Document root is a git folder?
+			$dr_isGit = $this->pathIsGit($document_root . '/web');
+			if($dr_isGit) {
+				$this->pull_request($data['new'], $website);
+			} else {
+				$this->setup_git($data['new'], $website);
+			}
+
 		}
-
-	}
 
 
     }
 
     private function pull_request($data, $website) {
-	global $app, $conf;
+		global $app, $conf;
 
-	$curr_path = $this->_exec('pwd'); // Current path
+		$curr_path = $this->_exec('pwd'); // Current path
 
-	//document_root
+		//document_root
         $document_root = escapeshellcmd($website['document_root'])."/web";
         //cd to document_root path
         chdir($document_root);
 
-	$gitBinary = $this->_exec("which git");
-	
-	$log = date('Y-m-d h:i:s') . " ==========================================================================".PHP_EOL;
-	$log .= $this->_exec($gitBinary . ' pull');
-	$log .= PHP_EOL."===========================================================================================".PHP_EOL;
+		$gitBinary = $this->_exec("which git");
+		
+		$log = date('Y-m-d h:i:s') . " ==========================================================================".PHP_EOL;
+		$log .= $this->_exec($gitBinary . ' pull');
+		$log .= PHP_EOL."===========================================================================================".PHP_EOL;
 
-	/* the id of the server as int */
-	$server_id = intval($conf['server_id']);
+		/* the id of the server as int */
+		$server_id = intval($conf['server_id']);
 
-	/** The type of the data */
-	$type = 'log_web_git_' . $data['web_git_id'];
+		/** The type of the data */
+		$type = 'log_web_git_' . $data['web_git_id'];
 
-	/*
-	 * actually this info has no state.
-	 * maybe someone knows better...???...
-	 */
-	$state = 'no_state';
+		/*
+		 * actually this info has no state.
+		 * maybe someone knows better...???...
+		 */
+		$state = 'no_state';
 
-	/*
-	 * Return the Result
-	 */
-	$res = array();
-	$res['server_id'] = $server_id;
-	$res['type'] = $type;
-	$res['data'] = $log;
-	$res['state'] = $state;
+		/*
+		 * Return the Result
+		 */
+		$res = array();
+		$res['server_id'] = $server_id;
+		$res['type'] = $type;
+		$res['data'] = $log;
+		$res['state'] = $state;
 
-	/*
-	 * Insert the log into the database
-	 */
-	$sql = 'REPLACE INTO monitor_data (server_id, type, created, data, state) ' .
-			'VALUES (?, ?, UNIX_TIMESTAMP(), ?, ?)';
-	$app->dbmaster->query($sql, $res['server_id'], $res['type'], serialize($res['data']), $res['state']);
+		/*
+		 * Insert the log into the database
+		 */
+		$sql = 'REPLACE INTO monitor_data (server_id, type, created, data, state) ' .
+				'VALUES (?, ?, UNIX_TIMESTAMP(), ?, ?)';
+		$app->dbmaster->query($sql, $res['server_id'], $res['type'], serialize($res['data']), $res['state']);
 
-	//Permissions
-	//user:grup
+		//Permissions
+		//user:grup
         $username = escapeshellcmd($website['system_user']);
         $groupname = escapeshellcmd($website['system_group']);
 
-	//Change permsis
+		//Change permsis
         $this->_exec('chown -R  ' . $username . ':' . $groupname . ' ' . $document_root);
 
-	chdir($curr_path);
+		chdir($curr_path);
     }
 
     /* Creates a new git repo */
     private function setup_git($data, $website) {
-	global $app, $conf;
+		global $app, $conf;
 
-	//Create temp folder for the initial checkout
-	$tmp_path = '/tmp/web_git';
-        $this->_exec('mkdir -p ' . $tmp_path);
-	$tmp_path .= '/' . $website['domain_id'];
+		//Create temp folder for the initial checkout
+		$tmp_path = '/tmp/web_git';
+	        $this->_exec('mkdir -p ' . $tmp_path);
+		$tmp_path .= '/' . $website['domain_id'];
 
-        //Construir URL git con user y pass
-	$url_parts = parse_url($data['url']);
+	        //Construir URL git con user y pass
+		$url_parts = parse_url($data['url']);
 
-	if($data['username'] != "") $url_parts['user'] = $data['username'];
-	if($data['password'] != "") $url_parts['pass'] = $data['password'];
+		if($data['username'] != "") $url_parts['user'] = $data['username'];
+		if($data['password'] != "") $url_parts['pass'] = $data['password'];
 
-	$git_url = http_build_url($url_parts);
+		$git_url = http_build_url($url_parts);
 
-	$gitBinary = $this->_exec("which git");
-	if($gitBinary) {
-	        //Clonar repo
-		$this->_exec($gitBinary . ' clone ' . $git_url . ' ' . $tmp_path);
+		$gitBinary = $this->_exec("which git");
+		if($gitBinary) {
+		        //Clonar repo
+			$this->_exec($gitBinary . ' clone ' . $git_url . ' ' . $tmp_path);
 
-		//user:grup
-        	$username = escapeshellcmd($website['system_user']);
-	        $groupname = escapeshellcmd($website['system_group']);
-		//document_root
-	        $document_root = escapeshellcmd($website['document_root']);
+			//user:grup
+	        	$username = escapeshellcmd($website['system_user']);
+		        $groupname = escapeshellcmd($website['system_group']);
+			//document_root
+		        $document_root = escapeshellcmd($website['document_root']);
 
-	        //Cambiar permsis
-		$this->_exec('chown -R  ' . $username . ':' . $groupname . ' ' . $tmp_path);
+		        //Cambiar permsis
+			$this->_exec('chown -R  ' . $username . ':' . $groupname . ' ' . $tmp_path);
 
-	        //mover .git a document_root
-		$this->_exec('mv ' . $tmp_path . '/*' . ' ' . $document_root . '/web/'); /* nano comment */
-		$this->_exec('mv ' . $tmp_path . '/.*' . ' ' . $document_root . '/web/');
+		        //mover .git a document_root
+			$this->_exec('mv ' . $tmp_path . '/*' . ' ' . $document_root . '/web/'); /* nano comment */
+			$this->_exec('mv ' . $tmp_path . '/.*' . ' ' . $document_root . '/web/');
 
-		//Eliminar carpeta temporal
-	        $this->_exec('rm -rf ' . $tmp_path);
-	}
+			//Eliminar carpeta temporal
+		        $this->_exec('rm -rf ' . $tmp_path);
+		}
     }
 
     function pathIsGit($path) {
-	global $app, $conf;
-	$curr_path = $this->_exec('pwd'); // Current path
-	//cd to document_root path
-	chdir($path);
+		global $app, $conf;
+		$curr_path = $this->_exec('pwd'); // Current path
+		//cd to document_root path
+		chdir($path);
 
-	$gitBinary = $this->_exec("which git");
-	$check = '';
-        if($gitBinary) {
-		$check = $this->_exec($gitBinary . ' rev-parse --is-inside-work-tree'); //Returns "true" if inside a git repo
-	}
+		$gitBinary = $this->_exec("which git");
+		$check = '';
+	        if($gitBinary) {
+			$check = $this->_exec($gitBinary . ' rev-parse --is-inside-work-tree'); //Returns "true" if inside a git repo
+		}
 
-	chdir($curr_path); //back to previous path
+		chdir($curr_path); //back to previous path
 
-	$app->log($check, LOGLEVEL_DEBUG);
+		$app->log($check, LOGLEVEL_DEBUG);
 
-	if($check == "true") {
-		return true;
-	} else {
-		return false;
-	}
+		if($check == "true") {
+			return true;
+		} else {
+			return false;
+		}
     }
 
     private function _exec($command) {
-	global $app;
-	$app->log('exec: '. $command, LOGLEVEL_DEBUG);
-	$output = shell_exec($command);
-	return trim($output);
+		global $app;
+		$app->log('exec: '. $command, LOGLEVEL_DEBUG);
+		$output = shell_exec($command);
+		return trim($output);
     }
 
 

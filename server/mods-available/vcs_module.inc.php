@@ -1,7 +1,7 @@
 <?php
 
 /*
-Copyright (c) 2018, Óscar Marcos (funcli.net)
+Copyright (c) 2018, Óscar Marcos, funcli.net
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
@@ -85,7 +85,7 @@ class vcs_module {
 			if($action == 'i') $app->plugins->raiseEvent('web_git_insert', $data);
 			if($action == 'u') $app->plugins->raiseEvent('web_git_insert', $data);
 			if($action == 'p') $app->plugins->raiseEvent('web_git_update', $data);
-			//if($action == 'd') $app->plugins->raiseEvent('web_git_delete', $data);
+			if($action == 'd') $app->plugins->raiseEvent('web_git_delete', $data);
 			break;
 		} // end switch
 	} // end function
