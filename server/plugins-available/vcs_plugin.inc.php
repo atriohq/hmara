@@ -11,6 +11,7 @@ class vcs_plugin {
 
     // private variables
     var $action = '';
+    var $website;
 
     //* This function is called during ispconfig installation to determine
     //  if a symlink shall be created for this plugin.
@@ -23,6 +24,25 @@ class vcs_plugin {
             return false;
         }
 
+    }
+
+    /**
+     * Returns the website record in the database by its ID. Saves the info in a variable like cache.
+     *
+     * @param $website_id ID of the record to fetch
+     * @return Array Datos de una website en la base de datos.
+     */
+    private function getWebsiteById($web_id) {
+    	global $app;
+
+    	if(isset($this->website) && $this->website) {
+    		$website = $this->website;
+    	} else {
+    		$website = $app->db->queryOneRecord("SELECT * FROM web_domain WHERE domain_id = ?", $web_id);
+    		$this->website = $website;
+    	}
+
+    	return $website;
     }
 
 
@@ -60,15 +80,15 @@ class vcs_plugin {
 
 		//Website
 		$web_id = $data['old']['parent_domain_id'];
-		$website = $app->db->queryOneRecord("SELECT * FROM web_domain WHERE domain_id = ?", $web_id);
+		$website = $this->getWebsiteById($web_id);
 
 		//document_root
-	        $document_root = escapeshellcmd($website['document_root']);
+	    $document_root = escapeshellcmd($website['document_root']);
 
 		if($website) {
 			//Document root is a git folder?
 			$path = $document_root . '/web';
-	                $dr_isGit = $this->pathIsGit($path);
+	        $dr_isGit = $this->pathIsGit($path);
 			if($dr_isGit) {
 				$this->_exec('rm -rf ' . $path . '/.git');
 			}
@@ -89,7 +109,7 @@ class vcs_plugin {
 
 		//Website
 		$web_id = $data['new']['parent_domain_id'];
-		$website = $app->db->queryOneRecord("SELECT * FROM web_domain WHERE domain_id = ?", $web_id);
+		$website = $this->getWebsiteById($web_id);
 
 		//user:grup
 		$username = escapeshellcmd($website['system_user']);
@@ -122,8 +142,6 @@ class vcs_plugin {
     private function pull_request($data, $website) {
 		global $app, $conf;
 
-		$curr_path = $this->_exec('pwd'); // Current path
-
 		//document_root
         $document_root = escapeshellcmd($website['document_root'])."/web";
         //cd to document_root path
@@ -131,7 +149,7 @@ class vcs_plugin {
 
 		$gitBinary = $this->_exec("which git");
 		
-		$log = date('Y-m-d h:i:s') . " ==========================================================================".PHP_EOL;
+		$log  = date('Y-m-d h:i:s') . " ==========================================================================".PHP_EOL;
 		$log .= $this->_exec($gitBinary . ' pull');
 		$log .= PHP_EOL."===========================================================================================".PHP_EOL;
 
@@ -161,17 +179,7 @@ class vcs_plugin {
 		 */
 		$sql = 'REPLACE INTO monitor_data (server_id, type, created, data, state) ' .
 				'VALUES (?, ?, UNIX_TIMESTAMP(), ?, ?)';
-		$app->dbmaster->query($sql, $res['server_id'], $res['type'], serialize($res['data']), $res['state']);
-
-		//Permissions
-		//user:grup
-        $username = escapeshellcmd($website['system_user']);
-        $groupname = escapeshellcmd($website['system_group']);
-
-		//Change permsis
-        $this->_exec('chown -R  ' . $username . ':' . $groupname . ' ' . $document_root);
-
-		chdir($curr_path);
+		$app->dbmaster->query($sql, $res['server_id'], $res['type'], serialize($res['data']), $res['state']);	
     }
 
     /* Creates a new git repo */
@@ -179,11 +187,11 @@ class vcs_plugin {
 		global $app, $conf;
 
 		//Create temp folder for the initial checkout
-		$tmp_path = '/tmp/web_git';
-	        $this->_exec('mkdir -p ' . $tmp_path);
-		$tmp_path .= '/' . $website['domain_id'];
+		$milliseconds = round(microtime(true) * 1000);
+		$tmp_path = '/tmp/web_git'.$milliseconds;
+	    $this->_exec('mkdir -p ' . $tmp_path);
 
-	        //Construir URL git con user y pass
+	    //Construir URL git con user y pass
 		$url_parts = parse_url($data['url']);
 
 		if($data['username'] != "") $url_parts['user'] = $data['username'];
@@ -193,54 +201,62 @@ class vcs_plugin {
 
 		$gitBinary = $this->_exec("which git");
 		if($gitBinary) {
-		        //Clonar repo
+		    //Clonar repo
 			$this->_exec($gitBinary . ' clone ' . $git_url . ' ' . $tmp_path);
 
-			//user:grup
-	        	$username = escapeshellcmd($website['system_user']);
-		        $groupname = escapeshellcmd($website['system_group']);
 			//document_root
-		        $document_root = escapeshellcmd($website['document_root']);
+		    $document_root = escapeshellcmd($website['document_root']);
 
-		        //Cambiar permsis
-			$this->_exec('chown -R  ' . $username . ':' . $groupname . ' ' . $tmp_path);
-
-		        //mover .git a document_root
+		    //mover .git a document_root
 			$this->_exec('mv ' . $tmp_path . '/*' . ' ' . $document_root . '/web/'); /* nano comment */
 			$this->_exec('mv ' . $tmp_path . '/.*' . ' ' . $document_root . '/web/');
 
 			//Eliminar carpeta temporal
-		        $this->_exec('rm -rf ' . $tmp_path);
+		    $this->_exec('rm -rf ' . $tmp_path);
 		}
     }
 
     function pathIsGit($path) {
 		global $app, $conf;
-		$curr_path = $this->_exec('pwd'); // Current path
+		
 		//cd to document_root path
 		chdir($path);
 
 		$gitBinary = $this->_exec("which git");
 		$check = '';
-	        if($gitBinary) {
+	    if($gitBinary) {
 			$check = $this->_exec($gitBinary . ' rev-parse --is-inside-work-tree'); //Returns "true" if inside a git repo
 		}
 
-		chdir($curr_path); //back to previous path
-
-		$app->log($check, LOGLEVEL_DEBUG);
-
 		if($check == "true") {
+			$app->log("Path is a git folder", LOGLEVEL_DEBUG);
 			return true;
 		} else {
+			$app->log("Path is NOT a git folder", LOGLEVEL_DEBUG);
 			return false;
 		}
     }
 
     private function _exec($command) {
 		global $app;
-		$app->log('exec: '. $command, LOGLEVEL_DEBUG);
-		$output = shell_exec($command);
+
+		$command_original = $command;
+
+		if(isset($this->website['system_user']) && $this->website['system_user']) {
+			$user = escapeshellcmd($this->website['system_user']);
+			$command = "sudo -H -u ". $user ." bash -c '".$command."'";
+		} else {
+			$user = "root";			
+		}
+
+		$app->log('exec (as '.$user.'): '. $command_original, LOGLEVEL_DEBUG);
+		$output = shell_exec($command);			
+
+		/**
+		 * 
+		 * usar exec en vez de shell_exec, devolver un array con 0 => status, 1 => $output
+		 */
+
 		return trim($output);
     }
 
