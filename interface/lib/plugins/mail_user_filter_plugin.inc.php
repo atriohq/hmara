@@ -118,7 +118,7 @@ class mail_user_filter_plugin {
 
 
 	/*
-		private function to create the mail filter rules in maildrop or sieve format.
+		Private function to create the mail filter rules in sieve format.
 	*/
 	private function mail_user_filter_get_rule($page_form) {
 

@@ -389,17 +389,6 @@ class mail_plugin {
 				$app->system->exec_safe('mv -f ? ?', $data['old']['maildir'], $data['new']['maildir']);
 				$app->log('Moved Maildir from: '.$data['old']['maildir'].' to '.$data['new']['maildir'], LOGLEVEL_DEBUG);
 			}
-			//This is to fix the maildrop quota not being rebuilt after the quota is changed.
-			// Courier Layout
-			if(is_dir($data['new']['maildir'].'/new') && $mail_config['pop3_imap_daemon'] != 'dovecot') {
-				if($data['new']['quota'] > 0) {
-					if(is_dir($data['new']['maildir'])) $app->system->exec_safe("su -c ? ?", "maildirmake -q ".$data['new']['quota']."S ".$data['new']['maildir'], $user);
-					$app->log('Updated Maildir quota: '."su -c 'maildirmake -q ".$data['new']['quota']."S ".$data['new']['maildir']."' ".$user, LOGLEVEL_DEBUG);
-				} else {
-					if(file_exists($data['new']['maildir'].'/maildirsize')) unlink($data['new']['maildir'].'/maildirsize');
-					$app->log('Set Maildir quota to unlimited.', LOGLEVEL_DEBUG);
-				}
-			}
 		}
 	}
 
