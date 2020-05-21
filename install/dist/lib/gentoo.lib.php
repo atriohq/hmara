@@ -190,36 +190,6 @@ class installer extends installer_base
 			caselog($command.' &> /dev/null', __FILE__, __LINE__, 'EXECUTED: '.$command, 'Failed to execute the command '.$command);
 		}
 
-		//* We have to change the permissions of the courier authdaemon directory to make it accessible for maildrop.
-		$command = 'chmod 755  /var/lib/courier/authdaemon/';
-		if (is_dir('/var/lib/courier/authdaemon')) {
-			caselog($command.' &> /dev/null', __FILE__, __LINE__, 'EXECUTED: '.$command, 'Failed to execute the command '.$command);
-		}
-
-		//* Changing maildrop lines in posfix master.cf
-		$configfile = $config_dir.'/master.cf';
-		$content = rf($configfile);
-
-		$content = preg_replace('/^#?maildrop/m', 'maildrop', $content);
-		$content = preg_replace('/^#?(\s+)flags=DRhu user=vmail argv=\/usr\/bin\/maildrop -d/m',
-			'$1flags=DRhu user=vmail argv=/usr/bin/maildrop -d vmail \${extension} \${recipient} \${user} \${nexthop} \${sender}',
-			$content);
-
-		$this->write_config_file($configfile, $content);
-
-		//* Writing the Maildrop mailfilter file
-		$content = rfsel($conf['ispconfig_install_dir'].'/server/conf-custom/install/mailfilter.master', 'tpl/mailfilter.master');
-		$content = str_replace('{dist_postfix_vmail_mailbox_base}', $cf['vmail_mailbox_base'], $content);
-
-		$this->write_config_file($cf['vmail_mailbox_base'].'/.mailfilter', $content);
-
-		//* Create the directory for the custom mailfilters
-		if (!is_dir($cf['vmail_mailbox_base'].'/mailfilters'))
-		{
-			$command = 'mkdir '.$cf['vmail_mailbox_base'].'/mailfilters';
-			caselog($command.' &> /dev/null', __FILE__, __LINE__, "EXECUTED: $command", "Failed to execute the command $command");
-		}
-
 		//* postfix-dkim
 		$filename='tag_as_originating.re';
 		$full_file_name=$config_dir.'/'.$filename;

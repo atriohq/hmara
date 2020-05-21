@@ -260,60 +260,9 @@ class installer_dist extends installer_base {
 			caselog($command.' &> /dev/null', __FILE__, __LINE__, 'EXECUTED: '.$command, 'Failed to execute the command '.$command);
 		}
 
-		//** We have to change the permissions of the courier authdaemon directory to make it accessible for maildrop.
-		$command = 'chmod 755  /var/run/authdaemon.courier-imap';
-		caselog($command.' &> /dev/null', __FILE__, __LINE__, 'EXECUTED: '.$command, 'Failed to execute the command '.$command);
-
-		//* Check maildrop service in posfix master.cf
-		$regex = "/^maildrop   unix.*pipe flags=DRhu user=vmail argv=\\/usr\\/bin\\/maildrop -d ".$cf['vmail_username']." \\$\{extension} \\$\{recipient} \\$\{user} \\$\{nexthop} \\$\{sender}/";
-		$configfile = $config_dir.'/master.cf';
-		if($this->get_postfix_service('maildrop', 'unix')) {
-			exec ("postconf -M maildrop.unix &> /dev/null", $out, $ret);
-			$change_maildrop_flags = @(preg_match($regex, $out[0]) && $out[0] !='')?false:true;
-		} else {
-			$change_maildrop_flags = @(preg_match($regex, $configfile))?false:true;
-		}
-		if ($change_maildrop_flags) {
-			//* Change maildrop service in posfix master.cf
-			if(is_file($config_dir.'/master.cf')) {
-				copy($config_dir.'/master.cf', $config_dir.'/master.cf~');
-			}
-			if(is_file($config_dir.'/master.cf~')) {
-				chmod($config_dir.'/master.cf~', 0400);
-			}
-			$configfile = $config_dir.'/master.cf';
-			$content = rf($configfile);
-			$content =	str_replace('  flags=DRhu user=vmail argv=/usr/bin/maildrop -d ${recipient}',
-						'flags=DRhu user='.$cf['vmail_username'].' argv=/usr/bin/maildrop -d '.$cf['vmail_username'].' ${extension} ${recipient} ${user} ${nexthop} ${sender}',
-						$content);
-			$content =	str_replace('  flags=DRhu user=vmail argv=/usr/local/bin/maildrop -d ${recipient}',
-						'flags=DRhu user='.$cf['vmail_username'].' argv=/usr/bin/maildrop -d '.$cf['vmail_username'].' ${extension} ${recipient} ${user} ${nexthop} ${sender}',
-						$content);
-		}
 		// enable tlsmanager
 		$content = str_replace('#tlsmgr    unix  -       -       n       1000?   1       tlsmgr', 'tlsmgr    unix  -       -       n       1000?   1       tlsmgr', $content);
 		wf($configfile, $content);
-
-		//* Writing the Maildrop mailfilter file
-		$configfile = 'mailfilter';
-		if(is_file($cf['vmail_mailbox_base'].'/.'.$configfile)){
-			copy($cf['vmail_mailbox_base'].'/.'.$configfile, $cf['vmail_mailbox_base'].'/.'.$configfile.'~');
-		}
-		$content = rfsel($conf['ispconfig_install_dir'].'/server/conf-custom/install/'.$configfile.'.master', "tpl/$configfile.master");
-		$content = str_replace('{dist_postfix_vmail_mailbox_base}', $cf['vmail_mailbox_base'], $content);
-		wf($cf['vmail_mailbox_base'].'/.'.$configfile, $content);
-
-		//* Create the directory for the custom mailfilters
-		$command = 'mkdir '.$cf['vmail_mailbox_base'].'/mailfilters';
-		caselog($command." &> /dev/null", __FILE__, __LINE__, "EXECUTED: $command", "Failed to execute the command $command");
-
-		//* Chmod and chown the .mailfilter file
-		$command = 'chown -R '.$cf['vmail_username'].':'.$cf['vmail_groupname'].' '.$cf['vmail_mailbox_base'].'/.mailfilter';
-		caselog($command." &> /dev/null", __FILE__, __LINE__, "EXECUTED: $command", "Failed to execute the command $command");
-
-		$command = 'chmod -R 600 '.$cf['vmail_mailbox_base'].'/.mailfilter';
-		caselog($command." &> /dev/null", __FILE__, __LINE__, "EXECUTED: $command", "Failed to execute the command $command");
-
 	}
 
 	public function configure_saslauthd() {
