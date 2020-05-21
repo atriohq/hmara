@@ -152,6 +152,11 @@ $conf['country'] = 'DE';
 //** Misc.
 $conf['interface_logout_url'] = ''; // example: http://www.domain.tld/
 
+# 38 x times found ( space padded to align with the lines below.
+$conf['interface_concat_client_sql'] = "CONCAT(IF(client.company_name != '', CONCAT(client.company_name, ' :: '), ''),                                                                                client.contact_name, ' (', client.username, IF(client.customer_no != '', CONCAT(', ', client.customer_no), ''), ')')";
+
+# From sites list
+$conf['interface_concat_client_sql'] = "CONCAT(IF(client.company_name != '', CONCAT(client.company_name, ' :: '), ''), IF(client.contact_firstname != '', CONCAT(client.contact_firstname, ' '), ''), client.contact_name, ' (', client.username, IF(client.customer_no != '', CONCAT(', ', client.customer_no), ''), ')')";
 
 //** Auto Load Modules
 $conf['start_db'] = true;
