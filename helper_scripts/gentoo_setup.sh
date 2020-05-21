@@ -191,7 +191,6 @@ function enable_apache_module()
 function meta_mail()
 {
 	local package_list=""
-	local add_maildrop=""
 	local remove_ssmtp="no"
 	local rc_scripts=""
 	local use_courier="no"
@@ -219,8 +218,6 @@ function meta_mail()
 		is_package_installed "net-libs/courier-authlib" "mysql" || { package_list="$package_list net-libs/courier-authlib"; rc_scripts="$rc_scripts courier-authlib"; }
 	
 		is_package_installed "net-mail/courier-imap" "fam" || { package_list="$package_list net-mail/courier-imap"; rc_scripts="$rc_scripts courier-imapd courier-imapd-ssl courier-pop3d courier-pop3d-ssl"; }
-		
-		is_package_installed "mail-filter/maildrop" || add_maildrop="yes" # Avoid file collision warnings from emerge
 		
 		is_package_installed "dev-libs/cyrus-sasl" "mysql" || { package_list="$package_list dev-libs/cyrus-sasl"; rc_scripts="$rc_scripts saslauthd"; }
 		
@@ -280,11 +277,6 @@ function meta_mail()
 	fi
 	
 	install_packages "$package_list" "Installing mail packages"
-	
-	if [ -n "$add_maildrop" ]
-	then
-		exec_command "COLLISION_IGNORE=\"/usr\" emerge mail-filter/maildrop" "Installing maildrop"
-	fi
 	
 	if [ "$installed_postfix" == "yes" ] && [ ! -d '/etc/mail/aliases.db' ]
 	then
