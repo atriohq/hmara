@@ -89,7 +89,7 @@ if($_SESSION['s']['user']['typ'] == 'admin' && $vhostdomain_type == 'domain') {
 		'suffix' => "",
 		'datasource' => array (  'type' => 'SQL',
 			//'querystring' => 'SELECT groupid, name FROM sys_group WHERE groupid != 1 ORDER BY name',
-			'querystring' => "SELECT sys_group.groupid, " . $conf['interface_concat_client_sql'] . " AS name
+			'querystring' => "SELECT sys_group.groupid, {CLIENTNAMESQL} AS name
 				FROM sys_group, client
 				WHERE sys_group.groupid != 1 AND sys_group.client_id = client.client_id
 				ORDER BY client.company_name, client.contact_name",
