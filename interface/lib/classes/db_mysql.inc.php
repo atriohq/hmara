@@ -189,10 +189,6 @@ class db
 		return $sQuery;
 	}
 
-	function get_client_sql_concat_query() {
-		return "CONCAT(IF(client.company_name != '', CONCAT(client.company_name, ' :: '), ''), IF(client.contact_firstname != '', CONCAT(client.contact_firstname, ' '), ''), client.contact_name, ' (', client.username, IF(client.customer_no != '', CONCAT(', ', client.customer_no), ''), ')')";
-	}
-
 	/**#@-*/
 
 
@@ -354,7 +350,6 @@ class db
 	 * @return array result row or NULL if none found
 	 */
 	public function queryOneRecord($sQuery = '') {
-		$sQuery = str_replace("{CLIENTNAMESQL}", $this->get_client_sql_concat_query(), $sQuery);
 
 		$aArgs = func_get_args();
 		if(!empty($aArgs)) {
@@ -394,7 +389,6 @@ class db
 	 * @return array all the rows in the result set
 	 */
 	public function queryAllRecords($sQuery = '') {
-		$sQuery = str_replace("{CLIENTNAMESQL}", $this->get_client_sql_concat_query(), $sQuery);
 		$aArgs = func_get_args();
 		$oResult = call_user_func_array(array(&$this, 'query'), $aArgs);
 		if(!$oResult) return array();
