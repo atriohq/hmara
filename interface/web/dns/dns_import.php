@@ -101,7 +101,7 @@ if($_SESSION['s']['user']['typ'] == 'admin') {
 	$app->tpl->setVar("server_id", $server_id_option);
 
 	// load the list of clients
-	$sql = "SELECT sys_group.groupid, sys_group.name, CONCAT(IF(client.company_name != '', CONCAT(client.company_name, ' :: '), ''), client.contact_name, ' (', client.username, IF(client.customer_no != '', CONCAT(', ', client.customer_no), ''), ')') as contactname FROM sys_group, client WHERE sys_group.client_id = client.client_id AND sys_group.client_id > 0 ORDER BY client.company_name, client.contact_name, sys_group.name";
+	$sql = "SELECT sys_group.groupid, sys_group.name, {CLIENTNAMESQL} as contactname FROM sys_group, client WHERE sys_group.client_id = client.client_id AND sys_group.client_id > 0 ORDER BY client.company_name, client.contact_name, sys_group.name";
 	$clients = $app->db->queryAllRecords($sql);
 	$clients = $app->functions->htmlentities($clients);
 	$client_select = '';
@@ -120,11 +120,11 @@ if ($_SESSION["s"]["user"]["typ"] != 'admin' && $app->auth->has_clients($_SESSIO
 
 	// Get the limits of the client
 	$client_group_id = intval($_SESSION["s"]["user"]["default_group"]);
-	$client = $app->db->queryOneRecord("SELECT client.client_id, client.contact_name, CONCAT(IF(client.company_name != '', CONCAT(client.company_name, ' :: '), ''), client.contact_name, ' (', client.username, IF(client.customer_no != '', CONCAT(', ', client.customer_no), ''), ')') as contactname, sys_group.name FROM sys_group, client WHERE sys_group.client_id = client.client_id and sys_group.groupid = ?", $client_group_id);
+	$client = $app->db->queryOneRecord("SELECT client.client_id, client.contact_name, {CLIENTNAMESQL} as contactname, sys_group.name FROM sys_group, client WHERE sys_group.client_id = client.client_id and sys_group.groupid = ?", $client_group_id);
 	$client = $app->functions->htmlentities($client);
 
 	// load the list of clients
-	$sql = "SELECT sys_group.groupid, sys_group.name, CONCAT(IF(client.company_name != '', CONCAT(client.company_name, ' :: '), ''), client.contact_name, ' (', client.username, IF(client.customer_no != '', CONCAT(', ', client.customer_no), ''), ')') as contactname FROM sys_group, client WHERE sys_group.client_id = client.client_id AND client.parent_client_id = ? ORDER BY client.company_name, client.contact_name, sys_group.name";
+	$sql = "SELECT sys_group.groupid, sys_group.name, {CLIENTNAMESQL} as contactname FROM sys_group, client WHERE sys_group.client_id = client.client_id AND client.parent_client_id = ? ORDER BY client.company_name, client.contact_name, sys_group.name";
 	$clients = $app->db->queryAllRecords($sql, $client['client_id']);
 	$clients = $app->functions->htmlentities($clients);
 	$tmp = $app->db->queryOneRecord("SELECT groupid FROM sys_group WHERE client_id = ?", $client['client_id']);
