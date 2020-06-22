@@ -152,6 +152,7 @@ $conf['country'] = 'DE';
 //** Misc.
 $conf['interface_logout_url'] = ''; // example: http://www.domain.tld/
 
+
 //** Auto Load Modules
 $conf['start_db'] = true;
 $conf['start_session'] = true;
