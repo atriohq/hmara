@@ -134,6 +134,8 @@ class db
 	}
 
 	public function _build_query_string($sQuery = '') {
+		$sQuery = str_replace("{CLIENTNAMESQL}", $this->get_client_sql_concat_query(), $sQuery);
+
 		$iArgs = func_num_args();
 		if($iArgs > 1) {
 			$aArgs = func_get_args();
@@ -189,8 +191,6 @@ class db
 				}
 			}
 		}
-
-		$sQuery = str_replace("{CLIENTNAMESQL}", $this->get_client_sql_concat_query(), $sQuery);
 
 		return $sQuery;
 	}
