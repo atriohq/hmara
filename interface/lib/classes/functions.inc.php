@@ -499,10 +499,6 @@ class functions {
 			return 'en';	
 		}
 	}
-
-	function get_client_sql_concat_query() {
-		return "CONCAT(IF(client.company_name != '', CONCAT(client.company_name, ' :: '), ''), IF(client.contact_firstname != '', CONCAT(client.contact_firstname, ' '), ''), client.contact_name, ' (', client.username, IF(client.customer_no != '', CONCAT(', ', client.customer_no), ''), ')')";
-	}
 }
 
 ?>
