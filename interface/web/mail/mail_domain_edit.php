@@ -76,7 +76,7 @@ class page_action extends tform_actions {
 		$settings = $app->getconf->get_global_config('domains');
 
 		if($_SESSION["s"]["user"]["typ"] == 'admin' && $settings['use_domain_module'] == 'y') {
-			$sql = "SELECT CONCAT(IF(client.company_name != '', CONCAT(client.company_name, ' :: '), ''), client.contact_name, ' (', client.username, IF(client.customer_no != '', CONCAT(', ', client.customer_no), ''), ')') as contactname FROM sys_group, client WHERE sys_group.client_id = client.client_id AND sys_group.groupid = ?";
+			$sql = "SELECT {CLIENTNAMESQL} as contactname FROM sys_group, client WHERE sys_group.client_id = client.client_id AND sys_group.groupid = ?";
 			$clients = $app->db->queryAllRecords($sql, $this->dataRecord['sys_groupid']);
 			$client_select = '<option value="dummy">' . $clients[0]['contactname'] . '</option>';
 			$app->tpl->setVar("client_group_name", $client_select);
