@@ -35,3 +35,15 @@ ALTER TABLE `mail_user` ADD `disableindexer-worker` ENUM('n','y') CHARACTER SET 
 
 -- add SSHFP and DNAME record
 ALTER TABLE `dns_rr` CHANGE `type` `type` ENUM('A','AAAA','ALIAS','CNAME','DNAME','CAA','DS','HINFO','LOC','MX','NAPTR','NS','PTR','RP','SRV','SSHFP','TXT','TLSA','DNSKEY') NULL DEFAULT NULL AFTER `name`;
+
+-- change cc and sender_cc column type
+ALTER TABLE `mail_user` CHANGE `cc` `cc` TEXT CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '';
+
+-- remove SPDY option
+ALTER TABLE `web_domain` DROP COLUMN `enable_spdy`;
+
+-- was missing in incremental, inserted for fixing older installations
+ALTER TABLE `web_domain` ADD `folder_directive_snippets` TEXT NULL AFTER `https_port`;
+
+ALTER TABLE `web_domain` CHANGE `apache_directives` `apache_directives` mediumtext NULL DEFAULT NULL;
+ALTER TABLE `web_domain` CHANGE `nginx_directives` `nginx_directives` mediumtext NULL DEFAULT NULL;

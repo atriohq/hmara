@@ -580,6 +580,11 @@ class apache2_plugin {
 			$log_folder .= '/' . $subdomain_host;
 			unset($tmp);
 
+			if($app->system->is_blacklisted_web_path($web_folder)) {
+				$app->log('Vhost is using a blacklisted web folder: ' . $web_folder, LOGLEVEL_ERROR);
+				return 0;
+			}
+
 			if(isset($data['old']['parent_domain_id'])) {
 				// old one
 				$tmp = $app->db->queryOneRecord('SELECT `domain` FROM web_domain WHERE domain_id = ?', $data['old']['parent_domain_id']);
@@ -731,7 +736,13 @@ class apache2_plugin {
 		// Check if the directories are there and create them if necessary.
 		$app->system->web_folder_protection($data['new']['document_root'], false);
 
-		if(!is_dir($data['new']['document_root'].'/' . $web_folder)) $app->system->mkdirpath($data['new']['document_root'].'/' . $web_folder);
+		if(!is_dir($data['new']['document_root'].'/' . $web_folder)) {
+			if($web_folder !== 'web') { //vhost sub/alias
+				$app->system->mkdirpath($data['new']['document_root'].'/' . $web_folder, 0755, $username, $groupname);
+			} else {
+				$app->system->mkdirpath($data['new']['document_root'].'/' . $web_folder);
+			}
+		}
 		if(!is_dir($data['new']['document_root'].'/' . $web_folder . '/error') and $data['new']['errordocs']) $app->system->mkdirpath($data['new']['document_root'].'/' . $web_folder . '/error');
 		if($data['new']['stats_type'] != '' && !is_dir($data['new']['document_root'].'/' . $web_folder . '/stats')) $app->system->mkdirpath($data['new']['document_root'].'/' . $web_folder . '/stats');
 		if(!is_dir($data['new']['document_root'].'/ssl')) $app->system->mkdirpath($data['new']['document_root'].'/ssl');
@@ -778,7 +789,7 @@ class apache2_plugin {
 			$app->system->chmod($data['new']['document_root'].'/'.$log_folder, 0755);
 			$app->system->exec_safe('mount --bind ? ?', '/var/log/ispconfig/httpd/'.$data['new']['domain'], $data['new']['document_root'].'/'.$log_folder);
 			//* add mountpoint to fstab
-			$fstab_line = '/var/log/ispconfig/httpd/'.$data['new']['domain'].' '.$data['new']['document_root'].'/'.$log_folder.'    none    bind,nobootwait';
+			$fstab_line = '/var/log/ispconfig/httpd/'.$data['new']['domain'].' '.$data['new']['document_root'].'/'.$log_folder.'    none    bind,nofail';
 			$fstab_line .= @($web_config['network_filesystem'] == 'y')?',_netdev    0 0':'    0 0';
 			$app->system->replaceLine('/etc/fstab', $fstab_line, $fstab_line, 1, 1);
 		}
@@ -1180,6 +1191,11 @@ class apache2_plugin {
 				$vhost_data['apache_directives'] = $snippet['snippet'];
 			}
 		}
+
+		if(!$vhost_data['apache_directives']) {
+			$vhost_data['apache_directives'] = ''; // ensure it is not null
+		}
+
 		// Make sure we only have Unix linebreaks
 		$vhost_data['apache_directives'] = str_replace("\r\n", "\n", $vhost_data['apache_directives']);
 		$vhost_data['apache_directives'] = str_replace("\r", "\n", $vhost_data['apache_directives']);
@@ -1234,17 +1250,6 @@ class apache2_plugin {
 
 		// Use separate bundle file only for apache versions < 2.4.8
 		if(@is_file($bundle_file) && version_compare($app->system->getapacheversion(true), '2.4.8', '<')) $vhost_data['has_bundle_cert'] = 1;
-
-		// HTTP/2.0 ?
-		$vhost_data['enable_http2']  = 'n';
-		if($vhost_data['enable_spdy'] == 'y'){
-			// check if apache supports http_v2
-			exec("2>&1 apachectl -M | grep http2_module", $tmp_output, $tmp_retval);
-			if($tmp_retval == 0){
-				$vhost_data['enable_http2']  = 'y';
-			}
-			unset($tmp_output, $tmp_retval);
-		}
 
 		// Set SEO Redirect
 		if($data['new']['seo_redirect'] != ''){
@@ -1508,6 +1513,7 @@ class apache2_plugin {
 			$fcgi_tpl->setVar('open_basedir', $php_open_basedir);
 
 			$fcgi_starter_script = $fastcgi_starter_path.$fastcgi_config['fastcgi_starter_script'].(($data['new']['type'] == 'vhostsubdomain' || $data['new']['type'] == 'vhostalias') ? '_web' . $data['new']['domain_id'] : '');
+			$app->system->set_immutable($fcgi_starter_script, false);
 			$app->system->file_put_contents($fcgi_starter_script, $fcgi_tpl->grab());
 			unset($fcgi_tpl);
 
@@ -1520,6 +1526,7 @@ class apache2_plugin {
 			}
 			$app->system->chown($fcgi_starter_script, $data['new']['system_user']);
 			$app->system->chgrp($fcgi_starter_script, $data['new']['system_group']);
+			$app->system->set_immutable($fcgi_starter_script, true);
 
 			$tpl->setVar('fastcgi_alias', $fastcgi_config['fastcgi_alias']);
 			$tpl->setVar('fastcgi_starter_path', $fastcgi_starter_path);
@@ -1533,6 +1540,7 @@ class apache2_plugin {
 			if ($data['old']['php'] == 'fast-cgi') {
 				$fastcgi_starter_path = str_replace('[system_user]', $data['old']['system_user'], $fastcgi_config['fastcgi_starter_path']);
 				$fastcgi_starter_path = str_replace('[client_id]', $client_id, $fastcgi_starter_path);
+				$app->system->set_immutable($fastcgi_starter_path, false, true);
 				if($data['old']['type'] == 'vhost') {
 					if(is_file($fastcgi_starter_script)) @unlink($fastcgi_starter_script);
 					if (is_dir($fastcgi_starter_path)) @rmdir($fastcgi_starter_path);
@@ -1644,6 +1652,7 @@ class apache2_plugin {
 			}
 
 			$cgi_starter_script = $cgi_starter_path.$cgi_config['cgi_starter_script'].(($data['new']['type'] == 'vhostsubdomain' || $data['new']['type'] == 'vhostalias') ? '_web' . $data['new']['domain_id'] : '');
+			$app->system->set_immutable($cgi_starter_script, false);
 			$app->system->file_put_contents($cgi_starter_script, $cgi_tpl->grab());
 			unset($cgi_tpl);
 
@@ -1657,6 +1666,7 @@ class apache2_plugin {
 			}
 			$app->system->chown($cgi_starter_script, $data['new']['system_user']);
 			$app->system->chgrp($cgi_starter_script, $data['new']['system_group']);
+			$app->system->set_immutable($cgi_starter_script, true);
 
 			$tpl->setVar('cgi_starter_path', $cgi_starter_path);
 			$tpl->setVar('cgi_starter_script', $cgi_config['cgi_starter_script'].(($data['new']['type'] == 'vhostsubdomain' || $data['new']['type'] == 'vhostalias') ? '_web' . $data['new']['domain_id'] : ''));
@@ -2186,11 +2196,13 @@ class apache2_plugin {
 					$fastcgi_starter_path = str_replace('[system_user]', $data['old']['system_user'], $fastcgi_config['fastcgi_starter_path']);
 					if($data['old']['type'] == 'vhost') {
 						if (is_dir($fastcgi_starter_path)) {
+							$app->system->set_immutable($fastcgi_starter_path, false, true);
 							$app->system->exec_safe('rm -rf ?', $fastcgi_starter_path);
 						}
 					} else {
 						$fcgi_starter_script = $fastcgi_starter_path.$fastcgi_config['fastcgi_starter_script'].'_web'.$data['old']['domain_id'];
 						if (file_exists($fcgi_starter_script)) {
+							$app->system->set_immutable($fcgi_starter_script, false);
 							$app->system->exec_safe('rm -f ?', $fcgi_starter_script);
 						}
 					}
@@ -2211,11 +2223,13 @@ class apache2_plugin {
 					$cgi_starter_path = str_replace('[system_user]', $data['old']['system_user'], $web_config['cgi_starter_path']);
 					if($data['old']['type'] == 'vhost') {
 						if (is_dir($cgi_starter_path)) {
+							$app->system->set_immutable($cgi_starter_path, false, true);
 							$app->system->exec_safe('rm -rf ?', $cgi_starter_path);
 						}
 					} else {
 						$cgi_starter_script = $cgi_starter_path.'php-cgi-starter_web'.$data['old']['domain_id'];
 						if (file_exists($cgi_starter_script)) {
+							$app->system->set_immutable($cgi_starter_script, false);
 							$app->system->exec_safe('rm -f ?', $cgi_starter_script);
 						}
 					}

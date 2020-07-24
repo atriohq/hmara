@@ -840,7 +840,6 @@ class page_action extends tform_actions {
 
 		$app->tpl->setVar('vhostdomain_type', $this->_vhostdomain_type, true);
 
-		$app->tpl->setVar('is_spdy_enabled', ($web_config['enable_spdy'] === 'y'));
 		$app->tpl->setVar('is_pagespeed_enabled', ($web_config['nginx_enable_pagespeed'] === 'y'));
 		$app->tpl->setVar("is_admin", $is_admin);
 
@@ -950,10 +949,8 @@ class page_action extends tform_actions {
 		}
 		$app->tpl->setLoop('folder_directive_snippets', $folder_directive_snippets);
 		if(is_array($web_config[$server_id])) {
-			$app->tpl->setVar('is_spdy_enabled', ($web_config[$server_id]['enable_spdy'] === 'y'));
 			$app->tpl->setVar('is_pagespeed_enabled', ($web_config[$server_id]['nginx_enable_pagespeed']));
 		} else {
-			$app->tpl->setVar('is_spdy_enabled', ($web_config['enable_spdy'] === 'y'));
 			$app->tpl->setVar('is_pagespeed_enabled', ($web_config['nginx_enable_pagespeed']));
 		}
 
@@ -1033,11 +1030,7 @@ class page_action extends tform_actions {
 				$this->dataRecord['web_folder'] = strtolower($this->dataRecord['web_folder']);
 				if(substr($this->dataRecord['web_folder'], 0, 1) === '/') $this->dataRecord['web_folder'] = substr($this->dataRecord['web_folder'], 1);
 				if(substr($this->dataRecord['web_folder'], -1) === '/') $this->dataRecord['web_folder'] = substr($this->dataRecord['web_folder'], 0, -1);
-				$forbidden_folders = array('', 'cgi-bin', 'log', 'private', 'ssl', 'tmp', 'webdav');
-				$check_folder = strtolower($this->dataRecord['web_folder']);
-				if(substr($check_folder, 0, 1) === '/') $check_folder = substr($check_folder, 1); // strip / at beginning to check against forbidden entries
-				if(strpos($check_folder, '/') !== false) $check_folder = substr($check_folder, 0, strpos($check_folder, '/')); // get the first part of the path to check it
-				if(in_array($check_folder, $forbidden_folders)) {
+				if($app->system->is_blacklisted_web_path($this->dataRecord['web_folder'])) {
 					$app->tform->errorMessage .= $app->tform->lng("web_folder_invalid_txt")."<br>";
 				}
 
@@ -1324,10 +1317,6 @@ class page_action extends tform_actions {
 			if(!$custom_php_ini_settings_are_valid){
 				$app->tform->errorMessage .= $app->tform->lng("invalid_custom_php_ini_settings_txt").'<br>';
 			}
-		}
-
-		if($web_config['enable_spdy'] === 'n') {
-			unset($app->tform->formDef["tabs"]['ssl']['fields']['enable_spdy']);
 		}
 	//	if($this->dataRecord["directive_snippets_id"] < 1) $this->dataRecord["enable_pagespeed"] = 'n';
 

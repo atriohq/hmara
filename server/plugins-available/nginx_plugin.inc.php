@@ -425,6 +425,11 @@ class nginx_plugin {
 			$log_folder .= '/' . $subdomain_host;
 			unset($tmp);
 
+			if($app->system->is_blacklisted_web_path($web_folder)) {
+				$app->log('Vhost is using a blacklisted web folder: ' . $web_folder, LOGLEVEL_ERROR);
+				return 0;
+			}
+
 			if(isset($data['old']['parent_domain_id'])) {
 				// old one
 				$tmp = $app->db->queryOneRecord('SELECT `domain` FROM web_domain WHERE domain_id = ?', $data['old']['parent_domain_id']);
@@ -573,7 +578,13 @@ class nginx_plugin {
 		// Check if the directories are there and create them if necessary.
 		$app->system->web_folder_protection($data['new']['document_root'], false);
 
-		if(!is_dir($data['new']['document_root'].'/' . $web_folder)) $app->system->mkdirpath($data['new']['document_root'].'/' . $web_folder);
+		if(!is_dir($data['new']['document_root'].'/' . $web_folder)) {
+			if($web_folder !== 'web') { //vhost sub/alias
+				$app->system->mkdirpath($data['new']['document_root'].'/' . $web_folder, 0755, $username, $groupname);
+			} else {
+				$app->system->mkdirpath($data['new']['document_root'].'/' . $web_folder);
+			}
+		}
 		if(!is_dir($data['new']['document_root'].'/' . $web_folder . '/error') and $data['new']['errordocs']) $app->system->mkdirpath($data['new']['document_root'].'/' . $web_folder . '/error');
 		if($data['new']['stats_type'] != '' && !is_dir($data['new']['document_root'].'/' . $web_folder . '/stats')) $app->system->mkdirpath($data['new']['document_root'].'/' . $web_folder . '/stats');
 		if(!is_dir($data['new']['document_root'].'/ssl')) $app->system->mkdirpath($data['new']['document_root'].'/ssl');
@@ -619,7 +630,7 @@ class nginx_plugin {
 			$app->system->chmod($data['new']['document_root'].'/'.$log_folder, 0755);
 			$app->system->exec_safe('mount --bind ? ?', '/var/log/ispconfig/httpd/'.$data['new']['domain'], $data['new']['document_root'].'/'.$log_folder);
 			//* add mountpoint to fstab
-			$fstab_line = '/var/log/ispconfig/httpd/'.$data['new']['domain'].' '.$data['new']['document_root'].'/'.$log_folder.'    none    bind,nobootwait';
+			$fstab_line = '/var/log/ispconfig/httpd/'.$data['new']['domain'].' '.$data['new']['document_root'].'/'.$log_folder.'    none    bind,nofail';
 			$fstab_line .= @($web_config['network_filesystem'] == 'y')?',_netdev    0 0':'    0 0';
 			$app->system->replaceLine('/etc/fstab', $fstab_line, $fstab_line, 1, 1);
 		}
@@ -1194,6 +1205,9 @@ class nginx_plugin {
 			$nginx_directives = $data['new']['nginx_directives'];
 //			$vhost_data['enable_pagespeed'] = false;
 		}
+		if(!$nginx_directives) {
+			$nginx_directives = ''; // ensure it is not null
+		}
 
 		// folder_directive_snippets
 		if(trim($data['new']['folder_directive_snippets']) != ''){
@@ -1515,18 +1529,6 @@ class nginx_plugin {
 					'use_rewrite' => ($data['new']['redirect_type'] == 'proxy' ? false:true),
 					'use_proxy' => ($data['new']['redirect_type'] == 'proxy' ? true:false));
 			}
-		}
-
-		// http2 or spdy?
-		$vhost_data['enable_http2']  = 'n';
-		if($vhost_data['enable_spdy'] == 'y'){
-			// check if nginx support http_v2; if so, use that instead of spdy
-			exec("2>&1 nginx -V | tr -- - '\n' | grep http_v2_module", $tmp_output, $tmp_retval);
-			if($tmp_retval == 0){
-				$vhost_data['enable_http2']  = 'y';
-				$vhost_data['enable_spdy'] = 'n';
-			}
-			unset($tmp_output, $tmp_retval);
 		}
 
 		//proxy protocol settings
@@ -2208,11 +2210,13 @@ class nginx_plugin {
 					$fastcgi_starter_path = str_replace('[system_user]', $data['old']['system_user'], $web_config['fastcgi_starter_path']);
 					if($data['old']['type'] == 'vhost') {
 						if (is_dir($fastcgi_starter_path)) {
+							$app->system->set_immutable($fastcgi_starter_path, false, true);
 							$app->system->exec_safe('rm -rf ?', $fastcgi_starter_path);
 						}
 					} else {
 						$fcgi_starter_script = $fastcgi_starter_path.$web_config['fastcgi_starter_script'].'_web'.$data['old']['domain_id'];
 						if (file_exists($fcgi_starter_script)) {
+							$app->system->set_immutable($fcgi_starter_script, false);
 							$app->system->exec_safe('rm -f ?', $fcgi_starter_script);
 						}
 					}
@@ -2234,11 +2238,13 @@ class nginx_plugin {
 					$cgi_starter_path = str_replace('[system_user]', $data['old']['system_user'], $web_config['cgi_starter_path']);
 					if($data['old']['type'] == 'vhost') {
 						if (is_dir($cgi_starter_path)) {
+							$app->system->set_immutable($cgi_starter_path, false, true);
 							$app->system->exec_safe('rm -rf ?', $cgi_starter_path);
 						}
 					} else {
 						$cgi_starter_script = $cgi_starter_path.'php-cgi-starter_web'.$data['old']['domain_id'];
 						if (file_exists($cgi_starter_script)) {
+							$app->system->set_immutable($cgi_starter_script, false);
 							$app->system->exec_safe('rm -f ?', $cgi_starter_script);
 						}
 					}
