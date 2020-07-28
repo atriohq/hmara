@@ -26,10 +26,6 @@ $wb['Domain'] = 'Etki Alanı';
 $wb['Redirect'] = 'Yönlendirme';
 $wb['SSL'] = 'SSL';
 $wb['Sites'] = 'Siteler';
-$wb['APS Installer'] = 'APS Yükleyici';
-$wb['Available packages'] = 'Kullanılabilecek Paketler';
-$wb['Installed packages'] = 'Yüklü Paketler';
-$wb['Update Packagelist'] = 'Güncelleme Paketi Listesi';
 $wb['Subdomain (Vhost)'] = 'Alt Etki Alanı (Sanal Sunucu)';
 $wb['error_proxy_requires_url'] = '"Vekil Sunucu" yönlendirme türü için, yönlendirilecek yolu gösteren bir İnternet adresi gereklidir.';
 ?>

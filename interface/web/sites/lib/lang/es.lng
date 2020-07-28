@@ -1,7 +1,5 @@
 <?php
 $wb['Aliasdomain'] = 'Alias de dominio para sitio web';
-$wb['APS Installer'] = 'Instalador de APS';
-$wb['Available packages'] = 'Paquetes disponibles';
 $wb['Command Line'] = 'Linea de comandos';
 $wb['Cron Jobs'] = 'Trabajos programados';
 $wb['Cron'] = 'Trabajos programados';
@@ -13,7 +11,6 @@ $wb['Folder users'] = 'Usuarios de carpetas protegidas';
 $wb['Folder'] = 'Carpetas protegidas';
 $wb['FTP'] = 'FTP';
 $wb['FTP-User'] = 'Cuentas de FTP';
-$wb['Installed packages'] = 'Paquetes instalados';
 $wb['Options'] = 'Opciones';
 $wb['Redirect'] = 'Redirección';
 $wb['Shell'] = 'Shell';
@@ -24,7 +21,6 @@ $wb['Statistics'] = 'Estadísticas';
 $wb['Stats'] = 'Estadísticas';
 $wb['Subdomain (Vhost)'] = 'Sub-dominios (Vhost)';
 $wb['Subdomain'] = 'Sub-dominio para sitio web';
-$wb['Update Packagelist'] = 'Actualizar lista de paquetes';
 $wb['Web Access'] = 'Acceso web';
 $wb['Web traffic'] = 'Trafico web';
 $wb['Webdav'] = 'WebDAV';

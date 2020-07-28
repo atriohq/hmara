@@ -107,27 +107,13 @@ class page_action extends tform_actions {
 				$app->db->datalogDelete('web_backup', 'backup_id', $rec['backup_id']);
 			}
 
-			//* Delete all records that belog to this web.
-			$web_domain = $app->db->queryOneRecord("SELECT domain FROM web_domain WHERE domain_id = ?", $this->id);
-			if($web_domain['domain'] != ''){
-				$aps_instances = $app->db->queryAllRecords("SELECT instance_id FROM aps_instances_settings WHERE name = 'main_domain' AND value = ?", $web_domain['domain']);
-				if(is_array($aps_instances) && !empty($aps_instances)){
-					foreach($aps_instances as $aps_instance){
-						if($aps_instance['instance_id'] > 0){
-							$app->db->datalogDelete('aps_instances_settings', 'instance_id', $aps_instance['instance_id']);
-							$app->db->datalogDelete('aps_instances', 'id', $aps_instance['instance_id']);
-						}
-					}
-				}
-			}
-			
 			//* Remove parent_domain_id from databases
 			$records = $app->db->queryAllRecords("SELECT database_id FROM web_database WHERE parent_domain_id = ?", $this->id);
 			foreach($records as $rec) {
 				$app->db->datalogUpdate('web_database', array('parent_domain_id' => 0), 'database_id', $rec['database_id']);
 			}
 		}
-		
+
 		//* Delete all web folders
 		$records = $app->db->queryAllRecords("SELECT web_folder_id FROM web_folder WHERE parent_domain_id = ?", $this->id);
 		foreach($records as $rec) {
