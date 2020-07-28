@@ -1,5 +1,4 @@
 <?php
-$wb['aps_limits_txt'] = 'Límites de instalador de APS';
 $wb['client_limits_txt'] = 'Límite de clientes';
 $wb['cron_job_limits_txt'] = 'Límites de trabajos programados';
 $wb['database_limits_txt'] = 'Límites de base de datos';
@@ -13,8 +12,6 @@ $wb['dns_servers_txt'] = 'Servidores DNS';
 $wb['email_limits_txt'] = 'Límites de correo';
 $wb['error_template_name_empty'] = 'Por favor, introduzca un nombre de plantilla';
 $wb['force_suexec_txt'] = 'Forzar SuEXEC';
-$wb['limit_aps_error_notint'] = 'La cantidad máx. de instancias de APS debe ser un número.';
-$wb['limit_aps_txt'] = 'Cantidad máx. de instancias de APS';
 $wb['limit_backup_txt'] = 'Función de copias de seguridad disponible';
 $wb['limit_cgi_txt'] = 'CGI disponible';
 $wb['limit_client_error_notint'] = 'El límite del clientes no es un número.';

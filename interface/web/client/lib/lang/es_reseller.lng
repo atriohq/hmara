@@ -2,7 +2,6 @@
 $wb['add_additional_template_txt'] = 'Añadir plantillas adicionales';
 $wb['added_by_txt'] = 'Creado por';
 $wb['added_date_txt'] = 'Fecha de creación';
-$wb['aps_limits_txt'] = 'Límites de instalador de APS';
 $wb['bank_account_iban_txt'] = 'IBAN';
 $wb['bank_account_number_txt'] = 'Cuenta de banco Nº.';
 $wb['bank_account_owner_txt'] = 'Propietario de la cuenta bancaria';
@@ -60,8 +59,6 @@ $wb['internet_txt'] = 'Internet';
 $wb['invalid_vat_id'] = 'El número de IVA no es correcto.';
 $wb['ip_address_txt'] = 'ip_address';
 $wb['language_txt'] = 'Idioma';
-$wb['limit_aps_error_notint'] = 'La cantidad máx. de instancias de APS debe ser un número.';
-$wb['limit_aps_txt'] = 'Cantidad máx. de instancias de APS';
 $wb['limit_backup_txt'] = 'Copias de seguridad disponibles';
 $wb['limit_cgi_txt'] = 'CGI disponible';
 $wb['limit_client_error'] = 'Ha alcanzado el número máx. de clientes.';

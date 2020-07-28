@@ -41,7 +41,6 @@ $wb['Sites Domain functions'] = 'Funções de domínios de sites';
 $wb['Sites Backup functions'] = 'Funções de backup de sites';
 $wb['Sites Aliasdomain functions'] = 'Funções de alias de domínios de sites';
 $wb['Sites Subdomain functions'] = 'Funções de subdomínios de sites';
-$wb['Sites APS functions'] = 'Funções de apps e complementos';
 $wb['Sites WebDAV-User functions'] = 'Funções de usuários webdav';
 $wb['DNS zone functions'] = 'Funções de zonas dns';
 $wb['DNS a functions'] = 'Funções de registro A dns';
