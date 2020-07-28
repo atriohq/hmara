@@ -258,7 +258,7 @@ class db
 
 	private function _query($sQuery = '') {
 		global $app;
-		
+
 		$aArgs = func_get_args();
 
 		if ($sQuery == '') {
@@ -354,7 +354,7 @@ class db
 	 * @return array result row or NULL if none found
 	 */
 	public function queryOneRecord($sQuery = '') {
-		
+
 		$aArgs = func_get_args();
 		if(!empty($aArgs)) {
 			$sQuery = array_shift($aArgs);
@@ -363,7 +363,7 @@ class db
 		}
 		array_unshift($aArgs, $sQuery);
 		}
-  
+
 		$oResult = call_user_func_array([&$this, 'query'], $aArgs);
 		if(!$oResult) return null;
 
@@ -750,7 +750,7 @@ class db
 			foreach($insert_data as $key => $val) {
 				$key_str .= '??,';
 				$params[] = $key;
-				
+
 				$val_str .= '?,';
 				$v_params[] = $val;
 			}
@@ -764,7 +764,7 @@ class db
 			$this->query("INSERT INTO ?? $insert_data_str", $tablename);
 			$app->log("deprecated use of passing values to datalogInsert() - table " . $tablename, 1);
 		}
-		
+
 		$old_rec = array();
 		$index_value = $this->insertID();
 		if(!$index_value && isset($insert_data[$index_field])) {
@@ -848,7 +848,7 @@ class db
 
 		$result = $this->queryAllRecords("SELECT COUNT( * ) AS cnt, sys_datalog.action, sys_datalog.dbtable FROM sys_datalog, server WHERE server.server_id = sys_datalog.server_id AND sys_datalog.user = ? AND sys_datalog.datalog_id > server.updated GROUP BY sys_datalog.dbtable, sys_datalog.action", $login);
 		foreach($result as $row) {
-			if(!$row['dbtable'] || in_array($row['dbtable'], array('aps_instances', 'aps_instances_settings', 'mail_access', 'mail_content_filter'))) continue; // ignore some entries, maybe more to come
+			if(!$row['dbtable'] || in_array($row['dbtable'], array('mail_access', 'mail_content_filter'))) continue; // ignore some entries, maybe more to come
 			$return['entries'][] = array('table' => $row['dbtable'], 'action' => $row['action'], 'count' => $row['cnt'], 'text' => $app->lng('datalog_status_' . $row['action'] . '_' . $row['dbtable'])); $return['count'] += $row['cnt'];
 		}
 		unset($result);
