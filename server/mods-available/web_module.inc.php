@@ -52,7 +52,7 @@ class web_module {
 		'web_folder_user_delete',
 		'web_backup_insert',
 		'web_backup_update',
-		'web_backup_delete',
+		'web_backup_delete');
 
 	//* This function is called during ispconfig installation to determine
 	//  if a symlink shall be created for this plugin.
