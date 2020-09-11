@@ -101,10 +101,6 @@ class web_module {
 		$app->modules->registerTableHook('web_folder', 'web_module', 'process');
 		$app->modules->registerTableHook('web_folder_user', 'web_module', 'process');
 		$app->modules->registerTableHook('web_backup', 'web_module', 'process');
-		$app->modules->registerTableHook('aps_instances', 'web_module', 'process');
-		$app->modules->registerTableHook('aps_instances_settings', 'web_module', 'process');
-		$app->modules->registerTableHook('aps_packages', 'web_module', 'process');
-		$app->modules->registerTableHook('aps_settings', 'web_module', 'process');
 		$app->modules->registerTableHook('directive_snippets', 'web_module', 'process');
 
 		// Register service
@@ -156,27 +152,6 @@ class web_module {
 			if($action == 'i') $app->plugins->raiseEvent('web_backup_insert', $data);
 			if($action == 'u') $app->plugins->raiseEvent('web_backup_update', $data);
 			if($action == 'd') $app->plugins->raiseEvent('web_backup_delete', $data);
-			break;
-
-		case 'aps_instances':
-			if($action == 'i') $app->plugins->raiseEvent('aps_instance_insert', $data);
-			if($action == 'u') $app->plugins->raiseEvent('aps_instance_update', $data);
-			if($action == 'd') $app->plugins->raiseEvent('aps_instance_delete', $data);
-			break;
-		case 'aps_instances_settings':
-			if($action == 'i') $app->plugins->raiseEvent('aps_instance_setting_insert', $data);
-			if($action == 'u') $app->plugins->raiseEvent('aps_instance_setting_update', $data);
-			if($action == 'd') $app->plugins->raiseEvent('aps_instance_setting_delete', $data);
-			break;
-		case 'aps_packages':
-			if($action == 'i') $app->plugins->raiseEvent('aps_package_insert', $data);
-			if($action == 'u') $app->plugins->raiseEvent('aps_package_update', $data);
-			if($action == 'd') $app->plugins->raiseEvent('aps_package_delete', $data);
-			break;
-		case 'aps_settings':
-			if($action == 'i') $app->plugins->raiseEvent('aps_setting_insert', $data);
-			if($action == 'u') $app->plugins->raiseEvent('aps_setting_update', $data);
-			if($action == 'd') $app->plugins->raiseEvent('aps_setting_delete', $data);
 			break;
 		case 'directive_snippets':
 			if($action == 'i') $app->plugins->raiseEvent('directive_snippets_insert', $data);
