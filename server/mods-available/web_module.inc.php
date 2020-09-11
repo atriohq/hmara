@@ -157,8 +157,7 @@ class web_module {
 			if($action == 'u') $app->plugins->raiseEvent('web_backup_update', $data);
 			if($action == 'd') $app->plugins->raiseEvent('web_backup_delete', $data);
 			break;
-<<<<<<< HEAD
-=======
+
 		case 'aps_instances':
 			if($action == 'i') $app->plugins->raiseEvent('aps_instance_insert', $data);
 			if($action == 'u') $app->plugins->raiseEvent('aps_instance_update', $data);
@@ -184,7 +183,7 @@ class web_module {
 			if($action == 'u') $app->plugins->raiseEvent('directive_snippets_update', $data);
 			if($action == 'd') $app->plugins->raiseEvent('directive_snippets_delete', $data);
 			break;
->>>>>>> 85f0039708dfc34bd368648b83d24e05ca93da9a
+
 		} // end switch
 	} // end function
 
