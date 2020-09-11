@@ -47,11 +47,19 @@ class sites_web_vhost_domain_plugin {
 		if($page_form->dataRecord['type'] == 'vhostalias') $vhostdomain_type = 'aliasdomain';
 		elseif($page_form->dataRecord['type'] == 'vhostsubdomain') $vhostdomain_type = 'subdomain';
 
-		// make sure that the record belongs to the clinet group and not the admin group when a dmin inserts it
-		// also make sure that the user can not delete domain created by a admin
+		// make sure that the record belongs to the client group and not the admin group when a admin inserts it
+		// also make sure that the user can not delete domain created by a admin if client protection is enabled
 		if($_SESSION["s"]["user"]["typ"] == 'admin' && isset($page_form->dataRecord["client_group_id"])) {
 			$client_group_id = $app->functions->intval($page_form->dataRecord["client_group_id"]);
-			$app->db->query("UPDATE web_domain SET sys_groupid = ?, sys_perm_group = 'ru' WHERE domain_id = ?", $client_group_id, $page_form->id);
+			$app->uses('getconf');
+			$global_config = $app->getconf->get_global_config('sites');
+			if($global_config['client_protection'] == 'y') {
+				$app->db->query("UPDATE web_domain SET sys_groupid = ?, sys_perm_group = 'ru' WHERE domain_id = ?", $client_group_id, $page_form->id);
+			} else {
+				$sysuser = $app->db->queryOneRecord('SELECT userid FROM sys_user WHERE default_group = ?',$client_group_id);
+				$sysuser_id = (is_array($sysuser) && isset($sysuser['userid']) && $sysuser['userid'] > 0)?$sysuser['userid']:1;
+				$app->db->query("UPDATE web_domain SET sys_userid = ?, sys_groupid = ?, sys_perm_group = 'riud' WHERE domain_id = ?", $sysuser_id, $client_group_id, $page_form->id);
+			}
 		}
 		if($app->auth->has_clients($_SESSION['s']['user']['userid']) && isset($page_form->dataRecord["client_group_id"])) {
 			$client_group_id = $app->functions->intval($page_form->dataRecord["client_group_id"]);
@@ -237,7 +245,7 @@ class sites_web_vhost_domain_plugin {
 					$backup_format_db = $page_form->dataRecord['backup_format_db'];
 					$records = $app->db->queryAllRecords("SELECT database_id FROM web_database WHERE parent_domain_id = ".$page_form->id);
 					foreach($records as $rec) {
-						$app->db->datalogUpdate('web_database', array("backup_interval" => $backup_interval, "backup_copies" => $backup_copies, "backup_format_web" => $backup_format_web, "backup_format_db" => $backup_format_db), 'database_id', $rec['database_id']);
+						$app->db->datalogUpdate('web_database', array("backup_interval" => $backup_interval, "backup_copies" => $backup_copies), 'database_id', $rec['database_id']);
 					}
 					unset($records);
 					unset($rec);

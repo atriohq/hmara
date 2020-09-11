@@ -32,7 +32,8 @@ class web_module {
 
 	var $module_name = 'web_module';
 	var $class_name = 'web_module';
-	var $actions_available = array( 'web_domain_insert',
+	var $actions_available = array(
+		'web_domain_insert',
 		'web_domain_update',
 		'web_domain_delete',
 		'ftp_user_insert',
@@ -52,7 +53,9 @@ class web_module {
 		'web_folder_user_delete',
 		'web_backup_insert',
 		'web_backup_update',
-		'web_backup_delete');
+		'web_backup_delete',
+		'directive_snippets_update'
+	);
 
 	//* This function is called during ispconfig installation to determine
 	//  if a symlink shall be created for this plugin.
@@ -98,6 +101,14 @@ class web_module {
 		$app->modules->registerTableHook('web_folder', 'web_module', 'process');
 		$app->modules->registerTableHook('web_folder_user', 'web_module', 'process');
 		$app->modules->registerTableHook('web_backup', 'web_module', 'process');
+<<<<<<< HEAD
+=======
+		$app->modules->registerTableHook('aps_instances', 'web_module', 'process');
+		$app->modules->registerTableHook('aps_instances_settings', 'web_module', 'process');
+		$app->modules->registerTableHook('aps_packages', 'web_module', 'process');
+		$app->modules->registerTableHook('aps_settings', 'web_module', 'process');
+		$app->modules->registerTableHook('directive_snippets', 'web_module', 'process');
+>>>>>>> 85f0039708dfc34bd368648b83d24e05ca93da9a
 
 		// Register service
 		$app->services->registerService('httpd', 'web_module', 'restartHttpd');
@@ -149,6 +160,34 @@ class web_module {
 			if($action == 'u') $app->plugins->raiseEvent('web_backup_update', $data);
 			if($action == 'd') $app->plugins->raiseEvent('web_backup_delete', $data);
 			break;
+<<<<<<< HEAD
+=======
+		case 'aps_instances':
+			if($action == 'i') $app->plugins->raiseEvent('aps_instance_insert', $data);
+			if($action == 'u') $app->plugins->raiseEvent('aps_instance_update', $data);
+			if($action == 'd') $app->plugins->raiseEvent('aps_instance_delete', $data);
+			break;
+		case 'aps_instances_settings':
+			if($action == 'i') $app->plugins->raiseEvent('aps_instance_setting_insert', $data);
+			if($action == 'u') $app->plugins->raiseEvent('aps_instance_setting_update', $data);
+			if($action == 'd') $app->plugins->raiseEvent('aps_instance_setting_delete', $data);
+			break;
+		case 'aps_packages':
+			if($action == 'i') $app->plugins->raiseEvent('aps_package_insert', $data);
+			if($action == 'u') $app->plugins->raiseEvent('aps_package_update', $data);
+			if($action == 'd') $app->plugins->raiseEvent('aps_package_delete', $data);
+			break;
+		case 'aps_settings':
+			if($action == 'i') $app->plugins->raiseEvent('aps_setting_insert', $data);
+			if($action == 'u') $app->plugins->raiseEvent('aps_setting_update', $data);
+			if($action == 'd') $app->plugins->raiseEvent('aps_setting_delete', $data);
+			break;
+		case 'directive_snippets':
+			if($action == 'i') $app->plugins->raiseEvent('directive_snippets_insert', $data);
+			if($action == 'u') $app->plugins->raiseEvent('directive_snippets_update', $data);
+			if($action == 'd') $app->plugins->raiseEvent('directive_snippets_delete', $data);
+			break;
+>>>>>>> 85f0039708dfc34bd368648b83d24e05ca93da9a
 		} // end switch
 	} // end function
 
