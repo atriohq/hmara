@@ -101,14 +101,11 @@ class web_module {
 		$app->modules->registerTableHook('web_folder', 'web_module', 'process');
 		$app->modules->registerTableHook('web_folder_user', 'web_module', 'process');
 		$app->modules->registerTableHook('web_backup', 'web_module', 'process');
-<<<<<<< HEAD
-=======
 		$app->modules->registerTableHook('aps_instances', 'web_module', 'process');
 		$app->modules->registerTableHook('aps_instances_settings', 'web_module', 'process');
 		$app->modules->registerTableHook('aps_packages', 'web_module', 'process');
 		$app->modules->registerTableHook('aps_settings', 'web_module', 'process');
 		$app->modules->registerTableHook('directive_snippets', 'web_module', 'process');
->>>>>>> 85f0039708dfc34bd368648b83d24e05ca93da9a
 
 		// Register service
 		$app->services->registerService('httpd', 'web_module', 'restartHttpd');
