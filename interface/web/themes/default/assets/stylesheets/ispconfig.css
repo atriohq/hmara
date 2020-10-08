@@ -836,3 +836,6 @@ span.tmp_account_name {
 #apache_directives, #nginx_directives, #proxy_directives {
 	font-family: Consolas, "Courier New", Courier, monospace;
 }
+.ip_suggestion_server {
+	font-weight: bold;
+}

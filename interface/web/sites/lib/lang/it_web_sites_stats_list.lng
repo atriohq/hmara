@@ -6,4 +6,5 @@ $wb['last_month_txt'] = 'Mese precedente';
 $wb['this_year_txt'] = 'Anno in corso';
 $wb['last_year_txt'] = 'Anno precedente';
 $wb['sum_txt'] = 'Somma';
-?>
+$wb['percentage_txt'] = 'In use %';
+$wb['quota_txt'] = 'Quota';

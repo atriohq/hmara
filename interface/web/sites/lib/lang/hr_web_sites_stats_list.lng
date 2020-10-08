@@ -6,4 +6,5 @@ $wb['last_month_txt'] = 'Prošli mjesec';
 $wb['this_year_txt'] = 'Ovu godinu';
 $wb['last_year_txt'] = 'Prošlu godinu';
 $wb['sum_txt'] = 'Ukupno';
-?>
+$wb['percentage_txt'] = 'In use %';
+$wb['quota_txt'] = 'Quota';
