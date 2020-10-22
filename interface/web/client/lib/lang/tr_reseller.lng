@@ -175,7 +175,6 @@ $wb['customer_no_template_txt'] = 'Müşteri No Kalıbı';
 $wb['customer_no_template_error_regex_txt'] = 'Müşteri no kalıbında geçersiz karakterler var';
 $wb['customer_no_start_txt'] = 'Müşteri No Başlangıç Değeri';
 $wb['customer_no_counter_txt'] = 'Müşteri No Sayacı';
-
 $wb['xmpp_limits_txt'] = 'XMPP Sınırları';
 $wb['xmpp_servers_txt'] = 'XMPP Sunucular';
 $wb['xmpp_servers_placeholder'] = 'XMPP Sunucuları Seçin';
@@ -210,4 +209,7 @@ $wb['limit_database_quota_error_notint'] = 'Veritabanı kotası sınırı bir sa
 $wb['Reseller'] = 'Reseller';
 $wb['Address'] = 'Address';
 $wb['Limits'] = 'Sınırlar';
+$wb['limit_access_mail_autoresponder_txt'] = 'Show autoresponder tab in mail account details';
+$wb['limit_access_mail_filter_txt'] = 'Show Mail Filter tab in Mailbox detail';
+$wb['limit_access_mail_backup_txt'] = 'Show Backup tab in mail account details';
 ?>

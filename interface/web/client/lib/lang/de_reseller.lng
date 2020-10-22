@@ -206,4 +206,7 @@ $wb['password_click_to_set_txt'] = 'Click to set';
 $wb['Reseller'] = 'Reseller';
 $wb['Address'] = 'Address';
 $wb['Limits'] = 'Limits';
+$wb['limit_access_mail_autoresponder_txt'] = 'Zeige Autoresponder Reiter in E-Mail Kontodetails';
+$wb['limit_access_mail_filter_txt'] = 'Zeige E-Mail Filter Reiter in E-Mail Kontodetails';
+$wb['limit_access_mail_backup_txt'] = 'Zeige Backup Reiter in E-Mail Kontodetails';
 ?>

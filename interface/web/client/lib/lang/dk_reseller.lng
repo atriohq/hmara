@@ -206,4 +206,7 @@ $wb['limit_database_quota_error_notint'] = 'The database quota limit must be a n
 $wb['Reseller'] = 'Reseller';
 $wb['Address'] = 'Address';
 $wb['Limits'] = 'Limits';
+$wb['limit_access_mail_autoresponder_txt'] = 'Show autoresponder tab in mail account details';
+$wb['limit_access_mail_filter_txt'] = 'Show Mail Filter tab in Mailbox detail';
+$wb['limit_access_mail_backup_txt'] = 'Show Backup tab in mail account details';
 ?>
