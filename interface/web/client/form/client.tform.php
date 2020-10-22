@@ -924,6 +924,27 @@ $form["tabs"]['limits'] = array (
 			'rows'  => '',
 			'cols'  => ''
 		),
+                'limit_access_mail_autoresponder' => array (
+                        'datatype' => 'VARCHAR',
+                        'formtype' => 'CHECKBOX',
+                        'default' => 'n',
+                        'valuelimit' => 'client:limit_access_mail_autoresponder',
+                        'value'  => array(0 => 'n', 1 => 'y')
+                ),
+                'limit_access_mail_filter' => array (
+                        'datatype' => 'VARCHAR',
+                        'formtype' => 'CHECKBOX',
+                        'default' => 'n',
+                        'valuelimit' => 'client:limit_access_mail_filter',
+                        'value'  => array(0 => 'n', 1 => 'y')
+                ),
+                'limit_access_mail_backup' => array (
+                        'datatype' => 'VARCHAR',
+                        'formtype' => 'CHECKBOX',
+                        'default' => 'n',
+                        'valuelimit' => 'client:limit_access_mail_backup',
+                        'value'  => array(0 => 'n', 1 => 'y')
+                ),
         'default_xmppserver' => array (
             'datatype' => 'INTEGER',
             'formtype' => 'SELECT',

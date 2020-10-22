@@ -204,4 +204,9 @@ $wb['email_error_empty'] = 'Email is empty';
 $wb['limit_directive_snippets_txt'] = 'Show web server config selection';
 $wb['Address'] = 'Address';
 $wb['Limits'] = 'Limits';
+$wb['limit_access_mail_autoresponder_txt'] = 'Show autoresponder tab in mail account details';
+$wb['limit_access_mail_filter_txt'] = 'Show Mail Filter tab in Mailbox detail';
+$wb['limit_access_mail_custom_rules_txt'] = 'Show Custom Rules tab in Mailbox detail';
+$wb['limit_access_mail_backup_txt'] = 'Show Backup tab in mail account details';
+
 ?>
