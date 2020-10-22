@@ -125,4 +125,7 @@ $wb['xmpp_servers_txt'] = 'XMPP Sunucuları';
 $wb['db_servers_txt'] = 'Veritabanı Sunucuları';
 $wb['mail_servers_txt'] = 'E-posta Sunucuları';
 $wb['Limits'] = 'Sınırlar';
+$wb['limit_access_mail_autoresponder_txt'] = 'Show autoresponder tab in mail account details';
+$wb['limit_access_mail_filter_txt'] = 'Show Mail Filter tab in Mailbox detail';
+$wb['limit_access_mail_backup_txt'] = 'Show Backup tab in mail account details';
 ?>

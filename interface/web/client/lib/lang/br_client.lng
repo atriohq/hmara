@@ -202,4 +202,7 @@ $wb['email_error_empty'] = 'O e-mail está em branco';
 $wb['limit_directive_snippets_txt'] = 'Exibir configurações de seleção do servidor web';
 $wb['Address'] = 'Address';
 $wb['Limits'] = 'Limites';
+$wb['limit_access_mail_autoresponder_txt'] = 'Show autoresponder tab in mail account details';
+$wb['limit_access_mail_filter_txt'] = 'Show Mail Filter tab in Mailbox detail';
+$wb['limit_access_mail_backup_txt'] = 'Show Backup tab in mail account details';
 ?>

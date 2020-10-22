@@ -124,6 +124,5 @@ $wb['mail_servers_txt'] = 'Mail-Server';
 $wb['Limits'] = 'Limits';
 $wb['limit_access_mail_autoresponder_txt'] = 'Zeige Autoresponder Reiter in E-Mail Kontodetails';
 $wb['limit_access_mail_filter_txt'] = 'Zeige E-Mail Filter Reiter in E-Mail Kontodetails';
-$wb['limit_access_mail_custom_rules_txt'] = 'Zeige Benutzerregel Reiter in E-Mail Kontodetails';
 $wb['limit_access_mail_backup_txt'] = 'Zeige Backup Reiter in E-Mail Kontodetails';
 ?>

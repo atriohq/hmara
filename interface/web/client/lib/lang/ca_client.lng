@@ -202,4 +202,7 @@ $wb['password_click_to_set_txt'] = 'Click to set';
 $wb['limit_dns_record_error_notint'] = 'The dns record limit must be a number.';
 $wb['Address'] = 'Address';
 $wb['Limits'] = 'Limits';
+$wb['limit_access_mail_autoresponder_txt'] = 'Show autoresponder tab in mail account details';
+$wb['limit_access_mail_filter_txt'] = 'Show Mail Filter tab in Mailbox detail';
+$wb['limit_access_mail_backup_txt'] = 'Show Backup tab in mail account details';
 ?>

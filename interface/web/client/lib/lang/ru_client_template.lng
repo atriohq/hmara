@@ -122,4 +122,7 @@ $wb['web_servers_txt'] = 'Web-серверы';
 $wb['db_servers_txt'] = 'Серверы баз данных';
 $wb['mail_servers_txt'] = 'Серверы почты';
 $wb['Limits'] = 'Лимиты';
+$wb['limit_access_mail_autoresponder_txt'] = 'Show autoresponder tab in mail account details';
+$wb['limit_access_mail_filter_txt'] = 'Show Mail Filter tab in Mailbox detail';
+$wb['limit_access_mail_backup_txt'] = 'Show Backup tab in mail account details';
 ?>
