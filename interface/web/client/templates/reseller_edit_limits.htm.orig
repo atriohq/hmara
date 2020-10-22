@@ -1,3 +1,48 @@
+<div class="panel panel_client">
+
+    <div class="pnl_formsarea">
+			<tmpl_if name="is_admin">
+                <div class="form-group">
+                    <label for="template_master" class="col-sm-3 control-label">{tmpl_var name='template_master_txt'}</label>
+                    <div class="col-sm-9"><select name="template_master" id="template_master" class="form-control">
+                        {tmpl_var name='template_master'}
+                    </select></div>
+                </div>
+                <div class="form-group">
+                    <label for="template_additional" class="col-sm-3 control-label">{tmpl_var name='template_additional_txt'}</label>
+                    <div class="col-sm-9"><select name="tpl_add_select" id="tpl_add_select" class="form-control">
+                        {tmpl_var name='tpl_add_select'}
+                    </select></div>
+                </div>
+				<tmpl_if name="is_admin">
+				<div class="clear"><div class="right">
+					<button class="btn btn-default formbutton-success" type="button" onclick="ISPConfig.addAdditionalTemplate();">{tmpl_var name="add_additional_template_txt"}</button>
+				</div></div>
+				</tmpl_if>
+                <div class="form-group">
+                    <label class="col-sm-3 control-label">{tmpl_var name='active_template_additional_txt'}</label>
+                    <div id="template_additional_list" class="col-sm-9 col-text">
+                        <ul>
+                        {tmpl_var name='template_additional_list'}
+                        </ul>
+                    </div>
+                    <input type="hidden" id="template_additional" name="template_additional" value="{tmpl_var name='template_additional'}">
+                </div>
+                <div class="form-group">
+                    &nbsp;
+                </div>
+            </tmpl_if>
+			<div class="form-group">
+                <label for="customer_no_template" class="col-sm-3 control-label">{tmpl_var name='customer_no_template_txt'}</label>
+                <div class="col-sm-9"><input type="text" name="customer_no_template" id="customer_no_template" value="{tmpl_var name='customer_no_template'}" class="form-control" /></div></div>
+			<div class="form-group">
+                <label for="customer_no_start" class="col-sm-3 control-label">{tmpl_var name='customer_no_start_txt'}</label>
+                <div class="col-sm-9"><input type="text" name="customer_no_start" id="customer_no_start" value="{tmpl_var name='customer_no_start'}" class="form-control" /></div></div>
+			<div class="form-group">
+                <label for="customer_no_counter" class="col-sm-3 control-label">{tmpl_var name='customer_no_counter_txt'}</label>
+                <div class="col-sm-9"><input type="text" name="customer_no_counter" id="customer_no_counter" value="{tmpl_var name='customer_no_counter'}" class="form-control" /></div>
+			</div>
+
 <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
   <div class="panel panel-default">
     <div class="panel-heading" role="tab" id="headingWeb">
@@ -9,13 +54,13 @@
     </div>
     <div id="collapseWeb" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="headingWeb">
       <div class="panel-body">
-                <div class="form-group">
+				<div class="form-group">
                     <label for="web_servers" class="col-sm-3 control-label">{tmpl_var name='web_servers_txt'}</label>
                     <div class="col-sm-9"><select data-placeholder="{tmpl_var name='web_servers_placeholder'}" multiple name="web_servers[]" id="web_servers" class="form-control">
                         {tmpl_var name='web_servers'}
                     </select></div>
                 </div>
-				<div class="form-group">
+                <div class="form-group">
                     <label for="limit_web_domain" class="col-sm-3 control-label">{tmpl_var name='limit_web_domain_txt'}</label>
                     <div class="col-sm-9"><input type="text" name="limit_web_domain" id="limit_web_domain" value="{tmpl_var name='limit_web_domain'}" class="form-control" /></div></div>
                 <div class="form-group">
@@ -82,13 +127,13 @@
                 </div>
                 <div class="form-group">
                     <label class="col-sm-3 control-label">{tmpl_var name='limit_ssl_txt'}</label>
-                    <div class="col-sm-9" data-uncheck-fields="limit_ssl_letsencrypt">
+                    <div class="col-sm-9">
                         {tmpl_var name='limit_ssl'}
                     </div>
                 </div>
                 <div class="form-group">
                     <label class="col-sm-3 control-label">{tmpl_var name='limit_ssl_letsencrypt_txt'}</label>
-                    <div class="col-sm-9" data-check-fields="limit_ssl">
+                    <div class="col-sm-9">
                         {tmpl_var name='limit_ssl_letsencrypt'}
                     </div>
                 </div>
@@ -137,15 +182,14 @@
       </h4>
     </div>
     <div id="collapseMail" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingMail">
-      <div class="panel-body">
-                <div class="form-group">
+      <div class="panel-body">&nbsp;
+				<div class="form-group">
                     <label for="mail_servers" class="col-sm-3 control-label">{tmpl_var name='mail_servers_txt'}</label>
-                    <div class="col-sm-9">
-						<select data-placeholder="{tmpl_var name='mail_servers_placeholder'}" multiple name="mail_servers[]" id="mail_servers" class="form-control">
+                    <div class="col-sm-9"><select data-placeholder="{tmpl_var name='mail_servers_placeholder'}" multiple name="mail_servers[]" id="mail_servers" class="form-control">
                         {tmpl_var name='mail_servers'}
                     </select></div>
                 </div>
-				<div class="form-group">
+                <div class="form-group">
                     <label for="limit_maildomain" class="col-sm-3 control-label">{tmpl_var name='limit_maildomain_txt'}</label>
                     <div class="col-sm-9"><input type="text" name="limit_maildomain" id="limit_maildomain" value="{tmpl_var name='limit_maildomain'}" class="form-control" /></div></div>
                 <div class="form-group">
@@ -188,8 +232,8 @@
                 <div class="form-group">
                     <label for="limit_spamfilter_policy" class="col-sm-3 control-label">{tmpl_var name='limit_spamfilter_policy_txt'}</label>
                     <div class="col-sm-9"><input type="text" name="limit_spamfilter_policy" id="limit_spamfilter_policy" value="{tmpl_var name='limit_spamfilter_policy'}" class="form-control" /></div>
-				</div>
-        		<div class="form-group">
+		</div>
+                <div class="form-group">
                     <label class="col-sm-3 control-label">{tmpl_var name='limit_access_mail_autoresponder_txt'}</label>
                     <div class="col-sm-9">{tmpl_var name='limit_access_mail_autoresponder'}</div>
                 </div>
@@ -201,7 +245,8 @@
                     <label class="col-sm-3 control-label">{tmpl_var name='limit_access_mail_backup_txt'}</label>
                     <div class="col-sm-9">{tmpl_var name='limit_access_mail_backup'}</div>
                 </div>
-			</div>
+
+	</div>
       </div>
   </div>
   <div class="panel panel-default">
@@ -214,13 +259,13 @@
     </div>
     <div id="collapseXMPP" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingXMPP">
       <div class="panel-body">
-                <div class="form-group">
+				<div class="form-group">
                     <label for="xmpp_servers" class="col-sm-3 control-label">{tmpl_var name='xmpp_servers_txt'}</label>
                     <div class="col-sm-9"><select data-placeholder="{tmpl_var name='xmpp_servers_placeholder'}" multiple name="xmpp_servers[]" id="xmpp_servers" class="form-control">
                         {tmpl_var name='xmpp_servers'}
                     </select></div>
                 </div>
-				<div class="form-group">
+                <div class="form-group">
                     <label for="limit_xmpp_domain" class="col-sm-3 control-label">{tmpl_var name='limit_xmpp_domain_txt'}</label>
                     <div class="col-sm-9"><input type="text" name="limit_xmpp_domain" id="limit_xmpp_domain" value="{tmpl_var name='limit_xmpp_domain'}" class="form-control" /></div></div>
                 <div class="form-group">
@@ -287,13 +332,13 @@
     </div>
     <div id="collapseDB" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingDB">
       <div class="panel-body">
-                <div class="form-group">
+				<div class="form-group">
                     <label for="db_servers" class="col-sm-3 control-label">{tmpl_var name='db_servers_txt'}</label>
                     <div class="col-sm-9"><select data-placeholder="{tmpl_var name='db_servers_placeholder'}" multiple name="db_servers[]" id="db_servers" class="form-control">
                         {tmpl_var name='db_servers'}
                     </select></div>
                 </div>
-				<div class="form-group">
+                <div class="form-group">
                     <label for="limit_database" class="col-sm-3 control-label">{tmpl_var name='limit_database_txt'}</label>
                     <div class="col-sm-9"><input type="text" name="limit_database" id="limit_database" value="{tmpl_var name='limit_database'}" class="form-control" /></div></div>
                 <div class="form-group">
@@ -330,7 +375,7 @@
                     <label for="limit_cron_frequency" class="col-sm-3 control-label">{tmpl_var name='limit_cron_frequency_txt'}</label>
                     <div class="col-sm-9"><input type="text" name="limit_cron_frequency" id="limit_cron_frequency" value="{tmpl_var name='limit_cron_frequency'}" class="form-control" /></div>
 				</div>
-
+            
       </div>
     </div>
   </div>
@@ -409,13 +454,12 @@
       </div>
     </div>
   </div>
-  <tmpl_if name="is_admin">
   <!-- Client -->
   <div class="panel panel-default">
     <div class="panel-heading" role="tab" id="headingClient">
       <h4 class="panel-title">
         <a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseClient" aria-expanded="false" aria-controls="collapseClient">
-          {tmpl_var name='client_limits_txt'}
+          {tmpl_var name='limit_client_txt'}
         </a>
       </h4>
     </div>
@@ -431,12 +475,44 @@
       </div>
     </div>
   </div>
-  </tmpl_if>
 </div>
 
         <input type="hidden" name="id" value="{tmpl_var name='id'}">
 
         <div class="clear"><div class="right">
-            <button class="btn btn-default formbutton-success" type="button" value="{tmpl_var name='btn_save_txt'}" data-submit-form="pageForm" data-form-action="client/client_template_edit.php">{tmpl_var name='btn_save_txt'}</button>
-            <button class="btn btn-default formbutton-default" type="button" value="{tmpl_var name='btn_cancel_txt'}" data-load-content="client/client_template_list.php">{tmpl_var name='btn_cancel_txt'}</button>
+            <button class="btn btn-default formbutton-success" type="button" value="{tmpl_var name='btn_save_txt'}" data-submit-form="pageForm" data-form-action="client/reseller_edit.php">{tmpl_var name='btn_save_txt'}</button>
+            <button class="btn btn-default formbutton-default" type="button" value="{tmpl_var name='btn_cancel_txt'}" data-load-content="client/reseller_list.php">{tmpl_var name='btn_cancel_txt'}</button>
         </div></div>
+    </div>
+
+</div>
+<tmpl_if name="is_admin">
+<script type="text/javascript">
+<!--
+function custom_template_selected() {
+    return ($('#template_master').val() == '0' ? true : false);
+}
+
+jQuery('#template_additional_list').find('li > a').click(function(e) {
+    e.preventDefault();
+    ISPConfig.delAdditionalTemplate($(this).parent().attr('rel'));
+});
+
+jQuery('div.panel_client')
+        .find('div.pnl_formsarea')
+        .find('fieldset')
+        .find('input,select,button')
+        .not('#template_master,#template_additional,#default_mailserver,#default_webserver,#default_dbserver,#default_dnsserver,#default_slave_dnsserver,#customer_no_template,#customer_no_start,#customer_no_counter')
+        .click(function(e) {
+            if(custom_template_selected()) return true;
+            e.preventDefault();
+            alert('{tmpl_var name="err_msg_master_tpl_set"}');
+        })
+        .focus(function() {
+            if(custom_template_selected()) return true;
+            $(this).blur();
+        });
+
+//-->
+</script>
+</tmpl_if>
