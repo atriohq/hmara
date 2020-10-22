@@ -44,8 +44,25 @@ $global_config = $app->getconf->get_global_config();
 $backup_available = true;
 if(!$app->auth->is_admin()) {
 	$client_group_id = $_SESSION['s']['user']['default_group'];
-	$client = $app->db->queryOneRecord("SELECT limit_backup FROM sys_group, client WHERE sys_group.client_id = client.client_id and sys_group.groupid = ?", $client_group_id);
-	if($client['limit_backup'] != 'y') $backup_available = false;
+	$client = $app->db->queryOneRecord("SELECT limit_access_mail_autoresponder, limit_access_mail_filter, limit_access_mail_backup  FROM sys_group, client WHERE sys_group.client_id = client.client_id and sys_group.groupid = ?", $client_group_id);
+
+	if(($global_config['mail']['mailbox_show_autoresponder_tab'] === 'y') && ($client['limit_access_mail_autoresponder'] != 'y')) {
+		$autoresponder_available = true;
+	} elseif(($global_config['mail']['mailbox_show_autoresponder_tab'] === 'n') && ($client['limit_access_mail_autoresponder'] != 'n')) {
+		$autoresponder_available = true;
+	} elseif(($global_config['mail']['mailbox_show_autoresponder_tab'] === 'n') && ($client['limit_access_mail_autoresponder'] != 'y')) {
+                $autoresponder_available = false;
+	}
+
+        if(($global_config['mail']['mailbox_show_mail_filter_tab'] === 'y') && ($client['limit_access_mail_filter'] != 'y')) {
+                $filter_available = true;
+        } elseif(($global_config['mail']['mailbox_show_mail_filter_tab'] === 'n') && ($client['limit_access_mail_filter'] != 'n')) {
+                $filter_available = true;
+        } elseif(($global_config['mail']['mailbox_show_mail_filter_tab'] === 'n') && ($client['limit_access_mail_filter'] != 'y')) {
+                $filter_available = false;
+        }
+
+        if($client['limit_access_mail_backup'] != 'y') $backup_available = false;
 }
 
 $form["title"]    = "Mailbox";
@@ -329,7 +346,7 @@ if($global_config['mail']['mail_password_onlyascii'] == 'y') {
 	);
 }
 
-if ($global_config['mail']['mailbox_show_autoresponder_tab'] === 'y') {
+if ($autoresponder_available) {
 	$form["tabs"]['autoresponder'] = array (
 		'title'  => "Autoresponder",
 		'width'  => 100,
@@ -400,7 +417,7 @@ if ($global_config['mail']['mailbox_show_autoresponder_tab'] === 'y') {
 }
 
 
-if ($global_config['mail']['mailbox_show_mail_filter_tab'] === 'y') {
+if ($filter_available) {
 	$form["tabs"]['filter_records'] = array (
 		'title'  => "Mail Filter",
 		'width'  => 100,
