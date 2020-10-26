@@ -1,6 +1,6 @@
 <?php
 $wb['list_head_txt'] = 'Statistiky zálohování';
-$wb['database_name_txt'] = '';
+$wb['database_name_txt'] = 'Název databáze';
 $wb['active_txt'] = 'Aktivní';
 $wb['domain_txt'] = 'Doména';
 $wb['backup_count_txt'] = 'Počet záloh';

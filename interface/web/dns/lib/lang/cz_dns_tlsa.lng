@@ -1,6 +1,6 @@
 <?php
 $wb['server_id_txt'] = 'Server';
-$wb['zone_txt'] = 'Zone';
+$wb['zone_txt'] = 'Zóna';
 $wb['name_txt'] = 'Service-Descriptor';
 $wb['type_txt'] = 'Typ';
 $wb['data_txt'] = 'TLSA-Data';
