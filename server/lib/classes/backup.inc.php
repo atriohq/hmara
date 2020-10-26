@@ -1130,29 +1130,24 @@ class backup
      * @author Ramil Valitov <ramilvalitov@gmail.com>
      * @see backup_plugin::run_backup() recommeneded to use if you need to make backups
      */
-    protected static function make_database_backup($web_database, $backup_job)
+    protected static function make_database_backup($web_domain, $backup_job)
     {
         global $app;
 
-        $server_id = intval($web_database['server_id']);
-        $domain_id = intval($web_database['parent_domain_id']);
+        $server_id = intval($web_domain['server_id']);
+        $domain_id = intval($web_domain['domain_id']);
         $server_config = $app->getconf->get_server_config($server_id, 'server');
         $backup_dir = trim($server_config['backup_dir']);
         $backup_tmp = trim($server_config['backup_tmp']);
         $db_backup_dir = $backup_dir . '/web' . $domain_id;
         $success = false;
 
-        if(empty($backup_job)) {
-			$backup_job = "auto";
-		}
+        if (empty($backup_job))
+            $backup_job = "auto";
 
-		if($app->db->dbHost != $app->dbmaster->dbHost) {
-			$web_domain = $app->dbmaster->queryOneRecord('SELECT * FROM `web_domain` WHERE `domain_id` = ?', $domain_id);
-		} else {
-			$web_domain = $app->db->queryOneRecord('SELECT * FROM `web_domain` WHERE `domain_id` = ?', $domain_id);
-		}
-		if (empty($web_domain)){
-            $app->log('Skipping database backup for database' . $web_database['database_name'] . ', because no associated domain entry found.', LOGLEVEL_DEBUG);
+        $records = $app->db->queryAllRecords("SELECT * FROM web_database WHERE server_id = ? AND parent_domain_id = ?", $server_id, $domain_id);
+        if (empty($records)){
+            $app->log('Skipping database backup for domain ' . $web_domain['domain_id'] . ', because no related databases found.', LOGLEVEL_DEBUG);
             return true;
         }
 
@@ -1392,34 +1387,29 @@ class backup
 
     /**
      * Makes a backup of website files or database.
-     * @param string|int $element_id
+     * @param string|int $domain_id
      * @param string $type backup type: web or mysql
      * @param string $backup_job how the backup is initiated: manual or auto
      * @param bool $mount if true, then the backup dir will be mounted and unmounted automatically
      * @return bool returns true if success
      * @author Ramil Valitov <ramilvalitov@gmail.com>
      */
-    public static function run_backup($element_id, $type, $backup_job, $mount = true)
+    public static function run_backup($domain_id, $type, $backup_job, $mount = true)
     {
         global $app;
 
-        $element_id = intval($element_id);
+        $domain_id = intval($domain_id);
 
-		if($type === 'mysql') {
-			$sql = 'SELECT * FROM web_database WHERE database_id = ?';
-		} else {
-			$sql = "SELECT * FROM web_domain WHERE (type = 'vhost' OR type = 'vhostsubdomain' OR type = 'vhostalias') AND domain_id = ?";
-		}
-
-        $rec = $app->db->queryOneRecord($sql, $element_id);
+        $sql = "SELECT * FROM web_domain WHERE (type = 'vhost' OR type = 'vhostsubdomain' OR type = 'vhostalias') AND domain_id = ?";
+        $rec = $app->db->queryOneRecord($sql, $domain_id);
         if (empty($rec)) {
-            $app->log('Failed to make backup of type ' . $type . ', because no information present about requested id ' . $element_id, LOGLEVEL_ERROR);
+            $app->log('Failed to make backup of type ' . $type . ', because no information present about requested domain id ' . $domain_id, LOGLEVEL_ERROR);
             return false;
         }
         $server_id = intval($rec['server_id']);
 
         if ($mount && !self::mount_backup_dir($server_id)) {
-            $app->log('Failed to make backup of type ' . $type . ' for id ' . $element_id . ', because failed to mount backup directory', LOGLEVEL_ERROR);
+            $app->log('Failed to make backup of type ' . $type . ' for domain id ' . $domain_id . ', because failed to mount backup directory', LOGLEVEL_ERROR);
             return false;
         }
         $ok = false;
@@ -1435,11 +1425,9 @@ class backup
                 $app->log('Failed to make backup, because backup type is unknown: ' . $type, LOGLEVEL_ERROR);
                 break;
         }
-
-        if($mount) {
-			self::unmount_backup_dir($server_id);
-		}
-		return $ok;
+        if ($mount)
+            self::unmount_backup_dir($server_id);
+        return $ok;
     }
 
     /**
@@ -1454,32 +1442,25 @@ class backup
 
         $server_id = intval($server_id);
 
+        $sql = "SELECT * FROM web_domain WHERE server_id = ? AND (type = 'vhost' OR type = 'vhostsubdomain' OR type = 'vhostalias') AND active = 'y' AND backup_interval != 'none' AND backup_interval != ''";
+        $domains = $app->db->queryAllRecords($sql, $server_id);
+
         if (!self::mount_backup_dir($server_id)) {
             $app->log('Failed to run regular backups routine because failed to mount backup directory', LOGLEVEL_ERROR);
             return;
         }
+        self::backups_garbage_collection($server_id);
 
-		self::backups_garbage_collection($server_id);
-
-		$date_of_week = date('w');
+        $date_of_week = date('w');
         $date_of_month = date('d');
-
-        $sql = "SELECT * FROM web_domain WHERE server_id = ? AND (type = 'vhost' OR type = 'vhostsubdomain' OR type = 'vhostalias') AND active = 'y' AND backup_interval != 'none' AND backup_interval != ''";
-        $domains = $app->db->queryAllRecords($sql, $server_id);
         foreach ($domains as $domain) {
             if (($domain['backup_interval'] == 'daily' or ($domain['backup_interval'] == 'weekly' && $date_of_week == 0) or ($domain['backup_interval'] == 'monthly' && $date_of_month == '01'))) {
                 self::run_backup($domain['domain_id'], 'web', $backup_job, false);
+                self::run_backup($domain['domain_id'], 'mysql', $backup_job, false);
             }
         }
-
-		$sql = "SELECT * FROM web_database WHERE server_id = ? AND active = 'y' AND backup_interval != 'none' AND backup_interval != ''";
-        $databases = $app->db->queryAllRecords($sql, $server_id);
-        foreach ($databases as $database) {
-            if (($database['backup_interval'] == 'daily' or ($database['backup_interval'] == 'weekly' && $date_of_week == 0) or ($database['backup_interval'] == 'monthly' && $date_of_month == '01'))) {
-                self::run_backup($database['database_id'], 'mysql', $backup_job, false);
-            }
-        }
-
-		self::unmount_backup_dir($server_id);
+        self::unmount_backup_dir($server_id);
     }
 }
+
+?>
