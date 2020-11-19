@@ -1,5 +1,5 @@
 <?php
-$wb['databasequota_txt'] = 'Cota do banco de dados';
+$wb['databasequota_txt'] = 'Cota do Banco de Dados';
 $wb['database_txt'] = 'Banco de dados';
 $wb['used_txt'] = 'Espaço utilizado';
 $wb['quota_txt'] = 'Cota';

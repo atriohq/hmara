@@ -2,5 +2,5 @@
 $wb['package_title_txt'] = 'Título do pacote';
 $wb['package_key_txt'] = 'Chave do pacote';
 $wb['Software Package'] = 'Pacote de software';
-$wb['Modify software package details'] = 'Alterar detalhes do pacote de software';
+$wb['Modify software package details'] = 'Modificar detalhes do pacote de software';
 ?>

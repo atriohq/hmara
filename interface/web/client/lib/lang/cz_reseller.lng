@@ -1,6 +1,6 @@
 <?php
 $wb['limit_maildomain_txt'] = 'Max. počet e-mailových domén';
-$wb['limit_mailbox_txt'] = 'Max. počet mailboxů';
+$wb['limit_mailbox_txt'] = 'Max. počet e-mailových schránek';
 $wb['limit_mailalias_txt'] = 'Max. počet e-mailových aliasů';
 $wb['limit_mailforward_txt'] = 'Max. počet e-mailových předávání';
 $wb['limit_mailcatchall_txt'] = 'Max. počet e-mailových košů';
@@ -203,7 +203,7 @@ $wb['limit_database_user_error_notint'] = 'Limit databázové kvóty musí být 
 $wb['limit_database_quota_txt'] = 'Databázové kvóty';
 $wb['limit_database_quota_error_notint'] = 'Limit databázové kvóty musí být číslo.';
 $wb['password_click_to_set_txt'] = 'Pro nastavení klikni zde';
-$wb['Reseller'] = 'Reseller';
-$wb['Address'] = 'Address';
 $wb['Limits'] = 'Limity';
+$wb['Reseller'] = 'Prodejce';
+$wb['Address'] = 'Adresa';
 ?>
