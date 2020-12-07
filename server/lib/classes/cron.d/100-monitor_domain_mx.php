@@ -64,6 +64,7 @@ class cronjob_monitor_domain_mx  extends cronjob {
 
 		// Initialize data array
 		$data = array();
+		$state = 'no_state';
 
 		// the id of the server as int
 		$server_id = intval($conf['server_id']);
@@ -75,6 +76,7 @@ class cronjob_monitor_domain_mx  extends cronjob {
 		}
 		$maildomains = $app->db->queryAllRecords("SELECT domain, active FROM mail_domain WHERE server_id = ?", $server_id);
 		if(is_array($maildomains)) {
+			$state = 'ok';
 			foreach ($maildomains as $maildomain) {
 				$mx_records = array();
 				$mx_weight = array();
