@@ -76,29 +76,38 @@ class cronjob_monitor_domain_mx  extends cronjob {
 		$maildomains = $app->db->queryAllRecords("SELECT domain, active FROM mail_domain WHERE server_id = ?", $server_id);
 		if(is_array($maildomains)) {
 			foreach ($maildomains as $maildomain) {
-				$mx = array();
-				$found_mx = getmxrr($maildomain['domain'], $mx);
+				$mx_records = array();
+				$mx_weight = array();
+				$found_mx = getmxrr($maildomain['domain'], $mx_records, $mx_weight) ;
 
-				$app->log('mx re:' . print_r($mx, 1));
+				$mx_sorted = array();
 
-				$first_mx = array_shift($mx);
+				// Merge records and weight into a single array to sort on priority.
+				// ignore multiple mx's at the same weight
+				foreach ($mx_records as $key => $name) {
+					$mx_sorted[$mx_weight[$key]] = $mx_records[$key];
+				}
+				ksort ($mx_sorted, SORT_NUMERIC);
+				reset ($mx_sorted);
+
+				$first_mx = array_shift($mx_sorted);
 				$mx_ip = gethostbyname($first_mx);
 
 				if (!in_array( $mx_ip, $smtpin_ips)) {
 					if ($maildomain['active'] == 'y') {
 						$app->log('Mail domain[' . $maildomain['domain'] . '] is active but the DNS does not match our IP.', LOGLEVEL_WARN);
 						$state = 'warning';
-						$data[$maildomain['domain']] = 'Domain is active but the DNS does not match our IP.';
+						$data[$maildomain['domain']] = 'Email domain is active but the DNS does not match our IP.';
 					} else {
 
-						$app->log('Good, the mail domain[' . $maildomain['domain'] . '] is not active and DNS is not pointing to us.', LOGLEVEL_DEBUG);
+						$app->log('Good, the email domain[' . $maildomain['domain'] . '] is not active and DNS is not pointing to us.', LOGLEVEL_DEBUG);
 					}
 				}
 				else {
 					if ($maildomain['active'] == 'n') {
-						$app->log('DNS points to our IP but the mail domain[' . $maildomain['domain'] . '] is not active.', LOGLEVEL_WARN);
+						$app->log('DNS points to our IP but the email domain[' . $maildomain['domain'] . '] is not active.', LOGLEVEL_WARN);
 						$state = 'warning';
-						$data[$maildomain['domain']] = 'DNS points to our IP but the mail domain is not active.';
+						$data[$maildomain['domain']] = 'DNS points to our IP but the email domain is not active.';
 					}
 					else {
 						// DNS OK.
