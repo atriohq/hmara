@@ -202,6 +202,9 @@ class functions {
 		$suggestions_max = $app->getconf->get_global_config('misc')['ipsuggestions_max'];
 		$groupid = intval($_SESSION["s"]["user"]["default_group"]);
 
+		// todo: order search results intelligently
+		// todo: read "context" from uri and search accordingly
+
 		if($type == 'IPv4'){
 			$regex = "/^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/";
 		} else {
