@@ -76,13 +76,13 @@
 		<tmpl_if name="IP_VISIBLE">
 			<div class="form-group">
 				<label for="ip" class="col-sm-3 control-label">{tmpl_var name='ip_txt'}</label>
-				<div class="col-sm-9"><input type="text" name="ip" id="ip" value="{tmpl_var name='ip'}" class="form-control" /></div>
+				<div class="col-sm-9"><input type="search" name="ip" id="ip" value="{tmpl_var name='ip'}" class="form-control" autocomplete="off" /></div>
 			</div>
 		</tmpl_if>
 		<tmpl_if name="IPV6_VISIBLE">
 			<div class="form-group">
 				<label for="ipv6" class="col-sm-3 control-label">{tmpl_var name='ipv6_txt'}</label>
-				<div class="col-sm-9"><input type="text" name="ipv6" id="ipv6" value="{tmpl_var name='ipv6'}" class="form-control" /></div>
+				<div class="col-sm-9"><input type="search" name="ipv6" id="ipv6" value="{tmpl_var name='ipv6'}" class="form-control" autocomplete="off" /></div>
 			</div>
 		</tmpl_if>
 		<tmpl_if name="NS1_VISIBLE">
