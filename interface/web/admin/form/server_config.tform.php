@@ -34,7 +34,7 @@
  */
 
 $form["title"] = "server_config";
-$form["description"] = "";
+//$form["description"] = "";
 $form["name"] = "server_config";
 $form["action"] = "server_config_edit.php";
 $form["db_table"] = "server";
@@ -1790,7 +1790,7 @@ $form["tabs"]['jailkit'] = array(
 			'validators' => array(	0 => array('type' => 'NOTEMPTY',
 										'errmsg' => 'jailkit_chroot_home_error_empty'),
 									1 => array ( 	'type' => 'REGEX',
-										'regex' => '/^\/[a-zA-Z0-9\.\-\_\/\[\]]{1,128}$/',
+										'regex' => '/^\/[a-zA-Z0-9\.\-\_\/\[\]]{1,}$/',
 										'errmsg'=> 'jailkit_chroot_home_error_regex'),
 			),
 			'value' => '',
@@ -1804,7 +1804,7 @@ $form["tabs"]['jailkit'] = array(
 			'validators' => array(	0 => array('type' => 'NOTEMPTY',
 										'errmsg' => 'jailkit_chroot_app_sections_error_empty'),
 									1 => array ( 	'type' => 'REGEX',
-										'regex' => '/^[a-zA-Z0-9\-\_\ ]{1,128}$/',
+										'regex' => '/^[a-zA-Z0-9\.\-\_\ ]{1,}$/',
 										'errmsg'=> 'jailkit_chroot_app_sections_error_regex'),
 			),
 			'value' => '',

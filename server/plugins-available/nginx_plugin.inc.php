@@ -637,17 +637,18 @@ class nginx_plugin {
 		$last_updated = array_unique($last_updated, SORT_REGULAR);
 		sort($last_updated, SORT_STRING);
 		$update_hash = hash('md5', implode(' ', $last_updated));
+		$check_for_jailkit_updates=false;
 
 		// Create jailkit chroot when enabling php_fpm_chroot
-		if($data['new']['php_fpm_chroot'] == 'y' && $data['old']['php_fpm_chroot'] != 'y') {
+		if($data['new']['php_fpm_chroot'] == 'y' && $data['old']['php_fpm_chroot'] != 'y' && $data['new']['php'] != 'no') {
 			$website = $app->db->queryOneRecord('SELECT * FROM web_domain WHERE domain_id = ?', $data['new']['domain_id']);
 			$this->website = array_merge($website, $data['new'], array('new_jailkit_hash' => $update_hash));
 			$this->jailkit_config = $jailkit_config;
 			$this->_setup_jailkit_chroot();
 			$this->_add_jailkit_user();
-			$check_for_jailkit_updates=false;
 		// else delete if unused
-		} elseif ($data['new']['delete_unused_jailkit'] == 'y' && $data['new']['php_fpm_chroot'] != 'y') {
+		} elseif (($data['new']['delete_unused_jailkit'] == 'y' && $data['new']['php_fpm_chroot'] != 'y') ||
+			($data['new']['delete_unused_jailkit'] == 'y' && $data['new']['php'] == 'no')) {
 			$check_for_jailkit_updates=false;
 			$this->_delete_jailkit_if_unused($data['new']['domain_id']);
 			if(is_dir($data['new']['document_root'].'/etc/jailkit')) {
@@ -802,10 +803,12 @@ class nginx_plugin {
 				$app->system->exec_safe('chmod -R a+r ?', $error_page_path);
 			}
 
-			//* Copy the web skeleton files only when there is no index.ph or index.html file yet
-			if(!file_exists($data['new']['document_root'].'/'.$web_folder.'/index.html') && !file_exists($data['new']['document_root'].'/'.$web_folder.'/index.php')) {
+			//* Copy the web skeleton files only when there is no index.php, standard_index.html or index.html file yet
+			if(!file_exists($data['new']['document_root'].'/'.$web_folder.'/index.html') && !file_exists($data['new']['document_root'].'/'.$web_folder.'/index.php') && !file_exists($data['new']['document_root'].'/'.$web_folder.'/standard_index.html')) {
 				if (file_exists($conf['rootpath'] . '/conf-custom/index/standard_index.html_'.substr($conf['language'], 0, 2))) {
-					if(!file_exists($data['new']['document_root'].'/' . $web_folder . '/index.html')) $app->system->exec_safe('cp ? ?', $conf['rootpath'] . '/conf-custom/index/standard_index.html_'.substr($conf['language'], 0, 2), $data['new']['document_root'].'/' . $web_folder . '/index.html');
+					if(!file_exists($data['new']['document_root'] . '/' . $web_folder . '/standard_index.html')) {
+						$app->system->exec_safe('cp ? ?', $conf['rootpath'] . '/conf-custom/index/standard_index.html_' . substr($conf['language'], 0, 2), $data['new']['document_root'] . '/' . $web_folder . '/standard_index.html');
+					}
 
 					if(is_file($conf['rootpath'] . '/conf-custom/index/favicon.ico')) {
 						if(!file_exists($data['new']['document_root'].'/' . $web_folder . '/favicon.ico')) $app->system->exec_safe('cp ? ?', $conf['rootpath'] . '/conf-custom/index/favicon.ico', $data['new']['document_root'].'/' . $web_folder . '/');
@@ -815,13 +818,13 @@ class nginx_plugin {
 					}
 				} else {
 					if (file_exists($conf['rootpath'] . '/conf-custom/index/standard_index.html')) {
-						if(!file_exists($data['new']['document_root'].'/' . $web_folder . '/index.html')) $app->system->exec_safe('cp ? ?', $conf['rootpath'] . '/conf-custom/index/standard_index.html', $data['new']['document_root'].'/' . $web_folder . '/index.html');
+						if(!file_exists($data['new']['document_root'].'/' . $web_folder . '/standard_index.html')) $app->system->exec_safe('cp ? ?', $conf['rootpath'] . '/conf-custom/index/standard_index.html', $data['new']['document_root'].'/' . $web_folder . '/standard_index.html');
 					} else {
-						if(!file_exists($data['new']['document_root'].'/' . $web_folder . '/index.html')) $app->system->exec_safe('cp ? ?', $conf['rootpath'] . '/conf/index/standard_index.html_'.substr($conf['language'], 0, 2), $data['new']['document_root'].'/' . $web_folder . '/index.html');
-						if(is_file($conf['rootpath'] . '/conf/index/favicon.ico')){
+						if(!file_exists($data['new']['document_root'].'/' . $web_folder . '/standard_index.html')) $app->system->exec_safe('cp ? ?', $conf['rootpath'] . '/conf/index/standard_index.html_'.substr($conf['language'], 0, 2), $data['new']['document_root'].'/' . $web_folder . '/standard_index.html');
+						if(is_file($conf['rootpath'] . '/conf/index/favicon.ico')) {
 							if(!file_exists($data['new']['document_root'].'/' . $web_folder . '/favicon.ico')) $app->system->exec_safe('cp ? ?', $conf['rootpath'] . '/conf/index/favicon.ico', $data['new']['document_root'].'/' . $web_folder . '/');
 						}
-						if(is_file($conf['rootpath'] . '/conf/index/robots.txt')){
+						if(is_file($conf['rootpath'] . '/conf/index/robots.txt')) {
 							if(!file_exists($data['new']['document_root'].'/' . $web_folder . '/robots.txt')) $app->system->exec_safe('cp ? ?', $conf['rootpath'] . '/conf/index/robots.txt', $data['new']['document_root'].'/' . $web_folder . '/');
 						}
 					}
@@ -1095,31 +1098,31 @@ class nginx_plugin {
 		}
 		if($data['new']['ip_address'] == '*' && $data['new']['ipv6_address'] == '') $tpl->setVar('ipv6_wildcard', 1);
 
+		$default_php_fpm = true;
+
 		if($data['new']['php'] == 'php-fpm' || $data['new']['php'] == 'hhvm'){
 			if($data['new']['server_php_id'] != 0){
-				$default_php_fpm = false;
 				$tmp_php = $app->db->queryOneRecord('SELECT * FROM server_php WHERE server_php_id = ?', $data['new']['server_php_id']);
 				if($tmp_php) {
+					$default_php_fpm = false;
 					$custom_php_fpm_ini_dir = $tmp_php['php_fpm_ini_dir'];
 					$custom_php_fpm_init_script = $tmp_php['php_fpm_init_script'];
 					$custom_php_fpm_pool_dir = $tmp_php['php_fpm_pool_dir'];
+					$custom_php_fpm_socket_dir = $tmp_php['php_fpm_socket_dir'];
 					if(substr($custom_php_fpm_ini_dir, -1) != '/') $custom_php_fpm_ini_dir .= '/';
 				}
-			} else {
-				$default_php_fpm = true;
 			}
 		} else {
 			if($data['old']['server_php_id'] != 0 && $data['old']['php'] != 'no'){
-				$default_php_fpm = false;
 				$tmp_php = $app->db->queryOneRecord('SELECT * FROM server_php WHERE server_php_id = ?', $data['old']['server_php_id']);
 				if($tmp_php) {
+					$default_php_fpm = false;
 					$custom_php_fpm_ini_dir = $tmp_php['php_fpm_ini_dir'];
 					$custom_php_fpm_init_script = $tmp_php['php_fpm_init_script'];
 					$custom_php_fpm_pool_dir = $tmp_php['php_fpm_pool_dir'];
+					$custom_php_fpm_socket_dir = $tmp_php['php_fpm_socket_dir'];
 					if(substr($custom_php_fpm_ini_dir, -1) != '/') $custom_php_fpm_ini_dir .= '/';
 				}
-			} else {
-				$default_php_fpm = true;
 			}
 		}
 
@@ -1131,7 +1134,12 @@ class nginx_plugin {
 		$pool_dir = trim($pool_dir);
 		if(substr($pool_dir, -1) != '/') $pool_dir .= '/';
 		$pool_name = 'web'.$data['new']['domain_id'];
-		$socket_dir = $web_config['php_fpm_socket_dir'];
+
+		if (!$default_php_fpm && !empty($custom_php_fpm_socket_dir)) {
+			$socket_dir = $custom_php_fpm_socket_dir;
+		} else {
+			$socket_dir = $web_config['php_fpm_socket_dir'];
+		}
 		if(substr($socket_dir, -1) != '/') $socket_dir .= '/';
 
 		if($data['new']['php_fpm_use_socket'] == 'y'){
@@ -1654,16 +1662,14 @@ class nginx_plugin {
 		// set logging variable
 		$vhost_data['logging'] = $web_config['logging'];
 
-                // Provide TLS 1.3 support if Nginx version is >= 1.13.0 and when it was linked against OpenSSL(>=1.1.1) at build time.
-		$output = $app->system->exec_safe('nginx -V 2>&1');
-
-		if(preg_match('/built with OpenSSL\s*(\d+)(\.(\d+)(\.(\d+))*)?(\D|$)/i', $output[0], $matches)) {
-                        $nginx_openssl_ver = $matches[1] . (isset($matches[3]) ? '.' . $matches[3] : '') . (isset($matches[5]) ? '.' . $matches[5] : '');
-		}
-
-		if((version_compare($app->system->getnginxversion(true), '1.13.0', '>=') && version_compare($nginx_openssl_ver, '1.1.1', '>='))) {
+		// Provide TLS 1.3 support if Nginx version is >= 1.13.0 and when it was linked against OpenSSL(>=1.1.1) at build time and when it was linked against OpenSSL(>=1.1.1) at runtime.
+		$nginx_openssl_build_ver = $app->system->exec_safe('nginx -V 2>&1 | grep \'built with OpenSSL\' | sed \'s/.*built\([a-zA-Z ]*\)OpenSSL \([0-9.]*\).*/\2/\'');
+		$nginx_openssl_running_ver = $app->system->exec_safe('nginx -V 2>&1 | grep \'running with OpenSSL\' | sed \'s/.*running\([a-zA-Z ]*\)OpenSSL \([0-9.]*\).*/\2/\'');
+		if(version_compare($app->system->getnginxversion(true), '1.13.0', '>=')
+			&& version_compare($nginx_openssl_build_ver, '1.1.1', '>=')
+			&& (empty($nginx_openssl_running_ver) || version_compare($nginx_openssl_running_ver, '1.1.1', '>='))) {
 			$app->log('Enable TLS 1.3 for: '.$domain, LOGLEVEL_DEBUG);
-			$vhost_data['tls1.3_supported'] = 'y';
+			$vhost_data['tls13_supported'] = "y";
 		}
 
 		$tpl->setVar($vhost_data);
@@ -2904,31 +2910,29 @@ class nginx_plugin {
 		$rh_releasefiles = array('/etc/centos-release', '/etc/redhat-release');
 
 		// HHVM => PHP-FPM-Fallback
+		$default_php_fpm = true;
+
 		if($data['new']['php'] == 'php-fpm' || $data['new']['php'] == 'hhvm'){
 			if($data['new']['server_php_id'] != 0){
-				$default_php_fpm = false;
 				$tmp_php = $app->db->queryOneRecord('SELECT * FROM server_php WHERE server_php_id = ?', $data['new']['server_php_id']);
 				if($tmp_php) {
+					$default_php_fpm = false;
 					$custom_php_fpm_ini_dir = $tmp_php['php_fpm_ini_dir'];
 					$custom_php_fpm_init_script = $tmp_php['php_fpm_init_script'];
 					$custom_php_fpm_pool_dir = $tmp_php['php_fpm_pool_dir'];
 					if(substr($custom_php_fpm_ini_dir, -1) != '/') $custom_php_fpm_ini_dir .= '/';
 				}
-			} else {
-				$default_php_fpm = true;
 			}
 		} else {
 			if($data['old']['server_php_id'] != 0 && $data['old']['php'] != 'no'){
-				$default_php_fpm = false;
 				$tmp_php = $app->db->queryOneRecord('SELECT * FROM server_php WHERE server_php_id = ?', $data['old']['server_php_id']);
 				if($tmp_php) {
+					$default_php_fpm = false;
 					$custom_php_fpm_ini_dir = $tmp_php['php_fpm_ini_dir'];
 					$custom_php_fpm_init_script = $tmp_php['php_fpm_init_script'];
 					$custom_php_fpm_pool_dir = $tmp_php['php_fpm_pool_dir'];
 					if(substr($custom_php_fpm_ini_dir, -1) != '/') $custom_php_fpm_ini_dir .= '/';
 				}
-			} else {
-				$default_php_fpm = true;
 			}
 		}
 
@@ -3130,17 +3134,17 @@ class nginx_plugin {
 	private function php_fpm_pool_delete ($data, $web_config) {
 		global $app, $conf;
 
+		$default_php_fpm = true;
+
 		if($data['old']['server_php_id'] != 0 && $data['old']['php'] != 'no'){
-			$default_php_fpm = false;
 			$tmp_php = $app->db->queryOneRecord('SELECT * FROM server_php WHERE server_php_id = ?', $data['old']['server_php_id']);
 			if($tmp_php) {
+				$default_php_fpm = false;
 				$custom_php_fpm_ini_dir = $tmp_php['php_fpm_ini_dir'];
 				$custom_php_fpm_init_script = $tmp_php['php_fpm_init_script'];
 				$custom_php_fpm_pool_dir = $tmp_php['php_fpm_pool_dir'];
 				if(substr($custom_php_fpm_ini_dir, -1) != '/') $custom_php_fpm_ini_dir .= '/';
 			}
-		} else {
-			$default_php_fpm = true;
 		}
 
 		if($default_php_fpm){
@@ -3624,7 +3628,7 @@ class nginx_plugin {
 		}
 
 		// chroot is used by php-fpm
-		if (isset($parent_domain['php_fpm_chroot']) && $parent_domain['php_fpm_chroot'] == 'y') {
+		if (isset($parent_domain['php_fpm_chroot']) && $parent_domain['php_fpm_chroot'] == 'y' && $parent_domain['php'] != 'no') {
 			return;
 		}
 
