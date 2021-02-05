@@ -48,7 +48,10 @@ class cronjob_letsencrypt extends cronjob {
 
 	public function onRunJob() {
 		global $app, $conf;
-		
+
+		//TODO: Certbot: If this is a mirror server, do not run
+		//TODO: Certbot: On mirror server, check for new cert (validity in master-db vs local db) and re-install
+
 		$server_config = $app->getconf->get_server_config($conf['server_id'], 'server');
 		if(!isset($server_config['migration_mode']) || $server_config['migration_mode'] != 'y') {			
 			$acme = $app->letsencrypt->get_acme_script();

@@ -2033,6 +2033,7 @@ CREATE TABLE `web_domain` (
   `seo_redirect` varchar(255) default NULL,
   `rewrite_to_https` ENUM('y','n') NOT NULL DEFAULT 'n',
   `ssl` enum('n','y') NOT NULL default 'n',
+  `ssl_valid_until` timestamp NULL DEFAULT NULL,
   `ssl_letsencrypt` enum('n','y') NOT NULL DEFAULT 'n',
   `ssl_letsencrypt_exclude` enum('n','y') NOT NULL DEFAULT 'n',
   `ssl_state` varchar(255) NULL,

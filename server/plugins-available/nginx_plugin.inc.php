@@ -100,6 +100,8 @@ class nginx_plugin {
 
 		// load the server configuration options
 		$app->uses('getconf');
+		// load openssl functions
+		$app->uses('openssl');
 		$web_config = $app->getconf->get_server_config($conf['server_id'], 'web');
 		if ($web_config['CA_path']!='' && !file_exists($web_config['CA_path'].'/openssl.cnf'))
 			$app->log("CA path error, file does not exist:".$web_config['CA_path'].'/openssl.cnf', LOGLEVEL_ERROR);
@@ -179,21 +181,24 @@ class nginx_plugin {
 			$ssl_ext_file = $ssl_dir.'/v3.ext';
 			$app->system->file_put_contents($ssl_ext_file, $ext_cnf);
 
-			$rand_file = $rand_file;
-			$key_file2 = $key_file2;
 			$openssl_cmd_key_file2 = $key_file2;
-			if(substr($domain, 0, 2) == '*.' && strpos($key_file2, '/ssl/\*.') !== false) $key_file2 = str_replace('/ssl/\*.', '/ssl/*.', $key_file2); // wildcard certificate
-			$key_file = $key_file;
+			if (substr($domain, 0, 2) == '*.' && strpos($key_file2, '/ssl/\*.') !== false) {
+				$key_file2 = str_replace('/ssl/\*.', '/ssl/*.', $key_file2); // wildcard certificate
+			}
 			$openssl_cmd_key_file = $key_file;
-			if(substr($domain, 0, 2) == '*.' && strpos($key_file, '/ssl/\*.') !== false) $key_file = str_replace('/ssl/\*.', '/ssl/*.', $key_file); // wildcard certificate
+			if (substr($domain, 0, 2) == '*.' && strpos($key_file, '/ssl/\*.') !== false) {
+				$key_file = str_replace('/ssl/\*.', '/ssl/*.', $key_file); // wildcard certificate
+			}
 			$ssl_days = 3650;
-			$csr_file = $csr_file;
 			$openssl_cmd_csr_file = $csr_file;
-			if(substr($domain, 0, 2) == '*.' && strpos($csr_file, '/ssl/\*.') !== false) $csr_file = str_replace('/ssl/\*.', '/ssl/*.', $csr_file); // wildcard certificate
+			if (substr($domain, 0, 2) == '*.' && strpos($csr_file, '/ssl/\*.') !== false) {
+				$csr_file = str_replace('/ssl/\*.', '/ssl/*.', $csr_file); // wildcard certificate
+			}
 			$config_file = $ssl_cnf_file;
-			$crt_file = $crt_file;
 			$openssl_cmd_crt_file = $crt_file;
-			if(substr($domain, 0, 2) == '*.' && strpos($crt_file, '/ssl/\*.') !== false) $crt_file = str_replace('/ssl/\*.', '/ssl/*.', $crt_file); // wildcard certificate
+			if (substr($domain, 0, 2) == '*.' && strpos($crt_file, '/ssl/\*.') !== false) {
+				$crt_file = str_replace('/ssl/\*.', '/ssl/*.', $crt_file); // wildcard certificate
+			}
 
 			if(is_file($ssl_cnf_file) && !is_link($ssl_cnf_file)) {
 
@@ -206,11 +211,11 @@ class nginx_plugin {
 					$app->system->exec_safe("openssl ca -batch -out ? -config ? -passin pass:? -in ? -extfile ?", $openssl_cmd_crt_file, $web_config['CA_path']."/openssl.cnf", $web_config['CA_pass'], $openssl_cmd_csr_file, $ssl_ext_file);
 					$app->log("Creating CA-signed SSL Cert for: $domain", LOGLEVEL_DEBUG);
 					if (filesize($crt_file)==0 || !file_exists($crt_file)) $app->log("CA-Certificate signing failed.  openssl ca -out $openssl_cmd_crt_file -config ".$web_config['CA_path']."/openssl.cnf -passin pass:".$web_config['CA_pass']." -in $openssl_cmd_csr_file -extfile $ssl_ext_file", LOGLEVEL_ERROR);
-				};
+				}
 				if (@filesize($crt_file)==0 || !file_exists($crt_file)){
 					$app->system->exec_safe("openssl req -x509 -passin pass:? -passout pass:? -key ? -in ? -out ? -days ? -config ?", $ssl_password, $ssl_password, $openssl_cmd_key_file2, $openssl_cmd_csr_file, $openssl_cmd_crt_file, $ssl_days, $config_file);
 					$app->log("Creating self-signed SSL Cert for: $domain", LOGLEVEL_DEBUG);
-				};
+				}
 
 			}
 
@@ -222,12 +227,18 @@ class nginx_plugin {
 			$ssl_request = $app->system->file_get_contents($csr_file);
 			$ssl_cert = $app->system->file_get_contents($crt_file);
 			$ssl_key = $app->system->file_get_contents($key_file);
+			$ssl_cert_validity = $app->openssl->get_cert_validity($crt_file);
 			/* Update the DB of the (local) Server */
 			$app->db->query("UPDATE web_domain SET ssl_request = ?, ssl_cert = ?, ssl_key = ? WHERE domain = ?", $ssl_request, $ssl_cert, $ssl_key, $data['new']['domain']);
 			$app->db->query("UPDATE web_domain SET ssl_action = '' WHERE domain = ?", $data['new']['domain']);
 			/* Update also the master-DB of the Server-Farm */
 			$app->dbmaster->query("UPDATE web_domain SET ssl_request = ?, ssl_cert = ?, ssl_key = ? WHERE domain = ?", $ssl_request, $ssl_cert, $ssl_key, $data['new']['domain']);
 			$app->dbmaster->query("UPDATE web_domain SET ssl_action = '' WHERE domain = ?", $data['new']['domain']);
+			/* Update the validity of the certificate */
+			if (!empty($ssl_cert_validity) && $ssl_cert_validity['until'] != -1) {
+				$app->db->query("UPDATE web_domain SET ssl_valid_until = FROM_UNIXTIME(?) WHERE domain = ?", $ssl_cert_validity['until'], $data['new']['domain']);
+				$app->dbmaster->query("UPDATE web_domain SET ssl_valid_until = FROM_UNIXTIME(?) WHERE domain = ?", $ssl_cert_validity['until'], $data['new']['domain']);
+			}
 		}
 
 		//* Check that the SSL key is not password protected
@@ -1348,7 +1359,7 @@ class nginx_plugin {
 			$trans = array(
 				'{DOCROOT}' => $vhost_data['web_document_root_www'],
 				'{DOCROOT_CLIENT}' => $vhost_data['web_document_root'],
-        '{DOMAIN}' => $vhost_data['domain'],
+                '{DOMAIN}' => $vhost_data['domain'],
 				'{FASTCGIPASS}' => 'fastcgi_pass '.($data['new']['php_fpm_use_socket'] == 'y'? 'unix:'.$fpm_socket : '127.0.0.1:'.$vhost_data['fpm_port']).';'
 			);
 			foreach($nginx_directive_lines as $nginx_directive_line){
@@ -1375,30 +1386,47 @@ class nginx_plugin {
 		$vhost_data['ssl_bundle_file'] = $bundle_file;
 
 		//* Generate Let's Encrypt SSL certificat
-		if($data['new']['ssl'] == 'y' && $data['new']['ssl_letsencrypt'] == 'y' && $conf['mirror_server_id'] == 0 && ( // ssl and let's encrypt is active and no mirror server
+		if($data['new']['ssl'] == 'y' && $data['new']['ssl_letsencrypt'] == 'y' && ( // ssl and let's encrypt is active
 			($data['old']['ssl'] == 'n' || $data['old']['ssl_letsencrypt'] == 'n') // we have new let's encrypt configuration
 			|| ($data['old']['domain'] != $data['new']['domain']) // we have domain update
 			|| ($data['old']['subdomain'] != $data['new']['subdomain']) // we have new or update on "auto" subdomain
 			|| $this->update_letsencrypt == true
 		)) {
 
-			$success = $app->letsencrypt->request_certificates($data, 'nginx');
-			if($success) {
-				/* we don't need to store it.
-				/* Update the DB of the (local) Server */
-				$app->db->query("UPDATE web_domain SET ssl_request = '', ssl_cert = '', ssl_key = '' WHERE domain = ?", $data['new']['domain']);
-				$app->db->query("UPDATE web_domain SET ssl_action = '' WHERE domain = ?", $data['new']['domain']);
-				/* Update also the master-DB of the Server-Farm */
-				$app->dbmaster->query("UPDATE web_domain SET ssl_request = '', ssl_cert = '', ssl_key = '' WHERE domain = ?", $data['new']['domain']);
-				$app->dbmaster->query("UPDATE web_domain SET ssl_action = '' WHERE domain = ?", $data['new']['domain']);
-			} else {
-				$data['new']['ssl_letsencrypt'] = 'n';
-				if($data['old']['ssl'] == 'n') $data['new']['ssl'] = 'n';
-				/* Update the DB of the (local) Server */
-				$app->db->query("UPDATE web_domain SET `ssl` = ?, `ssl_letsencrypt` = ? WHERE `domain` = ? AND `server_id` = ?", $data['new']['ssl'], 'n', $data['new']['domain'], $conf['server_id']);
-				/* Update also the master-DB of the Server-Farm */
-				$app->dbmaster->query("UPDATE web_domain SET `ssl` = ?, `ssl_letsencrypt` = ? WHERE `domain` = ?", $data['new']['ssl'], 'n', $data['new']['domain']);
+			$found_or_got_cert = $app->letsencrypt->get_existing_certificate($data['new']['ssl_domain']);
+
+			// On mirror servers no certs should be requested. They should be only setup. We assume that the required folder (/etc/letsencrypt/ or /root/.acme.sh/) are live network shares
+			if ($conf['mirror_server_id'] == 0) { // Request certs only on the mirrored server
+
+				// Didn't find an existing cert, fetch from LE
+				if(false === $found_or_got_cert) {
+					$found_or_got_cert = $app->letsencrypt->fetch_certificate_from_le( $data, 'nginx' );
+				}
+
+				if(false !== $found_or_got_cert) {
+					$cert_valid_until = $found_or_got_cert['until'];
+					/* we don't need to store it.
+					/* Update the DB of the (local) Server */
+					$app->db->query("UPDATE web_domain SET ssl_request = '', ssl_cert = '', ssl_key = '', ssl_valid_until = ? WHERE domain = ?", $cert_valid_until, $data['new']['domain']);
+					$app->db->query("UPDATE web_domain SET ssl_action = '' WHERE domain = ?", $data['new']['domain']);
+					/* Update also the master-DB of the Server-Farm */
+					$app->dbmaster->query("UPDATE web_domain SET ssl_request = '', ssl_cert = '', ssl_key = '', ssl_valid_until = ? WHERE domain = ?", $cert_valid_until, $data['new']['domain']);
+					$app->dbmaster->query("UPDATE web_domain SET ssl_action = '' WHERE domain = ?", $data['new']['domain']);
+				} else {
+					$data['new']['ssl_letsencrypt'] = 'n';
+					if($data['old']['ssl'] == 'n') $data['new']['ssl'] = 'n';
+					/* Update the DB of the (local) Server */
+					$app->db->query("UPDATE web_domain SET `ssl` = ?, `ssl_letsencrypt` = ? WHERE `domain` = ? AND `server_id` = ?", $data['new']['ssl'], 'n', $data['new']['domain'], $conf['server_id']);
+					/* Update also the master-DB of the Server-Farm */
+					$app->dbmaster->query("UPDATE web_domain SET `ssl` = ?, `ssl_letsencrypt` = ? WHERE `domain` = ?", $data['new']['ssl'], 'n', $data['new']['domain']);
+				}
+
 			}
+
+			if (false !== $found_or_got_cert) {
+				//TODO: Configure certificates
+			}
+
 		}
 
 		if($domain!='' && $data['new']['ssl'] == 'y' && @is_file($crt_file) && @is_file($key_file) && (@filesize($crt_file)>0)  && (@filesize($key_file)>0)) {
