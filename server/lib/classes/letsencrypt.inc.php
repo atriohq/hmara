@@ -201,9 +201,11 @@ class letsencrypt {
 			return '';
 		}
 
+		$primary_domain = $domains[0];
 		$certbot_can_use_certcommand = false;
 
 		$letsencrypt_version = $this->get_certbot_version();
+		$app->log("LE version is " . $letsencrypt_version, LOGLEVEL_DEBUG);
 		if (version_compare($letsencrypt_version, '0.22', '>=')) {
 			$acme_version = 'https://acme-v02.api.letsencrypt.org/directory';
 		} else {
@@ -212,7 +214,7 @@ class letsencrypt {
 		}
 		// Modern versions of certbot allow us for some more fancy options
 		if (version_compare($letsencrypt_version, '0.30', '>=')) {
-			$app->log("LE version is " . $letsencrypt_version . ", so using certificates command", LOGLEVEL_DEBUG);
+			$app->log("using certificates command and --webroot-map", LOGLEVEL_DEBUG);
 			$certbot_can_use_certcommand = true;
 			$webroot_map = array();
 			for($i = 0; $i < count($domains); $i++) {
@@ -227,7 +229,7 @@ class letsencrypt {
 
 		// Generate the required command based on the $command_type passed in
 		if ( $this->COMMAND_TYPE_REQUEST == $command_type) {
-			return $letsencrypt . " certonly -n --text --agree-tos --expand --authenticator webroot --server $acme_version --rsa-key-size 4096 --email postmaster@$domain $domain_arg $webroot_args";
+			return $letsencrypt . " certonly -n --text --agree-tos --expand --authenticator webroot --server {$acme_version} --rsa-key-size 4096 --email postmaster@{$primary_domain} --cert-name {$primary_domain} {$webroot_args} {$domain_arg}";
 		} else if ( $this->COMMAND_TYPE_CHECK == $command_type && $certbot_can_use_certcommand) {
 			return $letsencrypt . " certificates {$domain_arg}";
 		} else {
