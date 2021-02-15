@@ -223,13 +223,15 @@ class letsencrypt {
 			$webroot_args = "--webroot-map " . escapeshellarg(str_replace(array("\r", "\n"), '', json_encode($webroot_map)));
 			// Domain list is not required with json webroot map, the domains will be implicitly used from the json
 			$domain_arg = "";
+			$cert_selection_command = "--cert-name $primary_domain";
 		} else {
 			$webroot_args = "--webroot-path /usr/local/ispconfig/interface/acme";
+			$cert_selection_command = "--expand";
 		}
 
 		// Generate the required command based on the $command_type passed in
 		if ( $this->COMMAND_TYPE_REQUEST == $command_type) {
-			return $letsencrypt . " certonly -n --text --agree-tos --expand --authenticator webroot --server {$acme_version} --rsa-key-size 4096 --email postmaster@{$primary_domain} --cert-name {$primary_domain} {$webroot_args} {$domain_arg}";
+			return $letsencrypt . " certonly -n --text --agree-tos {$cert_selection_command} --authenticator webroot --server {$acme_version} --rsa-key-size 4096 --email postmaster@{$primary_domain} {$webroot_args} {$domain_arg}";
 		} else if ( $this->COMMAND_TYPE_CHECK == $command_type && $certbot_can_use_certcommand) {
 			return $letsencrypt . " certificates {$domain_arg}";
 		} else {
