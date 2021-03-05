@@ -31,7 +31,7 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 class cronjob_monitor_domain_mx  extends cronjob {
 
 	// job schedule
-	protected $_schedule = '* 6 * * *';
+	protected $_schedule = '30 6 * * *';
 	protected $_run_at_new = true;
 
 	private $_tools = null;
