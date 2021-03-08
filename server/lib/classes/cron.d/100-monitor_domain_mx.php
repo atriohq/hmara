@@ -54,13 +54,12 @@ class cronjob_monitor_domain_mx  extends cronjob {
 		global $app, $conf;
 
 		$app->uses('getconf,functions');
-		$mail_config = $app->getconf->get_server_config($conf['server_id'], 'server');
+		$mail_config = $app->getconf->get_server_config($conf['server_id'], 'mail');
 
 		/* used for all monitor cronjobs */
 		$app->load('monitor_tools');
 		$this->_tools = new monitor_tools();
 		/* end global section for monitor cronjobs */
-
 
 		// Initialize data array
 		$data = array();
@@ -68,12 +67,17 @@ class cronjob_monitor_domain_mx  extends cronjob {
 
 		// the id of the server as int
 		$server_id = intval($conf['server_id']);
+		$hostname = $app->system->hostname();
 
-		$smtpin_ips = gethostbynamel($mail_config['hostname']);
-		$smtpin_ips_v6 = $app->functions->gethostbynamel6($mail_config['hostname']);
+		$smtpin_ips = gethostbynamel($hostname);
+		$smtpin_ips_v6 = $app->functions->gethostbynamel6($hostname);
 		if ($smtpin_ips_v6) {
 			$smtpin_ips = array_merge($smtpin_ips, $smtpin_ips_v6);
 		}
+
+		# Add additional IP's , e.g. for secondary IP on the same box or a proxy.
+		$smtpin_ips = array_merge($smtpin_ips, explode(',', $mail_config['additional_smtp_ips']));
+
 		$maildomains = $app->db->queryAllRecords("SELECT domain, active FROM mail_domain WHERE server_id = ?", $server_id);
 		if(is_array($maildomains)) {
 			$state = 'ok';
