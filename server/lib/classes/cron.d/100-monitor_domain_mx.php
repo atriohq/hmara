@@ -103,17 +103,17 @@ class cronjob_monitor_domain_mx  extends cronjob {
 					if ($maildomain['active'] == 'y') {
 						$app->log('Mail domain[' . $maildomain['domain'] . '] is active but the DNS does not match our IP.', LOGLEVEL_WARN);
 						$state = 'warning';
-						$data[$maildomain['domain']] = 'Email domain is active but the DNS does not match our IP.';
+						$data[$maildomain['domain']] = 'Domain is active but the DNS does not match our IP.';
 					} else {
 
-						$app->log('Good, the email domain[' . $maildomain['domain'] . '] is not active and DNS is not pointing to us.', LOGLEVEL_DEBUG);
+						$app->log('Good, the mail domain[' . $maildomain['domain'] . '] is not active and DNS is not pointing to us.', LOGLEVEL_DEBUG);
 					}
 				}
 				else {
 					if ($maildomain['active'] == 'n') {
-						$app->log('DNS points to our IP but the email domain[' . $maildomain['domain'] . '] is not active.', LOGLEVEL_WARN);
+						$app->log('DNS points to our IP but the mail domain[' . $maildomain['domain'] . '] is not active.', LOGLEVEL_WARN);
 						$state = 'warning';
-						$data[$maildomain['domain']] = 'DNS points to our IP but the email domain is not active.';
+						$data[$maildomain['domain']] = 'DNS points to our IP but the mail domain is not active.';
 					}
 					else {
 						// DNS OK.
