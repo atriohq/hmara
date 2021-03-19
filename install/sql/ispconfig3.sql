@@ -1367,7 +1367,7 @@ CREATE TABLE `server` (
   `mirror_server_id` int(11) unsigned NOT NULL default '0',
   `dbversion` int(11) unsigned NOT NULL default '1',
   `active` tinyint(1) NOT NULL default '1',
-  `firewall_placeholder` TINYTEXT NOT NULL DEFAULT '{"FTP":[20,21,"40110:40210"],"MAIL":[25,110,143,465,587,993,995],"RSPAMD":[11334],"DNS":[53],"WEB":[80,443],"ISPCONFIG":[8080],CUSTOM_TCP":[""],"CUSTOM_UDP":[""]}',
+  `firewall_placeholder` TINYTEXT NOT NULL,
   PRIMARY KEY  (`server_id`)
 ) DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
