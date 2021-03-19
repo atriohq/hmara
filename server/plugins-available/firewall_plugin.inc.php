@@ -157,12 +157,13 @@ class firewall_plugin {
 		}
 		$tcp_ports_old_array = array_unique($tcp_ports_old_array);
 		$tcp_ports_old_array = array_unique($tcp_ports_old_array);
-
+/*
 		$req_ports=array('22', '5666');
 		foreach($req_ports as $req) {
 			if(!in_array($req, $tcp_ports_new_array)) $tcp_ports_new_array[]=$req;
 			if(!in_array($req, $udp_ports_new_array)) $udp_ports_new_array[]=$req;
 		}
+*/
 
 		//* add tcp ports
 		foreach($tcp_ports_new_array as $port) {
