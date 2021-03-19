@@ -64,7 +64,6 @@ class page_action extends tform_actions {
 		parent::onShowEnd();
 	}
 
-
 	function onBeforeUpdate() {
 		global $app, $conf;
 

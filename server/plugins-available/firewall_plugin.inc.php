@@ -106,19 +106,13 @@ class firewall_plugin {
 	private function ufw_update($event_name, $data) {
 		global $app, $conf;
 
-		$app->uses('system');
-
 		if(!$app->system->is_installed('ufw')) {
 			$app->log('UFW Firewall is not installed', LOGLEVEL_WARN);
 			return false;
 		}
 
-		exec('ufw --version', $out);
-		$parts = explode(' ', $out[0]);
-		$ufwversion = $parts[1];
-		unset($parts);
-		unset($out);
-
+		$app->system->exec_safe('ufw --version');
+		$ufwversion = explode(' ', $app->system->last_exec_out()[0])[1];
 		if(version_compare( $ufwversion , '0.30') < 0) {
 			$app->log('The installed UFW Firewall version is too old. Minimum required version 0.30', LOGLEVEL_WARN);
 			return false;
@@ -126,21 +120,49 @@ class firewall_plugin {
 
 		//* Basic firewall setup when the firewall is added the first time
 		if($event_name == 'firewall_insert') {
-			exec('ufw --force disable');
-			exec('ufw --force reset');
-			exec('ufw default deny incoming');
-			exec('ufw default allow outgoing');
+			$app->system->exec_safe('ufw --force disable');
+			$app->system->exec_safe('ufw --force reset');
+			$app->system->exec_safe('ufw default deny incoming');
+			$app->system->exec_safe('ufw default allow outgoing');
 		}
 
-		$tcp_ports_new = $this->clean_ports($data['new']['tcp_port'], ',');
-		$tcp_ports_old = $this->clean_ports($data['old']['tcp_port'], ',');
-		$udp_ports_new = $this->clean_ports($data['new']['udp_port'], ',');
-		$udp_ports_old = $this->clean_ports($data['old']['udp_port'], ',');
+		$data = $this->placeholder($data);
 
+		$tcp_ports_new = $this->clean_ports($data['new']['tcp_port'], ',');
+		$udp_ports_new = $this->clean_ports($data['new']['udp_port'], ',');
 		$tcp_ports_new_array = explode(',', $tcp_ports_new);
-		$tcp_ports_old_array = explode(',', $tcp_ports_old);
 		$udp_ports_new_array = explode(',', $udp_ports_new);
-		$udp_ports_old_array = explode(',', $udp_ports_old);
+
+		//* get current firewall-rules
+		$tcp_ports_old_array = array();
+		$udp_ports_old_array = array();
+		$app->system->exec_safe('ufw status');
+		if($app->system->last_exec_out()[0] == 'Status: inactive') {
+			//ufw is inactive - force start after updates
+			$force_ufw = true;
+		} else {
+			$force_ufw = false;
+		}
+
+		foreach($app->system->last_exec_out() as $rule) {
+			if($rule !== '' && ctype_digit($rule[0])) {
+				$temp = explode('/', $rule);
+				if (strpos($temp[1], 'tcp') === 0) {
+					$tcp_ports_old_array[] = $temp[0];
+				} else {
+					$udp_ports_old_array[] = $temp[0];;
+				}
+				unset($temp);
+			}
+		}
+		$tcp_ports_old_array = array_unique($tcp_ports_old_array);
+		$tcp_ports_old_array = array_unique($tcp_ports_old_array);
+
+		$req_ports=array('22', '5666');
+		foreach($req_ports as $req) {
+			if(!in_array($req, $tcp_ports_new_array)) $tcp_ports_new_array[]=$req;
+			if(!in_array($req, $udp_ports_new_array)) $udp_ports_new_array[]=$req;
+		}
 
 		//* add tcp ports
 		foreach($tcp_ports_new_array as $port) {
@@ -180,19 +202,24 @@ class firewall_plugin {
 
 		if($data['new']['active'] == 'y') {
 			if($data['new']['active'] == $data['old']['active']) {
-				exec('ufw reload');
-				$app->log('Reloading the firewall', LOGLEVEL_DEBUG);
+				if($force_ufw) {
+					$app->system->exec_safe('ufw --force enable');
+					$app->log('Starting the firewall', LOGLEVEL_DEBUG);
+				} else {
+					$app->system->exec_safe('ufw reload');
+					$app->log('Reloading the firewall', LOGLEVEL_DEBUG);
+				}
 			} else {
 				//* Ensure that bastille firewall is stopped
-				exec($conf['init_scripts'] . '/' . 'bastille-firewall stop 2>/dev/null');
-				if(@is_file('/etc/debian_version')) exec('update-rc.d -f bastille-firewall remove');
+				if(@is_file($conf['init_scripts'] . '/' . 'bastille-firewall')) $app->system->exec_safe($conf['init_scripts'] . '/' . 'bastille-firewall stop 2>/dev/null');
+				if(@is_file('/etc/debian_version')) $app->system->exec_safe('update-rc.d -f bastille-firewall remove');
 
 				//* Start ufw firewall
-				exec('ufw --force enable');
+				$app->system->exec_safe('ufw --force enable');
 				$app->log('Starting the firewall', LOGLEVEL_DEBUG);
 			}
 		} else {
-			exec('ufw disable');
+			$app->system->exec_safe('ufw disable');
 			$app->log('Stopping the firewall', LOGLEVEL_DEBUG);
 		}
 	}
@@ -216,7 +243,7 @@ class firewall_plugin {
 	private function bastille_update($event_name, $data) {
 		global $app, $conf;
 
-		$app->uses('system');
+		$data = $this->placeholder($data);
 
 		$tcp_ports = $this->clean_ports($data['new']['tcp_port'], ' ');
 		$udp_ports = $this->clean_ports($data['new']['udp_port'], ' ');
@@ -235,38 +262,33 @@ class firewall_plugin {
 		if($data['new']['active'] == 'y') {
 			//* ensure that ufw firewall is disabled in case both firewalls are installed
 			if($app->system->is_installed('ufw')) {
-				exec('ufw disable');
+				$app->system->exec_safe('ufw disable');
 			}
-			exec($conf['init_scripts'] . '/' . 'bastille-firewall restart 2>/dev/null');
-			if(@is_file('/etc/debian_version')) exec('update-rc.d bastille-firewall defaults');
-			if(@is_file('/sbin/insserv')) exec('insserv -d bastille-firewall');
+			$app->system->exec_safe($conf['init_scripts'] . '/' . 'bastille-firewall restart 2>/dev/null');
+			if(@is_file('/etc/debian_version')) $app->system->exec_safe('update-rc.d bastille-firewall defaults');
+			if(@is_file('/sbin/insserv')) $app->system->exec_safe('insserv -d bastille-firewall');
 			$app->log('Restarting the firewall', LOGLEVEL_DEBUG);
 		} else {
-			exec($conf['init_scripts'] . '/' . 'bastille-firewall stop 2>/dev/null');
-			if(@is_file('/etc/debian_version')) exec('update-rc.d -f bastille-firewall remove');
-			if(@is_file('/sbin/insserv')) exec('insserv -r -f bastille-firewall');
+			$app->system->exec_safe($conf['init_scripts'] . '/' . 'bastille-firewall stop 2>/dev/null');
+			if(@is_file('/etc/debian_version')) $app->system->exec_safe('update-rc.d -f bastille-firewall remove');
+			if(@is_file('/sbin/insserv')) $app->system->exec_safe('insserv -r -f bastille-firewall');
 			$app->log('Stopping the firewall', LOGLEVEL_DEBUG);
 		}
-
-
 	}
 
 	private function bastille_delete($event_name, $data) {
 		global $app, $conf;
 
-		exec($conf['init_scripts'] . '/' . 'bastille-firewall stop 2>/dev/null');
-		if(@is_file('/etc/debian_version')) exec('update-rc.d -f bastille-firewall remove');
-		if(@is_file('/sbin/insserv')) exec('insserv -r -f bastille-firewall');
+		if(@is_file($conf['init_scripts'] . '/' . 'bastille-firewall')) $app->system->exec_safe($conf['init_scripts'] . '/' . 'bastille-firewall stop 2>/dev/null');
+		if(@is_file('/etc/debian_version')) $app->system->exec_safe('update-rc.d -f bastille-firewall remove');
+		if(@is_file('/sbin/insserv')) $app->system->exec_safe('insserv -r -f bastille-firewall');
 		$app->log('Stopping the firewall', LOGLEVEL_DEBUG);
-
 	}
 
-
-	private function clean_ports($portlist, $spacer) {
+	private function clean_ports($portlist, $seperator) {
 
 		$ports = explode(',', $portlist);
 		$ports_out = '';
-
 		if(is_array($ports)) {
 			foreach($ports as $p) {
 				$p_clean = '';
@@ -283,14 +305,76 @@ class firewall_plugin {
 						$p_clean = $tmp;
 					}
 				}
-				if($p_clean != '') $ports_out .= $p_clean . $spacer;
+				if($p_clean != '') $ports_out .= $p_clean . $seperator;
 
 			}
 		}
-		return substr($ports_out, 0, strlen($spacer)*-1);
+		return substr($ports_out, 0, strlen($seperator)*-1);
 	}
 
+	private function auto_ports($records, $type, $server) {
+		global $app, $conf;
+		
+		$ports = array();
+		if($type == 'tcp') {
+			if($conf['server_id'] == 1) {
+				$check = $app->db->queryOneRecord('SELECT count(server_id) as c FROM server')['c'];
+				if($check > 1) $records['ISPCONFIG'][] = 3306;
+				$ports[] = implode(',', $records['ISPCONFIG']);
+			}
+			if($server['mail_server'] == 1) {
+				$ports[] = implode(',', $records['MAIL']);
+				// check for rspamd
+				$app->uses('getconf,system,functions');
+				$mail_config = $app->getconf->get_server_config($conf['server_id'], 'mail');
+				if($mail_config['content_filter'] == 'rspamd') {
+					$ports[] = implode(',', $records['RSPAMD']);
+				}
+			}
+			if($server['dns_server'] == 1) $ports[] = implode(',', $records['DNS']);
+			if($server['web_server'] == 1) {
+				$ports[] = implode(',', $records['FTP']);
+				$ports[] = implode(',', $records['WEB']);
+			}
+		} elseif($type == 'udp') {
+			if($server['dns_server'] == 1) $ports[] = implode(',', $records['DNS']);
+		}
 
+		return(implode(',', $ports));
+	}
+
+	private function placeholder($data) {
+		global $app, $conf;
+
+		$temp = $app->db->queryOneRecord('SELECT firewall_placeholder FROM server WHERE server_id = ?', $conf['server_id']);
+		$records = json_decode($temp['firewall_placeholder'], true);
+		foreach($records as $idx=>$val) $placeholders['{'.$idx.'}'] = $val;
+		$_replace = array();
+		foreach($placeholders as $placeholder => $ports) {
+			$_search[] = $placeholder;
+			$_replace[] = implode(',', $ports);
+		}
+
+		$server = $app->db->queryOneRecord('SELECT * FROM server WHERE server_id = ?', $conf['server_id']);
+		if($data['new']['tcp_port'] != '' || $data['old']['tcp_port'] != '') {
+			$search = $_search;
+			$replace = $_replace;
+			$search[] = '{AUTO}';
+			$replace[] = $this->auto_ports($records, 'tcp', $server);
+			$data['new']['tcp_port'] = str_replace($search, $replace, $data['new']['tcp_port']);
+			$data['old']['tcp_port'] = str_replace($search, $replace, $data['old']['tcp_port']);	
+		}
+		if($data['new']['udp_port'] != '' || $data['old']['udp_port'] != '') {
+			$search = $_search;
+			$replace = $_replace;
+			$search[] = '{AUTO}';
+			$replace[] = $this->auto_ports($records, 'udp', $server);
+			$data['new']['udp_port'] = str_replace($search, $replace, $data['new']['udp_port']);
+			$data['old']['udp_port'] = str_replace($search, $replace, $data['old']['udp_port']);
+		}
+	
+		return $data;	
+	}
 
 } // end class
 

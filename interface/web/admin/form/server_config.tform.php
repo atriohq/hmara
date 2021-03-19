@@ -2072,6 +2072,20 @@ $form["tabs"]['rescue'] = array(
 		//#################################
 	)
 );
+$form['tabs']['firewall_placeholder'] = array(
+	'title' => 'firewall_placeholder',
+	'width' => 80,
+	'template' => 'templates/server_config_firewall_placeholder.htm',
+	'readonly' => false,
+	'plugins' => array (
+		'placeholder_records' => array (
+			'class'   => 'plugin_server_firewall_placeholder',
+			'options' => array(
+			)
+		)
+	)
+);
+
 
 /*$mail_config = $app->getconf->get_server_config($conf['server_id'], 'mail');
 if(!isset($mail_config['rspamd_available']) || $mail_config['rspamd_available'] != 'y') {
