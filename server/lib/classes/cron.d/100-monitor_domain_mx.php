@@ -50,6 +50,15 @@ class cronjob_monitor_domain_mx  extends cronjob {
 		return parent::onBeforeRun();
 	}
 
+	private function _resolveHostnameBoth($hostname) {
+			$smtpin_ips = gethostbynamel($hostname);
+			$smtpin_ips_v6 = $app->functions->gethostbynamel6($hostname);
+			if ($smtpin_ips_v6) {
+				$smtpin_ips = array_merge($smtpin_ips, $smtpin_ips_v6);
+			}
+			return $smtpin_ips;
+	}
+
 	public function onRunJob() {
 		global $app, $conf;
 
@@ -69,10 +78,14 @@ class cronjob_monitor_domain_mx  extends cronjob {
 		$server_id = intval($conf['server_id']);
 		$hostname = $app->system->hostname();
 
-		$smtpin_ips = gethostbynamel($hostname);
-		$smtpin_ips_v6 = $app->functions->gethostbynamel6($hostname);
-		if ($smtpin_ips_v6) {
-			$smtpin_ips = array_merge($smtpin_ips, $smtpin_ips_v6);
+		$smtpin_ips = $this->_resolveHostnameBoth($hostname);
+
+		# Add additional IP's, e.g. an extrernal spamfilter/proxy.
+		foreach (explode(',', $mail_config['additional_smtp_hostnames'] as $hostname) {
+			$extra = $this->_resolveHostnameBoth($hostname);
+			if ($extra) {
+				$smtpin_ips = array_merge($smtpin_ips, $extra);
+			}
 		}
 
 		# Add additional IP's , e.g. for secondary IP on the same box or a proxy.
