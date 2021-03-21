@@ -50,13 +50,15 @@ class cronjob_monitor_domain_mx  extends cronjob {
 		return parent::onBeforeRun();
 	}
 
-	private function _resolveHostnameBoth($hostname) {
-			$smtpin_ips = gethostbynamel($hostname);
-			$smtpin_ips_v6 = $app->functions->gethostbynamel6($hostname);
-			if ($smtpin_ips_v6) {
-				$smtpin_ips = array_merge($smtpin_ips, $smtpin_ips_v6);
-			}
-			return $smtpin_ips;
+	private function _resolveHostnameBoth46($hostname) {
+		global $app;
+		$app->uses('getconf,functions');
+		$smtpin_ips = gethostbynamel($hostname);
+		$smtpin_ips_v6 = $app->functions->gethostbynamel6($hostname);
+		if ($smtpin_ips_v6) {
+			$smtpin_ips = array_merge($smtpin_ips, $smtpin_ips_v6);
+		}
+		return $smtpin_ips;
 	}
 
 	public function onRunJob() {
@@ -76,20 +78,25 @@ class cronjob_monitor_domain_mx  extends cronjob {
 
 		// the id of the server as int
 		$server_id = intval($conf['server_id']);
-		$hostname = $app->system->hostname();
 
-		$smtpin_ips = $this->_resolveHostnameBoth($hostname);
+		$hostname = $app->system->hostname();
+		$smtpin_ips = $this->_resolveHostnameBoth46($hostname);
 
 		# Add additional IP's, e.g. an extrernal spamfilter/proxy.
-		foreach (explode(',', $mail_config['additional_smtp_hostnames'] as $hostname) {
-			$extra = $this->_resolveHostnameBoth($hostname);
-			if ($extra) {
-				$smtpin_ips = array_merge($smtpin_ips, $extra);
+		if (!empty($mail_config['additional_smtp_hostnames'])) {
+			$additional_smtp_hostnames = explode(',', $mail_config['additional_smtp_hostnames']);
+			foreach ($additional_smtp_hostnames as $hostname) {
+				$extra = $this->_resolveHostnameBoth46($hostname);
+				if ($extra) {
+					$smtpin_ips = array_merge($smtpin_ips, $extra);
+				}
 			}
 		}
 
 		# Add additional IP's , e.g. for secondary IP on the same box or a proxy.
-		$smtpin_ips = array_merge($smtpin_ips, explode(',', $mail_config['additional_smtp_ips']));
+		if (!empty($mail_config['additional_smtp_ips'])) {
+			$smtpin_ips = array_merge($smtpin_ips, explode(',', $mail_config['additional_smtp_ips']));
+		}
 
 		$maildomains = $app->db->queryAllRecords("SELECT domain, active FROM mail_domain WHERE server_id = ?", $server_id);
 		if(is_array($maildomains)) {
