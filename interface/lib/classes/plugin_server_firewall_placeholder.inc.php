@@ -84,6 +84,7 @@ class plugin_server_firewall_placeholder extends plugin_base {
 		foreach($data as $idx=>$val) {
 			//* validate updates
 			if($dataRecord[$idx] != implode(',',$val)) {
+				$new = array();
 				$check = explode(',',$dataRecord[$idx]);
 				foreach($check as $_idx=>$validate) {
 					$validate = trim($validate);
@@ -91,10 +92,11 @@ class plugin_server_firewall_placeholder extends plugin_base {
 						if(!preg_match('/^\d{1,5}(?::\d{1,5})?(?:,\d{1,5}(?::\d{1,5})?)*$/', $validate)) {
 							$error .= "Invalide value $validate for $idx <br>";
 						} else {
-							$dataRecord[$_idx] = $validate;
+							$new[] = $validate;
 						}
 					}
 				}
+				if(!empty($new)) $dataRecord[$_idx] = implode(',', $new);
 				$data[$idx] = explode(',',$dataRecord[$_idx]);
 				$update = true;
 			}
