@@ -337,6 +337,10 @@ class firewall_plugin {
 				$ports[] = implode(',', $records['FTP']);
 				$ports[] = implode(',', $records['WEB']);
 			}
+			if($server['db_server'] == 1) {
+				$tmp = $app->db->queryOneRecord("SELECT count(server_id) as number from web_database where active = 'y' AND remote_access = 'y' AND server_id = ?", $conf['server_id']);
+				if($tmp['number'] > 0) $ports[] = 3306;
+			}
 		} elseif($type == 'udp') {
 			if($server['dns_server'] == 1) $ports[] = implode(',', $records['DNS']);
 		}
