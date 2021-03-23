@@ -51,6 +51,14 @@ class sites_database_plugin {
 
 			$sql = "UPDATE web_database SET sys_groupid = ?, backup_interval = ?, backup_copies = ? WHERE database_id = ?";
 			$app->db->query($sql, $sys_groupid, $backup_interval, $backup_copies, $form_page->id);
+
+			if($form_page->dataRecord['remote_access'] == 'y' && $form_page->dataRecord['active'] == 'y') {
+				$firewall = $app->db->queryOneRecord("SELECT * FROM firewall WHERE active = 'y' AND server_id = ?", $form_page->dataRecord['server_id']);
+				if($firewall) {
+					$app->db->datalogUpdate('firewall', $firewall, 'firewall_id', $firewall['firewall_id'], true);
+					file_put_contents("debug", "update fw");
+				}
+			}
 		}
 	}
 
