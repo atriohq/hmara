@@ -119,6 +119,9 @@ class rspamd_plugin {
 		$app->plugins->registerEvent('mail_access_insert', $this->plugin_name, 'spamfilter_wblist_insert');
 		$app->plugins->registerEvent('mail_access_update', $this->plugin_name, 'spamfilter_wblist_update');
 		$app->plugins->registerEvent('mail_access_delete', $this->plugin_name, 'spamfilter_wblist_delete');
+		$app->plugins->registerEvent('mail_access_insert', $this->plugin_name, 'mail_access_update');
+		$app->plugins->registerEvent('mail_access_update', $this->plugin_name, 'mail_access_update');
+		$app->plugins->registerEvent('mail_access_delete', $this->plugin_name, 'mail_access_update');
 
 		//* server
 		$app->plugins->registerEvent('server_insert', $this->plugin_name, 'server_update');
@@ -494,6 +497,175 @@ class rspamd_plugin {
 
 			if($mail_config['content_filter'] == 'rspamd'){
 				$app->services->restartServiceDelayed('rspamd', 'reload');
+			}
+		}
+	}
+
+	function mail_access_update($event_name, $data) {
+		global $app, $conf;
+
+		if(!is_dir('/etc/rspamd')) {
+			return;
+		}
+
+		$mail_config = $app->getconf->get_server_config($conf['server_id'], 'mail');
+
+		
+/*
+    [new] => Array
+        (
+            [access_id] => 5
+            [sys_userid] => 1
+            [sys_groupid] => 1
+            [sys_perm_user] => riud
+            [sys_perm_group] => riud
+            [sys_perm_other] => 
+            [server_id] => 1
+            [source] => 1.2.3.5
+            [access] => OK
+            [type] => client
+            [active] => y
+        )
+ */
+		# generated local.d/maps.d files
+		if ($data['old']['type'] == 'client' || $data['new']['type'] == 'client') {
+			$filename = '/etc/rspamd/local.d/maps.d/ip_whitelist.inc.ispc';
+			@unlink($filename);
+			$records = $app->db->queryAllRecords("SELECT `source` FROM ?? WHERE `type` = 'client' AND `access` = 'OK' AND `active` = 'y' AND `sys_userid` IN (SELECT `userid` FROM `sys_user` WHERE `sys_groupid` = 0) AND `server_id` = ? ORDER BY `source` ASC", $conf['mysql']['database'] . '.mail_access', $conf['server_id']);
+			if (count($records) > 0) {
+				if ($fp = fopen($filename, 'w')) {
+					fwrite($fp, "# ISPConfig whitelisted ip addresses\n\n");
+					foreach($records as $record) {
+						fwrite($fp, $record['source'] . "\n");
+					}
+					fclose($fp);
+				} else {
+					$app->log("Error: cannot open $filename for writing", LOGLEVEL_WARN);
+				}
+			}
+		}
+
+		if ($data['old']['type'] == 'sender' || $data['new']['type'] == 'sender') {
+			$filename = '/etc/rspamd/local.d/maps.d/sender_whitelist.inc.ispc';
+			@unlink($filename);
+			$records = $app->db->queryAllRecords("SELECT `source` FROM ?? WHERE `type` = 'sender' AND `source` LIKE '%@%' AND `access` = 'OK' AND `active` = 'y' AND `sys_userid` IN (SELECT `userid` FROM `sys_user` WHERE `sys_groupid` = 0) AND `server_id` = ? ORDER BY `source` ASC", $conf['mysql']['database'] . '.mail_access', $conf['server_id']);
+			if (count($records) > 0) {
+				if ($fp = fopen($filename, 'w')) {
+					fwrite($fp, "# ISPConfig whitelisted sender addresses\n\n");
+					foreach($records as $record) {
+						fwrite($fp, $record['source'] . "\n");
+					}
+					fclose($fp);
+				} else {
+					$app->log("Error: cannot open $filename for writing", LOGLEVEL_WARN);
+				}
+			}
+
+			$filename = '/etc/rspamd/local.d/maps.d/sender_blacklist.inc.ispc';
+			@unlink($filename);
+			$records = $app->db->queryAllRecords("SELECT `source` FROM ?? WHERE `type` = 'sender' AND `source` LIKE '%@%' AND `access` LIKE 'REJECT%' AND `active` = 'y' AND `sys_userid` IN (SELECT `userid` FROM `sys_user` WHERE `sys_groupid` = 0) AND `server_id` = ? ORDER BY `source` ASC", $conf['mysql']['database'] . '.mail_access', $conf['server_id']);
+			if (count($records) > 0) {
+				if ($fp = fopen($filename, 'w')) {
+					fwrite($fp, "# ISPConfig blacklisted sender addresses\n\n");
+					foreach($records as $record) {
+						fwrite($fp, $record['source'] . "\n");
+					}
+					fclose($fp);
+				} else {
+					$app->log("Error: cannot open $filename for writing", LOGLEVEL_WARN);
+				}
+			}
+
+			$filename = '/etc/rspamd/local.d/maps.d/sender_domain_whitelist.inc.ispc';
+			@unlink($filename);
+			$records = $app->db->queryAllRecords("SELECT `source` FROM ?? WHERE `type` = 'sender' AND `source` NOT LIKE '%@%' AND `access` = 'OK' AND `active` = 'y' AND `sys_userid` IN (SELECT `userid` FROM `sys_user` WHERE `sys_groupid` = 0) AND `server_id` = ? ORDER BY `source` ASC", $conf['mysql']['database'] . '.mail_access', $conf['server_id']);
+			if (count($records) > 0) {
+				if ($fp = fopen($filename, 'w')) {
+					fwrite($fp, "# ISPConfig whitelisted sender domains\n\n");
+					foreach($records as $record) {
+						fwrite($fp, ltrim($record['source'], '.') . "\n");
+					}
+					fclose($fp);
+				} else {
+					$app->log("Error: cannot open $filename for writing", LOGLEVEL_WARN);
+				}
+			}
+
+			$filename = '/etc/rspamd/local.d/maps.d/sender_domain_blacklist.inc.ispc';
+			@unlink($filename);
+			$records = $app->db->queryAllRecords("SELECT `source` FROM ?? WHERE `type` = 'sender' AND `source` NOT LIKE '%@%' AND `access` LIKE 'REJECT%' AND `active` = 'y' AND `sys_userid` IN (SELECT `userid` FROM `sys_user` WHERE `sys_groupid` = 0) AND `server_id` = ? ORDER BY `source` ASC", $conf['mysql']['database'] . '.mail_access', $conf['server_id']);
+			if (count($records) > 0) {
+				if ($fp = fopen($filename, 'w')) {
+					fwrite($fp, "# ISPConfig blacklisted sender domains\n\n");
+					foreach($records as $record) {
+						fwrite($fp, ltrim($record['source'], '.') . "\n");
+					}
+					fclose($fp);
+				} else {
+					$app->log("Error: cannot open $filename for writing", LOGLEVEL_WARN);
+				}
+			}
+		}
+
+		if ($data['old']['type'] == 'recipient' || $data['new']['type'] == 'recipient') {
+			$filename = '/etc/rspamd/local.d/maps.d/recipient_whitelist.inc.ispc';
+			@unlink($filename);
+			$records = $app->db->queryAllRecords("SELECT `source` FROM ?? WHERE `type` = 'recipient' AND `source` LIKE '%@%' AND `access` = 'OK' AND `active` = 'y' AND `sys_userid` IN (SELECT `userid` FROM `sys_user` WHERE `sys_groupid` = 0) AND `server_id` = ? ORDER BY `source` ASC", $conf['mysql']['database'] . '.mail_access', $conf['server_id']);
+			if (count($records) > 0) {
+				if ($fp = fopen($filename, 'w')) {
+					fwrite($fp, "# ISPConfig whitelisted recipient addresses\n\n");
+					foreach($records as $record) {
+						fwrite($fp, $record['source'] . "\n");
+					}
+					fclose($fp);
+				} else {
+					$app->log("Error: cannot open $filename for writing", LOGLEVEL_WARN);
+				}
+			}
+
+			$filename = '/etc/rspamd/local.d/maps.d/recipient_blacklist.inc.ispc';
+			@unlink($filename);
+			$records = $app->db->queryAllRecords("SELECT `source` FROM ?? WHERE `type` = 'recipient' AND `source` LIKE '%@%' AND `access` LIKE 'REJECT%' AND `active` = 'y' AND `sys_userid` IN (SELECT `userid` FROM `sys_user` WHERE `sys_groupid` = 0) AND `server_id` = ? ORDER BY `source` ASC", $conf['mysql']['database'] . '.mail_access', $conf['server_id']);
+			if (count($records) > 0) {
+				if ($fp = fopen($filename, 'w')) {
+					fwrite($fp, "# ISPConfig blacklisted recipient addresses\n\n");
+					foreach($records as $record) {
+						fwrite($fp, $record['source'] . "\n");
+					}
+					fclose($fp);
+				} else {
+					$app->log("Error: cannot open $filename for writing", LOGLEVEL_WARN);
+				}
+			}
+
+			$filename = '/etc/rspamd/local.d/maps.d/recipient_domain_whitelist.inc.ispc';
+			@unlink($filename);
+			$records = $app->db->queryAllRecords("SELECT `source` FROM ?? WHERE `type` = 'recipient' AND `source` NOT LIKE '%@%' AND `access` = 'OK' AND `active` = 'y' AND `sys_userid` IN (SELECT `userid` FROM `sys_user` WHERE `sys_groupid` = 0) AND `server_id` = ? ORDER BY `source` ASC", $conf['mysql']['database'] . '.mail_access', $conf['server_id']);
+			if (count($records) > 0) {
+				if ($fp = fopen($filename, 'w')) {
+					fwrite($fp, "# ISPConfig whitelisted recipient domains\n\n");
+					foreach($records as $record) {
+						fwrite($fp, ltrim($record['source'], '.') . "\n");
+					}
+					fclose($fp);
+				} else {
+					$app->log("Error: cannot open $filename for writing", LOGLEVEL_WARN);
+				}
+			}
+
+			$filename = '/etc/rspamd/local.d/maps.d/recipient_domain_blacklist.inc.ispc';
+			@unlink($filename);
+			$records = $app->db->queryAllRecords("SELECT `source` FROM ?? WHERE `type` = 'recipient' AND `source` NOT LIKE '%@%' AND `access` LIKE 'REJECT%' AND `active` = 'y' AND `sys_userid` IN (SELECT `userid` FROM `sys_user` WHERE `sys_groupid` = 0) AND `server_id` = ? ORDER BY `source` ASC", $conf['mysql']['database'] . '.mail_access', $conf['server_id']);
+			if (count($records) > 0) {
+				if ($fp = fopen($filename, 'w')) {
+					fwrite($fp, "# ISPConfig blacklisted recipient domains\n\n");
+					foreach($records as $record) {
+						fwrite($fp, ltrim($record['source'], '.') . "\n");
+					}
+					fclose($fp);
+				} else {
+					$app->log("Error: cannot open $filename for writing", LOGLEVEL_WARN);
+				}
 			}
 		}
 	}
