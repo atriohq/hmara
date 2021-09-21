@@ -49,7 +49,12 @@ class db
 	private $dbUser = '';  // database authorized user
 	private $dbPass = '';  // user's password
 	private $dbCharset = 'utf8';// Database charset
-	private $dbClientFlags = 0; // MySQL Client falgs
+	private $dbClientFlags = 0; // MySQL Client flags
+	private $dbSslClientKey = null;
+	private $dbSslClientCert = null;
+	private $dbSslCaCert = null;
+	private $dbSslCaPath = null;
+	private $dbSslCipherAlgos = null;
 	/**#@-*/
 
 	public $show_error_messages = false; // false in server, interface sets true when generating templates
@@ -70,7 +75,7 @@ class db
 	*/
 
 	// constructor
-	public function __construct($host = NULL , $user = NULL, $pass = NULL, $database = NULL, $port = NULL, $flags = NULL) {
+	public function __construct($host = NULL , $user = NULL, $pass = NULL, $database = NULL, $port = NULL, $flags = NULL, $dbSslClientKey = NULL, $dbSslClientCert = NULL, $dbSslCaCert = NULL, $dbSslCaPath = NULL, $dbSslCipherAlgos = NULL) {
 		global $app, $conf;
 
 		$this->dbHost = $host ? $host  : $conf['db_host'];
@@ -80,7 +85,16 @@ class db
 		$this->dbPass = $pass ? $pass : $conf['db_password'];
 		$this->dbCharset = $conf['db_charset'];
 		$this->dbClientFlags = ($flags !== NULL) ? $flags : $conf['db_client_flags'];
+		$this->dbSslClientKey = $dbSslClientKey ? $dbSslClientKey : $conf['db_ssl_client_key'];
+		$this->dbSslClientCert = $dbSslClientCert ? $dbSslClientCert : $conf['db_ssl_client_cert'];
+		$this->dbSslCaCert = $dbSslCaCert ? $dbSslCaCert : $conf['db_ssl_ca_cert'];
+		$this->dbSslCaPath = $dbSslCaPath ? $dbSslCaPath : $conf['db_ssl_ca_path'];
+		$this->dbSslCipherAlgos = $dbSslCipherAlgos ? $dbSslCipherAlgos : $conf['db_ssl_cipher_algos'];
 		$this->_iConnId = mysqli_init();
+
+		if (!empty($dbSslClientKey) || !empty($dbSslClientCert) || !empty($dbSslCaCert) || !empty($dbSslCaPath) || !empty($dbSslCipherAlgos)) {
+			mysqli_ssl_set($this->_iConnId, $dbSslClientKey, $dbSslClientCert, $dbSslCaCert, $dbSslCaPath, $dbSslCipherAlgos);
+		}
 
 		mysqli_real_connect($this->_iConnId, $this->dbHost, $this->dbUser, $this->dbPass, '', (int)$this->dbPort, NULL, $this->dbClientFlags);
 		for($try=0;(!is_object($this->_iConnId) || mysqli_connect_errno()) && $try < 5;++$try) {
@@ -662,15 +676,20 @@ class db
 		static $db=null;
 
 		if ( ! $db ) {
-			$clientdb_host     = ($conf['db_host']) ? $conf['db_host'] : NULL;
-			$clientdb_user     = ($conf['db_user']) ? $conf['db_user'] : NULL;
-			$clientdb_password = ($conf['db_password']) ? $conf['db_password'] : NULL;
-			$clientdb_port     = ((int)$conf['db_port']) ? (int)$conf['db_port'] : NULL;
-			$clientdb_flags    = ($conf['db_flags'] !== NULL) ? $conf['db_flags'] : NULL;
+			$clientdb_host             = ($conf['db_host']) ? $conf['db_host'] : NULL;
+			$clientdb_user             = ($conf['db_user']) ? $conf['db_user'] : NULL;
+			$clientdb_password         = ($conf['db_password']) ? $conf['db_password'] : NULL;
+			$clientdb_port             = ((int)$conf['db_port']) ? (int)$conf['db_port'] : NULL;
+			$clientdb_flags            = ($conf['db_flags'] !== NULL) ? $conf['db_flags'] : NULL;
+			$clientdb_ssl_client_key   = ($conf['db_ssl_client_key']) ? $conf['db_ssl_client_key'] : NULL;
+			$clientdb_ssl_client_cert  = ($conf['db_ssl_client_cert']) ? $conf['db_ssl_client_cert'] : NULL;
+			$clientdb_ssl_ca_cert      = ($conf['db_ssl_ca_cert']) ? $conf['db_ssl_ca_cert'] : NULL;
+			$clientdb_ssl_ca_path      = ($conf['db_ssl_ca_path']) ? $conf['db_ssl_ca_path'] : NULL;
+			$clientdb_ssl_cipher_algos = ($conf['db_ssl_cipher_algos']) ? $conf['db_ssl_cipher_algos'] : NULL;
 
 			require_once 'lib/mysql_clientdb.conf';
 
-			$db = new db($clientdb_host, $clientdb_user, $clientdb_password, NULL, $clientdb_port, $clientdb_flags);
+			$db = new db($clientdb_host, $clientdb_user, $clientdb_password, NULL, $clientdb_port, $clientdb_flags, $clientdb_ssl_client_key, $clientdb_ssl_client_cert, $clientdb_ssl_ca_cert, $clientdb_ssl_ca_path, $clientdb_ssl_cipher_algos);
 		}
 
 		$result = $db->_query("SELECT SUM(data_length+index_length) FROM information_schema.TABLES WHERE table_schema='".$db->escape($database_name)."'");
