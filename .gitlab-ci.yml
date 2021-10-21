@@ -66,14 +66,14 @@ syntax_diff:lint:
 #    - schedules
 #    - web
 #    - /^\d+\.\d+\.\d+$/
-#  
+#
 #  script:
 #    - $CI_PROJECT_DIR/helper_scripts/test_install_docker.sh
 #    - apt-get update
 #    - apt-get --yes install curl
 #    - curl --insecure https://127.0.0.1:8080/login/
 #    - ps xaf
-#    
+#
 #  needs: ["syntax:lint"]
 
 build:package:
@@ -85,20 +85,58 @@ build:package:
             - web
 
     script:
-        - echo "Building release."
-        - if [[ "$VER" == "" ]] ; then VER="$CI_COMMIT_TAG" ; fi
-        - if [[ "$VER" == "" ]] ; then VER="3.2dev"$(date +%s) ; fi
-        - if [[ "$VER" != "" ]] ; then echo "Replacing 3.2dev by $VER" ; sed -i -r 's/3\.2dev/'${VER}'/g' install/tpl/config.inc.php.master install/sql/ispconfig3.sql ; fi
-        - RET=0
-        - tar -cpzf ISPConfig-${VER}.tar.gz --exclude "ISPConfig-${VER}.tar.gz" --exclude ".git*" --exclude ".phplint.yml" --transform 's,^\./,ispconfig3_install/,' . || RET=$?
-        - if [[ $RET > 1 ]] ; then exit $RET ; fi
-        - echo "Listing tar contents for verification"
-        - tar -tvf ISPConfig-${VER}.tar.gz
-        - echo "Uploading file to download server"
-        - curl -u "${DEPLOY_FTP_USER}:${DEPLOY_FTP_PASSWORD}" -T ISPConfig-${VER}.tar.gz ftp://${DEPLOY_FTP_SERVER}/web/
-        - if [[ "$VER" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] ; then echo "Stable release ${VER}" ; curl -u "${DEPLOY_FTP_USER}:${DEPLOY_FTP_PASSWORD}" -T ISPConfig-${VER}.tar.gz ftp://${DEPLOY_FTP_SERVER}/web/ISPConfig-3-stable.tar.gz ; echo -n "${VER}" > ispconfig3_version.txt ; curl -u "${DEPLOY_FTP_USER}:${DEPLOY_FTP_PASSWORD}" -T ispconfig3_version.txt ftp://${DEPLOY_FTP_SERVER}/web/ ; else echo "Dev release ${VER}" ; fi
-        - rm ISPConfig-${VER}.tar.gz
-        - echo "Download url is https://download.ispconfig.org/ISPConfig-${VER}.tar.gz"
-        
+        - |
+          echo "Building release."
+          die() {
+              echo "failed to" "$@"
+              exit 1
+          }
+          if [[ "$VER" == "" ]] ; then
+              VER="$CI_COMMIT_TAG"
+          fi
+          if [[ "$VER" == "" ]] ; then
+              VER="3.2dev$(date +%s)"
+          fi
+          if [[ "$VER" != "" ]] ; then
+              echo "Replacing 3.2dev by $VER"
+              sed -i -r 's/3\.2dev/'"${VER}"'/g' install/tpl/config.inc.php.master install/sql/ispconfig3.sql || die "replace version in files"
+          fi
+          # if this is a git tag (probably a stable release) then make the tar reproducible by setting the creation time of the archive to the time of the git tag
+          if [[ "$VER" == "$CI_COMMIT_TAG" ]]; then
+              LIBFAKETIME_DEB=libfaketime_0.9.7-3_amd64.deb
+              curl -o /tmp/$LIBFAKETIME_DEB http://ftp.de.debian.org/debian/pool/main/f/faketime/$LIBFAKETIME_DEB || die "download libfaketime"
+              ( cd /tmp && echo "8bd396800da4e5ae05ef6ba9f4bacb4094c69d7299ba046422991bf0807c744e  $LIBFAKETIME_DEB" > check.sum && shasum -a 256 -c check.sum ) || die "checking consistency of libfaketime"
+              ( cd /tmp && dpkg-deb -x $LIBFAKETIME_DEB /tmp/libfaketime )
+              # get git tag timestamp (e.g. 2021-08-23T14:40:42+00:00)
+              RELEASE_TIMESTAMP="$(git log -1 --format=%aI "$CI_COMMIT_TAG")" || die "setting RELEASE_TIMESTAMP"
+              # set the modification time of the files we changed earlier
+              touch --no-create -d "$RELEASE_TIMESTAMP" install/tpl/config.inc.php.master install/sql/ispconfig3.sql || die "set modification time of install/tpl/config.inc.php.master install/sql/ispconfig3.sql"
+              # freeze system time for the next tar+gz call (timestamp needs to be in format 2021-08-23 14:40:42)
+              # see https://github.com/wolfcw/libfaketime for details
+              export LD_PRELOAD=/tmp/libfaketime/usr/lib/x86_64-linux-gnu/faketime/libfaketime.so.1
+              FAKETIME="$(date -d "$RELEASE_TIMESTAMP" '+%F %T')" || die "setting FAKETIME"
+              export FAKETIME
+          fi
+          # see https://reproducible-builds.org/docs/archives/ for the tar arguments used
+          tar --sort=name --owner=0 --group=0 --numeric-owner --format=gnu -cpzf "ISPConfig-${VER}.tar.gz" --exclude "ISPConfig-${VER}.tar.gz" --exclude ".git*" --exclude ".phplint.yml" --transform 's,^\./,ispconfig3_install/,' . || die "create release archive"
+          unset LD_PRELOAD # unfreeze the system time
+          echo "Listing tar contents for verification"
+          tar -tvf "ISPConfig-${VER}.tar.gz" || die "list release archive contents"
+          echo "Uploading file to download server"
+          curl -u "${DEPLOY_FTP_USER}:${DEPLOY_FTP_PASSWORD}" -T "ISPConfig-${VER}.tar.gz" "ftp://${DEPLOY_FTP_SERVER}/web/" || die "upload release to FTP server"
+          if [[ "$VER" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] ; then
+              echo "Stable release ${VER}"
+              curl -u "${DEPLOY_FTP_USER}:${DEPLOY_FTP_PASSWORD}" -T "ISPConfig-${VER}.tar.gz" "ftp://${DEPLOY_FTP_SERVER}/web/ISPConfig-3-stable.tar.gz" || die "upload stable release to FTP server"
+              echo -n "${VER}" > ispconfig3_version.txt || die "create ispconfig3_version.txt"
+              curl -u "${DEPLOY_FTP_USER}:${DEPLOY_FTP_PASSWORD}" -T ispconfig3_version.txt "ftp://${DEPLOY_FTP_SERVER}/web/" || die "upload ispconfig3_version.txt to FTP server"
+          else
+              echo "Dev release ${VER}"
+          fi
+          echo "Download url is https://download.ispconfig.org/ISPConfig-${VER}.tar.gz"
+          echo "SHA 256 sum for release"
+          shasum -a 256 "ISPConfig-${VER}.tar.gz"
+          echo "SHA 512 sum for release"
+          shasum -a 512 "ISPConfig-${VER}.tar.gz"
+          rm "ISPConfig-${VER}.tar.gz"
     needs: ["syntax:lint"]
     allow_failure: false
