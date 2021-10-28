@@ -145,6 +145,8 @@ class page_action extends tform_actions {
 		$app->uses('getconf,tools_sites');
 		$global_config = $app->getconf->get_global_config('sites');
 		$dbuser_prefix = $app->tools_sites->replacePrefix($global_config['dbuser_prefix'], $this->dataRecord);
+		$db_type = $app->db->getDatabaseType();
+		$db_version = $app->db->getDatabaseVersion();
 
 		$this->oldDataRecord = $app->db->queryOneRecord("SELECT * FROM web_database_user WHERE database_user_id = ?", $this->id);
 
@@ -154,7 +156,15 @@ class page_action extends tform_actions {
 		//* Database username shall not be empty
 		if($this->dataRecord['database_user'] == '') $app->tform->errorMessage .= $app->tform->wordbook["database_user_error_empty"].'<br />';
 
-		if(strlen($dbuser_prefix . $this->dataRecord['database_user']) > 16) $app->tform->errorMessage .= str_replace('{user}', htmlentities($dbuser_prefix . $this->dataRecord['database_user'], ENT_QUOTES, 'UTF-8'), $app->tform->wordbook["database_user_error_len"]).'<br />';
+		//* Default username max length: 16 chars
+		$username_max_length = 16;
+
+		//* Determine username max length based on Database server type and version
+		if (($db_type === 'mariadb' && version_compare($db_version, '10.0.0', '>=')) || ($db_type === 'mysql' && version_compare($db_version, '5.7.8', '>='))) {
+			$username_max_length = 32;
+		}
+
+		if (strlen($dbuser_prefix . $this->dataRecord['database_user']) > $username_max_length) $app->tform->errorMessage .= str_replace('{user}', array(htmlentities($dbuser_prefix . $this->dataRecord['database_user'], ENT_QUOTES, 'UTF-8'), $username_max_length), $app->tform->wordbook["database_user_error_len"]) . '<br />';
 
 		//* Check database user against blacklist
 		$dbuser_blacklist = array($conf['db_user'], 'mysql', 'root');
@@ -164,8 +174,8 @@ class page_action extends tform_actions {
 
 		if ($app->tform->errorMessage == ''){
 			/* restrict the names if there is no error */
-			/* crop user and db names if they are too long -> mysql: user: 16 chars / db: 64 chars */
-			$this->dataRecord['database_user'] = substr($dbuser_prefix . $this->dataRecord['database_user'], 0, 16);
+			/* crop user and db names if they are too long -> mysql: user: 16 or 32 chars / db: 64 chars */
+			$this->dataRecord['database_user'] = substr($dbuser_prefix . $this->dataRecord['database_user'], 0, $username_max_length);
 		}
 
 		/* prepare password for MongoDB */
@@ -192,10 +202,20 @@ class page_action extends tform_actions {
 		$app->uses('getconf,tools_sites');
 		$global_config = $app->getconf->get_global_config('sites');
 		$dbuser_prefix = $app->tools_sites->replacePrefix($global_config['dbuser_prefix'], $this->dataRecord);
+		$db_type = $app->db->getDatabaseType();
+		$db_version = $app->db->getDatabaseVersion();
 
 		$this->dataRecord['database_user_prefix'] = $dbuser_prefix;
 
-		if(strlen($dbuser_prefix . $this->dataRecord['database_user']) > 16) $app->tform->errorMessage .= str_replace('{user}', htmlentities($dbuser_prefix . $this->dataRecord['database_user'], ENT_QUOTES, 'UTF-8'), $app->tform->wordbook["database_user_error_len"]).'<br />';
+		//* Default username max length: 16 chars
+		$username_max_length = 16;
+
+		//* Determine username max length based on Database server type and version
+		if (($db_type === 'mariadb' && version_compare($db_version, '10.0.0', '>=')) || ($db_type === 'mysql' && version_compare($db_version, '5.7.8', '>='))) {
+			$username_max_length = 32;
+		}
+
+		if (strlen($dbuser_prefix . $this->dataRecord['database_user']) > $username_max_length) $app->tform->errorMessage .= str_replace('{user}', array(htmlentities($dbuser_prefix . $this->dataRecord['database_user'], ENT_QUOTES, 'UTF-8'), $username_max_length), $app->tform->wordbook["database_user_error_len"]) . '<br />';
 
 		//* Check database user against blacklist
 		$dbuser_blacklist = array($conf['db_user'], 'mysql', 'root');
@@ -204,9 +224,9 @@ class page_action extends tform_actions {
 		}
 
 		/* restrict the names */
-		/* crop user names if they are too long -> mysql: user: 16 chars / db: 64 chars */
-		if ($app->tform->errorMessage == ''){
-			$this->dataRecord['database_user'] = substr($dbuser_prefix . $this->dataRecord['database_user'], 0, 16);
+		/* crop user names if they are too long -> mysql: user: 16 or 32 chars / db: 64 chars */
+		if ($app->tform->errorMessage == '') {
+			$this->dataRecord['database_user'] = substr($dbuser_prefix . $this->dataRecord['database_user'], 0, $username_max_length);
 		}
 
 		$this->dataRecord['server_id'] = 0; // we need this on all servers
