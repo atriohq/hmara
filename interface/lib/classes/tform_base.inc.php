@@ -1388,6 +1388,17 @@ class tform_base {
 							} else {
 								$sql_insert_val .= "'".$record[$key]."', ";
 							}
+						} elseif ($field['formtype'] == 'SELECT') {
+							$sql_insert_key .= "`$key`, ";
+							if (is_null($record[$key])) {
+								$sql_insert_val .= 'NULL';
+							} elseif ($record[$key] === '') {
+								$sql_insert_val .= "default(`$key`)";
+							}
+							else {
+								$sql_insert_val .= "'".$record[$key]."'";
+							}
+							$sql_insert_val  .= ", ";
 						} else {
 							$sql_insert_key .= "`$key`, ";
 							$sql_insert_val .= (is_null($record[$key]) ? 'NULL' : "'".$record[$key]."'") . ", ";
