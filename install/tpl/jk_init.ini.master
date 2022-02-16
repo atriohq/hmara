@@ -234,3 +234,7 @@ paths = /usr/share/ImageMagick-*, /etc/ImageMagick-*, /usr/lib/i386-linux-gnu/Im
 comment = php version 8.0
 paths = /usr/bin/php8.0, /usr/lib/php/8.0/, /usr/lib/php/20200930/, /usr/share/php/8.0/, /etc/php/8.0/cli/, /etc/php/8.0/mods-available/
 includesections = php_common
+
+[gnupg]
+comment = GnuPGP Programm
+paths = /usr/bin/gpg, /usr/bin/gpg-agent, /usr/bin/gpgcompose, /usr/bin/gpgconf, /usr/bin/gpg-connect-agent, /usr/bin/gpgparsemail, /usr/bin/gpgsm, /usr/bin/gpgsplit, /usr/bin/gpgtar, /usr/bin/gpgv, /usr/bin/gpg-wks-server, /usr/bin/gpg-zip, /usr/bin/migrate-pubring-from-classic-gpg
