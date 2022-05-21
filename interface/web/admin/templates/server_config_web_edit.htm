@@ -1,7 +1,4 @@
-<div class='page-header'>
-	<h1><tmpl_var name="list_head_txt"> {tmpl_var name='server_name'}</h1>
-</div>
-<p><tmpl_var name="list_desc_txt"></p>
+<div class="alert alert-info"><h4 style="text-align:center"><tmpl_var name="config_for_txt"> {tmpl_var name='server_name'}</h4></div>
 
 <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
   <div class="panel panel-default">
@@ -137,10 +134,27 @@
                 </div>
             </div>
             <div class="form-group">
+                <label class="col-sm-3 control-label">{tmpl_var name='overtraffic_notify_reseller_txt'}</label>
+                <div class="col-sm-9">
+                    {tmpl_var name='overtraffic_notify_reseller'}
+                </div>
+            </div>
+            <div class="form-group">
                 <label class="col-sm-3 control-label">{tmpl_var name='overtraffic_notify_client_txt'}</label>
                 <div class="col-sm-9">
                     {tmpl_var name='overtraffic_notify_client'}
                 </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-3 control-label">{tmpl_var name='overtraffic_disable_web_txt'}</label>
+                <div class="col-sm-9">
+                    {tmpl_var name='overtraffic_disable_web'}
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="overquota_notify_threshold" class="col-sm-3 control-label">{tmpl_var name='overquota_notify_threshold_txt'}</label>
+                <div class="col-sm-6"><input type="text" name="overquota_notify_threshold" id="overquota_notify_threshold" value="{tmpl_var name='overquota_notify_threshold'}" class="form-control" /></div>
+                <div class="col-sm-3 input-sm">%</div>
             </div>
 			<div class="form-group">
                 <label class="col-sm-3 control-label">{tmpl_var name='overquota_notify_admin_txt'}</label>
@@ -149,10 +163,21 @@
                 </div>
             </div>
             <div class="form-group">
+                <label class="col-sm-3 control-label">{tmpl_var name='overquota_notify_reseller_txt'}</label>
+                <div class="col-sm-9">
+                    {tmpl_var name='overquota_notify_reseller'}
+                </div>
+            </div>
+            <div class="form-group">
                 <label class="col-sm-3 control-label">{tmpl_var name='overquota_notify_client_txt'}</label>
                 <div class="col-sm-9">
                     {tmpl_var name='overquota_notify_client'}
                 </div>
+            </div>
+            <div class="form-group">
+                <label for="overquota_db_notify_threshold" class="col-sm-3 control-label">{tmpl_var name='overquota_db_notify_threshold_txt'}</label>
+                <div class="col-sm-6"><input type="text" name="overquota_db_notify_threshold" id="overquota_db_notify_threshold" value="{tmpl_var name='overquota_db_notify_threshold'}" class="form-control" /></div>
+                <div class="col-sm-3 input-sm">%</div>
             </div>
 			<div class="form-group">
 				<label class="col-sm-3 control-label">{tmpl_var name='overquota_db_notify_admin_txt'}</label>
@@ -160,6 +185,12 @@
 					{tmpl_var name='overquota_db_notify_admin'}
 				 </div>
 			</div>
+            <div class="form-group">
+                <label class="col-sm-3 control-label">{tmpl_var name='overquota_db_notify_reseller_txt'}</label>
+                <div class="col-sm-9">
+                    {tmpl_var name='overquota_db_notify_reseller'}
+                </div>
+            </div>
 			<div class="form-group">
 				<label class="col-sm-3 control-label">{tmpl_var name='overquota_db_notify_client_txt'}</label>
 				<div class="col-sm-9">

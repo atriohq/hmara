@@ -101,12 +101,7 @@ class mysql_clientdb_plugin {
 
 		$success = true;
 		if(!preg_match('/\*[A-F0-9]{40}$/', $database_password)) {
-				$result = $link->query("SELECT PASSWORD('" . $link->escape_string($database_password) . "') as `crypted`");
-				if($result) {
-						$row = $result->fetch_assoc();
-						$database_password = $row['crypted'];
-						$result->free();
-				}
+				$database_password = $app->db->getPasswordHash($password);
 		}
 
 		$app->log("Calling $action for $database_name with access $user_access_mode and hosts " . implode(', ', $host_list), LOGLEVEL_DEBUG);
@@ -142,7 +137,7 @@ class mysql_clientdb_plugin {
 			if($user_access_mode == 'r') $grants = 'SELECT';
 			elseif($user_access_mode == 'rd') $grants = 'SELECT, DELETE, ALTER, DROP';
 
-			$database_name = str_replace('_', '\\_', $link->escape_string($database_name));
+			$database_name = $link->escape_string($database_name);
 
 			if($action == 'GRANT') {
 				if($user_access_mode == 'r' || $user_access_mode == 'rd') {
@@ -151,9 +146,38 @@ class mysql_clientdb_plugin {
 					$success = true;
 				}
 
-				if(!$link->query("GRANT " . $grants . " ON `".$database_name."`.* TO '".$link->escape_string($database_user)."'@'$db_host' IDENTIFIED BY PASSWORD '".$link->escape_string($database_password)."'")) $success = false;
-				$app->log("GRANT " . $grants . " ON `".$database_name."`.* TO '".$link->escape_string($database_user)."'@'$db_host' IDENTIFIED BY PASSWORD '".$link->escape_string($database_password)."' success? " . ($success ? 'yes' : 'no'), LOGLEVEL_DEBUG);
-			} elseif($action == 'REVOKE') {
+				// Create the user
+				$link->query("CREATE USER '".$link->escape_string($database_user)."'@'$db_host'");
+				$app->log("CREATE USER '".$link->escape_string($database_user)."'@'$db_host'", LOGLEVEL_DEBUG);
+
+				// mariadb or mysql < 5.7
+				if($this->getDatabaseType($link) == 'mariadb' || version_compare($this->getDatabaseVersion($link), '5.7', '<')) {
+					$query = sprintf("SET PASSWORD FOR '%s'@'%s' = '%s'",
+						$link->escape_string($database_user),
+						$db_host,
+						$link->escape_string($database_password));
+					if(!$link->query($query)) $success = false;
+				}
+				// mysql >= 5.7
+				else {
+					$query = sprintf("ALTER USER IF EXISTS '%s'@'%s' IDENTIFIED WITH mysql_native_password AS '%s'",
+						$link->escape_string($database_user),
+						$db_host,
+						$link->escape_string($database_password));
+					if(!$link->query($query)) $success = false;
+				}
+				
+				$app->log("PASSWORD SET FOR '".$link->escape_string($database_user)."'@'$db_host' success? " . ($success ? 'yes' : 'no'), LOGLEVEL_DEBUG);
+				
+				if($success == true){
+					$link->query("FLUSH PRIVILEGES");
+				}
+
+				// Set the grant
+				if(!$link->query("GRANT " . $grants . " ON `".$database_name."`.* TO '".$link->escape_string($database_user)."'@'$db_host'")) $success = false;
+				$app->log("GRANT " . $grants . " ON `".$database_name."`.* TO '".$link->escape_string($database_user)."'@'$db_host' success? " . ($success ? 'yes' : 'no'), LOGLEVEL_DEBUG);
+
+				} elseif($action == 'REVOKE') {
 				if(!$link->query("REVOKE ALL PRIVILEGES ON `".$database_name."`.* FROM '".$link->escape_string($database_user)."'@'$db_host'")) $success = false;
 			} elseif($action == 'DROP') {
 				if(!$link->query("DROP USER '".$link->escape_string($database_user)."'@'$db_host'")) $success = false;
@@ -163,10 +187,21 @@ class mysql_clientdb_plugin {
 				//if(!$link->query("SET PASSWORD FOR '".$link->escape_string($database_user)."'@'$db_host' = '".$link->escape_string($database_password)."'")) $success = false;
 				// SET PASSWORD for already hashed passwords is not supported by latest MySQL 5.7 anymore, so we have to set the hashed password directly
 				if(trim($database_password) != '') {
-					// MySQL < 5.7 and MariadB 10
-					if(!$link->query("UPDATE mysql.user SET `Password` = '".$link->escape_string($database_password)."' WHERE `Host` = '".$db_host."' AND `User` = '".$link->escape_string($database_user)."'")) {
-						// MySQL 5.7, the Password field has been renamed to authentication_string
-						if(!$link->query("UPDATE mysql.user SET `authentication_string` = '".$link->escape_string($database_password)."' WHERE `Host` = '".$db_host."' AND `User` = '".$link->escape_string($database_user)."'")) $success = false;
+					// mariadb or mysql < 5.7
+					if($this->getDatabaseType($link) == 'mariadb' || version_compare($this->getDatabaseVersion($link), '5.7', '<')) {
+						$query = sprintf("SET PASSWORD FOR '%s'@'%s' = '%s'",
+							$link->escape_string($database_user),
+							$db_host,
+							$link->escape_string($database_password));
+						if(!$link->query($query)) $success = false;
+					}
+					// mysql >= 5.7
+					else {
+						$query = sprintf("ALTER USER IF EXISTS '%s'@'%s' IDENTIFIED WITH mysql_native_password AS '%s'",
+							$link->escape_string($database_user),
+							$db_host,
+							$link->escape_string($database_password));
+						if(!$link->query($query)) $success = false;
 					}
 					if($success == true) $link->query("FLUSH PRIVILEGES");
 				}
@@ -529,7 +564,7 @@ class mysql_clientdb_plugin {
 			//* Remote access option has changed.
 			if($data['new']['remote_access'] != $data['old']['remote_access']) {
 
-				//* set new priveliges
+				//* set new privileges
 				if($data['new']['remote_access'] == 'y') {
 					if($db_user) {
 						if($db_user['database_user'] == 'root'){
@@ -771,6 +806,43 @@ class mysql_clientdb_plugin {
 		}
 
 		$link->close();
+	}
+	
+	
+				
+				
+	function getDatabaseType($link) {
+		$result = $link->query('SELECT VERSION() as version');
+		if($result) {
+			$tmp = $result->fetch_assoc();
+			$result->free();
+			
+			if(stristr($tmp['version'],'mariadb')) {
+				return 'mariadb';
+			} else {
+				return 'mysql';
+			}
+		} else {
+			return false;
+		}
+	}
+
+	function getDatabaseVersion($link, $major_version_only = false) {
+		$result = $link->query('SELECT VERSION() as version');
+		if($result) {
+			$tmp = $result->fetch_assoc();
+			$result->free();
+			
+			$version = explode('-', $tmp['version']);
+			if($major_version_only == true) {
+				$version_parts = explode('.', $version[0]);
+				return $version_parts[0];
+			} else {
+				return $version[0];
+			}
+		} else {
+			return false;
+		}
 	}
 
 } // end class

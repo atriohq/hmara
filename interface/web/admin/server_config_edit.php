@@ -57,13 +57,29 @@ class page_action extends tform_actions {
 		
 		// get the config
 		$app->uses('getconf');
-		$web_config = $app->getconf->get_server_config($conf['server_id'], 'web');
+		$web_config = $app->getconf->get_server_config($this->id, 'web');
 		
 		if($web_config['server_type'] == 'nginx'){
 			unset($app->tform->formDef["tabs"]["fastcgi"]);
 			unset($app->tform->formDef["tabs"]["vlogger"]);
 		}
-		
+		//Check if borg is installed
+		$is_borg_installed = false;
+		if($this->id != $conf['server_id']) {
+			$mon = $app->db->queryOneRecord('SELECT `data` FROM `monitor_data` WHERE `server_id` = ? AND `type` = ? ORDER BY `created` DESC', $this->id, 'backup_utils');
+			if($mon) {
+				$missing_utils = unserialize($mon['data']);
+				if($missing_utils) {
+					$missing_utils = $missing_utils['missing_utils'];
+					$is_borg_installed = ! in_array('borg', $missing_utils);
+				}
+			}
+		} else {
+			$is_borg_installed = $app->system->is_installed('borg');
+		}
+		if ( ! $is_borg_installed) {
+			$app->tpl->setVar('missing_utils', 'BorgBackup');
+		}
 		parent::onShow();
 	}
 
@@ -79,7 +95,7 @@ class page_action extends tform_actions {
 	function onShowEdit() {
 		global $app, $conf;
 
-		if($_SESSION["s"]["user"]["typ"] != 'admin') die('This function needs admin priveliges');
+		if($_SESSION["s"]["user"]["typ"] != 'admin') die('This function needs admin privileges');
 
 		if($app->tform->errorMessage == '') {
 			$app->uses('ini_parser,getconf');
@@ -90,8 +106,12 @@ class page_action extends tform_actions {
 			$this->dataRecord = $app->getconf->get_server_config($server_id, $section);
 
 			if($section == 'mail'){
-				$server_config = $app->getconf->get_server_config($server_id, 'server');
-				$rspamd_url = 'https://'.$server_config['hostname'].':8081/rspamd/';
+				if(trim($this->dataRecord['rspamd_url'] == '')) {
+					$server_config = $app->getconf->get_server_config($server_id, 'server');
+					$rspamd_url = 'https://'.$server_config['hostname'].':8081/rspamd/';
+				} else {
+					$rspamd_url = $this->dataRecord['rspamd_url'];
+				}
 			}
 		}
 
@@ -115,7 +135,7 @@ class page_action extends tform_actions {
 	function onUpdateSave($sql) {
 		global $app, $conf;
 
-		if($_SESSION["s"]["user"]["typ"] != 'admin') die('This function needs admin priveliges');
+		if($_SESSION["s"]["user"]["typ"] != 'admin') die('This function needs admin privileges');
 		$app->uses('ini_parser,getconf');
 
 		if($conf['demo_mode'] != true) {
@@ -192,10 +212,11 @@ class page_action extends tform_actions {
 							$app->db->datalogUpdate('mail_user', $mail_user, 'mailuser_id', $mail_user["mailuser_id"], true);
 							$mail_user['autoresponder'] = 'y';
 							$app->db->datalogUpdate('mail_user', $mail_user, 'mailuser_id', $mail_user["mailuser_id"], true);
-						} elseif($mail_user['move_junk'] == 'y') {
+						} elseif($mail_user['move_junk'] != 'n') {
+							$save = $mail_user['move_junk'];
 							$mail_user['move_junk'] = 'n';
 							$app->db->datalogUpdate('mail_user', $mail_user, 'mailuser_id', $mail_user["mailuser_id"], true);
-							$mail_user['move_junk'] = 'y';
+							$mail_user['move_junk'] = $save;
 							$app->db->datalogUpdate('mail_user', $mail_user, 'mailuser_id', $mail_user["mailuser_id"], true);
 						} else {
 							$app->db->datalogUpdate('mail_user', $mail_user, 'mailuser_id', $mail_user["mailuser_id"], true);

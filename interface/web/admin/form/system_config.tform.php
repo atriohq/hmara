@@ -34,7 +34,7 @@
 */
 
 $form["title"]   = "system_config_title";
-$form["description"]  = "system_config_desc_txt";
+//$form["description"]  = "system_config_desc_txt";
 $form["name"]   = "system_config";
 $form["action"]  = "system_config_edit.php";
 $form["db_table"] = "sys_ini";
@@ -148,6 +148,12 @@ $form["tabs"]['sites'] = array (
 			'width'  => '30',
 			'maxlength' => '255'
 		),
+		'client_protection' => array (
+			'datatype' => 'VARCHAR',
+			'formtype' => 'CHECKBOX',
+			'default' => 'y',
+			'value'  => array(0 => 'n', 1 => 'y')
+		),
 		'vhost_subdomains' => array (
 			'datatype' => 'VARCHAR',
 			'formtype' => 'CHECKBOX',
@@ -173,6 +179,12 @@ $form["tabs"]['sites'] = array (
 			'value'  => array(0 => 'n', 1 => 'y')
 		),
 		'reseller_can_use_options' => array (
+			'datatype' => 'VARCHAR',
+			'formtype' => 'CHECKBOX',
+			'default' => 'n',
+			'value'  => array(0 => 'n', 1 => 'y')
+		),
+		'show_aps_menu' => array (
 			'datatype' => 'VARCHAR',
 			'formtype' => 'CHECKBOX',
 			'default' => 'n',
@@ -229,6 +241,12 @@ $form["tabs"]['sites'] = array (
 			'separator' => ',',
 			'value'  => array('no' => 'Disabled', 'fast-cgi' => 'Fast-CGI', 'cgi' => 'CGI', 'mod' => 'Mod-PHP', 'suphp' => 'SuPHP', 'php-fpm' => 'PHP-FPM', 'hhvm' => 'HHVM')
 		),
+		'ssh_authentication' => array(
+			'datatype' => 'VARCHAR',
+			'formtype' => 'SELECT',
+			'default' => '',
+			'value'  => array('' => 'ssh_authentication_password_key', 'password' => 'ssh_authentication_password', 'key' => 'ssh_authentication_key')
+		)
 		//#################################
 		// END Datatable fields
 		//#################################
@@ -248,6 +266,18 @@ $form["tabs"]['mail'] = array (
 			'formtype' => 'CHECKBOX',
 			'default' => 'n',
 			'value' => array(0 => 'n', 1 => 'y')
+		),
+		'enable_welcome_mail' => array(
+			'datatype' => 'VARCHAR',
+			'formtype' => 'CHECKBOX',
+			'default' => 'y',
+			'value' => array(0 => 'n', 1 => 'y')
+		),
+		'show_per_domain_relay_options' => array(
+			'datatype' => 'VARCHAR',
+			'formtype' => 'CHECKBOX',
+			'default' => 'n',
+			'value'    => array(0 => 'n', 1 => 'y')
 		),
 		'mailbox_show_autoresponder_tab' => array (
 			'datatype' => 'VARCHAR',
@@ -451,6 +481,12 @@ $form["tabs"]['dns'] = array (
 			'value'  => '',
 			'name'  => 'default_slave_dnsserver'
 		),
+		'dns_show_zoneexport' => array (
+			'datatype' => 'VARCHAR',
+			'formtype' => 'CHECKBOX',
+			'default' => 'n',
+			'value'  => array(0 => 'n', 1 => 'y')
+		),
 		//#################################
 		// END Datatable fields
 		//#################################
@@ -562,7 +598,7 @@ $form["tabs"]['misc'] = array (
 					1 => array( 'event' => 'SAVE',
 					'type' => 'STRIPNL')
 			),
-			'default' => 'http://www.ispconfig.org/atom',
+			'default' => 'https://www.ispconfig.org/atom',
 			'value'  => ''
 		),
 		'dashboard_atom_url_reseller' => array (
@@ -574,7 +610,7 @@ $form["tabs"]['misc'] = array (
 					1 => array( 'event' => 'SAVE',
 					'type' => 'STRIPNL')
 			),
-			'default' => 'http://www.ispconfig.org/atom',
+			'default' => 'https://www.ispconfig.org/atom',
 			'value'  => ''
 		),
 		'dashboard_atom_url_client' => array (
@@ -586,13 +622,7 @@ $form["tabs"]['misc'] = array (
 					1 => array( 'event' => 'SAVE',
 					'type' => 'STRIPNL')
 			),
-			'default' => 'http://www.ispconfig.org/atom',
-			'value'  => ''
-		),
-		'monitor_key' => array (
-			'datatype' => 'VARCHAR',
-			'formtype' => 'TEXT',
-			'default' => '',
+			'default' => 'https://www.ispconfig.org/atom',
 			'value'  => ''
 		),
 		'tab_change_discard' => array (
@@ -614,6 +644,12 @@ $form["tabs"]['misc'] = array (
 			'value'  => array(0 => 'n', 1 => 'y')
 		),
 		'use_combobox' => array (
+			'datatype' => 'VARCHAR',
+			'formtype' => 'CHECKBOX',
+			'default' => 'y',
+			'value'  => array(0 => 'n', 1 => 'y')
+		),
+		'show_support_messages' => array (
 			'datatype' => 'VARCHAR',
 			'formtype' => 'CHECKBOX',
 			'default' => 'y',
@@ -766,12 +802,6 @@ $form["tabs"]['misc'] = array (
 			'formtype' => 'SELECT',
 			'default' => '',
 			'value'  => array('' => 'None', '1' => 'strength_1', '2' => 'strength_2', '3' => 'strength_3', '4' => 'strength_4', '5' => 'strength_5')
-		),
-		'ssh_authentication' => array(
-			'datatype' => 'VARCHAR',
-			'formtype' => 'SELECT',
-			'default' => '',
-			'value'  => array('' => 'ssh_authentication_password_key', 'password' => 'ssh_authentication_password', 'key' => 'ssh_authentication_key')
 		)
 		//#################################
 		// END Datatable fields
@@ -795,4 +825,3 @@ $form['tabs']['dns_ca'] = array (
 		)
 	)
 );
-
