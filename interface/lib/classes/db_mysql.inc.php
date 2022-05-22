@@ -134,8 +134,6 @@ class db
 	}
 
 	public function _build_query_string($sQuery = '') {
-		$sQuery = str_replace("{CLIENTNAMESQL}", $this->get_client_sql_concat_query(), $sQuery);
-
 		$iArgs = func_num_args();
 		if($iArgs > 1) {
 			$aArgs = func_get_args();
@@ -356,6 +354,7 @@ class db
 	 * @return array result row or NULL if none found
 	 */
 	public function queryOneRecord($sQuery = '') {
+		$sQuery = str_replace("{CLIENTNAMESQL}", $this->get_client_sql_concat_query(), $sQuery);
 
 		$aArgs = func_get_args();
 		if(!empty($aArgs)) {
@@ -395,6 +394,7 @@ class db
 	 * @return array all the rows in the result set
 	 */
 	public function queryAllRecords($sQuery = '') {
+		$sQuery = str_replace("{CLIENTNAMESQL}", $this->get_client_sql_concat_query(), $sQuery);
 		$aArgs = func_get_args();
 		$oResult = call_user_func_array(array(&$this, 'query'), $aArgs);
 		if(!$oResult) return array();
