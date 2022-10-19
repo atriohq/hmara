@@ -80,7 +80,7 @@ class app {
 
 			if($conf['dbmaster_host'] != '' && ($conf['dbmaster_host'] != $conf['db_host'] || ($conf['dbmaster_host'] == $conf['db_host'] && $conf['dbmaster_database'] != $conf['db_database']))) {
 				try {
-					$this->dbmaster = new db($conf['dbmaster_host'], $conf['dbmaster_user'], $conf['dbmaster_password'], $conf['dbmaster_database'], $conf['dbmaster_port'], $conf['dbmaster_client_flags']);
+					$this->dbmaster = new db($conf['dbmaster_host'], $conf['dbmaster_user'], $conf['dbmaster_password'], $conf['dbmaster_database'], $conf['dbmaster_port'], $conf['dbmaster_client_flags'], $conf['dbmaster_ssl_client_key'], $conf['dbmaster_ssl_client_cert'], $conf['dbmaster_ssl_ca_cert'], $conf['dbmaster_ssl_ca_path'], $conf['dbmaster_ssl_cipher_algos']);
 				} catch (Exception $e) {
 					$this->dbmaster = false;
 				}
