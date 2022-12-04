@@ -560,11 +560,11 @@ function _processDbState($type, $serverId, $serverState, $messages) {
 	if ($type == 'mx_ip_match') {
 		switch ($record['state']) {
 		case 'ok':
-			$messages[$app->lng("monitor_serverstate_listok_txt")][] = $app->lng("monitor_serverstate_mx_ip_matchok_txt") . ' ' .
+			$messages[$app->lng("monitor_serverstate_listok_txt")][] = $app->lng("monitor_serverstate_mx_ip_match_ok_txt") . ' ' .
 				"<a href='#' data-load-content='monitor/show_data.php?type=mx_ip_match'>[" . $app->lng("monitor_serverstate_more_txt") . "]</a>";
 			break;
 		case 'warning':
-			$messages[$app->lng("monitor_serverstate_listwarning_txt")][] = $app->lng("monitor_serverstate_mx_ip_matchwarning_txt") . ' ' .
+			$messages[$app->lng("monitor_serverstate_listwarning_txt")][] = $app->lng("monitor_serverstate_mx_ip_match_warning_txt") . ' ' .
 				"<a href='#' data-load-content='monitor/show_data.php?type=mx_ip_match'>[" . $app->lng("monitor_serverstate_more_txt") . "]</a>";
 			break;
 		default:
