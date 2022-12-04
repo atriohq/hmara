@@ -81,6 +81,9 @@ class cronjob_monitor_domain_mx  extends cronjob {
 
 		$hostname = $app->system->hostname();
 		$smtpin_ips = $this->_resolveHostnameBoth46($hostname);
+		if (empty($smtpin_ips)) {
+			$app->log('Our hostname['. $hostname . '] doet not resolve.', LOGLEVEL_WARN);
+		}
 
 		# Add additional IP's, e.g. an extrernal spamfilter/proxy.
 		if (!empty($mail_config['additional_smtp_hostnames'])) {
