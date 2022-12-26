@@ -120,9 +120,11 @@ class cronjob_monitor_domain_mx  extends cronjob {
 				reset ($mx_sorted);
 
 				$first_mx = array_shift($mx_sorted);
-				$mx_ip = gethostbyname($first_mx);
+				if (!empty($first_mx)) {
+					$mx_ip = gethostbyname($first_mx);
+				}
 
-				if (!in_array( $mx_ip, $smtpin_ips)) {
+				if (empty($mx_ip) || !in_array( $mx_ip, $smtpin_ips)) {
 					if ($maildomain['active'] == 'y') {
 						$str = 'Domain is active but the DNS does not match our IP. ( points to: ' . ($first_mx ?? 'not found') . ')';
 						$app->log('Mail domain[' . $maildomain['domain'] . ']: ' . $str, LOGLEVEL_WARN);
