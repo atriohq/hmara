@@ -344,3 +344,5 @@ $wb['jailkit_hardlinks_no_txt'] = 'Nein, entferne hardgelinkte Dateien';
 $wb['jailkit_hardlinks_yes_txt'] = 'Ja, benutze hardlinks wenn möglich';
 $wb['mailbox_soft_delete_txt'] = 'Postfach Soft-Löschung';
 $wb['mailbox_soft_delete_info_txt'] = 'wird standardmäßig nach 7 Tagen gelöscht.';
+$wb['additional_smtp_ips_txt'] = 'Additional smtp IP\'s';
+$wb['additional_smtp_hostnames_txt'] = 'Additional smtp hostnames\'s';
