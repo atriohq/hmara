@@ -584,12 +584,14 @@ class tools_monitor {
 
 		if(isset($record['data'])) {
 			$data = unserialize($record['data']);
-			$html = '';
+			$html = '<ul>';
 			foreach ($data as $domain => $text) {
-				$html .= "$domain: $text<br />";
+				$html .= "<li><span>$domain</span>: $text</li>";
 			}
+			$html .= '</ul>';
+			$html .= '<br /><p>'.$app->lng("monitor_serverstate_mx_ip_match_note_txt").'</p>';
 		} else {
-			$html = '<p>'.$app->lng("no_data_mx_ip_match_txt").'</p>';
+			$html = '<p>'.$app->lng("monitor_serverstate_mx_ip_match_nodata_txt").'</p>';
 		}
 
 		return $html;

@@ -171,4 +171,5 @@ $wb['monitor_serverstate_mx_ip_match_nodata_txt'] = 'Geen MX record controle dat
 $wb['monitor_serverstate_mx_ip_match_warning_txt'] = 'Niet alle DNS MX records komen overeen met het server IP';
 $wb['monitor_serverstate_mx_ip_match_ok_txt'] = 'Alle mail domeinen kloppen met de DNS.';
 $wb['monitor_serverstate_mx_ip_match_unknown_txt'] = 'Mail domeinen MX check onbekend.';
+$wb['monitor_serverstate_mx_ip_match_note_txt'] = 'note: If your using an external smtp service for e.g. spam filtering then add that name in the Server Config -> Mail -> Additional smtp hostnames to keep them out of this list.'
 ?>
