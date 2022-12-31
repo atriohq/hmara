@@ -345,4 +345,4 @@ $wb['jailkit_hardlinks_yes_txt'] = 'Yes, use hardlinks if possible';
 $wb['mailbox_soft_delete_txt'] = 'Mailbox soft delete';
 $wb['mailbox_soft_delete_info_txt'] = 'by default cleaned up after 7 days.';
 $wb['additional_smtp_ips_txt'] = 'Additional smtp IP\'s';
-$wb['additional_smtp_hostnames_txt'] = 'Additional smtp hostnames\'s';
+$wb['additional_smtp_hostnames_txt'] = 'Additional smtp hostnames';
