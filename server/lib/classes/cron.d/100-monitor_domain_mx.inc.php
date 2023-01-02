@@ -126,7 +126,13 @@ class cronjob_monitor_domain_mx  extends cronjob {
 
 				if (empty($mx_ip) || !in_array( $mx_ip, $smtpin_ips)) {
 					if ($maildomain['active'] == 'y') {
-						$str = 'Domain is active but the DNS does not match our IP. ( points to: ' . ($first_mx ?? 'not found') . ')';
+						$str = 'Domain is active but the DNS does not match our IP.';
+						if ($first_mx) {
+							$str .= ' (points to ' . $first_mx . ' on ' . $mx_ip . ')';
+						}
+						else {
+							$str .= ' (no mx record found)';
+						}
 						$app->log('Mail domain[' . $maildomain['domain'] . ']: ' . $str, LOGLEVEL_WARN);
 						$state = 'warning';
 						$data[$maildomain['domain']] = $str;
