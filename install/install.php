@@ -85,8 +85,6 @@ if(realpath(dirname(__FILE__)) != $cur_dir) {
 	chdir( realpath(dirname(__FILE__)) );
 }
 
-//** Install logfile
-define('ISPC_LOG_FILE', '/var/log/ispconfig_install.log');
 define('ISPC_INSTALL_ROOT', realpath(dirname(__FILE__).'/../'));
 
 //** Include the templating lib
@@ -155,9 +153,9 @@ swriteln($inst->lng('    Following will be a few questions for primary configura
 swriteln($inst->lng('    Default values are in [brackets] and can be accepted with <ENTER>.'));
 swriteln($inst->lng('    Tap in "quit" (without the quotes) to stop the installer.'."\n\n"));
 
-//** Check log file is writable (probably not root or sudo)
-if(!is_writable(dirname(ISPC_LOG_FILE))){
-	die("ERROR: Cannot write to the ".dirname(ISPC_LOG_FILE)." directory. Are you root or sudo ?\n\n");
+//** Check install dir is writable (probably not root or sudo)
+if(!is_writable(dirname('/usr/local/ispconfig'))){
+	die("ERROR: Cannot write to the /usr/local/ispconfig directory. Are you root or sudo ?\n\n");
 }
 
 //** Check for ISPConfig 2.x versions
@@ -303,6 +301,11 @@ if($install_mode == 'expert' && strtolower($inst->simple_query('Shall this serve
 	// the master DB is the same then the slave DB
 	$inst->dbmaster = $inst->db;
 }
+
+if(!is_dir($conf['ispconfig_log_dir'])) {
+	mkdir($conf['ispconfig_log_dir'], 0755, true);
+}
+define('ISPC_LOG_FILE', $conf['ispconfig_log_dir'] . '/install.log');
 
 //* Create the mysql database
 $inst->configure_database();

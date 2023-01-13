@@ -88,7 +88,6 @@ $cur_dir = getcwd();
 if(realpath(dirname(__FILE__)) != $cur_dir) die("Please run installation/update from _inside_ the install directory!\n");
 
 //** Install logfile
-define('ISPC_LOG_FILE', '/var/log/ispconfig_install.log');
 define('ISPC_INSTALL_ROOT', realpath(dirname(__FILE__).'/../'));
 
 //** Include the templating lib
@@ -112,6 +111,7 @@ $dist = get_distname();
 include_once "/usr/local/ispconfig/server/lib/config.inc.php";
 $conf_old = $conf;
 unset($conf);
+define('ISPC_LOG_FILE', $old_conf['ispconfig_log_dir'] . '/update.log');
 
 if($dist['id'] == '') die('Linux distribution or version not recognized.');
 

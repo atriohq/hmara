@@ -2982,9 +2982,6 @@ class installer_base {
 		}
 		swriteln('Using certificate path ' . $acme_cert_dir);
 
-		if(!is_dir($conf['ispconfig_log_dir'])) {
-			mkdir($conf['ispconfig_log_dir'], 0755, true);
-		}
 		$acme_log = $conf['ispconfig_log_dir'] . '/acme.log';
 
 		$ip_address_match = false;
