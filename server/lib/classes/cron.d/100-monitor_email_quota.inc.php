@@ -156,9 +156,9 @@ class cronjob_monitor_email_quota extends cronjob {
 		 * Export data to Graphite
 		 *
 		 * Install:
-		 * Add to the server/lib/config.inc.local.php file: `$conf['graphite_collector_command'] = 'ssh collector@icinga.local dummy_netcat';`
+		 * Add to the server/lib/config.inc.local.php file: `$conf['graphite_collector_command'] = 'ssh collector@graphite.local dummy_netcat';`
 		 *
-		 * On the icinga server create a user collector, with in the .ssh/authorized_keys: `command="nc -q0 127.0.0.1 2003" ssh-rsa ...` with the ssh public key of the root user on the mailserver
+		 * On the graphite server create a user collector, with in the .ssh/authorized_keys: `command="nc -q0 127.0.0.1 2003" ssh-rsa ...` with the ssh public key of the root user on the mailserver
 		 * The dummy_netcat is replaced by the actual nc command, assuring that no other commands can be executed via this key.
 		 */
 		if (!empty($data) && !empty($conf['graphite_collector_command'])) {
