@@ -199,6 +199,29 @@ class cronjob_monitor_hd_quota extends cronjob {
 		/* The new data is written, now we can delete the old one */
 		$this->_tools->delOldRecords($res['type'], $res['server_id']);
 
+		/**
+		 * Export data to Graphite
+		 *
+		 * Install:
+		 * Add to the server/lib/config.inc.local.php file: `$conf['graphite_collector_command'] = 'ssh collector@icinga.local dummy_netcat';`
+		 *
+		 * On the icinga server create a user collector, with in the .ssh/authorized_keys: `command="nc -q0 127.0.0.1 2003" ssh-rsa ...` with the ssh public key of the root user on the mailserver
+		 * The dummy_netcat is replaced by the actual nc command, assuring that no other commands can be executed via this key.
+		 */
+		if (!empty($data) && !empty($conf['graphite_collector_command'])) {
+			$server_config = $app->getconf->get_server_config($conf['server_id'], 'server');
+			$hostname = preg_replace('/\./', '_', $server_config['hostname']);
+
+			$graphite_lines = '';
+			$timestamp = time();
+			foreach ($data['user'] as $username => $stats) {
+				$username = preg_replace('/\./', '_', $username);
+				$graphite_lines .= "ispconfig.$hostname.monitor_data.disk_quota.$username $stats[used] $timestamp" . PHP_EOL;
+			}
+			file_put_contents('/tmp/usage_disk.ssv', $graphite_lines);
+			shell_exec("cat /tmp/usage_disk.ssv | " . $conf['graphite_collector_command']);
+		}
+
 
 		parent::onRunJob();
 	}
