@@ -1792,7 +1792,7 @@ class apache2_plugin {
 
 		//if proxy protocol is enabled we need to add a new port to lsiten to
 		if($web_config['vhost_proxy_protocol_enabled'] == 'y' && $data['new']['proxy_protocol'] == 'y'){
-			if((int)$web_config['vhost_proxy_protocol_http_port'] > 0) {
+			if(isset($web_config['vhost_proxy_protocol_http_port']) && (int)$web_config['vhost_proxy_protocol_http_port'] > 0) {
 				$tmp_vhost_arr['port']           = (int)$web_config['vhost_proxy_protocol_http_port'];
 				$tmp_vhost_arr['use_proxy_protocol'] = $data['new']['proxy_protocol'];
 				$vhosts[]                        = $tmp_vhost_arr;
