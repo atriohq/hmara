@@ -54,21 +54,21 @@ class sites_web_vhost_domain_plugin {
 			$app->uses('getconf');
 			$global_config = $app->getconf->get_global_config('sites');
 			if($global_config['client_protection'] == 'y') {
-				$web_domain_changes['sys_groupid'] = $client_group_id;
+				$generic_domain_changes['sys_groupid'] = $client_group_id;
 				$web_domain_changes['sys_perm_group'] = 'ru';
 			} else {
 				$sysuser = $app->db->queryOneRecord('SELECT userid FROM sys_user WHERE default_group = ?',$client_group_id);
 				$sysuser_id = (is_array($sysuser) && isset($sysuser['userid']) && $sysuser['userid'] > 0)?$sysuser['userid']:1;
 
-				$web_domain_changes['sys_userid'] = $sysuser_id;
-				$web_domain_changes['sys_groupid'] = $client_group_id;
+				$generic_domain_changes['sys_userid'] = $sysuser_id;
+				$generic_domain_changes['sys_groupid'] = $client_group_id;
 				$web_domain_changes['sys_perm_group'] = 'riud';
 			}
 		}
 		if($app->auth->has_clients($_SESSION['s']['user']['userid']) && isset($page_form->dataRecord["client_group_id"])) {
 			$client_group_id = $app->functions->intval($page_form->dataRecord["client_group_id"]);
 
-			$web_domain_changes['sys_groupid'] = $client_group_id;
+			$generic_domain_changes['sys_groupid'] = $client_group_id;
 			$web_domain_changes['sys_perm_group'] = 'riud';
 		}
 		// Get configuration for the web system
@@ -120,7 +120,7 @@ class sites_web_vhost_domain_plugin {
 					// Update the FTP user(s) too
 					$records = $app->db->queryAllRecords("SELECT ftp_user_id FROM ftp_user WHERE parent_domain_id = ?", $page_form->id);
 					foreach($records as $rec) {
-						$app->db->datalogUpdate('ftp_user', array("sys_userid" => $web_domain_changes['sys_userid'], "sys_groupid" => $web_domain_changes['sys_groupid'], "uid" => $system_user, "gid" => $system_group, "dir" => $document_root), 'ftp_user_id', $app->functions->intval($rec['ftp_user_id']));
+						$app->db->datalogUpdate('ftp_user', $generic_domain_changes + array("uid" => $system_user, "gid" => $system_group, "dir" => $document_root), 'ftp_user_id', $app->functions->intval($rec['ftp_user_id']));
 					}
 					unset($records);
 					unset($rec);
@@ -128,7 +128,7 @@ class sites_web_vhost_domain_plugin {
 					// Update the webdav user(s) too
 					$records = $app->db->queryAllRecords("SELECT webdav_user_id FROM webdav_user WHERE parent_domain_id = ?", $page_form->id);
 					foreach($records as $rec) {
-						$app->db->datalogUpdate('webdav_user', array("sys_userid" => $web_domain_changes['sys_userid'], "sys_groupid" => $web_domain_changes['sys_groupid']), 'webdav_user_id', $app->functions->intval($rec['webdav_user_id']));
+						$app->db->datalogUpdate('webdav_user', $generic_domain_changes + array('webdav_user_id', $app->functions->intval($rec['webdav_user_id'])));
 					}
 					unset($records);
 					unset($rec);
@@ -136,7 +136,7 @@ class sites_web_vhost_domain_plugin {
 					// Update the web folder(s) too
 					$records = $app->db->queryAllRecords("SELECT web_folder_id FROM web_folder WHERE parent_domain_id = ?", $page_form->id);
 					foreach($records as $rec) {
-						$app->db->datalogUpdate('web_folder', array("sys_userid" => $web_domain_changes['sys_userid'], "sys_groupid" => $web_domain_changes['sys_groupid']), 'web_folder_id', $app->functions->intval($rec['web_folder_id']));
+						$app->db->datalogUpdate('web_folder', $generic_domain_changes + array('web_folder_id', $app->functions->intval($rec['web_folder_id'])));
 					}
 					unset($records);
 					unset($rec);
@@ -144,7 +144,7 @@ class sites_web_vhost_domain_plugin {
 					//* Update all web folder users
 					$records = $app->db->queryAllRecords("SELECT web_folder_user.web_folder_user_id FROM web_folder_user, web_folder WHERE web_folder_user.web_folder_id = web_folder.web_folder_id AND web_folder.parent_domain_id = ?", $page_form->id);
 					foreach($records as $rec) {
-						$app->db->datalogUpdate('web_folder_user', array("sys_userid" => $web_domain_changes['sys_userid'], "sys_groupid" => $web_domain_changes['sys_groupid']), 'web_folder_user_id', $app->functions->intval($rec['web_folder_user_id']));
+						$app->db->datalogUpdate('web_folder_user', $generic_domain_changes + array('web_folder_user_id', $app->functions->intval($rec['web_folder_user_id'])));
 					}
 					unset($records);
 					unset($rec);
@@ -152,7 +152,7 @@ class sites_web_vhost_domain_plugin {
 					// Update the Shell user(s) too
 					$records = $app->db->queryAllRecords("SELECT shell_user_id FROM shell_user WHERE parent_domain_id = ?", $page_form->id);
 					foreach($records as $rec) {
-						$app->db->datalogUpdate('shell_user', array("sys_userid" => $web_domain_changes['sys_userid'], "sys_groupid" => $web_domain_changes['sys_groupid'], "puser" => $system_user, "pgroup" => $system_group, "dir" => $document_root), 'shell_user_id', $app->functions->intval($rec['shell_user_id']));
+						$app->db->datalogUpdate('shell_user', $generic_domain_changes + array("puser" => $system_user, "pgroup" => $system_group, "dir" => $document_root), 'shell_user_id', $app->functions->intval($rec['shell_user_id']));
 					}
 					unset($records);
 					unset($rec);
@@ -160,7 +160,7 @@ class sites_web_vhost_domain_plugin {
 					// Update the cron(s) too
 					$records = $app->db->queryAllRecords("SELECT id FROM cron WHERE parent_domain_id = ?", $page_form->id);
 					foreach($records as $rec) {
-						$app->db->datalogUpdate('cron', array("sys_userid" => $web_domain_changes['sys_userid'], "sys_groupid" => $web_domain_changes['sys_groupid']), 'id', $app->functions->intval($rec['id']));
+						$app->db->datalogUpdate('cron', $generic_domain_changes, 'id', $app->functions->intval($rec['id']));
 					}
 					unset($records);
 					unset($rec);
@@ -186,13 +186,13 @@ class sites_web_vhost_domain_plugin {
 					//* Update all databases
 					$records = $app->db->queryAllRecords("SELECT database_id FROM web_database WHERE parent_domain_id = ?", $page_form->id);
 					foreach($records as $rec) {
-						$app->db->datalogUpdate('web_database', array("sys_userid" => $web_domain_changes['sys_userid'], "sys_groupid" => $web_domain_changes['sys_groupid']), 'database_id', $app->functions->intval($rec['database_id']));
+						$app->db->datalogUpdate('web_database', $generic_domain_changes, 'database_id', $app->functions->intval($rec['database_id']));
 					}
 
 					//* Update all database users
 					$records = $app->db->queryAllRecords("SELECT web_database_user.database_user_id FROM web_database_user, web_database WHERE web_database_user.database_user_id IN (web_database.database_user_id, web_database.database_ro_user_id) AND web_database.parent_domain_id = ?", $page_form->id);
 					foreach($records as $rec) {
-						$app->db->datalogUpdate('web_database_user', array("sys_userid" => $web_domain_changes['sys_userid'], "sys_groupid" => $web_domain_changes['sys_groupid']), 'database_user_id', $app->functions->intval($rec['database_user_id']));
+						$app->db->datalogUpdate('web_database_user', $generic_domain_changes, 'database_user_id', $app->functions->intval($rec['database_user_id']));
 					}
 					unset($records);
 					unset($rec);
@@ -201,7 +201,7 @@ class sites_web_vhost_domain_plugin {
 					$records = $app->db->queryAllRecords("SELECT instance_id FROM aps_instances_settings WHERE name = 'main_domain' AND value = ?", $page_form->oldDataRecord["domain"]);
 					if(is_array($records) && !empty($records)){
 						foreach($records as $rec){
-							$app->db->datalogUpdate('aps_instances', array("sys_userid" => $web_domain_changes['sys_userid'], "sys_groupid" => $web_domain_changes['sys_groupid'], "customer_id" => $client_id), 'id', $rec['instance_id']);
+							$app->db->datalogUpdate('aps_instances', $generic_domain_changes + array("customer_id" => $client_id), 'id', $rec['instance_id']);
 						}
 					}
 					unset($records);
@@ -270,7 +270,7 @@ class sites_web_vhost_domain_plugin {
 					$backup_format_db = $page_form->dataRecord['backup_format_db'];
 					$records = $app->db->queryAllRecords("SELECT database_id FROM web_database WHERE parent_domain_id = ".$page_form->id);
 					foreach($records as $rec) {
-						$app->db->datalogUpdate('web_database', array("backup_interval" => $backup_interval, "backup_copies" => $backup_copies), 'database_id', $rec['database_id']);
+						$app->db->datalogUpdate('web_database', $generic_domain_changes + array("backup_interval" => $backup_interval, "backup_copies" => $backup_copies), 'database_id', $rec['database_id']);
 					}
 					unset($records);
 					unset($rec);
@@ -324,7 +324,7 @@ class sites_web_vhost_domain_plugin {
 		}
 
 		// Update the collected changes for the web_domain.
-		$app->db->datalogUpdate('web_domain', $web_domain_changes, 'domain_id', $page_form->id);
+		$app->db->datalogUpdate('web_domain', $generic_domain_changes + $web_domain_changes, 'domain_id', $page_form->id);
 	}
 
 }
