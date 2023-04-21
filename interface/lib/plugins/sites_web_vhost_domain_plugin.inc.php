@@ -54,16 +54,22 @@ class sites_web_vhost_domain_plugin {
 			$app->uses('getconf');
 			$global_config = $app->getconf->get_global_config('sites');
 			if($global_config['client_protection'] == 'y') {
-				$app->db->query("UPDATE web_domain SET sys_groupid = ?, sys_perm_group = 'ru' WHERE domain_id = ?", $client_group_id, $page_form->id);
+				$web_domain_changes['sys_groupid'] = $client_group_id;
+				$web_domain_changes['sys_perm_group'] = 'ru';
 			} else {
 				$sysuser = $app->db->queryOneRecord('SELECT userid FROM sys_user WHERE default_group = ?',$client_group_id);
 				$sysuser_id = (is_array($sysuser) && isset($sysuser['userid']) && $sysuser['userid'] > 0)?$sysuser['userid']:1;
-				$app->db->query("UPDATE web_domain SET sys_userid = ?, sys_groupid = ?, sys_perm_group = 'riud' WHERE domain_id = ?", $sysuser_id, $client_group_id, $page_form->id);
+
+				$web_domain_changes['sys_userid'] = $sysuser_id;
+				$web_domain_changes['sys_groupid'] = $client_group_id;
+				$web_domain_changes['sys_perm_group'] = 'riud';
 			}
 		}
 		if($app->auth->has_clients($_SESSION['s']['user']['userid']) && isset($page_form->dataRecord["client_group_id"])) {
 			$client_group_id = $app->functions->intval($page_form->dataRecord["client_group_id"]);
-			$app->db->query("UPDATE web_domain SET sys_groupid = ?, sys_perm_group = 'riud' WHERE domain_id = ?", $client_group_id, $page_form->id);
+
+			$web_domain_changes['sys_groupid'] = $client_group_id;
+			$web_domain_changes['sys_perm_group'] = 'riud';
 		}
 		// Get configuration for the web system
 		$app->uses("getconf");
@@ -109,8 +115,9 @@ class sites_web_vhost_domain_plugin {
 			if($event_name == 'sites:web_vhost_domain:on_after_update') {
 				if(($_SESSION["s"]["user"]["typ"] == 'admin' || $app->auth->has_clients($_SESSION['s']['user']['userid'])) &&  isset($page_form->dataRecord["client_group_id"]) && $page_form->dataRecord["client_group_id"] != $page_form->oldDataRecord["sys_groupid"]) {
 
-					$sql = "UPDATE web_domain SET system_user = ?, system_group = ?, document_root = ? WHERE domain_id = ?";
-					$app->db->query($sql, $system_user, $system_group, $document_root, $page_form->id);
+					$web_domain_changes['system_user'] = $system_user;
+					$web_domain_changes['system_group'] = $system_group;
+					$web_domain_changes['document_root'] = $document_root;
 
 					// Update the FTP user(s) too
 					$records = $app->db->queryAllRecords("SELECT ftp_user_id FROM ftp_user WHERE parent_domain_id = ?", $page_form->id);
@@ -210,7 +217,8 @@ class sites_web_vhost_domain_plugin {
 					$tmp=$app->db->queryOneRecord("SELECT ssl_domain FROM web_domain WHERE domain_id = ?", $page_form->id);
 					if($tmp['ssl_domain'] != '') {
 						$plain=str_replace($page_form->oldDataRecord["domain"], $app->functions->idn_encode($page_form->dataRecord["domain"]), $tmp);
-						$app->db->query("UPDATE web_domain SET ssl_domain = ? WHERE domain_id = ?", $plain, $page_form->id);
+
+						$web_domain_changes['ssl_domain'] = $plain;
 					}
 
 					$records = $app->db->queryAllRecords("SELECT domain_id,domain FROM web_domain WHERE (type = 'subdomain' OR type = 'vhostsubdomain' OR type = 'vhostalias') AND domain LIKE ?", "%." . $page_form->oldDataRecord["domain"]);
@@ -235,8 +243,7 @@ class sites_web_vhost_domain_plugin {
 
 				//* Set allow_override if empty
 				if($web_rec['allow_override'] == '') {
-					$sql = "UPDATE web_domain SET allow_override = ? WHERE domain_id = ?";
-					$app->db->query($sql, $web_config["htaccess_allow_override"], $page_form->id);
+					$web_domain_changes['allow_override'] = $web_config["htaccess_allow_override"];
 				}
 
 				//* Set php_open_basedir if empty or domain or client has been changed
@@ -244,16 +251,16 @@ class sites_web_vhost_domain_plugin {
 					(!empty($page_form->dataRecord["domain"]) && !empty($page_form->oldDataRecord["domain"]) && $app->functions->idn_encode($page_form->dataRecord["domain"]) != $page_form->oldDataRecord["domain"])) {
 					$php_open_basedir = $web_rec['php_open_basedir'];
 					$php_open_basedir = str_replace($page_form->oldDataRecord['domain'], $web_rec['domain'], $php_open_basedir);
-					$sql = "UPDATE web_domain SET php_open_basedir = ? WHERE domain_id = ?";
-					$app->db->query($sql, $php_open_basedir, $page_form->id);
+
+					$web_domain_changes['php_open_basedir'] = $php_open_basedir;
 				}
 				if(empty($web_rec['php_open_basedir']) ||
 					(isset($page_form->dataRecord["client_group_id"]) && $page_form->dataRecord["client_group_id"] != $page_form->oldDataRecord["sys_groupid"])) {
 					$document_root = str_replace("[client_id]", $client_id, $document_root);
 					$php_open_basedir = str_replace("[website_path]", $document_root, $web_config["php_open_basedir"]);
 					$php_open_basedir = str_replace("[website_domain]", $web_rec['domain'], $php_open_basedir);
-					$sql = "UPDATE web_domain SET php_open_basedir = ? WHERE domain_id = ?";
-					$app->db->query($sql, $php_open_basedir, $page_form->id);
+
+					$web_domain_changes['php_open_basedir'] = $php_open_basedir;
 				}
 
 				//* Change database backup options when web backup options have been changed
@@ -289,8 +296,11 @@ class sites_web_vhost_domain_plugin {
 				$php_open_basedir    = str_replace("[website_domain]", $app->functions->idn_encode($page_form->dataRecord['domain']), $php_open_basedir);
 				$htaccess_allow_override  = $web_config["htaccess_allow_override"];
 
-				$sql = "UPDATE web_domain SET system_user = ?, system_group = ?, document_root = ?, allow_override = ?, php_open_basedir = ?  WHERE domain_id = ?";
-				$app->db->query($sql, $system_user, $system_group, $document_root, $htaccess_allow_override, $php_open_basedir, $page_form->id);
+				$web_domain_changes['system_user'] = $system_user;
+				$web_domain_changes['system_group'] = $system_group;
+				$web_domain_changes['document_root'] = $document_root;
+				$web_domain_changes['allow_override'] = $htaccess_allow_override;
+				$web_domain_changes['php_open_basedir'] = $php_open_basedir;
 			}
 		} else {
 			if(isset($page_form->dataRecord["parent_domain_id"]) && $page_form->dataRecord["parent_domain_id"] != $page_form->oldDataRecord["parent_domain_id"]) {
@@ -305,10 +315,18 @@ class sites_web_vhost_domain_plugin {
 				$php_open_basedir = str_replace("[website_path]", $document_root, $php_open_basedir);
 				$php_open_basedir = str_replace("[website_domain]", $app->functions->idn_encode($page_form->dataRecord['domain']), $php_open_basedir);
 				$htaccess_allow_override = $parent_domain['allow_override'];
-				$sql = "UPDATE web_domain SET sys_groupid = ?,system_user = ?, system_group = ?, document_root = ?, allow_override = ?, php_open_basedir = ? WHERE domain_id = ?";
-				$app->db->query($sql, $parent_domain['sys_groupid'], $system_user, $system_group, $document_root, $htaccess_allow_override, $php_open_basedir, $page_form->id);
+
+				$web_domain_changes['sys_groupid'] = $parent_domain['sys_groupid'];
+				$web_domain_changes['system_user'] = $system_user;
+				$web_domain_changes['system_group'] = $system_group;
+				$web_domain_changes['document_root'] = $document_root;
+				$web_domain_changes['allow_override'] = $htaccess_allow_override;
+				$web_domain_changes['php_open_basedir'] = $php_open_basedir;
 			}
 		}
+
+		// Update the collected changes for the web_domain.
+		$app->db->datalogUpdate('web_domain', $web_domain_changes, 'domain_id', $page_form->id);
 	}
 
 }
