@@ -147,9 +147,8 @@ class shelluser_base_plugin {
 					}
 				}
 
-				$app->system->chown($data['new']['dir'],$data['new']['username'],false);
-				$app->system->chgrp($data['new']['dir'],$data['new']['pgroup'],false);
-
+				$app->system->chown($data['new']['dir'], 'root', false);
+				$app->system->chgrp($data['new']['dir'], 'root', false);
 
 				// call the ssh-rsa update function
 				$app->uses("getconf");
@@ -337,13 +336,12 @@ class shelluser_base_plugin {
 			// Get the UID of the user
 			$userid = intval($app->system->getuid($data['old']['username']));
 			if($userid > $this->min_uid) {
-				$web = $app->db->queryOneRecord("SELECT * FROM web_domain WHERE domain_id = ".intval($data['old']['parent_domain_id']));
+				$web = $app->db->queryOneRecord("SELECT * FROM web_domain WHERE domain_id = ?", $data['old']['parent_domain_id']);
 
 				// check if we have to delete the dir
 				$check = $app->db->queryOneRecord('SELECT shell_user_id FROM `shell_user` WHERE `dir` = ?', $data['old']['dir']);
 				if(!$check && is_dir($data['old']['dir'])) {
 
-					$web = $app->db->queryOneRecord("SELECT * FROM web_domain WHERE domain_id = ?", $data['old']['parent_domain_id']);
 					$app->system->web_folder_protection($web['document_root'], false);
 
 					// delete dir
@@ -477,7 +475,11 @@ class shelluser_base_plugin {
 			// Remove duplicate keys
 			$existing_keys = @file($sshkeys, FILE_IGNORE_NEW_LINES);
 			$new_keys = explode("\n", $userkey);
-			$final_keys_arr = @array_merge($existing_keys, $new_keys);
+			if(is_array($existing_keys)) {
+				$final_keys_arr = @array_merge($existing_keys, $new_keys);
+			} else {
+				$final_keys_arr = $new_keys;
+			}
 			$new_final_keys_arr = array();
 			if(is_array($final_keys_arr) && !empty($final_keys_arr)){
 				foreach($final_keys_arr as $key => $val){

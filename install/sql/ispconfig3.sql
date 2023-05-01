@@ -568,7 +568,7 @@ INSERT INTO `dns_ssl_ca` (`id`, `sys_userid`, `sys_groupid`, `sys_perm_user`, `s
 (NULL, 1, 1, 'riud', 'riud', '', 'Y', 'certSIGN', 'certsign.ro', 'Y', '', 0),
 (NULL, 1, 1, 'riud', 'riud', '', 'Y', 'CFCA', 'cfca.com.cn', 'Y', '', 0),
 (NULL, 1, 1, 'riud', 'riud', '', 'Y', 'Chunghwa Telecom', 'cht.com.tw', 'Y', '', 0),
-(NULL, 1, 1, 'riud', 'riud', '', 'Y', 'Sectigo / Comodo CA', 'comodoca.com', 'Y', '', 0),
+(NULL, 1, 1, 'riud', 'riud', '', 'Y', 'Sectigo (formerly Comodo CA)', 'sectigo.com', 'Y', '', 0),
 (NULL, 1, 1, 'riud', 'riud', '', 'Y', 'D-TRUST', 'd-trust.net', 'Y', '', 0),
 (NULL, 1, 1, 'riud', 'riud', '', 'Y', 'DigiCert', 'digicert.com', 'Y', '', 0),
 (NULL, 1, 1, 'riud', 'riud', '', 'Y', 'DocuSign', 'docusign.fr', 'Y', '', 0),
@@ -1101,6 +1101,7 @@ CREATE TABLE `mail_user` (
   `last_quota_notification` date NULL default NULL,
   `backup_interval` VARCHAR( 255 ) NOT NULL default 'none',
   `backup_copies` INT NOT NULL DEFAULT '1',
+  `imap_prefix` varchar(255) NULL default NULL,
   PRIMARY KEY  (`mailuser_id`),
   KEY `server_id` (`server_id`,`email`),
   KEY `email_access` (`email`,`access`)
