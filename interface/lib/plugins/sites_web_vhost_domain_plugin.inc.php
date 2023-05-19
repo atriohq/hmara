@@ -44,6 +44,9 @@ class sites_web_vhost_domain_plugin {
 		global $app, $conf;
 
 		$vhostdomain_type = 'domain';
+		$generic_domain_changes = array();
+		$web_domain_changes = array();
+
 		if($page_form->dataRecord['type'] == 'vhostalias') $vhostdomain_type = 'aliasdomain';
 		elseif($page_form->dataRecord['type'] == 'vhostsubdomain') $vhostdomain_type = 'subdomain';
 
