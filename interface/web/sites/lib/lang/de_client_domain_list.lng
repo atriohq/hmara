@@ -1,0 +1,5 @@
+<?php
+$wb['list_head_txt'] = 'Domains im Account';
+$wb['domain_txt'] = 'Domain';
+$wb['domain_del_txt'] = 'Wenden Sie sich an den Support um eine Domain zu entfernen';
+?>

@@ -107,4 +107,10 @@ $wb['show_aps_menu_note_txt'] = 'APS 将在不久的将来从面板中移除。'
 $wb['show_aps_menu_note_url_txt'] = '点击这里了解更多信息。';
 $wb['dns_show_zoneexport_txt'] = '显示区域导出。';
 $wb['le_caa_autocreate_options_txt'] = '在颁发 LE 时启用 CAA 记录的自动创建';
+$wb['use_domain_verification_hint'] = 'Allow User to add external domains with TXT entry in their external domain. Only usefull if domain limits is enabled';
+$wb['use_domain_verification_txt'] = 'Allow User to add external domain';
+$wb['ca_critical_txt'] = 'Strict Check';
+$wb['show_delete_on_forms_txt'] = 'Show delete button on edit forms';
+$wb['domain_verification_prefix_txt'] = 'External Domain:<br> Prefix for auth string';
+$wb['domain_verification_prefix_error_regex'] = 'Only A-Z allowed in Auth string [2-10 chars]';
 ?>

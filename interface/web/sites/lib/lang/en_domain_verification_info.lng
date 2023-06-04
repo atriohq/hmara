@@ -1,0 +1,11 @@
+<?php
+$wb['btn_cancel_txt'] = 'Back';
+$wb['btn_save_txt'] = 'Check again';
+$wb['domain_verification_txt'] = 'External domain';
+$wb['add_new_domain_verification'] = 'New external domain';
+$wb['domain_verification_info1_txt'] = 'Add in the DNS setting of you external domain';
+$wb['domain_verification_info2_txt'] = 'this <strong>TXT</strong> entry';
+$wb['domain_verification_info3_txt'] = 'The domain';
+$wb['domain_verification_info4_txt'] = 'was added';
+$wb['domain_verification_desc_txt'] = 'No entry found. (It may take some time for a DNS setting to become active)';
+?>

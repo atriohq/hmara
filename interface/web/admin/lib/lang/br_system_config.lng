@@ -108,4 +108,9 @@ $wb['show_aps_menu_note_url_txt'] = 'Click here for more information.';
 $wb['monitor_key_txt'] = 'Senha do Monitor';
 $wb['dns_show_zoneexport_txt'] = 'Show zone export.';
 $wb['le_caa_autocreate_options_txt'] = 'Enable automatic creation of CAA record on issuing LE';
+$wb['use_domain_verification_hint'] = 'Allow User to add external domains with TXT entry in their external domain. Only usefull if domain limits is enabled';
+$wb['use_domain_verification_txt'] = 'Allow User to add external domain';
 $wb['show_delete_on_forms_txt'] = 'Show delete button on edit forms';
+$wb['domain_verification_prefix_txt'] = 'External Domain:<br> Prefix for auth string';
+$wb['domain_verification_prefix_error_regex'] = 'Only A-Z allowed in Auth string [2-10 chars]';
+?>
