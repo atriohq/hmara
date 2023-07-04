@@ -162,7 +162,9 @@ class page_action extends tform_actions {
 		} // end if user is not admin
 		
 		// Check that the record does not yet exist
-		$existing_records = $app->db->queryAllRecords("SELECT id FROM dns_rr WHERE zone = ? AND name = ? AND type = 'TXT' AND data LIKE 'v=spf1%'", $_POST['zone'], $_POST['name']);
+		$existing_records = $app->db->queryAllRecords("SELECT id FROM dns_rr WHERE zone = ? AND (name = ? OR (name = ? AND ? = '') OR (name = '' AND ? = ?)) AND type = 'TXT' AND data LIKE 'v=spf1%'",
+													$_POST['zone'], $_POST['name'], $soa['origin'], $_POST['name'], $_POST['name'], $soa['origin'] );
+
 		if (!empty($existing_records)) {
 			if (count($existing_records) > 1) {
 				$multiple_existing_records_error_txt = $app->tform->wordbook['spf_record_exists_multiple_txt'];
