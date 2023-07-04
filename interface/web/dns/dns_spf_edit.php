@@ -109,6 +109,11 @@ class page_action extends tform_actions {
 			$spf_domain = rtrim($spf_domain);
 			$spf_mechanism = substr($rec['data'], -4, 1);
 		}
+		else {
+			$sql = "SELECT origin FROM dns_soa WHERE id = ? AND " . $app->tform->getAuthSQL('r');
+			$rec = $app->db->queryOneRecord($sql, $app->functions->intval($_REQUEST["zone"]));
+			$app->tpl->setVar("name", $rec['origin'], true);
+		}
 
 		//set html-values
 		$app->tpl->setVar("spf_ip", $spf_ip, true);
