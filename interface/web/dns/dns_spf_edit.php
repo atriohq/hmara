@@ -161,9 +161,16 @@ class page_action extends tform_actions {
 			}
 		} // end if user is not admin
 		
-		// Check that the record does not yet exist
-		$existing_records = $app->db->queryAllRecords("SELECT id FROM dns_rr WHERE zone = ? AND (name = ? OR (name = ? AND ? = '') OR (name = '' AND ? = ?)) AND type = 'TXT' AND data LIKE 'v=spf1%'",
-													$_POST['zone'], $_POST['name'], $soa['origin'], $_POST['name'], $_POST['name'], $soa['origin'] );
+		// Check that the record does not yet exist.
+		// '' and 'example.com.' are effectively the same name.
+		$existing_records = $app->db->queryAllRecords("SELECT r.*, s.origin FROM dns_rr r
+					LEFT JOIN dns_soa s ON (r.zone=s.id)
+					WHERE zone = ? AND type = 'TXT' AND data LIKE 'v=spf1%' AND " . $app->tform->getAuthSQL('r'), $_POST['zone']);
+		foreach ($existing_records as $key => $r) {
+			if (!empty($r['name']) && $re['name'] != $r['origin'] ) {
+				unset($existing_records[$key]);
+			}
+		}
 
 		if (!empty($existing_records)) {
 			if (count($existing_records) > 1) {
