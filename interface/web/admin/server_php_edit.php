@@ -57,11 +57,13 @@ class page_action extends tform_actions {
 	function onShowEdit() {
 		global $app, $conf;
 
-		$result = $app->db->queryAllRecords("SELECT w.domain
-			FROM server_php s LEFT JOIN web_domain w ON (w.server_php_id = s.server_php_id AND s.server_id=w.server_id)
-			WHERE s.server_php_id = ?", $this->id);
+		if ($this->active_tab == 'usage') {
+			$result = $app->db->queryAllRecords("SELECT w.domain
+				FROM server_php s LEFT JOIN web_domain w ON (w.server_php_id = s.server_php_id AND s.server_id=w.server_id)
+				WHERE s.server_php_id = ?", $this->id);
 
-		$app->tpl->setLoop('php_usage_list', $result);
+			$app->tpl->setLoop('php_usage_list', $result);
+		}
 
 		parent::onShowEdit();
 	}
