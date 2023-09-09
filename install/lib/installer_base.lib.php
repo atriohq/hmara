@@ -3634,7 +3634,7 @@ class installer_base extends stdClass {
 		chmod($install_dir.'/interface/lib/config.inc.php', 0600);
 		chown($install_dir.'/interface/lib/config.inc.php', 'ispconfig');
 		chgrp($install_dir.'/interface/lib/config.inc.php', 'ispconfig');
-		if(is_dir($install_dir.'/interface/lib/config.inc.php~')) {
+		if(is_file($install_dir.'/interface/lib/config.inc.php~')) {
 			chmod($install_dir.'/interface/lib/config.inc.php~', 0600);
 			chown($install_dir.'/interface/lib/config.inc.php~', 'ispconfig');
 			chgrp($install_dir.'/interface/lib/config.inc.php~', 'ispconfig');
