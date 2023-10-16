@@ -211,6 +211,7 @@ class installer_base extends stdClass {
 		if(is_installed('postfix')) $conf['postfix']['installed'] = true;
 		if(is_installed('postgrey')) $conf['postgrey']['installed'] = true;
 		if(is_installed('mailman') || is_installed('mmsitepass')) $conf['mailman']['installed'] = true;
+		if(is_installed('sympa')) $conf['sympa']['installed'] = true;
 		if(is_installed('apache') || is_installed('apache2') || is_installed('httpd') || is_installed('httpd2')) $conf['apache']['installed'] = true;
 		if(is_installed('getmail')) $conf['getmail']['installed'] = true;
 		if(is_installed('courierlogger')) $conf['courier']['installed'] = true;
@@ -962,6 +963,105 @@ class installer_base extends stdClass {
 
 		// load files
 		$content = rfsel($conf['ispconfig_install_dir'].'/server/conf-custom/install/mm_cfg.py.master', 'tpl/mm_cfg.py.master');
+		$old_file = rf($full_file_name);
+
+		$old_options = array();
+		$lines = explode("\n", $old_file);
+		foreach ($lines as $line)
+		{
+			if (trim($line) != '' && substr($line, 0, 1) != '#')
+			{
+				@list($key, $value) = @explode("=", $line);
+				if (isset($value) && $value !== '')
+				{
+					$key = rtrim($key);
+					$old_options[$key] = trim($value);
+				}
+			}
+		}
+
+		$virtual_domains = '';
+		if($status == 'update')
+		{
+			// create virtual_domains list
+			$domainAll = $this->db->queryAllRecords("SELECT domain FROM mail_mailinglist GROUP BY domain");
+
+			if(is_array($domainAll)) {
+				foreach($domainAll as $domain)
+				{
+					if ($domainAll[0]['domain'] == $domain['domain'])
+						$virtual_domains .= "'".$domain['domain']."'";
+					else
+						$virtual_domains .= ", '".$domain['domain']."'";
+				}
+			}
+		}
+		else
+			$virtual_domains = "' '";
+
+		$content = str_replace('{hostname}', $conf['hostname'], $content);
+		if(!isset($old_options['DEFAULT_SERVER_LANGUAGE']) || $old_options['DEFAULT_SERVER_LANGUAGE'] == '') $old_options['DEFAULT_SERVER_LANGUAGE'] = "'en'";
+		$content = str_replace('{default_language}', $old_options['DEFAULT_SERVER_LANGUAGE'], $content);
+		$content = str_replace('{virtual_domains}', $virtual_domains, $content);
+
+		wf($full_file_name, $content);
+
+		//* Write virtual_to_transport.sh script
+		$config_dir = $conf['mailman']['config_dir'].'/';
+		$full_file_name = $config_dir.'virtual_to_transport.sh';
+
+		//* Backup exiting virtual_to_transport.sh script
+		if(is_file($full_file_name)) {
+			copy($full_file_name, $config_dir.'virtual_to_transport.sh~');
+		}
+
+		if(is_dir('/etc/mailman')) {
+			if(is_file($conf['ispconfig_install_dir'].'/server/conf-custom/install/mailman-virtual_to_transport.sh')) {
+				copy($conf['ispconfig_install_dir'].'/server/conf-custom/install/mailman-virtual_to_transport.sh', $full_file_name);
+			} else {
+				copy('tpl/mailman-virtual_to_transport.sh', $full_file_name);
+			}
+			chgrp($full_file_name, $this->mailman_group);
+			chmod($full_file_name, 0755);
+		}
+
+		//* Create aliasaes
+		if($status == 'install') exec('/usr/lib/mailman/bin/genaliases 2>/dev/null');
+
+		if(!is_file('/var/lib/mailman/data/transport-mailman')) touch('/var/lib/mailman/data/transport-mailman');
+		exec('/usr/sbin/postmap /var/lib/mailman/data/transport-mailman');
+	}
+
+	public function configure_sympa($status = 'insert') {
+		global $conf;
+
+		$data_dir = '/var/lib/sympa';
+		if (($conf['sympa']['installed'] != true) && is_dir($data_dir)) {
+			rename($data_dir, $data_dir . '-bk');
+			//* Create the mailman files
+			if(!is_dir('/etc/sympa')) exec('mkdir -p /etc/sympa');
+			if(!is_file('/etc/sympa/transport.sympa')) touch('/etc/sympa/transport.sympa');
+			exec('postmap hash:/etc/sympa/transport.sympa');
+			if(!is_file('/etc/sympa/virtual.sympa')) touch('/etc/sympa/virtual.sympa');
+			exec('postmap hash:/etc/sympa/virtual.sympa');
+			if(!is_file('/etc/sympa/sympa_transport')) touch('/etc/sympa/sympa_transport');
+			exec('chmod 644 /etc/sympa/sympa_transport');
+			exec('chown sympa:sympa /etc/sympa/sympa_transport');
+			exec('/usr/lib/sympa/bin/sympa_newaliases.pl');
+			exec('postmap hash:/etc/sympa/sympa_transport');
+			exec('chmod 640 /etc/sympa/sympa_transport /etc/sympa/sympa_transport.db');
+			exec('chgrp postfix /etc/sympa/sympa_transport /etc/sympa/sympa_transport.db');
+		}
+
+		$config_dir = $conf['sympa']['config_dir'].'/';
+		$full_file_name = $config_dir.'sympa.conf';
+		//* Backup exiting file
+		if(is_file($full_file_name)) {
+			copy($full_file_name, $config_dir.'sympa.conf.master~');
+		}
+
+		// load files
+		$content = rfsel($conf['ispconfig_install_dir'].'/server/conf-custom/install/sympa.conf.master', 'tpl/sympa.conf.master.master');
 		$old_file = rf($full_file_name);
 
 		$old_options = array();
