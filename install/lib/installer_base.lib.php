@@ -1041,16 +1041,23 @@ class installer_base extends stdClass {
 			//* Create the mailman files
 			if(!is_dir('/etc/sympa')) exec('mkdir -p /etc/sympa');
 			if(!is_file('/etc/sympa/transport.sympa')) touch('/etc/sympa/transport.sympa');
-			exec('postmap hash:/etc/sympa/transport.sympa');
+			exec('/usr/sbin/postmap hash:/etc/sympa/transport.sympa');
 			if(!is_file('/etc/sympa/virtual.sympa')) touch('/etc/sympa/virtual.sympa');
-			exec('postmap hash:/etc/sympa/virtual.sympa');
+			exec('/usr/sbin/postmap hash:/etc/sympa/virtual.sympa');
 			if(!is_file('/etc/sympa/sympa_transport')) touch('/etc/sympa/sympa_transport');
-			exec('chmod 644 /etc/sympa/sympa_transport');
-			exec('chown sympa:sympa /etc/sympa/sympa_transport');
+			//exec('chmod 644 /etc/sympa/sympa_transport');
+			chmod('/etc/sympa/sympa_transport', 0644);
+			chown('/etc/sympa/sympa_transport', 'sympa');
+			chgrp('/etc/sympa/sympa_transport', 'sympa');
+			//exec('chown sympa:sympa /etc/sympa/sympa_transport');
 			exec('/usr/lib/sympa/bin/sympa_newaliases.pl');
-			exec('postmap hash:/etc/sympa/sympa_transport');
-			exec('chmod 640 /etc/sympa/sympa_transport /etc/sympa/sympa_transport.db');
-			exec('chgrp postfix /etc/sympa/sympa_transport /etc/sympa/sympa_transport.db');
+			exec('/usr/sbin/postmap hash:/etc/sympa/sympa_transport');
+			//exec('chmod 640 /etc/sympa/sympa_transport /etc/sympa/sympa_transport.db');
+			chmod('etc/sympa/sympa_transport', 0640);
+			chmod('etc/sympa/sympa_transport.db', 0640);
+			chgrp('/etc/sympa/sympa_transport', 'postfix');
+			chgrp('/etc/sympa/sympa_transport.db', 'postfix');
+			//exec('chgrp postfix /etc/sympa/sympa_transport /etc/sympa/sympa_transport.db');
 		}
 
 		$config_dir = $conf['sympa']['config_dir'].'/';
@@ -1079,6 +1086,24 @@ class installer_base extends stdClass {
 			}
 		}
 
+		//* Configure master.cf and add a line for deliver
+		if(!$this->get_postfix_service('sympa', 'unix')) {
+			//* backup
+		   if(is_file($config_dir.'/master.cf')){
+			   copy($config_dir.'/master.cf', $config_dir.'/master.cf~2');
+		   }
+		   if(is_file($config_dir.'/master.cf~2')){
+			   chmod($config_dir.'/master.cf~2', 0400);
+		   }
+		   //* Configure master.cf and add a line for deliver
+		   $content = rf($config_dir.'/master.cf');
+		   $deliver_content = 'sympa   unix  -       n       n       -       -       pipe'."\n".'  flags=hqRu null_sender= user=sympa argv=/usr/lib/sympa/bin/queue ${nexthop}'."\n";
+		   $deliver_content .= 'sympabounce   unix  -       n       n       -       -       pipe'."\n".'  flags=hqRu null_sender= user=sympa argv=/usr/lib/sympa/bin/bouncequeue ${nexthop}'."\n";
+		   af($config_dir.'/master.cf', $deliver_content);
+		   unset($content);
+		   unset($deliver_content);
+	   }
+
 		$virtual_domains = '';
 		if($status == 'update')
 		{
@@ -1099,14 +1124,14 @@ class installer_base extends stdClass {
 			$virtual_domains = "' '";
 
 		$content = str_replace('{hostname}', $conf['hostname'], $content);
-		if(!isset($old_options['DEFAULT_SERVER_LANGUAGE']) || $old_options['DEFAULT_SERVER_LANGUAGE'] == '') $old_options['DEFAULT_SERVER_LANGUAGE'] = "'en'";
+		if(!isset($old_options['DEFAULT_SERVER_LANGUAGE']) || $old_options['DEFAULT_SERVER_LANGUAGE'] == '') $old_options['DEFAULT_SERVER_LANGUAGE'] = "'en_US'";
 		$content = str_replace('{default_language}', $old_options['DEFAULT_SERVER_LANGUAGE'], $content);
 		$content = str_replace('{virtual_domains}', $virtual_domains, $content);
 
 		wf($full_file_name, $content);
 
 		//* Write virtual_to_transport.sh script
-		$config_dir = $conf['mailman']['config_dir'].'/';
+		$config_dir = $conf['sympa']['config_dir'].'/';
 		$full_file_name = $config_dir.'virtual_to_transport.sh';
 
 		//* Backup exiting virtual_to_transport.sh script
@@ -1125,7 +1150,7 @@ class installer_base extends stdClass {
 		}
 
 		//* Create aliasaes
-		if($status == 'install') exec('/usr/lib/mailman/bin/genaliases 2>/dev/null');
+		if($status == 'install') exec('/usr/lib/sympa/bin/sympa_newaliases.pl 2>/dev/null');
 
 		if(!is_file('/var/lib/mailman/data/transport-mailman')) touch('/var/lib/mailman/data/transport-mailman');
 		exec('/usr/sbin/postmap /var/lib/mailman/data/transport-mailman');
