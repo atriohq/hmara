@@ -1035,36 +1035,33 @@ class installer_base extends stdClass {
 	public function configure_sympa($status = 'insert') {
 		global $conf;
 
+		# https://www.sympa.community/manual/install/configure-mail-server-postfix.html
 		$data_dir = '/var/lib/sympa';
 		if (($conf['sympa']['installed'] != true) && is_dir($data_dir)) {
 			rename($data_dir, $data_dir . '-bk');
-			//* Create the mailman files
+			//* Create the Sympa files
 			if(!is_dir('/etc/sympa')) exec('mkdir -p /etc/sympa');
 			if(!is_file('/etc/sympa/transport.sympa')) touch('/etc/sympa/transport.sympa');
-			exec('/usr/sbin/postmap hash:/etc/sympa/transport.sympa');
 			if(!is_file('/etc/sympa/virtual.sympa')) touch('/etc/sympa/virtual.sympa');
-			exec('/usr/sbin/postmap hash:/etc/sympa/virtual.sympa');
 			if(!is_file('/etc/sympa/sympa_transport')) touch('/etc/sympa/sympa_transport');
-			//exec('chmod 644 /etc/sympa/sympa_transport');
 			chmod('/etc/sympa/sympa_transport', 0644);
 			chown('/etc/sympa/sympa_transport', 'sympa');
 			chgrp('/etc/sympa/sympa_transport', 'sympa');
-			//exec('chown sympa:sympa /etc/sympa/sympa_transport');
-			exec('/usr/lib/sympa/bin/sympa_newaliases.pl');
-			exec('/usr/sbin/postmap hash:/etc/sympa/sympa_transport');
-			//exec('chmod 640 /etc/sympa/sympa_transport /etc/sympa/sympa_transport.db');
+			exec('/usr/sbin/postmap hash:/etc/sympa/transport.sympa');
+			exec('/usr/sbin/postmap hash:/etc/sympa/virtual.sympa');
+			exec('/usr/lib/sympa/bin/sympa_newaliases.pl 2>/dev/null');
+			## exec('/usr/sbin/postmap hash:/etc/sympa/sympa_transport');
 			chmod('etc/sympa/sympa_transport', 0640);
 			chmod('etc/sympa/sympa_transport.db', 0640);
 			chgrp('/etc/sympa/sympa_transport', 'postfix');
 			chgrp('/etc/sympa/sympa_transport.db', 'postfix');
-			//exec('chgrp postfix /etc/sympa/sympa_transport /etc/sympa/sympa_transport.db');
 		}
 
 		$config_dir = $conf['sympa']['config_dir'].'/';
 		$full_file_name = $config_dir.'sympa.conf';
 		//* Backup exiting file
 		if(is_file($full_file_name)) {
-			copy($full_file_name, $config_dir.'sympa.conf.master~');
+			copy($full_file_name, $config_dir.'sympa.conf~');
 		}
 
 		// load files
@@ -1130,30 +1127,27 @@ class installer_base extends stdClass {
 
 		wf($full_file_name, $content);
 
-		//* Write virtual_to_transport.sh script
+		//* Write list_aliases.tt2 script
 		$config_dir = $conf['sympa']['config_dir'].'/';
-		$full_file_name = $config_dir.'virtual_to_transport.sh';
+		$full_file_name = $config_dir.'list_aliases.tt2';
 
-		//* Backup exiting virtual_to_transport.sh script
+		//* Backup exiting list_aliases.tt2 file
 		if(is_file($full_file_name)) {
-			copy($full_file_name, $config_dir.'virtual_to_transport.sh~');
+			copy($full_file_name, $config_dir.'list_aliases.tt2~');
 		}
 
-		if(is_dir('/etc/mailman')) {
-			if(is_file($conf['ispconfig_install_dir'].'/server/conf-custom/install/mailman-virtual_to_transport.sh')) {
-				copy($conf['ispconfig_install_dir'].'/server/conf-custom/install/mailman-virtual_to_transport.sh', $full_file_name);
+		if(is_dir('/etc/sympa')) {
+			if(is_file($conf['ispconfig_install_dir'].'/server/conf-custom/install/list_aliases.tt2')) {
+				copy($conf['ispconfig_install_dir'].'/server/conf-custom/install/list_aliases.tt2', $full_file_name);
 			} else {
-				copy('tpl/mailman-virtual_to_transport.sh', $full_file_name);
+				copy('tpl/list_aliases.tt2', $full_file_name);
 			}
-			chgrp($full_file_name, $this->mailman_group);
-			chmod($full_file_name, 0755);
+			chgrp($full_file_name, 'sympa');
+			chmod($full_file_name, 0644);
 		}
 
 		//* Create aliasaes
 		if($status == 'install') exec('/usr/lib/sympa/bin/sympa_newaliases.pl 2>/dev/null');
-
-		if(!is_file('/var/lib/mailman/data/transport-mailman')) touch('/var/lib/mailman/data/transport-mailman');
-		exec('/usr/sbin/postmap /var/lib/mailman/data/transport-mailman');
 	}
 
 	public function get_postfix_service($service, $type) {
@@ -1418,6 +1412,23 @@ class installer_base extends stdClass {
 		exec('postmap /var/lib/mailman/data/virtual-mailman');
 		if(!is_file('/var/lib/mailman/data/transport-mailman')) touch('/var/lib/mailman/data/transport-mailman');
 		exec('/usr/sbin/postmap /var/lib/mailman/data/transport-mailman');
+
+		//* Create the Sympa files
+		if(!is_dir('/etc/sympa')) exec('mkdir -p /etc/sympa');
+		if(!is_file('/etc/sympa/transport.sympa')) touch('/etc/sympa/transport.sympa');
+		if(!is_file('/etc/sympa/virtual.sympa')) touch('/etc/sympa/virtual.sympa');
+		if(!is_file('/etc/sympa/sympa_transport')) touch('/etc/sympa/sympa_transport');
+		chmod('/etc/sympa/sympa_transport', 0644);
+		chown('/etc/sympa/sympa_transport', 'sympa');
+		chgrp('/etc/sympa/sympa_transport', 'sympa');
+		exec('/usr/sbin/postmap hash:/etc/sympa/transport.sympa');
+		exec('/usr/sbin/postmap hash:/etc/sympa/virtual.sympa');
+		exec('/usr/lib/sympa/bin/sympa_newaliases.pl 2>/dev/null');
+		## exec('/usr/sbin/postmap hash:/etc/sympa/sympa_transport');
+		chmod('etc/sympa/sympa_transport', 0640);
+		chmod('etc/sympa/sympa_transport.db', 0640);
+		chgrp('/etc/sympa/sympa_transport', 'postfix');
+		chgrp('/etc/sympa/sympa_transport.db', 'postfix');
 
 		//* Create auxillary postfix conf files
 		$configfile = 'helo_access';
