@@ -351,5 +351,6 @@ $wb['bind_zonefiles_slaveprefix_error_regex'] = 'Invalid BIND zonefiles slave pr
 $wb['bind_keyfiles_dir_error_regex'] = 'Invalid BIND keyfiles directory.';
 $wb['mailbox_soft_delete_txt'] = 'Mailbox soft delete';
 $wb['mailbox_soft_delete_info_txt'] = 'by default cleaned up after 7 days.';
+$wb['monitor_mx_records_txt'] = 'Monitor MX records for mail domains';
 $wb['additional_smtp_ips_txt'] = 'Extra  smtp IP\'s';
 $wb['additional_smtp_hostnames_txt'] = 'Extra smtp hostnames';
