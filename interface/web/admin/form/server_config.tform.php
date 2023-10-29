@@ -392,7 +392,7 @@ $form["tabs"]['server'] = array(
 		'monitor_system_updates' => array(
 			'datatype' => 'VARCHAR',
 			'formtype' => 'CHECKBOX',
-                       'default' => 'n',
+			'default' => 'y',
 			'value' => array(0 => 'n', 1 => 'y')
 		),
 		'log_retention' => array (
