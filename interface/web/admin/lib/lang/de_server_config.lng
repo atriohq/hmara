@@ -352,5 +352,5 @@ $wb['bind_zonefiles_masterprefix_error_regex'] = 'Invalid BIND zonefiles master 
 $wb['bind_zonefiles_slaveprefix_error_regex'] = 'Invalid BIND zonefiles slave prefix.';
 $wb['bind_keyfiles_dir_error_regex'] = 'Invalid BIND keyfiles directory.';
 $wb['monitor_mx_records_txt'] = 'Monitor MX records for mail domains';
-$wb['additional_smtp_ips_txt'] = 'Additional smtp IP\'s';
-$wb['additional_smtp_hostnames_txt'] = 'Additional smtp hostnames';
+$wb['additional_mx_ips_txt'] = 'Additional MX IP\'s';
+$wb['additional_mx_hostnames_txt'] = 'Additional MX hostnames';

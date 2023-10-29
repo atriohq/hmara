@@ -353,5 +353,5 @@ $wb['jailkit_hardlinks_yes_txt'] = '是的，如果可能，使用硬链接';
 $wb['mailbox_soft_delete_txt'] = '邮箱软删除';
 $wb['mailbox_soft_delete_info_txt'] = '默认情况下，7天后清理。';
 $wb['monitor_mx_records_txt'] = 'Monitor MX records for mail domains';
-$wb['additional_smtp_ips_txt'] = 'Additional smtp IP\'s';
-$wb['additional_smtp_hostnames_txt'] = 'Additional smtp hostnames';
+$wb['additional_mx_ips_txt'] = 'Additional MX IP\'s';
+$wb['additional_mx_hostnames_txt'] = 'Additional MX hostnames';
