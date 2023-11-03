@@ -28,7 +28,7 @@ NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-class installer_base {
+class installer_base extends stdClass {
 
 	var $wb = array();
 	var $language = 'en';
@@ -247,7 +247,7 @@ class installer_base {
 	//** Check prerequisites
 	public function check_prerequisites() {
 		global $conf;
-		
+
 		$msg = '';
 
 		if ($conf['default_php'] != '') {
@@ -260,6 +260,40 @@ class installer_base {
 		if(!function_exists('mb_detect_encoding')) $msg .= "PHP Multibyte Module (MB) is missing.\n";
 
 		if($msg != '') die($msg);
+	}
+
+	//** Check MySQL version
+	public function check_mysql_version() {
+		global $conf;
+
+		// Set MariaDB version to 10.0.5 and MySQL version to 8.0.4 after CentOS 7 support ended to allow preg_* functions in SQL queries
+		$min_mariadb_version = '5.5';
+		$min_mysql_version = '5.5';
+
+		$rec = $this->db->queryOneRecord('SELECT VERSION() as mysql_version');
+		if(is_array($rec)) {
+			$version = $rec['mysql_version'];
+		} else {
+			die("Unable to get MySQL or compatible version\n");
+		}
+
+		if(strpos($version,'MariaDB')) {
+			// We have MariaDB
+			$parts = explode('-',$version);
+			$version = $parts[0];
+			if(version_compare($version, $min_mariadb_version, '<')) {
+				die("Minimum required MariaDB version is " . $min_mariadb_version . ",found " . $version . "\n");
+			} else {
+				swriteln("Checking MariaDB version " . $version . " .. OK");
+			}
+		} else {
+			// We have MySQL or Percona
+			if(version_compare($version, $min_mysql_version, '<')) {
+				die("Minimum required MySQL or compatible version is " . $min_mysql_version . ",found " . $version . "\n");
+			} else {
+				swriteln("Checking MySQL or compatible version " . $version . " .. OK");
+			}
+		}
 	}
 
     public function force_configure_app($service, $enable_force=true) {
@@ -812,6 +846,14 @@ class installer_base {
 					$this->warning('Unable to set rights of user in master database: '.$value['db']."\n Query: ".$query."\n Error: ".$this->dbmaster->errorMessage);
 				}
 
+				$query = "GRANT SELECT, INSERT ON ?? TO ?@?";
+				if ($verbose){
+					echo $query ."\n";
+				}
+				if(!$this->dbmaster->query($query, $value['db'] . '.server_php', $value['user'], $host)) {
+					$this->warning('Unable to set rights of user in master database: '.$value['db']."\n Query: ".$query."\n Error: ".$this->dbmaster->errorMessage);
+				}
+
 			}
 
 		}
@@ -874,7 +916,7 @@ class installer_base {
 
 		if (is_dir($config_dir)) {
 			if(is_file($config_dir.'/'.$jk_init)) copy($config_dir.'/'.$jk_init, $config_dir.'/'.$jk_init.'~');
-			if(is_file($config_dir.'/'.$jk_chrootsh.'.master')) copy($config_dir.'/'.$jk_chrootsh.'.master', $config_dir.'/'.$jk_chrootsh.'~');
+			if(is_file($config_dir.'/'.$jk_chrootsh)) copy($config_dir.'/'.$jk_chrootsh, $config_dir.'/'.$jk_chrootsh.'~');
 
 			if(is_file($conf['ispconfig_install_dir'].'/server/conf-custom/install/'.$jk_init.'.master')) {
 				copy($conf['ispconfig_install_dir'].'/server/conf-custom/install/'.$jk_init.'.master', $config_dir.'/'.$jk_init);
@@ -1136,7 +1178,7 @@ class installer_base {
 
 		//* If there are RBL's defined, format the list and add them to smtp_recipient_restrictions to prevent removal after an update
 		$rbl_list = '';
-		if (@isset($server_ini_array['mail']['realtime_blackhole_list']) && $server_ini_array['mail']['realtime_blackhole_list'] != '') {
+		if(@isset($server_ini_array['mail']['realtime_blackhole_list']) && $server_ini_array['mail']['realtime_blackhole_list'] != '') {
 			$rbl_hosts = explode(",", str_replace(" ", "", $server_ini_array['mail']['realtime_blackhole_list']));
 			foreach ($rbl_hosts as $key => $value) {
 				$rbl_list .= ", reject_rbl_client ". $value;
@@ -1146,13 +1188,13 @@ class installer_base {
 
 		//* If Postgrey is installed, configure it
 		$greylisting = '';
-		if($conf['postgrey']['installed'] == true) {
+		if(isset($conf['postgrey']['installed']) && ($conf['postgrey']['installed'] == true)) {
 			$greylisting = ', check_recipient_access mysql:/etc/postfix/mysql-virtual_policy_greylist.cf';
 		}
 
 		$reject_sender_login_mismatch = '';
 		$reject_authenticated_sender_login_mismatch = '';
-		if (isset($server_ini_array['mail']['reject_sender_login_mismatch']) && ($server_ini_array['mail']['reject_sender_login_mismatch'] == 'y')) {
+		if(isset($server_ini_array['mail']['reject_sender_login_mismatch']) && ($server_ini_array['mail']['reject_sender_login_mismatch'] == 'y')) {
 			$reject_sender_login_mismatch = ',reject_sender_login_mismatch,';
 			$reject_authenticated_sender_login_mismatch = 'reject_authenticated_sender_login_mismatch, ';
 		}
@@ -1162,11 +1204,11 @@ class installer_base {
 		$stress_adaptive = (isset($server_ini_array['mail']['stress_adaptive']) && ($server_ini_array['mail']['stress_adaptive'] == 'y')) ? '' : $stress_adaptive_placeholder;
 
 		$reject_unknown_client_hostname='';
-		if (isset($server_ini_array['mail']['reject_unknown']) && ($server_ini_array['mail']['reject_unknown'] == 'client' || $server_ini_array['mail']['reject_unknown'] == 'client_helo')) {
+		if(isset($server_ini_array['mail']['reject_unknown']) && ($server_ini_array['mail']['reject_unknown'] == 'client' || $server_ini_array['mail']['reject_unknown'] == 'client_helo')) {
 			$reject_unknown_client_hostname=',reject_unknown_client_hostname';
 		}
 		$reject_unknown_helo_hostname='';
-		if ((!isset($server_ini_array['mail']['reject_unknown'])) || $server_ini_array['mail']['reject_unknown'] == 'helo' || $server_ini_array['mail']['reject_unknown'] == 'client_helo') {
+		if((!isset($server_ini_array['mail']['reject_unknown'])) || $server_ini_array['mail']['reject_unknown'] == 'helo' || $server_ini_array['mail']['reject_unknown'] == 'client_helo') {
 			$reject_unknown_helo_hostname=',reject_unknown_helo_hostname';
 		}
 
@@ -1311,7 +1353,7 @@ class installer_base {
 			$change_maildrop_flags = @(preg_match("/$quoted_regex/", $configfile))?false:true;
 		}
 		if ($change_maildrop_flags) {
-			//* Change maildrop service in posfix master.cf
+			//* Change maildrop service in postfix master.cf
 			if(is_file($config_dir.'/master.cf')) {
 				copy($config_dir.'/master.cf', $config_dir.'/master.cf~');
 			}
@@ -1320,8 +1362,8 @@ class installer_base {
  			}
 			$configfile = $config_dir.'/master.cf';
 			$content = rf($configfile);
-			$content =	str_replace('flags=DRhu user=vmail argv=/usr/bin/maildrop -d ${recipient}',
-						'flags=DRhu user='.$cf['vmail_username'].' argv=/usr/bin/maildrop -d '.$cf['vmail_username'].' ${extension} ${recipient} ${user} ${nexthop} ${sender}',
+			$content =	preg_replace('/flags=(DRX?hu) user=vmail argv=\/usr\/bin\/maildrop -d \${recipient}/',
+						'flags=$1 user='.$cf['vmail_username'].' argv=/usr/bin/maildrop -d '.$cf['vmail_username'].' \${extension} \${recipient} \${user} \${nexthop} \${sender}',
 						$content);
 			wf($configfile, $content);
 		}
@@ -1497,7 +1539,7 @@ class installer_base {
 			if(is_file($config_dir.'/master.cf')){
 				copy($config_dir.'/master.cf', $config_dir.'/master.cf~2');
 			}
-			if(is_file($config_dir.'/master.cf~')){
+			if(is_file($config_dir.'/master.cf~2')){
 				chmod($config_dir.'/master.cf~2', 0400);
 			}
 			//* Configure master.cf and add a line for deliver
@@ -2007,7 +2049,7 @@ class installer_base {
 			rename("/etc/rspamd/local.d/greylist.conf", "/etc/rspamd/local.d/greylist.old");
 		}
 
-		exec('chmod a+r /etc/rspamd/local.d/* /etc/rspamd/local.d/maps.d/* /etc/rspamd/override.d/*');
+		exec('chmod a+r,-x+X /etc/rspamd/local.d/* /etc/rspamd/local.d/maps.d/* /etc/rspamd/override.d/*');
 		# protect passwords in these files
 		exec('chgrp _rspamd /etc/rspamd/local.d/redis.conf /etc/rspamd/local.d/classifier-bayes.conf');
 		exec('chmod 640 /etc/rspamd/local.d/redis.conf /etc/rspamd/local.d/classifier-bayes.conf');
@@ -2018,8 +2060,10 @@ class installer_base {
 		}
 
 		# unneccesary, since this was done above?
-		$command = 'usermod -a -G amavis _rspamd';
-		caselog($command.' &> /dev/null', __FILE__, __LINE__, "EXECUTED: $command", "Failed to execute the command $command");
+		if(is_user('_rspamd') && is_group('amavis')) {
+			$command = 'usermod -a -G amavis _rspamd';
+			caselog($command.' &> /dev/null', __FILE__, __LINE__, "EXECUTED: $command", "Failed to execute the command $command");
+		}
 
 		if(strpos(rf('/etc/rspamd/rspamd.conf'), '.include "$LOCAL_CONFDIR/local.d/users.conf"') === false){
 			af('/etc/rspamd/rspamd.conf', '.include "$LOCAL_CONFDIR/local.d/users.conf"');
@@ -2352,13 +2396,17 @@ class installer_base {
 			replaceLine('/etc/apache2/ports.conf', 'Listen 443', 'Listen 443', 1);
 
 			// Comment out the namevirtualhost lines, as they were added by ispconfig in ispconfig.conf file again
-			replaceLine('/etc/apache2/ports.conf', 'NameVirtualHost *:80', '# NameVirtualHost *:80', 1);
-			replaceLine('/etc/apache2/ports.conf', 'NameVirtualHost *:443', '# NameVirtualHost *:443', 1);
+			replaceLine('/etc/apache2/ports.conf', 'NameVirtualHost *:80', '# NameVirtualHost *:80', 1, 0);
+			replaceLine('/etc/apache2/ports.conf', 'NameVirtualHost *:443', '# NameVirtualHost *:443', 1, 0);
 		}
 
 		if(is_file('/etc/apache2/mods-available/fcgid.conf')) {
 			// add or modify the parameters for fcgid.conf
-			replaceLine('/etc/apache2/mods-available/fcgid.conf','MaxRequestLen','MaxRequestLen 15728640',1);
+			if(hasLine('/etc/apache2/mods-available/fcgid.conf','MaxRequestLen')) {
+				replaceLine('/etc/apache2/mods-available/fcgid.conf','MaxRequestLen','  MaxRequestLen 15728640',1);
+			} else {
+				preg_replace('/^(.*\n)(.*)$/sU', '$1  MaxRequestLen 15728640\n$2', '/etc/apache2/mods-available/fcgid.conf');
+			}
 		}
 
 		if(is_file('/etc/apache2/apache.conf')) {
@@ -2640,7 +2688,7 @@ class installer_base {
 
 			//$command = 'adduser '.$conf['apache']['user'].' '.$apps_vhost_group;
 			$command = 'usermod -a -G '.$apps_vhost_group.' '.$conf['apache']['user'];
-			caselog($command.' &> /dev/null', __FILE__, __LINE__, "EXECUTED: $command", "Failed to execute the command $command");
+			caselog($command.' &> /dev/null 2>&1', __FILE__, __LINE__, "EXECUTED: $command", "Failed to execute the command $command");
 
 			if(!@is_dir($install_dir)){
 				mkdir($install_dir, 0755, true);
@@ -2732,7 +2780,7 @@ class installer_base {
 
 			//$command = 'adduser '.$conf['nginx']['user'].' '.$apps_vhost_group;
 			$command = 'usermod -a -G '.$apps_vhost_group.' '.$conf['nginx']['user'];
-			caselog($command.' &> /dev/null', __FILE__, __LINE__, "EXECUTED: $command", "Failed to execute the command $command");
+			caselog($command.' &> /dev/null 2>&1', __FILE__, __LINE__, "EXECUTED: $command", "Failed to execute the command $command");
 
 			if(!@is_dir($install_dir)){
 				mkdir($install_dir, 0755, true);
@@ -2940,7 +2988,7 @@ class installer_base {
 			$dnsa=dns_get_record($hostname, DNS_A);
 			if($dnsa) {
 				foreach ($dnsa as $rec) {
-					$dns_ips[] = $rec['ip'];
+					if(is_array($rec) && isset($rec['ip'])) $dns_ips[] = $rec['ip'];
 				}
 			}
 		}
@@ -2948,7 +2996,7 @@ class installer_base {
 			$dnsaaaa=dns_get_record($hostname, DNS_AAAA);
 			if($dnsaaaa) {
 				foreach ($dnsaaaa as $rec) {
-					$dns_ips[] = $rec['ip'];
+					if(is_array($rec) && isset($rec['ip'])) $dns_ips[] = $rec['ip'];
 				}
 			}
 		}
@@ -3002,6 +3050,8 @@ class installer_base {
 			$crt_subject = exec("openssl x509 -in ".escapeshellarg($ssl_crt_file)." -inform PEM -noout -subject");
 			$crt_issuer = exec("openssl x509 -in ".escapeshellarg($ssl_crt_file)." -inform PEM -noout -issuer");
 		}
+
+		$issued_successfully = false;
 
 		if ((@file_exists($ssl_crt_file) && ($crt_subject == $crt_issuer)) || (!@is_dir($acme_cert_dir) || !@file_exists($check_acme_file) || !@file_exists($ssl_crt_file) || md5_file($check_acme_file) != md5_file($ssl_crt_file)) && $ip_address_match == true) {
 
@@ -3100,8 +3150,6 @@ class installer_base {
 					system($this->getinitcommand($conf[$server]['init_script'], 'restart').' &> /dev/null');
 				}
 			}
-
-			$issued_successfully = false;
 
 			// Backup existing ispserver ssl files
 			//
@@ -3612,19 +3660,31 @@ class installer_base {
 		// and must be fixed as this will allow the apache user to read the ispconfig files.
 		// Later this must run as own apache server or via suexec!
 		if($conf['apache']['installed'] == true){
-			$command = 'adduser '.$conf['apache']['user'].' ispconfig';
-			caselog($command.' &> /dev/null', __FILE__, __LINE__, "EXECUTED: $command", "Failed to execute the command $command");
-			if(is_group('ispapps')){
-				$command = 'adduser '.$conf['apache']['user'].' ispapps';
+			$ispc_groupinfo = posix_getgrnam('ispconfig');
+			if(!in_array($conf['apache']['user'],$ispc_groupinfo['members'])) {
+				$command = 'adduser '.$conf['apache']['user'].' ispconfig';
 				caselog($command.' &> /dev/null', __FILE__, __LINE__, "EXECUTED: $command", "Failed to execute the command $command");
+			}
+			if(is_group('ispapps')){
+				$ispapps_groupinfo = posix_getgrnam('ispapps');
+				if(!in_array($conf['apache']['user'],$ispapps_groupinfo['members'])) {
+					$command = 'adduser '.$conf['apache']['user'].' ispapps';
+					caselog($command.' &> /dev/null', __FILE__, __LINE__, "EXECUTED: $command", "Failed to execute the command $command");
+				}
 			}
 		}
 		if($conf['nginx']['installed'] == true){
-			$command = 'adduser '.$conf['nginx']['user'].' ispconfig';
-			caselog($command.' &> /dev/null', __FILE__, __LINE__, "EXECUTED: $command", "Failed to execute the command $command");
-			if(is_group('ispapps')){
-				$command = 'adduser '.$conf['nginx']['user'].' ispapps';
+			$ispc_groupinfo = posix_getgrnam('ispconfig');
+			if(!in_array($conf['nginx']['user'],$ispc_groupinfo['members'])) {
+				$command = 'adduser '.$conf['nginx']['user'].' ispconfig';
 				caselog($command.' &> /dev/null', __FILE__, __LINE__, "EXECUTED: $command", "Failed to execute the command $command");
+			}
+			if(is_group('ispapps')){
+				$ispapps_groupinfo = posix_getgrnam('ispapps');
+				if(!in_array($conf['nginx']['user'],$ispapps_groupinfo['members'])) {
+					$command = 'adduser '.$conf['nginx']['user'].' ispapps';
+					caselog($command.' &> /dev/null', __FILE__, __LINE__, "EXECUTED: $command", "Failed to execute the command $command");
+				}
 			}
 		}
 
@@ -3867,7 +3927,7 @@ class installer_base {
 		$install_dir = $conf['ispconfig_install_dir'];
 
 		//* Root Crontab
-		exec('crontab -u root -l > crontab.txt');
+		exec('crontab -u root -l > crontab.txt 2>/dev/null');
 		$existing_root_cron_jobs = file('crontab.txt');
 
 		// remove existing ispconfig cronjobs, in case the syntax has changed
@@ -3884,10 +3944,6 @@ class installer_base {
 			$root_cron_jobs[] = "0 0 * * * ".$install_dir."/server/scripts/create_daily_nginx_access_logs.sh &> /dev/null";
 		}
 
-		if ($conf['services']['mail'] == 1) {
-			$root_cron_jobs[] = "30 23 * * * ".$install_dir."/server/scripts/handle_mailbox_soft_deleted.sh &> /dev/null";
-		}
-
 		foreach($root_cron_jobs as $cron_job) {
 			if(!in_array($cron_job."\n", $existing_root_cron_jobs)) {
 				$existing_root_cron_jobs[] = $cron_job."\n";
@@ -3900,7 +3956,7 @@ class installer_base {
 		//* Getmail crontab
 		if(is_user('getmail')) {
 			$cf = $conf['getmail'];
-			exec('crontab -u getmail -l > crontab.txt');
+			exec('crontab -u getmail -l > crontab.txt 2>/dev/null');
 			$existing_cron_jobs = file('crontab.txt');
 
 			$cron_jobs = array(

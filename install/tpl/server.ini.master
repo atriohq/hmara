@@ -56,9 +56,9 @@ relayhost_user=
 relayhost_password=
 mailbox_size_limit=0
 message_size_limit=0
-mailbox_soft_delete=n
+mailbox_soft_delete=0
 mailbox_quota_stats=y
-realtime_blackhole_list=zen.spamhaus.org
+realtime_blackhole_list=
 overquota_notify_threshold=90
 overquota_notify_admin=y
 overquota_notify_reseller=y
@@ -136,6 +136,10 @@ overquota_notify_onok=n
 logging=yes
 php_fpm_reload_mode=reload
 php_fpm_default_chroot=n
+vhost_proxy_protocol_enabled=n
+vhost_proxy_protocol_protocols=ipv4
+vhost_proxy_protocol_http_port=880
+vhost_proxy_protocol_https_port=8443
 
 [dns]
 bind_user=root

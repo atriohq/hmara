@@ -2,7 +2,7 @@
 
 class dashlet_quota {
 
-	function show($limit_to_client_id = null) {
+	function show() {
 		global $app;
 
 		//* Loading Template
@@ -24,13 +24,7 @@ class dashlet_quota {
 		if(is_file($lng_file)) include $lng_file;
 		$tpl->setVar($wb);
 
-		if ($_SESSION["s"]["user"]["typ"] != 'admin') {
-			$client_id = $_SESSION['s']['user']['client_id'];
-		} else {
-			$client_id = $limit_to_client_id;
-		}
-
-		$sites = $app->quota_lib->get_quota_data($client_id);
+		$sites = $app->quota_lib->get_quota_data( ($_SESSION["s"]["user"]["typ"] != 'admin') ? $_SESSION['s']['user']['client_id'] : null);
 		//print_r($sites);
 
 		$has_quota = false;

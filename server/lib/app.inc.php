@@ -50,7 +50,7 @@ if(DEVSYSTEM !== true) {
  * @license bsd-3-clause
  * @link empty
  **/
-class app {
+class app extends stdClass {
 	/** @var array	List of modules that have been loaded. */
 	var $loaded_modules = [];
 	/** @var array	List of plugins that have been loaded. */
@@ -353,6 +353,26 @@ class app {
 	function error($msg) {
 		$this->log($msg, 3);	// isn't this supposed to be error code 2? (gwyneth 20220315)
 		die($msg);
+	}
+
+	/**
+	 * Determin if the current process is running on the master or a slave server.
+	 *
+	 * @return boolean
+	 */
+	function running_on_masterserver() {
+
+		return $this->dbmaster == $this->db;
+	}
+
+	/**
+	 * Determin if the current process is running on the master or a slave server.
+	 *
+	 * @return boolean
+	 */
+	function running_on_slaveserver() {
+
+		return $this->dbmaster != $this->db;
 	}
 }
 

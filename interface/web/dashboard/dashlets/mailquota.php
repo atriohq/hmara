@@ -2,7 +2,7 @@
 
 class dashlet_mailquota {
 
-	function show($limit_to_client_id = null) {
+	function show() {
 		global $app;
 
 		//* Loading Template
@@ -16,13 +16,7 @@ class dashlet_mailquota {
 		if(is_file($lng_file)) include $lng_file;
 		$tpl->setVar($wb);
 
-		if ($_SESSION["s"]["user"]["typ"] != 'admin') {
-			$client_id = $_SESSION['s']['user']['client_id'];
-		} else {
-			$client_id = $limit_to_client_id;
-		}
-
-		$emails = $app->quota_lib->get_mailquota_data($client_id);
+		$emails = $app->quota_lib->get_mailquota_data( ($_SESSION["s"]["user"]["typ"] != 'admin') ? $_SESSION['s']['user']['client_id'] : null);
 		//print_r($emails);
 
 		$has_mailquota = false;
