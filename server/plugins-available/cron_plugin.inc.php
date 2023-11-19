@@ -93,7 +93,7 @@ class cron_plugin {
 		}
 
 		//* get data from web
-		$parent_domain = $app->db->queryOneRecord("SELECT `domain_id`, `system_user`, `system_group`, `document_root`, `hd_quota` FROM `web_domain` WHERE `domain_id` = ?", $data["new"]["parent_domain_id"]);
+		$parent_domain = $app->db->queryOneRecord("SELECT `domain_id`, `system_user`, `system_group`, `domain`, `document_root`, `hd_quota`, `php_cli_binary` FROM `web_domain` LEFT JOIN server_php ON web_domain.server_php_id = server_php.server_php_id WHERE `domain_id` = ?", $data["new"]["parent_domain_id"]);
 		if(!$parent_domain["domain_id"]) {
 			$app->log("Parent domain not found", LOGLEVEL_WARN);
 			return 0;
@@ -220,7 +220,7 @@ class cron_plugin {
 		$chr_cmd_count = 0;
 
 		//* read all active cron jobs from database and write them to file
-		$cron_jobs = $app->db->queryAllRecords("SELECT c.`run_min`, c.`run_hour`, c.`run_mday`, c.`run_month`, c.`run_wday`, c.`command`, c.`type`, c.`log`, `web_domain`.`domain` as `domain` FROM `cron` as c INNER JOIN `web_domain` ON `web_domain`.`domain_id` = c.`parent_domain_id` WHERE c.`parent_domain_id` = ? AND c.`active` = 'y'", $this->parent_domain["domain_id"]);
+		$cron_jobs = $app->db->queryAllRecords("SELECT c.`id`, c.`run_min`, c.`run_hour`, c.`run_mday`, c.`run_month`, c.`run_wday`, c.`command`, c.`type`, c.`log`, `web_domain`.`domain` as `domain` FROM `cron` as c INNER JOIN `web_domain` ON `web_domain`.`domain_id` = c.`parent_domain_id` WHERE c.`parent_domain_id` = ? AND c.`active` = 'y'", $this->parent_domain["domain_id"]);
 		if($cron_jobs && count($cron_jobs) > 0) {
 			foreach($cron_jobs as $job) {
 				if($job['run_month'] == '@reboot') {
@@ -259,8 +259,25 @@ class cron_plugin {
 						$web_root = $this->parent_domain['document_root'];
 					}
 
+					$web_domain = $this->parent_domain['domain'];
+					if($this->parent_domain['php_cli_binary'] == '') {
+						// PHP cli binary not set or default was selected, fallback to just "php"
+						$web_php_cli = 'php';
+						$app->log("PHP CLI binary not set for the website\'s selected PHP version or Default was selected. Falling back to \"php\" for cronjob id " . $job['id'], LOGLEVEL_DEBUG);
+					} else {
+						$web_php_cli = $this->parent_domain['php_cli_binary'];
+					}
+
 					$web_root .= '/web';
-					$job['command'] = str_replace('[web_root]', $web_root, $job['command']);
+
+					$trans = array(
+                        '[web_root]' => $web_root,
+						'{DOCROOT_CLIENT}' => $web_root,
+                        '{DOMAIN}' => $web_domain,
+						'{SITE_PHP}' => $web_php_cli
+	                );
+
+					$job['command'] = strtr($job['command'], $trans);
 
 					$cron_line .= "\t";
 					//if($job['type'] != 'chrooted' && substr($job['command'], 0, 1) != "/") $cron_line .= $this->parent_domain['document_root'].'/';

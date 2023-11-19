@@ -80,7 +80,8 @@ class shelluser_base_plugin {
 		}
 
 		//* Check if the resulting path is inside the docroot
-		$web = $app->db->queryOneRecord("SELECT * FROM web_domain WHERE domain_id = ?", $data['new']['parent_domain_id']);
+		$web = $app->db->queryOneRecord("SELECT * FROM web_domain LEFT JOIN server_php ON web_domain.server_php_id = server_php.server_php_id WHERE `domain_id` = ?", $data["new"]["parent_domain_id"]);
+		//$web = $app->db->queryOneRecord("SELECT * FROM web_domain WHERE domain_id = ?", $data['new']['parent_domain_id']);
 		if(substr($data['new']['dir'],0,strlen($web['document_root'])) != $web['document_root']) {
 			$app->log('Directory of the shell user is outside of website docroot.',LOGLEVEL_WARN);
 			return false;
@@ -168,6 +169,36 @@ class shelluser_base_plugin {
 				$app->system->chown($homedir.'/.profile', $data['new']['username']);
 				$app->system->chgrp($homedir.'/.profile', $data['new']['pgroup']);
 
+				$app->load('tpl');
+
+				$tpl = new tpl();
+				$tpl->newTemplate("bash.bashrc.master");
+
+				$tpl->setVar('jailkit_chroot', false);
+				$tpl->setVar('domain', $web['domain']);
+				//$tpl->setVar('home_dir', $this->_get_home_dir(""));
+
+				if($web['server_php_id'] > 0) {
+					$tpl->setVar('use_site_php', true);
+					$tpl->setVar('php_bin_dir', $php_bin_dir);
+				} else {
+					$tpl->setVar('use_site_php', false);
+				}
+
+				$bashrc = $this->data['new']['dir'].'/etc/bash.bashrc';
+				if(@is_file($bashrc) || @is_link($bashrc)) unlink($bashrc);
+
+				//file_put_contents($bashrc, $tpl->grab());
+				$app->system->file_put_contents($bashrc, $tpl->grab());
+				unset($tpl);
+
+				$app->log("Added bashrc script: ".$bashrc, LOGLEVEL_DEBUG);
+
+
+
+
+
+
 				// Create symlinks for conveniance, SFTP user should not land in an empty dir.
 				symlink('../../web', $homedir.'/web');
 				symlink('../../log', $homedir.'/log');
@@ -202,7 +233,8 @@ class shelluser_base_plugin {
 		}
 
 		//* Check if the resulting path is inside the docroot
-		$web = $app->db->queryOneRecord("SELECT * FROM web_domain WHERE domain_id = ?", $data['new']['parent_domain_id']);
+		$web = $app->db->queryOneRecord("SELECT * FROM web_domain LEFT JOIN server_php ON web_domain.server_php_id = server_php.server_php_id WHERE `domain_id` = ?", $data["new"]["parent_domain_id"]);
+		//$web = $app->db->queryOneRecord("SELECT * FROM web_domain WHERE domain_id = ?", $data['new']['parent_domain_id']);
 		if(substr($data['new']['dir'],0,strlen($web['document_root'])) != $web['document_root']) {
 			$app->log('Directory of the shell user is outside of website docroot.',LOGLEVEL_WARN);
 			return false;
@@ -299,6 +331,36 @@ class shelluser_base_plugin {
 						$app->system->chown($homedir.'/.profile', $data['new']['username']);
 						$app->system->chgrp($homedir.'/.profile', $data['new']['pgroup']);
 					}
+
+
+
+					// Create .bashrc file
+					$app->load('tpl');
+
+					$tpl = new tpl();
+					$tpl->newTemplate("bash.bashrc.master");
+
+					$tpl->setVar('jailkit_chroot', false);
+					//$tpl->setVar('domain', $web['domain']);
+					$php_bin_dir = dirname($web['php_cli_binary']);
+					//$tpl->setVar('home_dir', $this->_get_home_dir(""));
+
+					if($web['server_php_id'] > 0) {
+						$tpl->setVar('use_site_php', false);
+						$tpl->setVar('php_bin_dir', $php_bin_dir);
+						$tpl->setVar('use_php_alias', true);
+						$tpl->setVar('php_alias', $web['php_cli_binary']);
+					} else {
+						$tpl->setVar('use_site_php', false);
+					}
+
+					$bashrc = $homedir .'/.bashrc';
+					if(@is_file($bashrc) || @is_link($bashrc)) unlink($bashrc);
+
+					$app->system->file_put_contents($bashrc, $tpl->grab());
+					unset($tpl);
+
+					$app->log("Added bashrc script: ".$bashrc, LOGLEVEL_DEBUG);
 
 					//* Add webfolder protection again
 					$app->system->web_folder_protection($web['document_root'], true);

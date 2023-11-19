@@ -23,4 +23,5 @@ $wb['command_hint_txt'] = 'e.g. /var/www/clients/clientX/webY/myscript.sh or htt
 $wb['log_output_txt'] = 'Log output';
 $wb['limit_cron_url_txt'] = 'URL cron only. Please enter a URL starting with https:// as cron command.';
 $wb['command_error_empty'] = 'Command is empty.';
+$wb['variables_txt'] = 'Variables';
 ?>
