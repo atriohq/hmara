@@ -329,8 +329,8 @@ class shelluser_jailkit_plugin {
 			$options = array('allow_hardlink');
 		}
 
-		//$web = $app->db->queryOneRecord("SELECT domain, last_jailkit_hash FROM web_domain WHERE domain_id = ?", $this->data['new']["parent_domain_id"]);
-		$web = $app->db->queryOneRecord("SELECT * FROM web_domain LEFT JOIN server_php ON web_domain.server_php_id = server_php.server_php_id WHERE `domain_id` = ?", $data["new"]["parent_domain_id"]);
+		$web = $app->db->queryOneRecord("SELECT domain, last_jailkit_hash FROM web_domain WHERE domain_id = ?", $this->data['new']["parent_domain_id"]);
+		//$web = $app->db->queryOneRecord("SELECT * FROM web_domain LEFT JOIN server_php ON web_domain.server_php_id = server_php.server_php_id WHERE `domain_id` = ?", $data["new"]["parent_domain_id"]);
 
 		$last_updated = preg_split('/[\s,]+/', $this->jailkit_config['jailkit_chroot_app_sections']
 						  .' '.$this->jailkit_config['jailkit_chroot_app_programs']
@@ -357,14 +357,13 @@ class shelluser_jailkit_plugin {
 			$tpl->setVar('jailkit_chroot', true);
 			$tpl->setVar('domain', $web['domain']);
 			$tpl->setVar('home_dir', $this->_get_home_dir(""));
-			$tpl->setVar('php_cli_binary', dirname($web['php_cli_binary']));
 
 			$bashrc = $this->data['new']['dir'].'/etc/bash.bashrc';
 			if(@is_file($bashrc) || @is_link($bashrc)) unlink($bashrc);
 
 			$app->system->file_put_contents($bashrc, $tpl->grab());
 
-			//file_put_contents($bashrc, $tpl->grab());
+
 			unset($tpl);
 
 			$app->log("Added bashrc script: ".$bashrc, LOGLEVEL_DEBUG);
