@@ -250,14 +250,30 @@ class page_action extends tform_actions {
         array_walk($keyparts, function(&$value, $key) { $value = '"'.$value.'"'; } );
         $dkim_txt = implode('', $keyparts);
 		*/
-		$dkim_txt = '"v=DKIM1; t=s; p=' . $dns_key . '"';
+		$dkim_txt = 'v=DKIM1; t=s; p=' . $dns_key;
 
-		$dns_record = $rec['dkim_selector'] . '._domainkey.' . $rec['domain'] . '. 3600  IN  TXT   '.$dkim_txt;
+		$dns_record = $rec['dkim_selector'] . '._domainkey.' . $rec['domain'] . '. 3600  IN  TXT   "' . $dkim_txt . '"';
 
 		$app->tpl->setVar('dkim_selector', $rec['dkim_selector'], true);
 		$app->tpl->setVar('dkim_private', $rec['dkim_private'], true);
 		$app->tpl->setVar('dkim_public', $rec['dkim_public'], true);
 		if (!empty($rec['dkim_public'])) $app->tpl->setVar('dns_record', $dns_record, true);
+
+		if ($this->dataRecord['dkim'] == 'y') {
+			$dns_record_status = dns_get_record($rec['dkim_selector'] . '._domainkey.' . $rec['domain'], DNS_TXT);
+			if (empty($dns_record_status) || empty($dns_record_status[0]['txt'])) {
+				// Record not found
+				$app->tpl->setVar('dkim_status', "DKIM enabled, record not found in DNS yet.", true);
+			}
+			elseif ($dns_record_status[0]['txt'] == $dkim_txt) {
+				$app->tpl->setVar('dkim_status', "<span class=\"fa fa-check-circle-o\" aria-hidden=\"false\" title=\"DKIM enabled, DNS resolving OK\"</span>", false);
+			}
+			else {
+				// Mismatch in record!
+				$app->tpl->setVar('dkim_status', "DKIM enabled, mismatched record", true);
+				//$app->tpl->setVar('dkim_auto_dns', "XX" . print_r($dns_record_status, 1) . "--", true);
+			}
+		}
 
 		$csrf_token = $app->auth->csrf_token_get('mail_domain_del');
 		$app->tpl->setVar('_csrf_id', $csrf_token['csrf_id']);
