@@ -1,7 +1,7 @@
 <?php
 
 // Title of the form.
-$form['title'] = 'External Domain';
+$form['title'] = 'External domain';
 $form['description'] = '';
 $form['name'] = 'domain_verification';
 $form['action'] = 'domain_verification_edit.php';
@@ -22,7 +22,7 @@ $form["auth_preset"]["perm_other"] = ''; //r = read, i = insert, u = update, d =
 
 
 $form['tabs']['domain_verification'] = array(
-	'title' => 'External Domain', // Title of the Tab
+	'title' => 'External domain', // Title of the Tab
 	'width' => 100, // Tab width
 	'template' => 'templates/domain_verification_edit.htm', // Template file name
 	'fields' => array(

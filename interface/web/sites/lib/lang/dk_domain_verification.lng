@@ -1,4 +1,4 @@
 <?php
 $wb['add_dom_txt'] = 'New external domain';
-$wb['domain_error_regex'] = 'Domainname not valid';
+$wb['domain_error_regex'] = 'Domain not valid';
 ?>

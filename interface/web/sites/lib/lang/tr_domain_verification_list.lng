@@ -3,5 +3,5 @@ $wb['add_new_domain_verification'] = 'New external domain';
 $wb['list_head_txt'] = 'External domain verification';
 $wb['domain_txt'] = 'Open domain verifications';
 $wb['record_created_txt'] = 'Entry created on';
-$wb['dns_auth_record_txt'] = 'TXT auth string';
+$wb['dns_auth_record_txt'] = 'TXT verification string';
 ?>

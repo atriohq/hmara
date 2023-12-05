@@ -47,7 +47,7 @@ class page_action extends tform_actions {
 		//If domain already in system than exit with error message
 		$rec = $app->db->queryOneRecord("SELECT domain FROM domain WHERE domain = ?",$this->dataRecord['domain']);
 		if(!is_null($rec)) {
-			$app->tform->errorMessage .= $app->lng('Domain not external');
+			$app->tform->errorMessage .= $app->lng('Domain already exists in domain module');
 		}
 		unset($rec);
 		

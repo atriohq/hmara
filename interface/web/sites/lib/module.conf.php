@@ -74,7 +74,7 @@ if($_SESSION['s']['user']['typ'] == 'user') {
                     'link'      => 'sites/client_domain_list.php',
                     'html_id'   => 'client_domain_list'];
 
-        $items[] = ['title'     => "External Domain",
+        $items[] = ['title'     => "External domain",
                     'target'    => 'content',
                     'link'      => 'sites/domain_verification_list.php',
                     'html_id'   => 'domain_verification_list'];
