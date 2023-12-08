@@ -361,7 +361,7 @@ class shelluser_jailkit_plugin {
 			$bashrc = $this->data['new']['dir'].'/etc/bash.bashrc';
 			if(@is_file($bashrc) || @is_link($bashrc)) unlink($bashrc);
 
-			$app->system->file_put_contents($bashrc, $tpl->grab());
+			file_put_contents($bashrc, $tpl->grab());
 
 
 			unset($tpl);

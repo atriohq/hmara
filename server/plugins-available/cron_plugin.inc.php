@@ -260,8 +260,8 @@ class cron_plugin {
 					}
 
 					$web_domain = $this->parent_domain['domain'];
-					if($this->parent_domain['php_cli_binary'] == '') {
-						// PHP cli binary not set or default was selected, fallback to just "php"
+					if($this->parent_domain['php_cli_binary'] == '' || $job['type'] == 'chrooted') {
+						// PHP cli binary not set or default was selected or it is a chrooted web, fallback to just "php"
 						$web_php_cli = 'php';
 						$app->log("PHP CLI binary not set for the website\'s selected PHP version or Default was selected. Falling back to \"php\" for cronjob id " . $job['id'], LOGLEVEL_DEBUG);
 					} else {

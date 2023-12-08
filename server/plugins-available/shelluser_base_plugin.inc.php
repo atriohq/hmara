@@ -332,32 +332,37 @@ class shelluser_base_plugin {
 						$app->system->chgrp($homedir.'/.profile', $data['new']['pgroup']);
 					}
 
-
-
 					// Create .bashrc file
 					$app->load('tpl');
 
 					$tpl = new tpl();
 					$tpl->newTemplate("bash.bashrc.master");
 
+					// This is not a Jailkit chroot
 					$tpl->setVar('jailkit_chroot', false);
-					//$tpl->setVar('domain', $web['domain']);
 					$php_bin_dir = dirname($web['php_cli_binary']);
-					//$tpl->setVar('home_dir', $this->_get_home_dir(""));
 
+					// FIXME: Check if we need to add an additional field for the path environment variable that contains the path to the php binary
 					if($web['server_php_id'] > 0) {
-						$tpl->setVar('use_site_php', false);
-						$tpl->setVar('php_bin_dir', $php_bin_dir);
-						$tpl->setVar('use_php_alias', true);
-						$tpl->setVar('php_alias', $web['php_cli_binary']);
+						if(preg_match('/^(\/usr\/(s)?bin|\/(s)?bin)/', $php_bin_dir))
+						{
+							$tpl->setVar('use_site_php', false);
+							$tpl->setVar('use_php_alias', true);
+							$tpl->setVar('php_alias', $web['php_cli_binary']);
+						} else {
+							$tpl->setVar('use_site_php', true);
+							$tpl->setVar('use_php_alias', false);
+							$tpl->setVar('php_bin_dir', $php_bin_dir);
+						}
 					} else {
 						$tpl->setVar('use_site_php', false);
+						$tpl->setVar('use_php_alias', false);
 					}
 
 					$bashrc = $homedir .'/.bashrc';
 					if(@is_file($bashrc) || @is_link($bashrc)) unlink($bashrc);
 
-					$app->system->file_put_contents($bashrc, $tpl->grab());
+					file_put_contents($bashrc, $tpl->grab());
 					unset($tpl);
 
 					$app->log("Added bashrc script: ".$bashrc, LOGLEVEL_DEBUG);
