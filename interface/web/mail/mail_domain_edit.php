@@ -240,24 +240,11 @@ class page_action extends tform_actions {
 			$app->tpl->setVar('relay_pass', $rec['relay_pass'], true);
 		}
 
-		// load dkim-values
-		$sql = "SELECT domain, dkim_private, dkim_public, dkim_selector FROM mail_domain WHERE domain_id = ?";
-		$rec = $app->db->queryOneRecord($sql, $app->functions->intval($_GET['id']));
-		$dns_key = str_replace(array('-----BEGIN PUBLIC KEY-----','-----END PUBLIC KEY-----',"\r","\n"),'',$rec['dkim_public']);
-
-        /* we do not show split DKIM key anymore
-		$keyparts = str_split('v=DKIM1; t=s; p=' . $dns_key, 200);
-        array_walk($keyparts, function(&$value, $key) { $value = '"'.$value.'"'; } );
-        $dkim_txt = implode('', $keyparts);
-		*/
+		$dns_key = str_replace(array('-----BEGIN PUBLIC KEY-----','-----END PUBLIC KEY-----',"\r","\n"), '', $this->dataRecord['dkim_public']);
 		$dkim_txt = 'v=DKIM1; t=s; p=' . $dns_key;
+		$dns_record = $this->dataRecord['dkim_selector'] . '._domainkey.' . $this->dataRecord['domain'] . '. 3600  IN  TXT   "' . $dkim_txt . '"';
 
-		$dns_record = $rec['dkim_selector'] . '._domainkey.' . $rec['domain'] . '. 3600  IN  TXT   "' . $dkim_txt . '"';
-
-		$app->tpl->setVar('dkim_selector', $rec['dkim_selector'], true);
-		$app->tpl->setVar('dkim_private', $rec['dkim_private'], true);
-		$app->tpl->setVar('dkim_public', $rec['dkim_public'], true);
-		if (!empty($rec['dkim_public'])) $app->tpl->setVar('dns_record', $dns_record, true);
+		if (!empty($this->dataRecord['dkim_public'])) $app->tpl->setVar('dns_record', $dns_record, true);
 
 		$csrf_token = $app->auth->csrf_token_get('mail_domain_del');
 		$app->tpl->setVar('_csrf_id', $csrf_token['csrf_id']);
