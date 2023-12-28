@@ -1,0 +1,25 @@
+<?xml version="1.0" ?>
+<list>
+    <listname>{hostname}</listname>
+    <type>my_profile</type>
+    <subject>a list example</subject>
+    <description/>
+    <status>open</status>
+    <shared_edit>editor</shared_edit>
+    <shared_read>private</shared_read>
+    <language>fr</language>
+    <owner multiple="1">
+        <email>serge.aumont@renater.fr</email>
+        <gecos>C.R.U.</gecos>
+    </owner>
+    <owner multiple="1">
+        <email>olivier.salaun@renater.fr</email>
+    </owner>
+    <owner_include multiple="1">
+        <source>my_file</source>
+    </owner_include>
+    <editor multiple="1">
+        <email>user@domain.org</email>
+    </editor>
+    <topic>Computing</topic>
+</list>

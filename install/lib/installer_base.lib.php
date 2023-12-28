@@ -1057,7 +1057,7 @@ class installer_base extends stdClass {
 			chgrp('/etc/sympa/sympa_transport.db', 'postfix');
 		}
 
-		$config_dir = $conf['sympa']['config_dir'].'/';
+		$config_dir = $conf['sympa']['config_dir'].'/sympa/';
 		$full_file_name = $config_dir.'sympa.conf';
 		//* Backup exiting file
 		if(is_file($full_file_name)) {
