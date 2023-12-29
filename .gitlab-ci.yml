@@ -102,7 +102,7 @@ build:package:
     
     artifacts:
       paths:
-        - ISPConfig-${VER}.tar.gz
+        - ISPConfig-${CI_COMMIT_REF_NAME}.tar.gz
       expire_in: 1 week
 
         
