@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
 <list>
-    <listname>{listname}@{domain}</listname>
+    <listname>{listname}</listname>
     <type>private_working_group</type>
     <subject>{listname}</subject>
     <description/>
