@@ -1093,11 +1093,11 @@ class installer_base extends stdClass {
 			   chmod($config_dir.'/master.cf~2', 0400);
 		   }
 		   //* Configure master.cf and add a line for deliver
-		   $content = rf($config_dir.'/master.cf');
+		   $content_master = rf($config_dir.'/master.cf');
 		   $deliver_content = 'sympa   unix  -       n       n       -       -       pipe'."\n".'  flags=hqRu null_sender= user=sympa argv=/usr/lib/sympa/bin/queue ${nexthop}'."\n";
 		   $deliver_content .= 'sympabounce   unix  -       n       n       -       -       pipe'."\n".'  flags=hqRu null_sender= user=sympa argv=/usr/lib/sympa/bin/bouncequeue ${nexthop}'."\n";
 		   af($config_dir.'/master.cf', $deliver_content);
-		   unset($content);
+		   unset($content_master);
 		   unset($deliver_content);
 	   }
 
@@ -1425,8 +1425,8 @@ class installer_base extends stdClass {
 		exec('/usr/sbin/postmap hash:/etc/sympa/virtual.sympa');
 		exec('/usr/lib/sympa/bin/sympa_newaliases.pl 2>/dev/null');
 		## exec('/usr/sbin/postmap hash:/etc/sympa/sympa_transport');
-		chmod('etc/sympa/sympa_transport', 0640);
-		chmod('etc/sympa/sympa_transport.db', 0640);
+		chmod('/etc/sympa/sympa_transport', 0640);
+		chmod('/etc/sympa/sympa_transport.db', 0640);
 		chgrp('/etc/sympa/sympa_transport', 'postfix');
 		chgrp('/etc/sympa/sympa_transport.db', 'postfix');
 

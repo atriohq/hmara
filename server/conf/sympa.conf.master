@@ -12,7 +12,7 @@ domain  {hostname}
 ## Listmasters can be defined for each virtual host, however, the default
 ## listmasters will have privileges to manage all virtual hosts.
 ## Example: listmaster  your_email_address@domain.tld
-listmaster      listmaster@hotel.phphost.ch
+listmaster      listmaster@{hostname}
 
 ###\\\\ Database related ////###
 
