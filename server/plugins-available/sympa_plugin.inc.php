@@ -70,8 +70,7 @@ class sympa_plugin {
 	function insert($event_name, $data) {
 		global $app, $conf;
 
-		// Still needed?
-		//$this->update_config();
+		$this->update_config();
 
 		// Generate a config File
 		if(file_exists($conf["rootpath"]."/conf-custom/sympa_list_creation.xml.master")) {
@@ -84,7 +83,7 @@ class sympa_plugin {
 		$content = str_replace('{domain}', $data["new"]["domain"], $content);
 		$content = str_replace('{email}', $data["new"]["email"], $content);
 
-		$filename = 'sympa_list_creation'.$data["new"]['mailinglist_id'].'.xml';
+		$filename = '/tmp/sympa_list_creation'.$data["new"]['mailinglist_id'].'.xml';
 
 		file_put_contents($filename, $content);
 
@@ -146,8 +145,9 @@ class sympa_plugin {
 
 	function update_config() {
 		global $app, $conf;
-/* 
-		copy($this->sympa_config_dir.'/sympa/sympa.conf', $this->sympa_config_dir.'/sympa/sympa.conf~');
+		
+		/*
+		//copy($this->sympa_config_dir.'/sympa/sympa.conf', $this->sympa_config_dir.'/sympa/sympa.conf~');
 
 		// load the server configuration options
 		$app->uses('getconf');
@@ -160,7 +160,7 @@ class sympa_plugin {
 		} else {
 			$content = file_get_contents($conf["rootpath"]."/conf/sympa_list_creation.xml.master");
 		}
-		$old_file = file_get_contents($this->sympa_config_dir."/mm_cfg.py"); */
+		$old_file = file_get_contents($this->sympa_config_dir."/mm_cfg.py");
 
 		/* $old_options = array();
 		$lines = explode("\n", $old_file);
@@ -175,7 +175,7 @@ class sympa_plugin {
 					$old_options[$key] = trim($value);
 				}
 			}
-		}
+		}*/
 
 		// create virtual_domains list
 		$domainAll = $app->db->queryAllRecords("SELECT domain FROM mail_mailinglist GROUP BY domain");
@@ -197,7 +197,7 @@ class sympa_plugin {
 			if(!is_dir($this->sympa_expldir_dir/$domain['domain'])) mkdir($this->sympa_expldir_dir/$domain['domain'], 0750);
 			chown($this->sympa_expldir_dir/$domain['domain'], 'sympa');
 			chgrp($this->sympa_expldir_dir/$domain['domain'], 'sympa');
-		} */
+		}
 
 		// Still needed? $content = str_replace('{hostname}', $server_config['hostname'], $content);
 		// $content = str_replace('{default_language}', $old_options['DEFAULT_SERVER_LANGUAGE'], $content);
