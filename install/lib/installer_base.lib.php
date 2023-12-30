@@ -1050,7 +1050,7 @@ class installer_base extends stdClass {
 			exec('/usr/sbin/postmap hash:/etc/sympa/transport.sympa');
 			exec('/usr/sbin/postmap hash:/etc/sympa/virtual.sympa');
 			exec('/usr/lib/sympa/bin/sympa_newaliases.pl 2>/dev/null');
-			## exec('/usr/sbin/postmap hash:/etc/sympa/sympa_transport');
+			exec('/usr/sbin/postmap hash:/etc/sympa/sympa_transport');
 			chmod('etc/sympa/sympa_transport', 0640);
 			chmod('etc/sympa/sympa_transport.db', 0640);
 			chgrp('/etc/sympa/sympa_transport', 'postfix');
@@ -1065,9 +1065,10 @@ class installer_base extends stdClass {
 		}
 
 		// load files
-		$content = rfsel($conf['ispconfig_install_dir'].'/server/conf-custom/install/sympa.conf.master', 'tpl/sympa.conf.master.master');
+		$content = rfsel($conf['ispconfig_install_dir'].'/server/conf-custom/install/sympa.conf.master', 'tpl/sympa.conf.master');
 		$old_file = rf($full_file_name);
 
+		// TODO: FIX parsing of old config
 		$old_options = array();
 		$lines = explode("\n", $old_file);
 		foreach ($lines as $line)
@@ -1424,7 +1425,7 @@ class installer_base extends stdClass {
 		exec('/usr/sbin/postmap hash:/etc/sympa/transport.sympa');
 		exec('/usr/sbin/postmap hash:/etc/sympa/virtual.sympa');
 		exec('/usr/lib/sympa/bin/sympa_newaliases.pl 2>/dev/null');
-		## exec('/usr/sbin/postmap hash:/etc/sympa/sympa_transport');
+		exec('/usr/sbin/postmap hash:/etc/sympa/sympa_transport');
 		chmod('/etc/sympa/sympa_transport', 0640);
 		chmod('/etc/sympa/sympa_transport.db', 0640);
 		chgrp('/etc/sympa/sympa_transport', 'postfix');
