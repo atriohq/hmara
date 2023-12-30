@@ -1068,14 +1068,13 @@ class installer_base extends stdClass {
 		$content = rfsel($conf['ispconfig_install_dir'].'/server/conf-custom/install/sympa.conf.master', 'tpl/sympa.conf.master');
 		$old_file = rf($full_file_name);
 
-		// TODO: FIX parsing of old config
 		$old_options = array();
 		$lines = explode("\n", $old_file);
 		foreach ($lines as $line)
 		{
 			if (trim($line) != '' && substr($line, 0, 1) != '#')
 			{
-				@list($key, $value) = @explode("=", $line);
+				@list($key, $value) = @preg_split('/\s+/', $line);
 				if (isset($value) && $value !== '')
 				{
 					$key = rtrim($key);
@@ -1122,9 +1121,11 @@ class installer_base extends stdClass {
 			$virtual_domains = "' '";
 
 		$content = str_replace('{hostname}', $conf['hostname'], $content);
-		if(!isset($old_options['DEFAULT_SERVER_LANGUAGE']) || $old_options['DEFAULT_SERVER_LANGUAGE'] == '') $old_options['DEFAULT_SERVER_LANGUAGE'] = "'en_US'";
+		if(!isset($old_options['DEFAULT_SERVER_LANGUAGE']) || $old_options['DEFAULT_SERVER_LANGUAGE'] == '') $old_options['DEFAULT_SERVER_LANGUAGE'] = 'en';
 		$content = str_replace('{default_language}', $old_options['DEFAULT_SERVER_LANGUAGE'], $content);
-		$content = str_replace('{virtual_domains}', $virtual_domains, $content);
+		
+		// TODO: Fix write in correct file
+		//$content = str_replace('{virtual_domains}', $virtual_domains, $content);
 
 		wf($full_file_name, $content);
 
