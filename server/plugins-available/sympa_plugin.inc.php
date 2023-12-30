@@ -188,16 +188,36 @@ class sympa_plugin {
 				$virtual_domains .= ", '".$domain['domain']."'";
 			
 			// create the domain https://github.com/sympa-community/sympa-community.github.io/blob/master/manual/install/configure-mail-server-postfix.md#adding-new-domain
-			if(!is_dir($this->sympa_config_dir/$domain['domain'])) mkdir($this->sympa_config_dir/$domain['domain'], 0755);
-			chown($this->sympa_config_dir/$domain['domain'], 'sympa');
-			chgrp($this->sympa_config_dir/$domain['domain'], 'sympa');
-			if(!is_file($this->sympa_config_dir/$domain['domain'].'/robot.conf')) touch($this->sympa_config_dir/$domain['domain'].'/robot.conf');
-			chown($this->sympa_config_dir/$domain['domain'].'/robot.conf', 'sympa');
-			chgrp($this->sympa_config_dir/$domain['domain'].'/robot.conf', 'sympa');
-			if(!is_dir($this->sympa_expldir_dir/$domain['domain'])) mkdir($this->sympa_expldir_dir/$domain['domain'], 0750);
-			chown($this->sympa_expldir_dir/$domain['domain'], 'sympa');
-			chgrp($this->sympa_expldir_dir/$domain['domain'], 'sympa');
+			if(!is_dir($this->sympa_config_dir.'/'.$domain['domain'])) mkdir($this->sympa_config_dir.'/'.$domain['domain'], 0755);
+			chown($this->sympa_config_dir.'/'.$domain['domain'], 'sympa');
+			chgrp($this->sympa_config_dir.'/'.$domain['domain'], 'sympa');
+			if(!is_file($this->sympa_config_dir.'/'.$domain['domain'].'/robot.conf')) touch($this->sympa_config_dir.'/'.$domain['domain'].'/robot.conf');
+			chown($this->sympa_config_dir.'/'.$domain['domain'].'/robot.conf', 'sympa');
+			chgrp($this->sympa_config_dir.'/'.$domain['domain'].'/robot.conf', 'sympa');
+			
+			/* TODO : add config to robot.conf
+			listmaster adresse-email-admin@retzo.net
+			create_list  listmaster
+			wwsympa_url     http://lists.$line/sympa" > $SYSCONFDIR.'/'.$line/robot.conf 
+			*/
+						/* TODO : add config to transport.sympa
+				echo "sympa@$line          sympa:sympa@$line
+			listmaster@$line     sympa:listmaster@$line
+			bounce@$line         sympabounce:sympa@$line
+			abuse-feedback-report@$line  sympabounce:sympa@$line" >>  $SYSCONFDIR/transport.sympa
+			*/
+
+			/* TODO : add config to virtual.sympa
+				echo "sympa-request@$line  postmaster@retzo.net
+			sympa-owner@$line    postmaster@retzo.net" >>  $SYSCONFDIR/virtual.sympa
+			*/
+
+			if(!is_dir($this->sympa_expldir_dir.'/'.$domain['domain'])) mkdir($this->sympa_expldir_dir.'/'.$domain['domain'], 0750);
+			chown($this->sympa_expldir_dir.'/'.$domain['domain'], 'sympa');
+			chgrp($this->sympa_expldir_dir.'/'.$domain['domain'], 'sympa');
 		}
+
+		exec('nohup '.$conf['init_scripts'] . '/' . 'sympa reload >/dev/null 2>&1 &');
 
 		// Still needed? $content = str_replace('{hostname}', $server_config['hostname'], $content);
 		// $content = str_replace('{default_language}', $old_options['DEFAULT_SERVER_LANGUAGE'], $content);
