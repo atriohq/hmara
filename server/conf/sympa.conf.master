@@ -68,7 +68,7 @@ lang    {lang}
 ## This is used to construct URLs of web interface. The protocol (either
 ## https:// or http://) is required.
 ## Example: wwsympa_url https://web.example.org/sympa
-wwsympa_url     http://{hostname}/wws
+wwsympa_url     https://{hostname}/wws
 
 ## static_content_path
 ## Directory for static contents
@@ -95,3 +95,7 @@ pictures_path   /var/lib/sympa/pictures
 ## URL for subscribers pictures
 ## HTTP server have to map it with "pictures_path" directory.
 pictures_url    /pictures-sympa
+
+## create_list
+## Who is able to create lists
+create_list  closed

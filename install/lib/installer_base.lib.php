@@ -1106,27 +1106,18 @@ class installer_base extends stdClass {
 		
 		if(!isset($old_options['lang']) || $old_options['lang'] == '') $old_options['lang'] = 'en';
 		$content = str_replace('{lang}', $old_options['lang'], $content);
-		
 		if(!isset($old_options['listmaster']) || $old_options['listmaster'] == '') $old_options['listmaster'] = 'listmaster@'.$conf['hostname'];
 		$content = str_replace('{listmaster}', $old_options['listmaster'], $content);
-
 		if(!isset($old_options['db_type']) || $old_options['db_type'] == '') $old_options['db_type'] = 'mysql';
 		$content = str_replace('{db_type}', $old_options['db_type'], $content);
-
 		if(!isset($old_options['db_port']) || $old_options['db_port'] == '') $old_options['db_port'] = '3306';
 		$content = str_replace('{db_port}', $old_options['db_port'], $content);
-
 		if(!isset($old_options['db_name']) || $old_options['db_name'] == '') $old_options['db_name'] = 'sympa';
 		$content = str_replace('{db_name}', $old_options['db_name'], $content);
-
 		if(!isset($old_options['db_user']) || $old_options['db_user'] == '') $old_options['db_user'] = 'sympa';
 		$content = str_replace('{db_user}', $old_options['db_user'], $content);
-
 		if(!isset($old_options['db_passwd']) || $old_options['db_passwd'] == '') $old_options['db_passwd'] = 'your_passwd';
 		$content = str_replace('{db_passwd}', $old_options['db_passwd'], $content);
-		
-		// TODO: Fix write in correct file
-		//$content = str_replace('{virtual_domains}', $virtual_domains, $content);
 
 		wf($full_file_name, $content);
 

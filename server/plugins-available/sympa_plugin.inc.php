@@ -117,16 +117,14 @@ class sympa_plugin {
 		
 		$this->update_config();
 
-		// Still needed? 
-		/* if($data["new"]["password"] != $data["old"]["password"] && $data["new"]["password"] != '') {
-			// TODO: Change password reset tool
-			$app->system->exec_safe("nohup /usr/lib/mailman/bin/change_pw -l ? -p ? >/dev/null 2>&1 &", $data["new"]["listname"], $data["new"]["password"]);
-			exec('nohup '.$conf['init_scripts'] . '/' . 'sympa reload >/dev/null 2>&1 &');
+		if($data["new"]["password"] != $data["old"]["password"] && $data["new"]["password"] != '') {
+			//$app->system->exec_safe("nohup /usr/lib/mailman/bin/change_pw -l ? -p ? >/dev/null 2>&1 &", $data["new"]["listname"], $data["new"]["password"]);
+			//exec('nohup '.$conf['init_scripts'] . '/' . 'sympa reload >/dev/null 2>&1 &');
 			$app->db->query("UPDATE mail_mailinglist SET password = '' WHERE mailinglist_id = ?", $data["new"]['mailinglist_id']);
 		}
 		
-		if(is_file('/etc/sympa/virtual.sympa')) exec('postmap /etc/sympa/virtual.sympa');
-		if(is_file('/etc/sympa/sympa_transport')) exec('postmap /etc/sympa/sympa_transport'); */
+		// if(is_file('/etc/sympa/virtual.sympa')) exec('postmap /etc/sympa/virtual.sympa');
+		// if(is_file('/etc/sympa/sympa_transport')) exec('postmap /etc/sympa/sympa_transport');
 	}
 
 	function delete($event_name, $data) {
