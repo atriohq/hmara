@@ -88,7 +88,6 @@ class sympa_plugin {
 		file_put_contents($filename, $content);
 
 		$pid = $app->system->exec_safe("nohup /usr/bin/sympa --create_list --robot ? --input_file ? >/dev/null 2>&1 & echo $!;", $data["new"]["domain"], $filename);
-		// wait for /usr/lib/mailman/bin/newlist-call
 		$running = true;
 		do {
 			exec('ps -p '.intval($pid), $out);
@@ -197,31 +196,53 @@ class sympa_plugin {
 			listmaster adresse-email-admin@retzo.net
 			create_list  listmaster
 			wwsympa_url     http://lists.$line/sympa" > $SYSCONFDIR.'/'.$line/robot.conf 
-			*/
-						/* TODO : add config to transport.sympa
-				echo "sympa@$line          sympa:sympa@$line
-			listmaster@$line     sympa:listmaster@$line
-			bounce@$line         sympabounce:sympa@$line
-			abuse-feedback-report@$line  sympabounce:sympa@$line" >>  $SYSCONFDIR/transport.sympa
+
+			if(is_dir($this->sympa_config_dir.'/'.$domain['domain'])) {
+				if(is_file($conf['ispconfig_install_dir'].'/server/conf-custom/install/mailman-virtual_to_transport.sh')) {
+					copy($conf['ispconfig_install_dir'].'/server/conf-custom/install/mailman-virtual_to_transport.sh', $full_file_name);
+				} else {
+					copy('tpl/mailman-virtual_to_transport.sh', $full_file_name);
+				}
+				chgrp($full_file_name, $this->mailman_group);
+				chmod($full_file_name, 0755);
+			}
 			*/
 
-			/* TODO : add config to virtual.sympa
-				echo "sympa-request@$line  postmaster@retzo.net
-			sympa-owner@$line    postmaster@retzo.net" >>  $SYSCONFDIR/virtual.sympa
-			*/
+			//* Configure transport.sympa and add aliases
+			$content_transport = rf($this->sympa_config_dir.'/transport.sympa');
+			if(strpos($content_transport, 'listmaster@'.$domain['domain']) === false){
+				af($this->sympa_config_dir.'/transport.sympa', "listmaster@".$domain['domain']."     sympa:listmaster@".$domain['domain']."\n");
+			}
+			if(strpos($content_transport, 'sympa@'.$domain['domain']) === false){
+				af($this->sympa_config_dir.'/transport.sympa', "sympa@".$domain['domain']."          sympa:sympa@".$domain['domain']."\n");
+			}
+			if(strpos($content_transport, 'bounce@'.$domain['domain']) === false){
+				af($this->sympa_config_dir.'/transport.sympa', "bounce@".$domain['domain']."        sympabounce:sympa@".$domain['domain']."\n");
+			}
+			if(strpos($content_transport, 'abuse-feedback-report@'.$domain['domain']) === false){
+				af($this->sympa_config_dir.'/transport.sympa', "abuse-feedback-report@".$domain['domain']."  sympabounce:sympa@".$domain['domain']."\n");
+			}
+			unset($content_transport);
+
+			//* Configure virtual.sympa and add aliases
+			$content_virtual = rf($this->sympa_config_dir.'/virtual.sympa ');
+			if(strpos($content_virtual , 'sympa-request@'.$domain['domain']) === false){
+				af($this->sympa_config_dir.'/virtual.sympa', "sympa-request@".$domain['domain']."  postmaster@".$domain['domain']."\n");
+			}
+			if(strpos($content_virtual , 'sympa-owner@'.$domain['domain']) === false){
+				af($this->sympa_config_dir.'/virtual.sympa', "sympa-owner@".$domain['domain']."  postmaster@".$domain['domain']."\n");
+			}
+			unset($content_virtual);
 
 			if(!is_dir($this->sympa_expldir_dir.'/'.$domain['domain'])) mkdir($this->sympa_expldir_dir.'/'.$domain['domain'], 0750);
 			chown($this->sympa_expldir_dir.'/'.$domain['domain'], 'sympa');
 			chgrp($this->sympa_expldir_dir.'/'.$domain['domain'], 'sympa');
 		}
 
+		if(is_file($this->sympa_config_dir.'/virtual.sympa')) exec('postmap '.$this->sympa_config_dir.'/virtual.sympa');
+		if(is_file($this->sympa_config_dir.'/transport.sympa')) exec('postmap '.$this->sympa_config_dir.'/transport.sympa');
+
 		exec('nohup '.$conf['init_scripts'] . '/' . 'sympa reload >/dev/null 2>&1 &');
-
-		// Still needed? $content = str_replace('{hostname}', $server_config['hostname'], $content);
-		// $content = str_replace('{default_language}', $old_options['DEFAULT_SERVER_LANGUAGE'], $content);
-		// $content = str_replace('{virtual_domains}', $virtual_domains, $content);
-
-		//file_put_contents($this->sympa_config_dir.'/sympa/sympa.conf', $content);
 	}
 
 } // end class
