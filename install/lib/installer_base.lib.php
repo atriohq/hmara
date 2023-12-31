@@ -1057,6 +1057,25 @@ class installer_base extends stdClass {
 			chgrp('/etc/sympa/sympa_transport.db', 'postfix');
 		}
 
+		$config_dir = $conf['postfix']['config_dir'];
+		//* Configure master.cf and add a line for deliver
+		if(!$this->get_postfix_service('sympa', 'unix')) {
+			//* backup
+		   if(is_file($config_dir.'/master.cf')){
+			   copy($config_dir.'/master.cf', $config_dir.'/master.cf~2');
+		   }
+		   if(is_file($config_dir.'/master.cf~2')){
+			   chmod($config_dir.'/master.cf~2', 0400);
+		   }
+		   //* Configure master.cf and add a line for deliver
+		   $content_master = rf($config_dir.'/master.cf');
+		   $deliver_content = 'sympa   unix  -       n       n       -       -       pipe'."\n".'  flags=hqRu null_sender= user=sympa argv=/usr/lib/sympa/bin/queue ${nexthop}'."\n";
+		   $deliver_content .= 'sympabounce   unix  -       n       n       -       -       pipe'."\n".'  flags=hqRu null_sender= user=sympa argv=/usr/lib/sympa/bin/bouncequeue ${nexthop}'."\n";
+		   af($config_dir.'/master.cf', $deliver_content);
+		   unset($content_master);
+		   unset($deliver_content);
+	    }
+
 		$config_dir = $conf['sympa']['config_dir'].'/sympa/';
 		$full_file_name = $config_dir.'sympa.conf';
 		//* Backup exiting file
@@ -1083,46 +1102,28 @@ class installer_base extends stdClass {
 			}
 		}
 
-		//* Configure master.cf and add a line for deliver
-		if(!$this->get_postfix_service('sympa', 'unix')) {
-			//* backup
-		   if(is_file($config_dir.'/master.cf')){
-			   copy($config_dir.'/master.cf', $config_dir.'/master.cf~2');
-		   }
-		   if(is_file($config_dir.'/master.cf~2')){
-			   chmod($config_dir.'/master.cf~2', 0400);
-		   }
-		   //* Configure master.cf and add a line for deliver
-		   $content_master = rf($config_dir.'/master.cf');
-		   $deliver_content = 'sympa   unix  -       n       n       -       -       pipe'."\n".'  flags=hqRu null_sender= user=sympa argv=/usr/lib/sympa/bin/queue ${nexthop}'."\n";
-		   $deliver_content .= 'sympabounce   unix  -       n       n       -       -       pipe'."\n".'  flags=hqRu null_sender= user=sympa argv=/usr/lib/sympa/bin/bouncequeue ${nexthop}'."\n";
-		   af($config_dir.'/master.cf', $deliver_content);
-		   unset($content_master);
-		   unset($deliver_content);
-	   }
-
-		$virtual_domains = '';
-		if($status == 'update')
-		{
-			// create virtual_domains list
-			$domainAll = $this->db->queryAllRecords("SELECT domain FROM mail_mailinglist GROUP BY domain");
-
-			if(is_array($domainAll)) {
-				foreach($domainAll as $domain)
-				{
-					if ($domainAll[0]['domain'] == $domain['domain'])
-						$virtual_domains .= "'".$domain['domain']."'";
-					else
-						$virtual_domains .= ", '".$domain['domain']."'";
-				}
-			}
-		}
-		else
-			$virtual_domains = "' '";
-
 		$content = str_replace('{hostname}', $conf['hostname'], $content);
-		if(!isset($old_options['DEFAULT_SERVER_LANGUAGE']) || $old_options['DEFAULT_SERVER_LANGUAGE'] == '') $old_options['DEFAULT_SERVER_LANGUAGE'] = 'en';
-		$content = str_replace('{default_language}', $old_options['DEFAULT_SERVER_LANGUAGE'], $content);
+		
+		if(!isset($old_options['lang']) || $old_options['lang'] == '') $old_options['lang'] = 'en';
+		$content = str_replace('{lang}', $old_options['lang'], $content);
+		
+		if(!isset($old_options['listmaster']) || $old_options['listmaster'] == '') $old_options['listmaster'] = 'listmaster@'.$conf['hostname'];
+		$content = str_replace('{listmaster}', $old_options['listmaster'], $content);
+
+		if(!isset($old_options['db_type']) || $old_options['db_type'] == '') $old_options['db_type'] = 'mysql';
+		$content = str_replace('{db_type}', $old_options['db_type'], $content);
+
+		if(!isset($old_options['db_port']) || $old_options['db_port'] == '') $old_options['db_port'] = '3306';
+		$content = str_replace('{db_port}', $old_options['db_port'], $content);
+
+		if(!isset($old_options['db_name']) || $old_options['db_name'] == '') $old_options['db_name'] = 'sympa';
+		$content = str_replace('{db_name}', $old_options['db_name'], $content);
+
+		if(!isset($old_options['db_user']) || $old_options['db_user'] == '') $old_options['db_user'] = 'sympa';
+		$content = str_replace('{db_user}', $old_options['db_user'], $content);
+
+		if(!isset($old_options['db_passwd']) || $old_options['db_passwd'] == '') $old_options['db_passwd'] = 'your_passwd';
+		$content = str_replace('{db_passwd}', $old_options['db_passwd'], $content);
 		
 		// TODO: Fix write in correct file
 		//$content = str_replace('{virtual_domains}', $virtual_domains, $content);
