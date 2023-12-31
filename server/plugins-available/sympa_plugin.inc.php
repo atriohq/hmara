@@ -245,6 +245,67 @@ class sympa_plugin {
 		exec('nohup '.$conf['init_scripts'] . '/' . 'sympa reload >/dev/null 2>&1 &');
 	}
 
+
+	function rf($file){
+		global $app;
+		clearstatcache();
+		if(!$fp = fopen($file, 'rb')){
+			$app->log('WARNING: Could not open file '.$file, 2);
+			return false;
+		} else {
+			if(filesize($file) > 0){
+				$content = fread($fp, filesize($file));
+			} else {
+				$content = '';
+			}
+			fclose($fp);
+			return $content;
+		}
+	}
+
+	function mkdirs($strPath, $mode = '0755'){
+		if(isset($strPath) && $strPath != ''){
+			//* Verzeichnisse rekursiv erzeugen
+			if(is_dir($strPath)){
+				return true;
+			}
+			$pStrPath = dirname($strPath);
+			if(!mkdirs($pStrPath, $mode)){
+				return false;
+			}
+			$old_umask = umask(0);
+			$ret_val = mkdir($strPath, octdec($mode));
+			umask($old_umask);
+			return $ret_val;
+		}
+		return false;
+	}
+	function wf($file, $content){
+		global $app;
+		$this->mkdirs(dirname($file));
+		if(!$fp = fopen($file, 'wb')){
+			$app->log('WARNING: Could not open file '.$file, 2);
+			return false;
+		} else {
+			fwrite($fp, $content);
+			fclose($fp);
+			return true;
+		}
+	}
+
+	function af($file, $content){
+		global $app;
+		$this->mkdirs(dirname($file));
+		if(!$fp = fopen($file, 'ab')){
+			$app->log('WARNING: Could not open file '.$file, 2);
+			return false;
+		} else {
+			fwrite($fp, $content);
+			fclose($fp);
+			return true;
+		}
+	}
+
 } // end class
 
 ?>
