@@ -209,28 +209,28 @@ class sympa_plugin {
 			*/
 
 			//* Configure transport.sympa and add aliases
-			$content_transport = rf($this->sympa_config_dir.'/transport.sympa');
+			$content_transport = $this->rf($this->sympa_config_dir.'/transport.sympa');
 			if(strpos($content_transport, 'listmaster@'.$domain['domain']) === false){
-				af($this->sympa_config_dir.'/transport.sympa', "listmaster@".$domain['domain']."     sympa:listmaster@".$domain['domain']."\n");
+				$this->af($this->sympa_config_dir.'/transport.sympa', "listmaster@".$domain['domain']."     sympa:listmaster@".$domain['domain']."\n");
 			}
 			if(strpos($content_transport, 'sympa@'.$domain['domain']) === false){
-				af($this->sympa_config_dir.'/transport.sympa', "sympa@".$domain['domain']."          sympa:sympa@".$domain['domain']."\n");
+				$this->af($this->sympa_config_dir.'/transport.sympa', "sympa@".$domain['domain']."          sympa:sympa@".$domain['domain']."\n");
 			}
 			if(strpos($content_transport, 'bounce@'.$domain['domain']) === false){
-				af($this->sympa_config_dir.'/transport.sympa', "bounce@".$domain['domain']."        sympabounce:sympa@".$domain['domain']."\n");
+				$this->af($this->sympa_config_dir.'/transport.sympa', "bounce@".$domain['domain']."        sympabounce:sympa@".$domain['domain']."\n");
 			}
 			if(strpos($content_transport, 'abuse-feedback-report@'.$domain['domain']) === false){
-				af($this->sympa_config_dir.'/transport.sympa', "abuse-feedback-report@".$domain['domain']."  sympabounce:sympa@".$domain['domain']."\n");
+				$this->af($this->sympa_config_dir.'/transport.sympa', "abuse-feedback-report@".$domain['domain']."  sympabounce:sympa@".$domain['domain']."\n");
 			}
 			unset($content_transport);
 
 			//* Configure virtual.sympa and add aliases
-			$content_virtual = rf($this->sympa_config_dir.'/virtual.sympa ');
+			$content_virtual = $this->rf($this->sympa_config_dir.'/virtual.sympa ');
 			if(strpos($content_virtual , 'sympa-request@'.$domain['domain']) === false){
-				af($this->sympa_config_dir.'/virtual.sympa', "sympa-request@".$domain['domain']."  postmaster@".$domain['domain']."\n");
+				$this->af($this->sympa_config_dir.'/virtual.sympa', "sympa-request@".$domain['domain']."  postmaster@".$domain['domain']."\n");
 			}
 			if(strpos($content_virtual , 'sympa-owner@'.$domain['domain']) === false){
-				af($this->sympa_config_dir.'/virtual.sympa', "sympa-owner@".$domain['domain']."  postmaster@".$domain['domain']."\n");
+				$this->af($this->sympa_config_dir.'/virtual.sympa', "sympa-owner@".$domain['domain']."  postmaster@".$domain['domain']."\n");
 			}
 			unset($content_virtual);
 
@@ -245,7 +245,8 @@ class sympa_plugin {
 		exec('nohup '.$conf['init_scripts'] . '/' . 'sympa reload >/dev/null 2>&1 &');
 	}
 
-
+	// TODO:
+	// If someone has a better idea than redefining this functions
 	function rf($file){
 		global $app;
 		clearstatcache();
