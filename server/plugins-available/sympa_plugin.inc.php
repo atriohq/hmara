@@ -34,7 +34,7 @@ class sympa_plugin {
 	var $class_name = 'sympa_plugin';
 
 
-	var $sympa_config_dir = '/etc/sympa/';
+	var $sympa_config_dir = '/etc/sympa';
 	var $sympa_expldir_dir = '/var/lib/sympa/list_data';
 
 	//* This function is called during ispconfig installation to determine
@@ -188,33 +188,29 @@ class sympa_plugin {
 			if(!is_dir($this->sympa_config_dir.'/'.$domain['domain'])) mkdir($this->sympa_config_dir.'/'.$domain['domain'], 0755);
 			chown($this->sympa_config_dir.'/'.$domain['domain'], 'sympa');
 			chgrp($this->sympa_config_dir.'/'.$domain['domain'], 'sympa');
-			if(!is_file($this->sympa_config_dir.'/'.$domain['domain'].'/robot.conf')) touch($this->sympa_config_dir.'/'.$domain['domain'].'/robot.conf');
-			chown($this->sympa_config_dir.'/'.$domain['domain'].'/robot.conf', 'sympa');
-			chgrp($this->sympa_config_dir.'/'.$domain['domain'].'/robot.conf', 'sympa');
 			
-			/* TODO : add config to robot.conf
-			listmaster adresse-email-admin@retzo.net
-			create_list  listmaster
-			wwsympa_url     http://lists.$line/sympa" > $SYSCONFDIR.'/'.$line/robot.conf 
-
+			/*
 			if(is_dir($this->sympa_config_dir.'/'.$domain['domain'])) {
-				if(is_file($conf['ispconfig_install_dir'].'/server/conf-custom/install/mailman-virtual_to_transport.sh')) {
-					copy($conf['ispconfig_install_dir'].'/server/conf-custom/install/mailman-virtual_to_transport.sh', $full_file_name);
+				if(is_file($conf['ispconfig_install_dir'].'/server/conf-custom/install/sympa.robot.conf.master')) {
+					copy($conf['ispconfig_install_dir'].'/server/conf-custom/install/sympa.robot.conf.master', $full_file_name);
 				} else {
-					copy('tpl/mailman-virtual_to_transport.sh', $full_file_name);
+					copy('tpl/mailman-virtual_to_transport.sh', $this->sympa_config_dir.'/'.$domain['domain'].'/robot.conf');
 				}
 				chgrp($full_file_name, $this->mailman_group);
 				chmod($full_file_name, 0755);
-			}
-			*/
+			}*/
+
+			if(!is_file($this->sympa_config_dir.'/'.$domain['domain'].'/robot.conf')) touch($this->sympa_config_dir.'/'.$domain['domain'].'/robot.conf');
+			chown($this->sympa_config_dir.'/'.$domain['domain'].'/robot.conf', 'sympa');
+			chgrp($this->sympa_config_dir.'/'.$domain['domain'].'/robot.conf', 'sympa');
 
 			//* Configure transport.sympa and add aliases
 			$content_transport = $this->rf($this->sympa_config_dir.'/transport.sympa');
-			if(strpos($content_transport, 'listmaster@'.$domain['domain']) === false){
-				$this->af($this->sympa_config_dir.'/transport.sympa', "listmaster@".$domain['domain']."     sympa:listmaster@".$domain['domain']."\n");
-			}
 			if(strpos($content_transport, 'sympa@'.$domain['domain']) === false){
 				$this->af($this->sympa_config_dir.'/transport.sympa', "sympa@".$domain['domain']."          sympa:sympa@".$domain['domain']."\n");
+			}
+			if(strpos($content_transport, 'listmaster@'.$domain['domain']) === false){
+				$this->af($this->sympa_config_dir.'/transport.sympa', "listmaster@".$domain['domain']."     sympa:listmaster@".$domain['domain']."\n");
 			}
 			if(strpos($content_transport, 'bounce@'.$domain['domain']) === false){
 				$this->af($this->sympa_config_dir.'/transport.sympa', "bounce@".$domain['domain']."        sympabounce:sympa@".$domain['domain']."\n");
@@ -225,7 +221,7 @@ class sympa_plugin {
 			unset($content_transport);
 
 			//* Configure virtual.sympa and add aliases
-			$content_virtual = $this->rf($this->sympa_config_dir.'/virtual.sympa ');
+			$content_virtual = $this->rf($this->sympa_config_dir.'/virtual.sympa');
 			if(strpos($content_virtual , 'sympa-request@'.$domain['domain']) === false){
 				$this->af($this->sympa_config_dir.'/virtual.sympa', "sympa-request@".$domain['domain']."  postmaster@".$domain['domain']."\n");
 			}
