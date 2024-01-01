@@ -99,3 +99,15 @@ pictures_url    /pictures-sympa
 ## create_list
 ## Who is able to create lists
 create_list  closed
+
+## sendmail_aliases
+## Path of the file that contains all list related aliases
+sendmail_aliases /etc/sympa/sympa_transport
+
+## aliases_program
+## Program used to update alias database
+aliases_program postmap
+
+## aliases_db_type
+## Type of alias database
+aliases_db_type hash
