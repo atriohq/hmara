@@ -95,16 +95,11 @@ class sympa_plugin {
 			unset($out);
 		} while ($running);
 		unset($out);
-	/* 	if(is_file('/etc/mailman/virtual-mailman') && !is_link('/etc/sympa/virtual.sympa')) {
-			symlink('/etc/mailman/virtual-mailman','/etc/sympa/virtual.sympa');
-		} */
-		// Still needed? if(is_file('/etc/sympa/virtual.sympa')) exec('postmap /etc/sympa/virtual.sympa');
-		// Still needed? if(is_file('/etc/sympa/sympa_transport')) exec('postmap /etc/sympa/sympa_transport');
+	
+		if(is_file('/etc/sympa/virtual.sympa')) exec('postmap /etc/sympa/virtual.sympa');
+		if(is_file('/etc/sympa/sympa_transport')) exec('postmap /etc/sympa/sympa_transport');
 		
 		exec('nohup '.$conf['init_scripts'] . '/' . 'sympa reload >/dev/null 2>&1 &');
-		
-		// Fix list URL
-		//$app->system->exec_safe('/usr/sbin/withlist -l -r fix_url ?', $data["new"]["listname"]);
 
 		$app->db->query("UPDATE mail_mailinglist SET password = '' WHERE mailinglist_id = ?", $data["new"]['mailinglist_id']);
 
@@ -117,13 +112,9 @@ class sympa_plugin {
 		$this->update_config();
 
 		if($data["new"]["password"] != $data["old"]["password"] && $data["new"]["password"] != '') {
-			//$app->system->exec_safe("nohup /usr/lib/mailman/bin/change_pw -l ? -p ? >/dev/null 2>&1 &", $data["new"]["listname"], $data["new"]["password"]);
-			//exec('nohup '.$conf['init_scripts'] . '/' . 'sympa reload >/dev/null 2>&1 &');
+			// Password not used in Sympa, no action needed
 			$app->db->query("UPDATE mail_mailinglist SET password = '' WHERE mailinglist_id = ?", $data["new"]['mailinglist_id']);
 		}
-		
-		// if(is_file('/etc/sympa/virtual.sympa')) exec('postmap /etc/sympa/virtual.sympa');
-		// if(is_file('/etc/sympa/sympa_transport')) exec('postmap /etc/sympa/sympa_transport');
 	}
 
 	function delete($event_name, $data) {
@@ -134,45 +125,10 @@ class sympa_plugin {
 		$app->system->exec_safe("nohup /usr/bin/sympa --close_list=? >/dev/null 2>&1 &", $data["old"]["listname"].'@'.$data["old"]["domain"]);
 
 		exec('nohup '.$conf['init_scripts'] . '/' . 'sympa reload >/dev/null 2>&1 &');
-		
-		// Still needed? if(is_file('/etc/sympa/virtual.sympa')) exec('postmap /etc/sympa/virtual.sympa');
-		// Still needed? if(is_file('/etc/sympa/sympa_transport')) exec('postmap /etc/sympa/sympa_transport');
-
 	}
 
 	function update_config() {
 		global $app, $conf;
-		
-		/*
-		//copy($this->sympa_config_dir.'/sympa/sympa.conf', $this->sympa_config_dir.'/sympa/sympa.conf~');
-
-		// load the server configuration options
-		$app->uses('getconf');
-		$server_config = $app->getconf->get_server_config($conf['server_id'], 'server');
-
-		// load files
-		// TODO: Change file
-		if(file_exists($conf["rootpath"]."/conf-custom/sympa_list_creation.xml.master")) {
-			$content = file_get_contents($conf["rootpath"]."/conf-custom/sympa_list_creation.xml.master");
-		} else {
-			$content = file_get_contents($conf["rootpath"]."/conf/sympa_list_creation.xml.master");
-		}
-		$old_file = file_get_contents($this->sympa_config_dir."/mm_cfg.py");
-
-		/* $old_options = array();
-		$lines = explode("\n", $old_file);
-		foreach ($lines as $line)
-		{
-			if (strlen($line) && substr($line, 0, 1) != '#')
-			{
-				list($key, $value) = explode("=", $line);
-				if ($value && $value !== '')
-				{
-					$key = rtrim($key);
-					$old_options[$key] = trim($value);
-				}
-			}
-		}*/
 
 		// create virtual_domains list
 		$domainAll = $app->db->queryAllRecords("SELECT domain FROM mail_mailinglist GROUP BY domain");
@@ -189,7 +145,7 @@ class sympa_plugin {
 			chown($this->sympa_config_dir.'/'.$domain['domain'], 'sympa');
 			chgrp($this->sympa_config_dir.'/'.$domain['domain'], 'sympa');
 			
-			/*
+			/* If we need custom variable per domain, might be good for the lang
 			if(is_dir($this->sympa_config_dir.'/'.$domain['domain'])) {
 				if(is_file($conf['ispconfig_install_dir'].'/server/conf-custom/install/sympa.robot.conf.master')) {
 					copy($conf['ispconfig_install_dir'].'/server/conf-custom/install/sympa.robot.conf.master', $full_file_name);
