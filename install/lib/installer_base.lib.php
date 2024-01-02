@@ -1110,6 +1110,8 @@ class installer_base extends stdClass {
 		$content = str_replace('{listmaster}', $old_options['listmaster'], $content);
 		if(!isset($old_options['db_type']) || $old_options['db_type'] == '') $old_options['db_type'] = 'mysql';
 		$content = str_replace('{db_type}', $old_options['db_type'], $content);
+		if(!isset($old_options['db_host']) || $old_options['db_host'] == '') $old_options['db_host'] = 'localhost';
+		$content = str_replace('{db_host}', $old_options['db_host'], $content);
 		if(!isset($old_options['db_port']) || $old_options['db_port'] == '') $old_options['db_port'] = '3306';
 		$content = str_replace('{db_port}', $old_options['db_port'], $content);
 		if(!isset($old_options['db_name']) || $old_options['db_name'] == '') $old_options['db_name'] = 'sympa';
