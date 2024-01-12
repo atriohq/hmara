@@ -134,8 +134,8 @@
         for (let i = 0; i < publicKeys.length; i++) {
             const publicKey = publicKeys[i].trim();;
 
-            // Skip empty lines
-            if (publicKey === '') {
+            // Skip empty lines and comments
+            if (publicKey === '' || publicKey.startsWith('#')) {
                 continue;
             }
 
