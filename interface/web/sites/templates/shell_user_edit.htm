@@ -141,7 +141,7 @@
 
             const parts = publicKey.split(/\s+/);
             const type = parts[0];
-            const comment = parts[parts.length - 1];
+            const comment = parts.slice(2).join(' '); // Handle comments with spaces
 
             const widget = createSSHWidget(type, comment, i, textarea);
             widgetContainer.appendChild(widget);
