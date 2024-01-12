@@ -133,6 +133,12 @@
         const publicKeys = textarea.value.trim().split('\n');
         for (let i = 0; i < publicKeys.length; i++) {
             const publicKey = publicKeys[i].trim();;
+
+            // Skip empty lines
+            if (publicKey === '') {
+                continue;
+            }
+
             const parts = publicKey.split(/\s+/);
             const type = parts[0];
             const comment = parts[parts.length - 1];
