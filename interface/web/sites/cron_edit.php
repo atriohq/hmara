@@ -78,6 +78,7 @@ class page_action extends tform_actions {
 			$app->tpl->setVar("edit_disabled", 0);
 		}
 
+
 		parent::onShowEnd();
 	}
 
@@ -148,7 +149,7 @@ class page_action extends tform_actions {
 					$has_error = true;
 				}
 			}
-			
+
 			if($client["limit_cron_type"] == 'url' && $this->dataRecord["type"] != 'url') {
 				$app->error($app->tform->wordbook["limit_cron_url_txt"]);
 				$has_error = true;
@@ -178,7 +179,7 @@ class page_action extends tform_actions {
 					$has_error = true;
 				}
 			}
-			
+
 			if($client["limit_cron_type"] == 'url' && $this->dataRecord["type"] != 'url') {
 				$app->error($app->tform->wordbook["limit_cron_url_txt"]);
 				$has_error = true;

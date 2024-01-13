@@ -171,6 +171,7 @@ class cron_plugin {
 
 
 		$this->parent_domain = $parent_domain;
+
 		$this->_write_crontab();
 
 		$this->action = '';
@@ -207,6 +208,7 @@ class cron_plugin {
 		$app->uses("getconf");
 
 		$cron_config = $app->getconf->get_server_config($conf["server_id"], 'cron');
+		$web_config = $app->getconf->get_server_config($conf["server_id"], 'web');
 
 		//* try to find customer's mail address
 
@@ -249,33 +251,44 @@ class cron_plugin {
 						continue;
 					}
 
-					$web_root = '';
+					$web_docroot_client = '';
+
+					$web_domain = $this->parent_domain['domain'];
+
+					// web folder is hardcoded to /web:
+					$web_folder = '/web';
+
 					if($job['type'] == 'chrooted') {
 						if(substr($job['command'], 0, strlen($this->parent_domain['document_root'])) == $this->parent_domain['document_root']) {
 							//* delete the unneeded path part
 							$job['command'] = substr($job['command'], strlen($this->parent_domain['document_root']));
 						}
 					} else {
-						$web_root = $this->parent_domain['document_root'];
+						$web_docroot_client = $this->parent_domain['document_root'];
 					}
 
-					$web_domain = $this->parent_domain['domain'];
-					if($this->parent_domain['php_cli_binary'] == '' || $job['type'] == 'chrooted') {
-						// PHP cli binary not set or default was selected or it is a chrooted web, fallback to just "php"
-						$web_php_cli = 'php';
-						$app->log("PHP CLI binary not set for the website\'s selected PHP version or Default was selected. Falling back to \"php\" for cronjob id " . $job['id'], LOGLEVEL_DEBUG);
+					if(empty($this->parent_domain['php_cli_binary'])) {
+						// PHP cli binary not set or default was selected, fallback to "/usr/bin/php"
+						$web_php_cli = '/usr/bin/php';
+						$app->log("PHP CLI binary not set for the website\'s selected PHP version or Default was selected. Fall back to \"/usr/bin/php\" for cronjob id " . $job['id'], LOGLEVEL_DEBUG);
+						if($job['type'] == 'chrooted') {
+							if(!file_exists($this->parent_domain['document_root'] . $web_php_cli)) {
+								echo $this->parent_domain['document_root'] . $web_php_cli."\n\n\n\n";
+								$app->log("The PHP cli binary " . $web_php_cli . " is not available in the jail of the web " . $web_domain . " / cronjob_id: " . $job['id']  . ". Check your Jailkit setup!", LOGLEVEL_DEBUG);
+							}
+						}
 					} else {
 						$web_php_cli = $this->parent_domain['php_cli_binary'];
 					}
 
-					$web_root .= '/web';
+					$web_docroot_client .= $web_folder;
 
 					$trans = array(
-                        '[web_root]' => $web_root,
-						'{DOCROOT_CLIENT}' => $web_root,
-                        '{DOMAIN}' => $web_domain,
+						'[web_root]' => $web_docroot_client,
+						'{DOCROOT_CLIENT}' => $web_docroot_client,
+						'{DOMAIN}' => $web_domain,
 						'{SITE_PHP}' => $web_php_cli
-	                );
+					);
 
 					$job['command'] = strtr($job['command'], $trans);
 

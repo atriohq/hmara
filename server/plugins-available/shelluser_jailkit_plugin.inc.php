@@ -82,8 +82,12 @@ class shelluser_jailkit_plugin {
 		}
 
 
-		//$web = $app->db->queryOneRecord("SELECT * FROM web_domain WHERE domain_id = ?", $data['new']['parent_domain_id']);
+
 		$web = $app->db->queryOneRecord("SELECT * FROM web_domain LEFT JOIN server_php ON web_domain.server_php_id = server_php.server_php_id WHERE `domain_id` = ?", $data["new"]["parent_domain_id"]);
+
+		$this->web = $web;
+
+		$this->username = $data['new']['username'];
 
 		if(!$app->system->is_allowed_user($data['new']['username'], false, false)
 			|| !$app->system->is_allowed_user($data['new']['puser'], true, true)
@@ -136,6 +140,8 @@ class shelluser_jailkit_plugin {
 
 						//* call the ssh-rsa update function
 						$this->_setup_ssh_rsa();
+
+						$this->_add_bashrc_jailkit();
 
 						$app->system->usermod($data['new']['username'], 0, 0, '', '/usr/sbin/jk_chrootsh', '', '');
 
@@ -191,8 +197,13 @@ class shelluser_jailkit_plugin {
 		}
 
 		if($app->system->is_user($data['new']['puser'])) {
-			//$web = $app->db->queryOneRecord("SELECT * FROM web_domain WHERE domain_id = ?", $data['new']['parent_domain_id']);
+
+
 			$web = $app->db->queryOneRecord("SELECT * FROM web_domain LEFT JOIN server_php ON web_domain.server_php_id = server_php.server_php_id WHERE `domain_id` = ?", $data["new"]["parent_domain_id"]);
+
+			$this->web = $web;
+
+			$this->username = $data['new']['username'];
 
 			// Get the UID of the parent user
 			$uid = intval($app->system->getuid($data['new']['puser']));
@@ -224,6 +235,8 @@ class shelluser_jailkit_plugin {
 						$this->_setup_jailkit_chroot();
 
 						$this->_add_jailkit_user();
+
+						$this->_add_bashrc_jailkit();
 
 						//* call the ssh-rsa update function
 						$this->_setup_ssh_rsa();
@@ -349,25 +362,6 @@ class shelluser_jailkit_plugin {
 
 			$this->_add_jailkit_programs($options);
 
-			$app->load('tpl');
-
-			$tpl = new tpl();
-			$tpl->newTemplate("bash.bashrc.master");
-
-			$tpl->setVar('jailkit_chroot', true);
-			$tpl->setVar('domain', $web['domain']);
-			$tpl->setVar('home_dir', $this->_get_home_dir(""));
-
-			$bashrc = $this->data['new']['dir'].'/etc/bash.bashrc';
-			if(@is_file($bashrc) || @is_link($bashrc)) unlink($bashrc);
-
-			file_put_contents($bashrc, $tpl->grab());
-
-
-			unset($tpl);
-
-			$app->log("Added bashrc script: ".$bashrc, LOGLEVEL_DEBUG);
-
 			$tpl = new tpl();
 			$tpl->newTemplate("motd.master");
 
@@ -396,6 +390,8 @@ class shelluser_jailkit_plugin {
 			}
 
 			$app->system->update_jailkit_chroot($this->data['new']['dir'], $sections, $programs, $options);
+
+
 		}
 
 		// this gets last_jailkit_update out of sync with master db, but that is ok,
@@ -462,13 +458,13 @@ class shelluser_jailkit_plugin {
 		$app->system->chown($this->data['new']['dir'].$jailkit_chroot_userhome, $this->data['new']['username']);
 		$app->system->chgrp($this->data['new']['dir'].$jailkit_chroot_userhome, $this->data['new']['pgroup']);
 
-		$app->log("Added created jailkit user home in : ".$this->data['new']['dir'].$jailkit_chroot_userhome, LOGLEVEL_DEBUG);
+		$app->log("Added created jailkit user home in: ".$this->data['new']['dir'].$jailkit_chroot_userhome, LOGLEVEL_DEBUG);
 
 		if(!is_dir($this->data['new']['dir'].$jailkit_chroot_puserhome)) mkdir($this->data['new']['dir'].$jailkit_chroot_puserhome, 0750, true);
 		$app->system->chown($this->data['new']['dir'].$jailkit_chroot_puserhome, $this->data['new']['puser']);
 		$app->system->chgrp($this->data['new']['dir'].$jailkit_chroot_puserhome, $this->data['new']['pgroup']);
 
-		$app->log("Added jailkit parent user home in : ".$this->data['new']['dir'].$jailkit_chroot_puserhome, LOGLEVEL_DEBUG);
+		$app->log("Added jailkit parent user home in: ".$this->data['new']['dir'].$jailkit_chroot_puserhome, LOGLEVEL_DEBUG);
 
 
 	}
@@ -678,6 +674,68 @@ class shelluser_jailkit_plugin {
 		// this gets last_jailkit_update out of sync with master db, but that is ok,
 		// as it is only used as a timestamp to moderate the frequency of updating on the slaves
 		$app->db->query("UPDATE `web_domain` SET `last_jailkit_update` = NOW(), `last_jailkit_hash` = NULL WHERE `document_root` = ?", $parent_domain['document_root']);
+	}
+
+
+
+	function _add_bashrc_jailkit() {
+		global $app;
+
+		// Create .bashrc file
+		$app->load('tpl');
+
+		$tpl = new tpl();
+
+		// /etc/bash.bashrc is not supported by Red Hat OS
+		if($app->system->is_redhat_os() == true) {
+			$tpl->newTemplate("bashrc_el.master");
+		} else {
+			$tpl->newTemplate("bash.bashrc.master");
+		}
+
+		// Predefine some template vars
+		$tpl->setVar('jailkit_chroot', true);
+		$tpl->setVar('domain', $this->web['domain']);
+		$tpl->setVar('home_dir', $this->_get_home_dir(""));
+
+		$tpl->setVar('use_php_path', false);
+		$tpl->setVar('use_php_alias', false);
+
+		$php_bin_dir = dirname($this->web['php_cli_binary']);
+
+		if(!file_exists($this->_get_home_dir($this->web['system_user']))) $this->_add_jailkit_user();
+
+		if(($this->web['server_php_id'] > 0) && !empty($this->web['php_cli_binary'])) {
+			if(preg_match('/^(\/usr\/(s)?bin|\/(s)?bin)/', $php_bin_dir)) {
+				$tpl->setVar('use_php_path', false);
+				$tpl->setVar('use_php_alias', true);
+				$tpl->setVar('php_alias', $this->web['php_cli_binary']);
+			} else {
+				$tpl->setVar('use_php_path', true);
+				$tpl->setVar('use_php_alias', false);
+				$tpl->setVar('php_bin_dir', $php_bin_dir);
+			}
+
+			if(!file_exists($this->web['document_root'] . '/' . $this->web['php_cli_binary'])) {
+				$app->log("The PHP cli binary " . $this->web['php_cli_binary'] . " is not available in the jail of the web " . $this->web['domain']  . " / username: " . $this->username  . ". Check your Jailkit setup!", LOGLEVEL_DEBUG);
+				$tpl->setVar('use_php_path', false);
+				$tpl->setVar('use_php_alias', false);
+			}
+		}
+
+		if($app->system->is_redhat_os() == true) {
+			$bashrc = $this->web['document_root'] . '/home/' . $this->web['system_user'] . '/.bashrc';
+		} else {
+			$bashrc = $this->web['document_root'] . '/etc/bash.bashrc';
+		}
+
+		if(@is_file($bashrc) || @is_link($bashrc)) unlink($bashrc);
+		file_put_contents($bashrc, $tpl->grab());
+		$app->log("Added bashrc script: " . $bashrc, LOGLEVEL_DEBUG);
+
+		unset($tpl);
+
+
 	}
 
 } // end class

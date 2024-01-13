@@ -2064,7 +2064,7 @@ class system{
 
 	function _getinitcommand($servicename, $action, $init_script_directory = '', $check_service) {
 		global $conf, $app;
-		
+
 		// upstart
 		/* removed upstart support - deprecated
 		if(is_executable('/sbin/initctl')){
@@ -2072,7 +2072,7 @@ class system{
 			if(intval($retval['retval']) == 0) return 'service '.$servicename.' '.$action;
 		}
 		*/
-		
+
 		if(!in_array($action,array('start','stop','restart','reload','force-reload'))) {
 			$app->log('Invalid init command action '.$action,LOGLEVEL_WARN);
 			return false;
@@ -2081,10 +2081,10 @@ class system{
 		//* systemd (now default in all supported OS)
 		if(is_executable('/bin/systemd') || is_executable('/usr/bin/systemctl')){
 			$app->log('Trying to use Systemd to restart service',LOGLEVEL_DEBUG);
-			
+
 			//* Test service name via regex
 			if(preg_match('/[a-zA-Z0-9\.\-\_]/',$servicename)) {
-			
+
 				//* Test if systemd service is enabled
 				if ($check_service) {
 					$this->exec_safe("systemctl is-enabled ? 2>&1", $servicename);
@@ -2092,7 +2092,7 @@ class system{
 				} else {
 					$app->log('Systemd service '.$servicename.' not found or not enabled.',LOGLEVEL_DEBUG);
 				}
-			
+
 				//* Return service command
 				if ($ret_val == 0 || !$check_service) {
 					return 'systemctl '.$action.' '.$servicename.'.service';
@@ -2108,69 +2108,69 @@ class system{
 
 		//* sysvinit fallback
 		$app->log('Using init script to restart service',LOGLEVEL_DEBUG);
-		
+
 		//* Get init script directory
 		if($init_script_directory == '') $init_script_directory = $conf['init_scripts'];
 		if(substr($init_script_directory, -1) === '/') $init_script_directory = substr($init_script_directory, 0, -1);
 		$init_script_directory = realpath($init_script_directory);
-		
+
 		//* Check init script dir
 		if(!is_dir($init_script_directory)) {
 			$app->log('Init script directory '.$init_script_directory.' not found',LOGLEVEL_WARN);
 			return false;
 		}
-		
+
 		//* Forbidden init script paths
 		if(substr($init_script_directory,0,4) == '/var' || substr($init_script_directory,0,4) == '/tmp') {
 			$app->log('Do not put init scripts in /var or /tmp folder.',LOGLEVEL_WARN);
 			return false;
 		}
-		
+
 		//* Check init script dir owner
 		if(fileowner($init_script_directory) !== 0) {
 			$app->log('Init script directory '.$init_script_directory.' not owned by root user',LOGLEVEL_WARN);
 			return false;
 		}
-		
+
 		$full_init_script_path = realpath($init_script_directory.'/'.$servicename);
-    
+
     //** Gentoo, keep symlink as init script, but do some checks
-    if(file_exists('/etc/gentoo-release')) {  
+    if(file_exists('/etc/gentoo-release')) {
       //* check if init script is symlink
-      if(is_link($init_script_directory.'/'.$servicename)) {                 
+      if(is_link($init_script_directory.'/'.$servicename)) {
         //* Check init script owner (realpath, symlink is checked later)
       	if(fileowner($full_init_script_path) !== 0) {
       		$app->log('Init script '.$full_init_script_path.' not owned by root user',LOGLEVEL_WARN);
       		return false;
         }
-        
+
         //* full path is symlink
         $full_init_script_path_symlink = $init_script_directory.'/'.$servicename;
-        
+
         //* check if realpath matches symlink
         if(strpos($full_init_script_path_symlink,$full_init_script_path) == 0) {
           $full_init_script_path = $full_init_script_path_symlink;
         }
       }
     }
-		
+
 		if($full_init_script_path == '') {
 			$app->log('No init script, we quit here.',LOGLEVEL_WARN);
 			return false;
 		}
-		
+
 		//* Check init script
 		if(!is_file($full_init_script_path)) {
 			$app->log('Init script '.$full_init_script_path.' not found',LOGLEVEL_WARN);
 			return false;
 		}
-		
+
 		//* Check init script owner
 		if(fileowner($full_init_script_path) !== 0) {
 			$app->log('Init script '.$full_init_script_path.' not owned by root user',LOGLEVEL_WARN);
 			return false;
 		}
-		
+
 		if($check_service && is_executable($full_init_script_path)) {
 			return $full_init_script_path.' '.$action;
 		}
