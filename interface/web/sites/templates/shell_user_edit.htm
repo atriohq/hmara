@@ -73,9 +73,11 @@
 
                     <div id="sshWidgetContainer"></div>
 
-                    <div id="addKeyContainer">
-                        <input type="text" id="newSSHKey" placeholder="Enter new SSH key">
-                        <button onclick="addNewKey()">Add Key</button>
+                    <div id="addKeyContainer" class="input-group col-sm-9" >
+                        <input type="text" id="newSSHKey" placeholder="Enter new SSH key"  class="form-control">
+                        <span class="input-group-btn">
+                            <button class="btn btn-default" type="button" onclick="addNewKey(); return false;">Add Key</button>
+                        </span>
                     </div>
                 </div>
             </div>
