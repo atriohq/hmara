@@ -78,6 +78,29 @@ class page_action extends tform_actions {
 			$app->tpl->setVar("edit_disabled", 0);
 		}
 
+		$parent_domain = $app->db->queryOneRecord("SELECT `domain_id`, `system_user`, `system_group`, `domain`, `document_root`, `hd_quota`, `php_cli_binary`
+			FROM `web_domain`
+				LEFT JOIN server_php ON web_domain.server_php_id = server_php.server_php_id
+			WHERE `domain_id` = ?", $this->dataRecord["parent_domain_id"]);
+
+		if(!$parent_domain["domain_id"]) {
+			$app->log("Parent domain not found", LOGLEVEL_WARN);
+			return 0;
+		}
+
+		$web_docroot_client = '';
+
+		if($this->dataRecord['type'] != 'chrooted') {
+			$web_docroot_client = $this->parent_domain['document_root'];
+		}
+
+		// web folder is hardcoded to /web:
+		$web_docroot_client .= '/web';
+
+		// Example values for placeholders.
+		$app->tpl->setVar("php_cli_binary", $parent_domain['php_cli_binary']);
+		$app->tpl->setVar("docroot_client", $web_docroot_client);
+		$app->tpl->setVar("domain", $parent_domain['domain']);
 
 		parent::onShowEnd();
 	}
