@@ -79,20 +79,19 @@ class page_action extends tform_actions {
 		}
 
 		$parent_domain = $app->db->queryOneRecord("SELECT `domain_id`, `system_user`, `system_group`, `domain`, `document_root`, `hd_quota`, `php_cli_binary`
-			FROM `web_domain`
-				LEFT JOIN server_php ON web_domain.server_php_id = server_php.server_php_id
-			WHERE `domain_id` = ?", $this->dataRecord["parent_domain_id"]);
+		FROM `web_domain`
+			LEFT JOIN server_php ON web_domain.server_php_id = server_php.server_php_id
+		WHERE `domain_id` = ?", $this->dataRecord["parent_domain_id"]);
 
-		if(!$parent_domain["domain_id"]) {
-			$app->log("Parent domain not found", LOGLEVEL_WARN);
-			return 0;
-		}
-
-		$web_docroot_client = '';
 
 		if($this->dataRecord['type'] != 'chrooted') {
-			$web_docroot_client = $this->parent_domain['document_root'];
+			$web_docroot_client = $parent_domain['document_root'];
+		} else {
+			$web_docroot_client = '';
 		}
+
+		//TODO: Fix cron type detection
+		$app->tpl->setVar("cron_type", $this->dataRecord['type']);
 
 		// web folder is hardcoded to /web:
 		$web_docroot_client .= '/web';
@@ -152,6 +151,7 @@ class page_action extends tform_actions {
 				$this->dataRecord["type"] = 'full';
 			}
 		}
+
 
 		parent::onSubmit();
 	}

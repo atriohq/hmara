@@ -41,6 +41,7 @@ $web_id = $app->functions->intval($_GET["web_id"]);
 $php_type = $_GET["php_type"];
 $client_group_id = $app->functions->intval($_GET['client_group_id']);
 $type = $_GET["type"];
+$cron_type = $_GET["cron_type"];
 
 //if($_SESSION["s"]["user"]["typ"] == 'admin') {
 
@@ -248,7 +249,36 @@ if($type == 'getclientssldata'){
 	$json = $app->functions->json_encode($client);
 }
 
-//}
+if($type == 'getcronplaceholders') {
+
+	$web = $app->db->queryOneRecord("SELECT `domain`, `document_root`, `php_cli_binary`
+	FROM `web_domain`
+		LEFT JOIN server_php ON web_domain.server_php_id = server_php.server_php_id
+	WHERE `domain_id` = ? AND ".$app->tform->getAuthSQL('r'), $web_id);
+
+
+
+	if($cron_type != 'chrooted') {
+		$web_docroot_client = $web['document_root'];
+	} else {
+		$web_docroot_client = '';
+	}
+
+	if(empty($web['php_cli_binary'])) {
+		$web['php_cli_binary'] = "/usr/bin/php";
+	}
+
+	$web_docroot_client .= '/web';
+
+	$json = json_encode(array(
+		'php_cli_binary' => $web['php_cli_binary'],
+		'docroot_client' => $web_docroot_client,
+		'domain' => $web['domain']
+	));
+
+
+
+}
 
 header('Content-type: application/json');
 echo $json;

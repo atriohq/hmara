@@ -52,9 +52,9 @@
                 <div class="col-sm-9">
 					<input type="text" name="command" id="command" value="{tmpl_var name='command'}" class="form-control" />
                     <b>{tmpl_var name='variables_txt'}:</b>
-                                       <a href="javascript:void(0);" data-toggle="tooltip" title="{tmpl_var name='php_cli_binary'}" class="addPlaceholder">{SITE_PHP}</a>,
-                                       <a href="javascript:void(0);" data-toggle="tooltip" title="{tmpl_var name='docroot_client'}" class="addPlaceholder">{DOCROOT_CLIENT}</a>,
-                                       <a href="javascript:void(0);" data-toggle="tooltip" title="{tmpl_var name='domain'}" class="addPlaceholder">{DOMAIN}</a>
+                                       <a href="javascript:void(0);" data-toggle="tooltip" id="php_cli_binary" title="{tmpl_var name='php_cli_binary'}" class="addPlaceholder">{SITE_PHP}</a>,
+                                       <a href="javascript:void(0);" data-toggle="tooltip" id="docroot_client" title="{tmpl_var name='docroot_client'}" class="addPlaceholder">{DOCROOT_CLIENT}</a>,
+                                       <a href="javascript:void(0);" data-toggle="tooltip" id="domain" title="{tmpl_var name='domain'}" class="addPlaceholder">{DOMAIN}</a>
                                        <br><br><p class="formHint">{tmpl_var name='command_hint_txt'}</p>
 				</div>
             </div>
@@ -73,8 +73,29 @@
 
 
         <input type="hidden" name="id" value="{tmpl_var name='id'}">
+        <input type="hidden" name="cron_type" value="{tmpl_var name='cron_type'}">
 
         <div class="clear"><div class="right">
             <button class="btn btn-default formbutton-success" type="button" value="{tmpl_var name='btn_save_txt'}" data-submit-form="pageForm" data-form-action="sites/cron_edit.php">{tmpl_var name='btn_save_txt'}</button>
             <button class="btn btn-default formbutton-default" type="button" value="{tmpl_var name='btn_cancel_txt'}" data-load-content="sites/cron_list.php">{tmpl_var name='btn_cancel_txt'}</button>
         </div></div>
+
+        <script language="JavaScript" type="text/javascript">
+        jQuery('#parent_domain_id').change(function(){
+            reloadCronPlaceholders();
+        });
+
+        function reloadCronPlaceholders() {
+            var parentDomainId = jQuery('#parent_domain_id').val()
+            var cron_type = jQuery('#cron_type').val()
+
+            jQuery.getJSON('sites/ajax_get_json.php'+ '?' + Math.round(new Date().getTime()), {web_id: parentDomainId, cron_type: cron_type, 'type': 'getcronplaceholders'}, function(data) {
+                console.log(data);
+                $("#php_cli_binary").attr('data-original-title', data.php_cli_binary);
+                $('#docroot_client').attr('data-original-title', data.docroot_client);
+                $('#domain').attr('data-original-title', data.domain);
+
+            });
+        }
+        </script>
+
