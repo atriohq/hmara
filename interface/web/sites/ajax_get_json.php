@@ -41,7 +41,6 @@ $web_id = $app->functions->intval($_GET["web_id"]);
 $php_type = $_GET["php_type"];
 $client_group_id = $app->functions->intval($_GET['client_group_id']);
 $type = $_GET["type"];
-$cron_type = $_GET["cron_type"];
 
 //if($_SESSION["s"]["user"]["typ"] == 'admin') {
 
