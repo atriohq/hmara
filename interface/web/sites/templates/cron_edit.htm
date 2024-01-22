@@ -80,6 +80,12 @@
         </div></div>
 
         <script language="JavaScript" type="text/javascript">
+
+        // Select first domain onLoad
+        jQuery(document).ready(function() {
+            jQuery('#parent_domain_id').trigger('change');
+        });
+
         jQuery('#parent_domain_id').change(function(){
             reloadCronPlaceholders();
         });
