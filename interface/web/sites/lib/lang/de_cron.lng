@@ -24,4 +24,5 @@ $wb['log_output_txt'] = 'Ausgabe loggen';
 $wb['limit_cron_url_txt'] = 'Es sind nur URL cronjobs möglich. Der Cron-Befehl muss mit https:// beginnen.';
 $wb['command_error_empty'] = 'Befehl ist leer.';
 $wb['variables_txt'] = 'Variablen';
-?>
+$wb['domain_not_selected_placeholder_txt'] = 'Bitte wähle eine Domain aus';
+

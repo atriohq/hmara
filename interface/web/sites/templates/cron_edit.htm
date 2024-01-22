@@ -73,7 +73,6 @@
 
 
         <input type="hidden" name="id" value="{tmpl_var name='id'}">
-        <input type="hidden" name="cron_type" value="{tmpl_var name='cron_type'}">
 
         <div class="clear"><div class="right">
             <button class="btn btn-default formbutton-success" type="button" value="{tmpl_var name='btn_save_txt'}" data-submit-form="pageForm" data-form-action="sites/cron_edit.php">{tmpl_var name='btn_save_txt'}</button>
@@ -87,14 +86,12 @@
 
         function reloadCronPlaceholders() {
             var parentDomainId = jQuery('#parent_domain_id').val()
-            var cron_type = jQuery('#cron_type').val()
 
-            jQuery.getJSON('sites/ajax_get_json.php'+ '?' + Math.round(new Date().getTime()), {web_id: parentDomainId, cron_type: cron_type, 'type': 'getcronplaceholders'}, function(data) {
-                console.log(data);
+            jQuery.getJSON('sites/ajax_get_json.php'+ '?' + Math.round(new Date().getTime()), {web_id: parentDomainId, 'type': 'getcronplaceholders'}, function(data) {
+                //console.log(data);
                 $("#php_cli_binary").attr('data-original-title', data.php_cli_binary);
                 $('#docroot_client').attr('data-original-title', data.docroot_client);
                 $('#domain').attr('data-original-title', data.domain);
-
             });
         }
         </script>

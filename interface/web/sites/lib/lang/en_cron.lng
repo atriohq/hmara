@@ -24,4 +24,4 @@ $wb['log_output_txt'] = 'Log output';
 $wb['limit_cron_url_txt'] = 'URL cron only. Please enter a URL starting with https:// as cron command.';
 $wb['command_error_empty'] = 'Command is empty.';
 $wb['variables_txt'] = 'Variables';
-?>
+$wb['domain_not_selected_placeholder_txt'] = 'No Domain selected';
