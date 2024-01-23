@@ -260,7 +260,6 @@ if($type == 'getcronplaceholders') {
 		WHERE wd.domain_id = ?", $web_id);
 
 		$php_cli_binary = $web['php_cli_binary'];
-
 		$domain = $web['domain'];
 
 		$domain_owner = $app->db->queryOneRecord("SELECT limit_cron_type FROM sys_group, client WHERE sys_group.client_id = client.client_id and sys_group.groupid = ?", $web["sys_groupid"]);

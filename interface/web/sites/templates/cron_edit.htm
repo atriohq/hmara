@@ -80,24 +80,27 @@
         </div></div>
 
         <script language="JavaScript" type="text/javascript">
-
-        // Select first domain onLoad
+        // Select first existing domain "onLoad"
         jQuery(document).ready(function() {
             jQuery('#parent_domain_id').trigger('change');
         });
-
+        // Reload cron placeholders if a different domain was selected
         jQuery('#parent_domain_id').change(function(){
             reloadCronPlaceholders();
         });
 
         function reloadCronPlaceholders() {
             var parentDomainId = jQuery('#parent_domain_id').val()
-
             jQuery.getJSON('sites/ajax_get_json.php'+ '?' + Math.round(new Date().getTime()), {web_id: parentDomainId, 'type': 'getcronplaceholders'}, function(data) {
                 //console.log(data);
                 $("#php_cli_binary").attr('data-original-title', data.php_cli_binary);
                 $('#docroot_client').attr('data-original-title', data.docroot_client);
-                $('#domain').attr('data-original-title', data.domain);
+                // Load and display a hint to the user that no domain was selected yet. Should only happen if no web_domain has been created or assigned by the user.
+                if(data.domain == null || data.domain == '') {
+                    $('#domain').attr('data-original-title', "{tmpl_var name='domain_not_selected_placeholder_txt'}");
+                } else {
+                    $('#domain').attr('data-original-title', data.domain);
+                }
             });
         }
         </script>
