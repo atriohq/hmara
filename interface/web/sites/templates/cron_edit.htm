@@ -95,11 +95,11 @@
                 //console.log(data);
                 $("#php_cli_binary").attr('data-original-title', data.php_cli_binary);
                 $('#docroot_client').attr('data-original-title', data.docroot_client);
-                // Load and display a hint to the user that no domain was selected yet. Should only happen if no web_domain has been created or assigned by the user.
-                if(data.domain == null || data.domain == '') {
-                    $('#domain').attr('data-original-title', "{tmpl_var name='domain_not_selected_placeholder_txt'}");
-                } else {
+                // Update the data-original-title of the {DOMAIN} placeholder or load and display a hint to the user that no domain was selected yet. Should only happen if no web has been created or assigned by or to the user.
+                if(data.domain) {
                     $('#domain').attr('data-original-title', data.domain);
+                } else {
+                    $('#domain').attr('data-original-title', "{tmpl_var name='domain_not_selected_placeholder_txt'}");
                 }
             });
         }
