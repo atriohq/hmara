@@ -330,6 +330,8 @@ class shelluser_jailkit_plugin {
 	{
 		global $app, $conf;
 
+		$app->load('tpl');
+
 		if (isset($this->jailkit_config) && isset($this->jailkit_config['jailkit_hardlinks'])) {
 			if ($this->jailkit_config['jailkit_hardlinks'] == 'yes') {
 				$options = array('hardlink');
@@ -724,7 +726,7 @@ class shelluser_jailkit_plugin {
 		}
 
 		if($app->system->is_redhat_os() == true) {
-			$bashrc = $this->web['document_root'] . '/home/' . $this->web['system_user'] . '/.bashrc';
+			$bashrc = $this->web['document_root'] . '/etc/bashrc';
 		} else {
 			$bashrc = $this->web['document_root'] . '/etc/bash.bashrc';
 		}

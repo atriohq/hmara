@@ -174,9 +174,9 @@ class shelluser_base_plugin {
 				}
 
 				// Create symlinks for conveniance, SFTP user should not land in an empty dir.
-				symlink('../../web', $homedir.'/web');
-				symlink('../../log', $homedir.'/log');
-				symlink('../../private', $homedir.'/private');
+				if(!is_link($homedir.'/web')) symlink('../../web', $homedir.'/web');
+				if(!is_link($homedir.'/log')) symlink('../../log', $homedir.'/log');
+				if(!is_link($homedir.'/private')) symlink('../../private', $homedir.'/private');
 
 				//* Disable shell user temporarily if we use jailkit
 				if($data['new']['chroot'] == 'jailkit') {

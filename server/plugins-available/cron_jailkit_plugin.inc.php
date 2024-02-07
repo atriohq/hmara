@@ -242,6 +242,8 @@ class cron_jailkit_plugin {
 	{
 		global $app, $conf;
 
+		$app->load('tpl');
+
 		if (isset($this->jailkit_config) && isset($this->jailkit_config['jailkit_hardlinks'])) {
 			if ($this->jailkit_config['jailkit_hardlinks'] == 'yes') {
 				$options = array('hardlink');
