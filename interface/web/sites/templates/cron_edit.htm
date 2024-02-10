@@ -1,7 +1,8 @@
             <div class="form-group">
                 <tmpl_if name="edit_disabled">
+
                     <label for="parent_domain_id" class="col-sm-3 control-label">{tmpl_var name='parent_domain_id_txt'}</label>
-                    <div class="col-sm-9"><select name="parent_domain_id" id="parent_domain_id" class="form-control" disabled="disabled">
+                    <div class="col-sm-9"><i class="fa-solid fa-circle-info"></i><select name="parent_domain_id" id="parent_domain_id" class="form-control" disabled="disabled">
                         {tmpl_var name='parent_domain_id'}
                     </select></div>
                     <input type="hidden" name="parent_domain_id" value="{tmpl_var name='parent_domain_id_value'}" />
@@ -12,6 +13,7 @@
                         </select></div>
                 </tmpl_if>
             </div>
+
             <div class="form-group">
                 <label for="run_min" class="col-sm-3 control-label">{tmpl_var name='run_min_txt'}</label>
                 <div class="col-sm-9">
@@ -70,8 +72,6 @@
                     {tmpl_var name='active'}
                 </div>
             </div>
-
-
         <input type="hidden" name="id" value="{tmpl_var name='id'}">
 
         <div class="clear"><div class="right">
@@ -85,7 +85,7 @@
             jQuery('#parent_domain_id').trigger('change');
         });
         // Reload cron placeholders if a different domain was selected
-        jQuery('#parent_domain_id').change(function(){
+        jQuery('#parent_domain_id').change(function() {
             reloadCronPlaceholders();
         });
 

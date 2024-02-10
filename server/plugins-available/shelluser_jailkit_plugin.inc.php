@@ -726,6 +726,7 @@ class shelluser_jailkit_plugin {
 		}
 
 		if($app->system->is_redhat_os() == true) {
+			//$bashrc = $this->web['document_root'] . '/home/' . $this->web['system_user'] . '/.bashrc';
 			$bashrc = $this->web['document_root'] . '/etc/bashrc';
 		} else {
 			$bashrc = $this->web['document_root'] . '/etc/bash.bashrc';
