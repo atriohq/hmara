@@ -1,63 +1,90 @@
 <tmpl_if name="list_head_txt">
-<div class='page-header'>
-        <h1><tmpl_var name="list_head_txt"></h1>
-</div>
+    <div class='page-header'>
+        <h1>
+            <tmpl_var name="list_head_txt">
+        </h1>
+    </div>
 </tmpl_if>
-<tmpl_if name="list_desc_txt"><p><tmpl_var name="list_desc_txt"></p></tmpl_if>
+<tmpl_if name="list_desc_txt">
+    <p>
+        <tmpl_var name="list_desc_txt">
+    </p>
+</tmpl_if>
 
-            <div class="form-group">
-                <div class="col-sm-3 text-right">
-                    {tmpl_var name='use_domain_module'}
-                </div>
-                <div class="col-sm-9">
-                    <p><strong>{tmpl_var name='use_domain_module_txt'}</strong></p>
-                    <p>{tmpl_var name='use_domain_module_hint'}</p>
-                </div>
-            </div>
-            <div class="form-group">
-                <label class="col-sm-3 control-label">{tmpl_var name='new_domain_txt'}</label>
-                <div class="col-sm-9"><textarea class="form-control" name="new_domain_html" id="new_domain_html" height: 250px">{tmpl_var name='new_domain_html'}</textarea></div>
-            </div>
+<div class="form-group">
+    <div class="col-sm-3 text-right">
+        {tmpl_var name='use_domain_module'}
+    </div>
+    <div class="col-sm-9">
+        <p><strong>{tmpl_var name='use_domain_module_txt'}</strong></p>
+        <p>{tmpl_var name='use_domain_module_hint'}</p>
+    </div>
+</div>
+<div class="form-group">
+    <label class="col-sm-3 control-label">{tmpl_var name='new_domain_txt'}</label>
+    <div class="col-sm-9"><textarea class="form-control" name="new_domain_html" id="new_domain_html" height: 250px">{tmpl_var
+        name='new_domain_html'}</textarea></div>
+</div>
 <br>
-            <div class="form-group">
-                <div class="col-sm-3 text-right">
-                    {tmpl_var name='use_domain_verification'}
-                </div>
-                <div class="col-sm-9">
-                    <p><strong>{tmpl_var name='use_domain_verification_txt'}</strong></p>
-                    <p>{tmpl_var name='use_domain_verification_hint'}</p>
-                </div>
-            </div>
-			<div class="form-group">
-			  <label for="page_title" class="col-sm-3 control-label">{tmpl_var name='domain_verification_prefix_txt'}</label>
-			  <div class="col-sm-9"><input type="text" name="domain_verification_prefix" id="domain_verification_prefix" value="{tmpl_var name='domain_verification_prefix'}" size="" maxlength="" class="form-control" /></div>
-			</div>
+<div class="form-group">
+    <div class="col-sm-3 text-right">
+        {tmpl_var name='use_domain_verification'}
+    </div>
+    <div class="col-sm-9">
+        <p><strong>{tmpl_var name='use_domain_verification_txt'}</strong></p>
+        <p>{tmpl_var name='use_domain_verification_hint_txt'}</p>
+    </div>
+</div>
+<div class="form-group">
+    <label for="page_title" class="col-sm-3 control-label">{tmpl_var name='domain_verification_prefix_txt'}</label>
+    <div class="col-sm-9"><input type="text" name="domain_verification_prefix" id="domain_verification_prefix"
+                                 value="{tmpl_var name='domain_verification_prefix'}" size="" maxlength=""
+                                 class="form-control"/></div>
+</div>
+<div class="form-group">
+    <div class="col-sm-3 text-right">
+        {tmpl_var name='use_domain_subdomain'}
+    </div>
+    <div class="col-sm-9">
+        <p><strong>{tmpl_var name='use_domain_subdomain_txt'}</strong></p>
+        <p>{tmpl_var name='use_domain_subdomain_hint_txt'}</p>
+    </div>
+</div>
+
 <script>
-    //Disable the external Domain checkbox if Domain Limit is not in use
+    //Disable the external domain and subdomain checkbox if Domain Limit is not in use
 $( document ).ready(function() {
     if(!document.getElementById('use_domain_module').checked) {
         $('#use_domain_verification').attr("disabled", true);
-		$('#domain_verification_prefix').attr("disabled", true);
+               $('#domain_verification_prefix').attr("disabled", true);
+               $('#domain_domain_subdomain').attr("disabled", true);
     }
     $('#use_domain_module').on('change', function() {
         if (this.checked) {
             $('#use_domain_verification').removeAttr("disabled");
             $('#domain_verification_prefix').removeAttr("disabled");
+            $('#use_domain_subdomain').removeAttr("disabled");
         } else {
             $('#use_domain_verification').prop('checked', false );
             $('#use_domain_verification').attr("disabled", true);
-			$('#domain_verification_prefix').attr("disabled", true);
+            $('#domain_verification_prefix').attr("disabled", true);
+            $('#use_domain_subdomain').prop('checked', false );
+            $('#use_domain_subdomain').attr("disabled", true);
         }
     });
 });
 </script>
 
 
-
-            
-        <input type="hidden" name="id" value="{tmpl_var name='id'}">
-            
-        <div class="clear"><div class="right">
-            <button class="btn btn-default formbutton-success" type="button" value="{tmpl_var name='btn_save_txt'}" data-submit-form="pageForm" data-form-action="admin/system_config_edit.php">{tmpl_var name='btn_save_txt'}</button>
-            <button class="btn btn-default formbutton-default" type="button" value="{tmpl_var name='btn_cancel_txt'}" data-load-content="admin/users_list.php">{tmpl_var name='btn_cancel_txt'}</button>
-        </div></div>
+<input type="hidden" name="id" value="{tmpl_var name='id'}">
+<div class="clear">
+    <div class="right">
+        <button class="btn btn-default formbutton-success" type="button" value="{tmpl_var name='btn_save_txt'}"
+                data-submit-form="pageForm" data-form-action="admin/system_config_edit.php">{tmpl_var
+            name='btn_save_txt'}
+        </button>
+        <button class="btn btn-default formbutton-default" type="button" value="{tmpl_var name='btn_cancel_txt'}"
+                data-load-content="admin/users_list.php">{tmpl_var name='btn_cancel_txt'}
+        </button>
+    </div>
+</div>

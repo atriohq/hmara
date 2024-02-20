@@ -673,6 +673,7 @@ CREATE TABLE `domain` (
   `sys_perm_group` varchar(5) NOT NULL default '',
   `sys_perm_other` varchar(5) NOT NULL default '',
   `domain` varchar(255) NOT NULL default '',
+  `domain_type_flag` varchar(1) DEFAULT 'n',
   PRIMARY KEY  (`domain_id`),
   UNIQUE KEY `domain` (`domain`)
 ) DEFAULT CHARSET=utf8 ;

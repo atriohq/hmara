@@ -49,6 +49,7 @@ use_domain_module=n
 new_domain_html=Please contact our support to create a new domain for you.
 use_domain_verification=n
 domain_verification_prefix=ISP
+use_domain_subdomain=n
 
 [misc]
 company_name=

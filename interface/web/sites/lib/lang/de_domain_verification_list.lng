@@ -1,7 +1,25 @@
 <?php
-$wb['add_new_domain_verification'] = 'Neue externe Domain';
-$wb['list_head_txt'] = 'Externe Domains Verifizierungen';
-$wb['domain_txt'] = 'Offene Domain Verifizierungen';
-$wb['record_created_txt'] = 'Eintrag erstellt am';
-$wb['dns_auth_record_txt'] = 'TXT Auth String';
+$wb['add_new_domain_verification_txt'] = 'New external domain';
+$wb['add_new_domain_verification_long_txt'] = 'Verify and add an external domain with an DNS entry.';
+$wb['add_new_subdomain_txt'] = 'New Subdomain as Maindomain';
+$wb['add_new_subdomain_long_txt'] = 'Add an Subdomain as Maindomain.';
+$wb['list_head_txt'] = 'Domains in this Webspace';
+$wb['domain_txt'] = 'Open domain verifications';
+$wb['record_created_txt'] = 'Entry created on';
+$wb['dns_auth_record_txt'] = 'TXT verification string';
+$wb['domainlist_txt'] = 'Domains';
+$wb['domainlist_ex_txt'] = 'External Domains';
+$wb['domainlist_subdomain_txt'] = 'Subdomain as Maindomain';
+$wb['domain_type_txt'] = 'Domaintype';
+$wb['domain_is_external_yes'] = 'External';
+$wb['domain_is_external_no'] = 'Internal';
+$wb['external_domain_txt'] = 'External Domains';
+$wb['internal_domain_txt'] = 'Domains';
+$wb['subdomain_txt'] = 'Subdomains (as Maindomains)';
+$wb['delete_confirmation_exdom_txt'] = 'Delete the external Domain?';
+$wb['delete_confirmation_subdomain_txt'] = 'Delete the Subdomain?';
+$wb['error_domain_in dnsuse'] = 'This domain cannot be deleted, because it is in use as dns zone';
+$wb['error_domain_in dnsslaveuse'] = 'This domain cannot be deleted, because it is in use as secondary dns zone';
+$wb['error_domain_in mailuse'] = 'This domain cannot be deleted, because it is in use as mail-domain';
+$wb['error_domain_in webuse'] = 'This domain cannot be deleted, because it is in use as web-domain';
 ?>

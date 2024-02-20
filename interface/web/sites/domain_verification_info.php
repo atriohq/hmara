@@ -1,5 +1,5 @@
 <?php
-/* 
+/*
  * Copyright (c) 2023, Johannes Koschier <hannes@cheat.at>
  * All rights reserved.
  *
@@ -37,53 +37,69 @@ $app->uses('tpl,tform,tools_sites');
 $app->auth->check_module_permissions('sites');
 
 
-if(isset($_GET['newid'])) {
-	$app->tpl->newTemplate("templates/domain_verification_info.htm");
-	$lngFile = 'lib/lang/'.$app->functions->check_language($_SESSION['s']['language']).'_domain_verification_info.lng';
-	include $lngFile;
-	$app->tpl->setVar($wb);
+if (isset($_GET['newid'])) {
+    $app->tpl->newTemplate("templates/domain_verification_info.htm");
+    $lngFile = 'lib/lang/' . $app->functions->check_language($_SESSION['s']['language']) . '_domain_verification_info.lng';
+    include $lngFile;
+    $app->tpl->setVar($wb);
 
-	if (!is_numeric($_GET['newid'])){
-		die ('External Domain - ID not numeric');
-	}
-	$rec = $app->db->queryOneRecord("SELECT * FROM domain_verification WHERE domain_id = ?", $_GET['newid']);
+    if (!is_numeric($_GET['newid'])) {
+        die ('External Domain - ID not numeric');
+    }
+    $rec = $app->db->queryOneRecord("SELECT * FROM domain_verification WHERE domain_id = ?", $_GET['newid']);
 
-	$app->tpl->setVar('dns_auth_record', $rec['dns_auth_record']);
-	$app->tpl->setVar('domain', $rec['domain']);
-	$app->tpl->setVar('domain_id', $rec['domain_id']);
-	$app->tpl->setVar('task_done', 'no');
-	
-	$rrArray = dns_get_record($rec['domain'],DNS_NS); //get Auth nameserver from the domain
-	foreach($rrArray as $rr ) { //Ask every Auth Nameserver 
-		//$execStr = 'dig @'.$rr['target'].' '.$rec['domain'].' TXT +short';
-		//exec($execStr, $arrTXT); //theres no way to do a dig @x.x.x.x with pure PHP
-		$digAuthServerStr = '@'.$rr['target'];
-		$app->system->exec_safe('dig ? ? ? ?', $digAuthServerStr, $rec['domain'], 'TXT', '+short');
-		$arrTXT = [];
-		if($app->system->last_exec_retcode() == 0) {
-			$arrTXT = $app->system->last_exec_out();
-		}
-			
-		foreach($arrTXT as $txtRecord){ //every TXT record
-			$txtRecord = str_replace('"', '', $txtRecord); //Remove the " at begin and end of string
-			if($txtRecord == $rec['dns_auth_record']){
-				$tempRec =  $app->db->queryOneRecord("SELECT sys_userid FROM sys_user WHERE username = 'admin'"); //get sys_userid from admin. Should be 1 
-				$sql = "INSERT INTO domain (sys_userid, sys_groupid, sys_perm_user, sys_perm_group, domain) VALUES (?, ?, 'riud', 'ru', ?)";
-				$app->db->query($sql,$tempRec['sys_userid'], $rec['sys_groupid'], $rec['domain']); //Insert into domain table
+    $app->tpl->setVar('dns_auth_record', $rec['dns_auth_record']);
+    $app->tpl->setVar('domain', $rec['domain']);
+    $app->tpl->setVar('domain_id', $rec['domain_id']);
+    $app->tpl->setVar('task_done', 'no');
 
-				$sql = "DELETE FROM domain_verification WHERE domain_id = ?";
-				$app->db->query($sql,$rec['domain_id']); //delete from domain_verification
-				$app->tpl->setVar('task_done', 'yes');
-				break 2;
-			}
-		}
-	}
+    $rrArray = dns_get_record($rec['domain'], DNS_NS); //get Auth nameserver from the domain to avoid DNS Cache waiting
+    $TXTFound = FALSE;
+    foreach ($rrArray as $rr) { //Ask every Auth Nameserver
+        //$execStr = 'dig @'.$rr['target'].' '.$rec['domain'].' TXT +short';
+        //exec($execStr, $arrTXT); //theres no way to do a dig @x.x.x.x with pure PHP
+        $digAuthServerStr = '@' . $rr['target'];
+        $app->system->exec_safe('dig ? ? ? ?', $digAuthServerStr, $rec['domain'], 'TXT', '+short');
+        $arrTXT = [];
+        if ($app->system->last_exec_retcode() == 0) {
+            $arrTXT = $app->system->last_exec_out();
+        }
 
-	if(isset($_GET['refreshbutton'])) {
-		sleep(1); //simple delay to prevent refresh button abuse..
-	}
-	
-	$app->tpl_defaults();
-	$app->tpl->pparse();
+        foreach ($arrTXT as $txtRecord) { //every TXT record
+            $txtRecord = str_replace('"', '', $txtRecord); //Remove the " at begin and end of string
+            if ($txtRecord == $rec['dns_auth_record']) {
+                $TXTFound = TRUE;
+                break 2;
+            }
+        }
+    }
+
+    //Fallback with dns_get_record because dig could fail if it is a subdomain or maybe subdelegation of NS records...
+    If ($TXTFound === FALSE) {
+        $arrTXT = dns_get_record($rec['domain'], DNS_TXT);
+        foreach($arrTXT as $txtRecord) { //every TXT record
+            if ($txtRecord['txt'] == $rec['dns_auth_record']) {
+                $TXTFound = TRUE;
+                break;
+            }
+        }
+    }
+
+    if ($TXTFound === TRUE) {
+        $tempRec = $app->db->queryOneRecord("SELECT sys_userid FROM sys_user WHERE username = 'admin'"); //get sys_userid from admin. Should be 1
+        $sql = "INSERT INTO domain (sys_userid, sys_groupid, sys_perm_user, sys_perm_group, domain, domain_type_flag) VALUES (?, ?, 'riud', 'ru', ?, 'y')";
+        $app->db->query($sql, $tempRec['sys_userid'], $rec['sys_groupid'], $rec['domain']); //Insert into domain table
+
+        $sql = "DELETE FROM domain_verification WHERE domain_id = ?";
+        $app->db->query($sql, $rec['domain_id']); //delete from domain_verification
+        $app->tpl->setVar('task_done', 'yes');
+    }
+
+    if (isset($_GET['refreshbutton'])) {
+        sleep(1); //simple delay to prevent refresh button abuse..
+    }
+
+    $app->tpl_defaults();
+    $app->tpl->pparse();
 }
 ?>

@@ -5,7 +5,7 @@ $wb['domain_verification_txt'] = 'External domain';
 $wb['add_new_domain_verification'] = 'New external domain';
 $wb['domain_verification_info1_txt'] = 'Add in the DNS setting of you external domain';
 $wb['domain_verification_info2_txt'] = 'this <strong>TXT</strong> entry';
-$wb['domain_verification_info3_txt'] = 'Domain';
-$wb['domain_verification_info4_txt'] = 'was added';
+$wb['domain_verification_info3_txt'] = 'Validations is done, domain';
+$wb['domain_verification_info4_txt'] = 'was added. You can now use it';
 $wb['domain_verification_desc_txt'] = 'No entry found. (It may take some time for a DNS change to propagate)';
 ?>

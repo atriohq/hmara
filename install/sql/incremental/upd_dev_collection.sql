@@ -10,3 +10,5 @@ CREATE TABLE `domain_verification` (
   `record_created` timestamp NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`domain_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
+
+ALTER TABLE `domain` ADD `domain_type_flag` VARCHAR(1) NULL DEFAULT 'n' AFTER `domain`;

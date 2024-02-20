@@ -1,11 +1,11 @@
 <?php
-$wb['btn_cancel_txt'] = 'Zurück';
-$wb['btn_save_txt'] = 'Erneut Überprüfen';
-$wb['domain_verification_txt'] = 'External Domain';
-$wb['add_new_domain_verification'] = 'Neue externe Domain';
-$wb['domain_verification_info1_txt'] = 'Fügen Sie in den DNS Einstellungen Ihrer externen Domain';
-$wb['domain_verification_info2_txt'] = 'den folgenden <strong>TXT</strong> Eintrag hinzu';
-$wb['domain_verification_info3_txt'] = 'Die Domain';
-$wb['domain_verification_info4_txt'] = 'wurde hinzugefügt';
-$wb['domain_verification_desc_txt'] = 'Es wurde noch kein Eintrag gefunden. (Es kann einige Zeit dauern bis eine DNS Einstellung aktiv wird)';
+$wb['btn_cancel_txt'] = 'Back';
+$wb['btn_save_txt'] = 'Check again';
+$wb['domain_verification_txt'] = 'External domain';
+$wb['add_new_domain_verification'] = 'New external domain';
+$wb['domain_verification_info1_txt'] = 'Add in the DNS setting of you external domain';
+$wb['domain_verification_info2_txt'] = 'this <strong>TXT</strong> entry';
+$wb['domain_verification_info3_txt'] = 'Validations is done, domain';
+$wb['domain_verification_info4_txt'] = 'was added. You can now use it';
+$wb['domain_verification_desc_txt'] = 'No entry found. (It may take some time for a DNS change to propagate)';
 ?>

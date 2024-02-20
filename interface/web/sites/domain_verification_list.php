@@ -1,5 +1,5 @@
 <?php
-/* 
+/*
  * Copyright (c) 2023, Johannes Koschier <hannes@cheat.at>
  * All rights reserved.
  *
@@ -40,9 +40,40 @@ $list_def_file = 'list/domain_verification.list.php';
 
 class list_action extends listform_actions {
 
+
+
 	function onShow() {
+
+		global $app;
+		$globalDomainConfig = $app->getconf->get_global_config('domains');
+
+		$clientGroupId = $_SESSION["s"]["user"]["default_group"];
+		//Internal Domain List
+		$sql = "SELECT * FROM domain WHERE sys_groupid = ? AND domain_type_flag = 'n'";
+		$records = $app->db->queryAllRecords($sql, $clientGroupId);
+        $app->tpl->setLoop('domain_records', $records);
+
+		if($globalDomainConfig['use_domain_verification'] == 'y') {
+			//External Domain List
+			$sql = "SELECT * FROM domain WHERE sys_groupid = ? AND domain_type_flag = 'y'";
+			$records = $app->db->queryAllRecords($sql, $clientGroupId);
+			$app->tpl->setLoop('domain_records_ex', $records);
+			$app->tpl->setVar('use_domain_verification','yes');
+		}
+		if($globalDomainConfig['use_domain_subdomain'] == 'y') {
+			//Subdomain (as Maindomain) List
+			$sql = "SELECT * FROM domain WHERE sys_groupid = ? AND domain_type_flag = 's'";
+			$records = $app->db->queryAllRecords($sql, $clientGroupId);
+			$app->tpl->setLoop('domain_records_subdomain', $records);
+			$app->tpl->setVar('use_domain_subdomain','yes');
+		}
+		//* SET csrf token
+		$csrf_token = $app->auth->csrf_token_get('domain_verification');
+		$app->tpl->setVar('_csrf_id',$csrf_token['csrf_id']);
+		$app->tpl->setVar('_csrf_key',$csrf_token['csrf_key']);
 		parent::onShow();
 	}
+
 
 }
 $list = new list_action;

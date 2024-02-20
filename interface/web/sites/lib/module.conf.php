@@ -68,13 +68,8 @@ $items=[];
 $app->uses('getconf');
 $global_domain_config = $app->getconf->get_global_config('domains');
 if($_SESSION['s']['user']['typ'] == 'user') {
-    if($global_domain_config['use_domain_verification'] == 'y') {
+    if($global_domain_config['use_domain_verification'] == 'y' || $global_domain_config['use_domain_subdomain'] == 'y') {
         $items[] = ['title'     => "Domains",
-                    'target'    => 'content',
-                    'link'      => 'sites/client_domain_list.php',
-                    'html_id'   => 'client_domain_list'];
-
-        $items[] = ['title'     => "External domain",
                     'target'    => 'content',
                     'link'      => 'sites/domain_verification_list.php',
                     'html_id'   => 'domain_verification_list'];
