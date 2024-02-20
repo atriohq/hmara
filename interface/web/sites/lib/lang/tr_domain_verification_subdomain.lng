@@ -1,0 +1,10 @@
+<?php
+$wb['new_subdomain_as_maindomain_txt'] = 'Add an Subdomain as Maindomain.';
+$wb['domain_txt'] = 'Domain';
+$wb['host_txt'] = 'Host';
+$wb['btn_cancel_txt'] = 'Cancel';
+$wb['btn_save_txt'] = 'Save';
+$wb['subdomain_name_not_allowed_txt'] = 'Subdomain name not valid';
+$wb['subdomain_exist_txt'] = 'Subdomain exists';
+$wb['subdomain_exist_as_web_txt'] = 'Subdomain exists as Website';
+?>
