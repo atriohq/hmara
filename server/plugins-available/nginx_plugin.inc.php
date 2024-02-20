@@ -101,7 +101,7 @@ class nginx_plugin {
 		// load the server configuration options
 		$app->uses('getconf');
 		$web_config = $app->getconf->get_server_config($conf['server_id'], 'web');
-		if ($web_config['CA_path']!='' && !file_exists($web_config['CA_path'].'/openssl.cnf'))
+		if (isset($web_config['CA_path']) && $web_config['CA_path'] != '' && !file_exists($web_config['CA_path'].'/openssl.cnf'))
 			$app->log("CA path error, file does not exist:".$web_config['CA_path'].'/openssl.cnf', LOGLEVEL_ERROR);
 
 		//* Only vhosts can have a ssl cert
@@ -693,7 +693,7 @@ class nginx_plugin {
 
 		// Get the client ID
 		$client = $app->dbmaster->queryOneRecord('SELECT client_id FROM sys_group WHERE sys_group.groupid = ?', $data['new']['sys_groupid']);
-		$client_id = intval($client['client_id']);
+		$client_id = (is_array($client)) ? intval($client['client_id']) : 0;
 		unset($client);
 
 		// Remove old symlinks, if site is renamed
@@ -1277,7 +1277,7 @@ class nginx_plugin {
 		}
 
 		// folder_directive_snippets
-		if(trim($data['new']['folder_directive_snippets']) != ''){
+		if(isset($data['new']['folder_directive_snippets']) && !is_null($data['new']['folder_directive_snippets']) && trim($data['new']['folder_directive_snippets']) != ''){
 			$data['new']['folder_directive_snippets'] = trim($data['new']['folder_directive_snippets']);
 			$data['new']['folder_directive_snippets'] = str_replace("\r\n", "\n", $data['new']['folder_directive_snippets']);
 			$data['new']['folder_directive_snippets'] = str_replace("\r", "\n", $data['new']['folder_directive_snippets']);
@@ -1627,7 +1627,7 @@ class nginx_plugin {
 		$server_alias = array();
 
 		// get autoalias
-		$auto_alias = $web_config['website_autoalias'];
+		$auto_alias = (isset($web_config['website_autoalias']))?$web_config['website_autoalias']:'';
 		if($auto_alias != '') {
 			// get the client username
 			$client = $app->db->queryOneRecord("SELECT `username` FROM `client` WHERE `client_id` = ?", $client_id);
@@ -1968,7 +1968,7 @@ class nginx_plugin {
 
 		// create password file for stats directory
 		if(!is_file($data['new']['document_root'].'/' . $stats_web_folder . '/stats/.htpasswd_stats') || $data['new']['stats_password'] != $data['old']['stats_password']) {
-			if(trim($data['new']['stats_password']) != '') {
+			if(isset($data['new']['stats_password']) && !is_null($data['new']['stats_password']) && trim($data['new']['stats_password']) != '') {
 				$htp_file = 'admin:'.trim($data['new']['stats_password']);
 				$app->system->file_put_contents($data['new']['document_root'].'/' . $stats_web_folder . '/stats/.htpasswd_stats', $htp_file);
 				$app->system->chmod($data['new']['document_root'].'/' . $stats_web_folder . '/stats/.htpasswd_stats', 0755);
@@ -2880,6 +2880,7 @@ class nginx_plugin {
 
 		$app->uses("getconf");
 		$web_config = $app->getconf->get_server_config($conf["server_id"], 'web');
+		$php_fpm_reload_mode = ($web_config['php_fpm_reload_mode'] == 'reload')?'reload':'restart';
 
 		// HHVM => PHP-FPM-Fallback
 		if($data['new']['php'] != 'php-fpm' && $data['new']['php'] != 'hhvm'){
@@ -2889,9 +2890,9 @@ class nginx_plugin {
 			}
 			if($data['old']['php'] != 'no'){
 				if(!$default_php_fpm){
-					$app->services->restartService('php-fpm', 'reload:'.$custom_php_fpm_init_script);
+					$app->services->restartService('php-fpm', $php_fpm_reload_mode.':'.$custom_php_fpm_init_script);
 				} else {
-					$app->services->restartService('php-fpm', 'reload:'.$conf['init_scripts'].'/'.$web_config['php_fpm_init_script']);
+					$app->services->restartService('php-fpm', $php_fpm_reload_mode.':'.$conf['init_scripts'].'/'.$web_config['php_fpm_init_script']);
 				}
 			}
 			return;
@@ -2961,7 +2962,7 @@ class nginx_plugin {
 
 		// Custom php.ini settings
 		$final_php_ini_settings = array();
-		$custom_php_ini_settings = trim($data['new']['custom_php_ini']);
+		$custom_php_ini_settings = (isset($data['new']['custom_php_ini']) && !is_null($data['new']['custom_php_ini'])) ? trim($data['new']['custom_php_ini']) : '';
 
 		if(intval($data['new']['directive_snippets_id']) > 0){
 			$snippet = $app->db->queryOneRecord("SELECT * FROM directive_snippets WHERE directive_snippets_id = ? AND type = 'nginx' AND active = 'y' AND customer_viewable = 'y'", intval($data['new']['directive_snippets_id']));
@@ -3039,7 +3040,7 @@ class nginx_plugin {
 			if ( @is_file($default_pool_dir.$pool_name.'.conf') ) {
 				$app->system->unlink($default_pool_dir.$pool_name.'.conf');
 				$app->log('Removed PHP-FPM config file: '.$default_pool_dir.$pool_name.'.conf', LOGLEVEL_DEBUG);
-				$app->services->restartService('php-fpm', 'reload:'.$conf['init_scripts'].'/'.$web_config['php_fpm_init_script']);
+				$app->services->restartService('php-fpm', $php_fpm_reload_mode.':'.$conf['init_scripts'].'/'.$web_config['php_fpm_init_script']);
 			}
 		}
 		$php_versions = $app->db->queryAllRecords("SELECT * FROM server_php WHERE php_fpm_init_script != '' AND php_fpm_ini_dir != '' AND php_fpm_pool_dir != '' AND server_id = ?", $conf["server_id"]);
@@ -3051,7 +3052,7 @@ class nginx_plugin {
 					if ( @is_file($php_version['php_fpm_pool_dir'].$pool_name.'.conf') ) {
 						$app->system->unlink($php_version['php_fpm_pool_dir'].$pool_name.'.conf');
 						$app->log('Removed PHP-FPM config file: '.$php_version['php_fpm_pool_dir'].$pool_name.'.conf', LOGLEVEL_DEBUG);
-						$app->services->restartService('php-fpm', 'reload:'.$php_version['php_fpm_init_script']);
+						$app->services->restartService('php-fpm', $php_fpm_reload_mode.':'.$php_version['php_fpm_init_script']);
 					}
 				}
 			}
@@ -3059,9 +3060,9 @@ class nginx_plugin {
 		// Reload current PHP-FPM after all others
 		sleep(1);
 		if(!$default_php_fpm){
-			$app->services->restartService('php-fpm', 'reload:'.$custom_php_fpm_init_script);
+			$app->services->restartService('php-fpm', $php_fpm_reload_mode.':'.$custom_php_fpm_init_script);
 		} else {
-			$app->services->restartService('php-fpm', 'reload:'.$conf['init_scripts'].'/'.$web_config['php_fpm_init_script']);
+			$app->services->restartService('php-fpm', $php_fpm_reload_mode.':'.$conf['init_scripts'].'/'.$web_config['php_fpm_init_script']);
 		}
 	}
 
@@ -3104,7 +3105,7 @@ class nginx_plugin {
 			if ( @is_file($default_pool_dir.$pool_name.'.conf') ) {
 				$app->system->unlink($default_pool_dir.$pool_name.'.conf');
 				$app->log('Removed PHP-FPM config file: '.$default_pool_dir.$pool_name.'.conf', LOGLEVEL_DEBUG);
-				$app->services->restartService('php-fpm', 'reload:'.$conf['init_scripts'].'/'.$web_config['php_fpm_init_script']);
+				$app->services->restartService('php-fpm', $php_fpm_reload_mode.':'.$conf['init_scripts'].'/'.$web_config['php_fpm_init_script']);
 			}
 		}
 		$php_versions = $app->db->queryAllRecords("SELECT * FROM server_php WHERE php_fpm_init_script != '' AND php_fpm_ini_dir != '' AND php_fpm_pool_dir != '' AND server_id = ?", $data['old']['server_id']);
@@ -3116,7 +3117,7 @@ class nginx_plugin {
 					if ( @is_file($php_version['php_fpm_pool_dir'].$pool_name.'.conf') ) {
 						$app->system->unlink($php_version['php_fpm_pool_dir'].$pool_name.'.conf');
 						$app->log('Removed PHP-FPM config file: '.$php_version['php_fpm_pool_dir'].$pool_name.'.conf', LOGLEVEL_DEBUG);
-						$app->services->restartService('php-fpm', 'reload:'.$php_version['php_fpm_init_script']);
+						$app->services->restartService('php-fpm', $php_fpm_reload_mode.':'.$php_version['php_fpm_init_script']);
 					}
 				}
 			}
@@ -3125,9 +3126,9 @@ class nginx_plugin {
 		// Reload current PHP-FPM after all others
 		sleep(1);
 		if(!$default_php_fpm){
-			$app->services->restartService('php-fpm', 'reload:'.$custom_php_fpm_init_script);
+			$app->services->restartService('php-fpm', $php_fpm_reload_mode.':'.$custom_php_fpm_init_script);
 		} else {
-			$app->services->restartService('php-fpm', 'reload:'.$conf['init_scripts'].'/'.$web_config['php_fpm_init_script']);
+			$app->services->restartService('php-fpm', $php_fpm_reload_mode.':'.$conf['init_scripts'].'/'.$web_config['php_fpm_init_script']);
 		}
 	}
 

@@ -175,4 +175,14 @@ $wb['server_id_0_error_txt'] = '请选择一个有效的服务器。服务器ID�
 $wb['datalog_changes_close_txt'] = '关闭';
 $wb['non_admin_error'] = '需要管理员级别的权限';
 $wb['copy_to_clipboard_txt'] = '复制到剪贴板';
+$wb['datalog_status_i_client'] = 'Create new client';
+$wb['datalog_status_u_client'] = 'Update client';
+$wb['datalog_status_d_client'] = 'Delete client';
+$wb['datalog_status_i_domain'] = 'Create new domain';
+$wb['datalog_status_u_domain'] = 'Update domain';
+$wb['datalog_status_d_domain'] = 'Delete domain';
+$wb['datalog_status_d_web_backup'] = 'Delete website backup';
+$wb['datalog_status_i_dns_template'] = 'Create DNS template';
+$wb['datalog_status_u_dns_template'] = 'Update DNS template';
+$wb['datalog_status_d_dns_template'] = 'Delete DNS template';
 ?>

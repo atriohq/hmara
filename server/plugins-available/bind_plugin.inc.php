@@ -352,7 +352,7 @@ class bind_plugin {
 				$loglevel = @($dns_config['disable_bind_log'] === 'y') ? LOGLEVEL_DEBUG : LOGLEVEL_WARN;
 				$app->log("Writing BIND domain file failed: ".$filename." ".implode(' ', $out), $loglevel);
 				if(is_array($out) && !empty($out)){
-					$app->log('Reason for Bind restart failure: '.implode("\n", $out), $loglevel);
+					$app->log('Reason for Bind zone check failure: '.implode("\n", $out), $loglevel);
 					$app->dbmaster->datalogError(implode("\n", $out));
 				}
 				if ($old_zonefile != '') {
@@ -402,7 +402,7 @@ class bind_plugin {
  		}
 
 		//* Restart bind nameserver if update_acl is not empty, otherwise reload it
-		if($data['new']['update_acl'] != '') {
+               if(!empty($data['new']['update_acl'])) {
 			$app->services->restartServiceDelayed('bind', 'restart');
 		} else {
 			$app->services->restartServiceDelayed('bind', 'reload');
@@ -460,7 +460,12 @@ class bind_plugin {
 		}
 
 		//* Ensure that the named slave directory is writable by the named user
-		$slave_record_dir = $dns_config['bind_zonefiles_dir'].'/'.$this->slave_zone_file_prefix();
+		if(!empty($dns_config['bind_zonefiles_slaveprefix'])) {
+			$slave_record_dir = $dns_config['bind_zonefiles_dir'].'/'.$dns_config['bind_zonefiles_slaveprefix'];
+			if(substr($slave_record_dir,-1) != '/') $slave_record_dir = dirname($slave_record_dir);
+		} else {
+			$slave_record_dir = $dns_config['bind_zonefiles_dir'];
+		}
 		if(!@is_dir($slave_record_dir)) mkdir($slave_record_dir, 0770, true);
 		chown($slave_record_dir, $dns_config['bind_user']);
 		chgrp($slave_record_dir, $dns_config['bind_group']);
@@ -500,7 +505,10 @@ class bind_plugin {
 		$data["new"] = $tmp;
 		$data["old"] = $tmp;
 		$this->action = 'update';
-		$this->soa_update($event_name, $data);
+
+		if (isset($data['new']['active']) && $data['new']['active'] == 'Y') {
+			$this->soa_update($event_name, $data);
+		}
 
 	}
 
@@ -520,11 +528,15 @@ class bind_plugin {
 		global $app, $conf;
 
 		//* Get the data of the soa and call soa_update
+               //* In a singel server setup the record in dns_soa will already be gone ... so this will give an empty array.
 		$tmp = $app->db->queryOneRecord("SELECT * FROM dns_soa WHERE id = ?", $data['old']['zone']);
 		$data["new"] = $tmp;
 		$data["old"] = $tmp;
 		$this->action = 'update';
-		$this->soa_update($event_name, $data);
+
+		if (isset($data['new']['active']) && $data['new']['active'] == 'Y') {
+			$this->soa_update($event_name, $data);
+		}
 
 	}
 

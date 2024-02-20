@@ -1151,6 +1151,7 @@ class system{
 		$group_file = $app->file->rf($this->server_conf['group_datei']);
 		$group_file_lines = explode("\n", $group_file);
 		foreach($group_file_lines as $group_file_line){
+			if(empty($group_file_line)) continue;
 			list($group_name, $group_x, $group_id, $group_users) = explode(':', $group_file_line);
 			if($group_name == $group){
 				$group_users = explode(',', str_replace(' ', '', $group_users));
@@ -2072,7 +2073,7 @@ class system{
 		}
 		*/
 		
-		if(!in_array($action,array('restart','reload','force-reload'))) {
+		if(!in_array($action,array('start','stop','restart','reload','force-reload'))) {
 			$app->log('Invalid init command action '.$action,LOGLEVEL_WARN);
 			return false;
 		}
