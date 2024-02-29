@@ -91,7 +91,7 @@ class page_action extends tform_actions {
 			$this->id = 1;
 			$old_data = strtolower($rec['data']);
 			$app->tpl->setVar("data", $old_data, true);
-			if ($rec['active'] == 'Y') $app->tpl->setVar("active", '<input name="active" id="active" value="1" type="checkbox" checked="">');
+			if ($rec['active'] == 'Y') $app->tpl->setVar("active", '<input name="active" id="active" value="" type="checkbox" CHECKED>'); else $app->tpl->setVar("active", '<input name="active" id="active" value="" type="checkbox">');
 			$zone = $rec['zone'];
 			$dmarc_rua = '';
 			$dmarc_ruf = '';
@@ -236,7 +236,7 @@ class page_action extends tform_actions {
 		// DMARC requieres at least one active dkim-record...
 		$sql = "SELECT * FROM dns_rr
 					LEFT JOIN dns_soa ON (dns_rr.zone=dns_soa.id)
-					WHERE dns_soa.origin = ? AND dns_rr.name LIKE ? AND type='TXT' AND data like 'v=DKIM1;%' AND dns_rr.active='Y'";
+					WHERE dns_soa.origin = ? AND dns_rr.name LIKE ? AND ((type='TXT' AND data LIKE 'v=DKIM%') OR type='CNAME') AND dns_rr.active='Y'";
 		$temp = $app->db->queryAllRecords($sql, $soa['origin'], '%._domainkey%');
 		if (empty($temp)) {
 			if (isset($app->tform->errorMessage )) $app->tform->errorMessage = '<br/>' . $app->tform->errorMessage;
