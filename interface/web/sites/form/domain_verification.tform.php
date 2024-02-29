@@ -20,51 +20,42 @@ $form["auth_preset"]["perm_group"] = 'riud'; //r = read, i = insert, u = update,
 $form["auth_preset"]["perm_other"] = ''; //r = read, i = insert, u = update, d = delete
 
 
-
 $form['tabs']['domain_verification'] = array(
-	'title' => 'External domain', // Title of the Tab
-	'width' => 100, // Tab width
-	'template' => 'templates/domain_verification_edit.htm', // Template file name
-	'fields' => array(
-		'domain' => array(
-			'datatype' => 'VARCHAR',
-			'formtype' => 'TEXT',
-			'filters' => array(0 => array('event' => 'SAVE',
-					'type' => 'IDNTOASCII'),
-				1 => array('event' => 'SHOW',
-					'type' => 'IDNTOUTF8'),
-				2 => array('event' => 'SAVE',
-					'type' => 'TOLOWER')
-			),
-			'validators' => array(0 => array('type' => 'NOTEMPTY',
-					'errmsg' => 'domain_error_empty'),
-				1 => array('type' => 'UNIQUE',
-					'errmsg' => 'domain_error_unique'),
-				2 => array('type' => 'ISDOMAIN',
-					'errmsg' => 'domain_error_regex'),
-			),
-			'default' => '',
-			'value' => '',
-			'width' => '30',
-			'maxlength' => '255',
-			'searchable' => 1
-		),
-		'dns_auth_record' => array(
-			'datatype' => 'VARCHAR',
-			'formtype' => 'TEXT',
-			'default' => '',
-			'value' => '',
-			'width' => '50',
-			'maxlength' => '255'
-		),
-		'record_created' => array(
-			'datatype' => 'TIMESTAMP',
-			'formtype' => 'TEXT',
-			'default' => '',
-			'value' => '',
-			'width' => '50',
-			'maxlength' => '255'
-		),
-	)
+    'title' => 'External domain', // Title of the Tab
+    'width' => 100, // Tab width
+    'template' => 'templates/domain_verification_edit.htm', // Template file name
+    'fields' => array(
+        'domain' => array(
+            'datatype' => 'VARCHAR',
+            'formtype' => 'TEXT',
+            'filters' => array(0 => array('event' => 'SAVE',
+                'type' => 'IDNTOASCII'),
+                1 => array('event' => 'SHOW',
+                    'type' => 'IDNTOUTF8'),
+                2 => array('event' => 'SAVE',
+                    'type' => 'TOLOWER')
+            ),
+            'validators' => array(0 => array('type' => 'NOTEMPTY',
+                'errmsg' => 'domain_error_empty'),
+                1 => array('type' => 'UNIQUE',
+                    'errmsg' => 'domain_error_unique'),
+                2 => array('type' => 'ISDOMAIN',
+                    'errmsg' => 'domain_error_regex'),
+            ),
+            'default' => '',
+            'value' => '',
+            'width' => '30',
+            'maxlength' => '255',
+            'searchable' => 1
+        ),
+        'dns_auth_record' => array(
+            'datatype' => 'VARCHAR',
+            'formtype' => 'TEXT',
+            'default' => '',
+            'value' => '',
+            'width' => '50',
+            'maxlength' => '255'
+        ),
+    )
 );
 ?>
