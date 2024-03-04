@@ -2358,6 +2358,27 @@ class system{
 		}
 	}
 
+	public function get_os_type() {
+		global $app;
+
+
+		$dist = "undetected";
+
+		if(file_exists('/etc/redhat-release') && (filesize('/etc/redhat-release') > 0)) {
+			$dist = "redhat";
+		} elseif(file_exists('/etc/debian_version') && (filesize('/etc/debian_version') > 0)) {
+			$dist = "debian";
+		} elseif(strstr(trim(file_get_contents('/etc/issue')), 'Ubuntu') || (is_file('/etc/os-release') && stristr(file_get_contents('/etc/os-release'), 'Ubuntu'))) {
+			$dist = "ubuntu";
+		} elseif(file_exists('/etc/SuSE-release') && (filesize('/etc/SuSE-release') > 0)) {
+			$dist = "suse";
+		} elseif(file_exists('/etc/gentoo-release') && (filesize('/etc/gentoo-release') > 0)) {
+			$dist = "gentoo";
+		}
+
+		return $dist;
+	}
+
 	public function is_allowed_path($path) {
 		global $app;
 

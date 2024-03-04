@@ -141,7 +141,7 @@ class shelluser_jailkit_plugin {
 						//* call the ssh-rsa update function
 						$this->_setup_ssh_rsa();
 
-						$this->_add_bashrc_jailkit();
+						$this->_setup_php_jailkit();
 
 						$app->system->usermod($data['new']['username'], 0, 0, '', '/usr/sbin/jk_chrootsh', '', '');
 
@@ -236,7 +236,7 @@ class shelluser_jailkit_plugin {
 
 						$this->_add_jailkit_user();
 
-						$this->_add_bashrc_jailkit();
+						$this->_setup_php_jailkit();
 
 						//* call the ssh-rsa update function
 						$this->_setup_ssh_rsa();
@@ -345,7 +345,6 @@ class shelluser_jailkit_plugin {
 		}
 
 		$web = $app->db->queryOneRecord("SELECT domain, last_jailkit_hash FROM web_domain WHERE domain_id = ?", $this->data['new']["parent_domain_id"]);
-		//$web = $app->db->queryOneRecord("SELECT * FROM web_domain LEFT JOIN server_php ON web_domain.server_php_id = server_php.server_php_id WHERE `domain_id` = ?", $data["new"]["parent_domain_id"]);
 
 		$last_updated = preg_split('/[\s,]+/', $this->jailkit_config['jailkit_chroot_app_sections']
 						  .' '.$this->jailkit_config['jailkit_chroot_app_programs']
@@ -680,63 +679,82 @@ class shelluser_jailkit_plugin {
 
 
 
-	function _add_bashrc_jailkit() {
+	function _setup_php_jailkit() {
 		global $app;
+
+		$app->uses('system');
 
 		// Create .bashrc file
 		$app->load('tpl');
 
 		$tpl = new tpl();
-
-		// /etc/bash.bashrc is not supported by Red Hat OS
-		if($app->system->is_redhat_os() == true) {
-			$tpl->newTemplate("bashrc_el.master");
-		} else {
-			$tpl->newTemplate("bash.bashrc.master");
-		}
+		$tpl_deb_user_bashrc = new tpl();
 
 		// Predefine some template vars
-		$tpl->setVar('jailkit_chroot', true);
+		$tpl->setVar('jailkit_chroot', 'y');
 		$tpl->setVar('domain', $this->web['domain']);
 		$tpl->setVar('home_dir', $this->_get_home_dir(""));
-
 		$tpl->setVar('use_php_path', false);
 		$tpl->setVar('use_php_alias', false);
 
+		if($app->system->get_os_type() == "debian" || $app->system->get_os_type() == "ubuntu") {
+			$tpl->newTemplate("bashrc_user_deb.master");
+		} elseif($app->system->get_os_type() == "redhat") {
+			$tpl->newTemplate("bashrc_user_redhat.master");
+		} else {
+			$tpl->newTemplate("bashrc_user_generic.master");
+		}
+
+
 		$php_bin_dir = dirname($this->web['php_cli_binary']);
 
-		if(!file_exists($this->_get_home_dir($this->web['system_user']))) $this->_add_jailkit_user();
-
 		if(($this->web['server_php_id'] > 0) && !empty($this->web['php_cli_binary'])) {
-			if(preg_match('/^(\/usr\/(s)?bin|\/(s)?bin)/', $php_bin_dir)) {
-				$tpl->setVar('use_php_path', false);
-				$tpl->setVar('use_php_alias', true);
-				$tpl->setVar('php_alias', $this->web['php_cli_binary']);
-			} else {
-				$tpl->setVar('use_php_path', true);
-				$tpl->setVar('use_php_alias', false);
-				$tpl->setVar('php_bin_dir', $php_bin_dir);
+			if($app->system->get_os_type() != "debian" || $app->system->get_os_type() != "ubuntu") {
+				if(preg_match('/^(\/usr\/(s)?bin|\/(s)?bin)/', $php_bin_dir)) {
+					$tpl->setVar('use_php_path', false);
+					$tpl->setVar('use_php_alias', true);
+					$tpl->setVar('php_alias', $this->web['php_cli_binary']);
+				} else {
+					$tpl->setVar('use_php_path', true);
+					$tpl->setVar('use_php_alias', false);
+					$tpl->setVar('php_bin_dir', $php_bin_dir);
+				}
 			}
 
 			if(!file_exists($this->web['document_root'] . '/' . $this->web['php_cli_binary'])) {
-				$app->log("The PHP cli binary " . $this->web['php_cli_binary'] . " is not available in the jail of the web " . $this->web['domain']  . " / username: " . $this->username  . ". Check your Jailkit setup!", LOGLEVEL_DEBUG);
+				$app->log("The PHP cli binary " . $this->web['php_cli_binary'] . " is not available in the jail of the web " . $this->web['domain']  . " / SSH/SFTP user: " . $this->username  . ". Check your Jailkit setup!", LOGLEVEL_DEBUG);
 				$tpl->setVar('use_php_path', false);
 				$tpl->setVar('use_php_alias', false);
+				if(is_link($this->web['document_root'] . '/etc/alternatives/php'))
+				{
+					unlink($this->web['document_root'] . '/etc/alternatives/php');
+				}
+			} else {
+				if($app->system->get_os_type() == "debian" || $app->system->get_os_type() == "ubuntu") {
+					if(is_link($this->web['document_root'] . '/etc/alternatives/php') || is_file($this->web['document_root'] . '/etc/alternatives/php'))
+					{
+						unlink($this->web['document_root'] . '/etc/alternatives/php');
+						symlink($this->web['php_cli_binary'], $this->web['document_root'] . '/etc/alternatives/php');
+					} else {
+						symlink($this->web['php_cli_binary'], $this->web['document_root'] . '/etc/alternatives/php');
+					}
+				}
+
 			}
 		}
 
-		if($app->system->is_redhat_os() == true) {
-			//$bashrc = $this->web['document_root'] . '/home/' . $this->web['system_user'] . '/.bashrc';
-			$bashrc = $this->web['document_root'] . '/etc/bashrc';
-		} else {
-			$bashrc = $this->web['document_root'] . '/etc/bash.bashrc';
-		}
+		$bashrc = $this->web['document_root'] . '/home/' . $this->data['new']['username'] . '/.bashrc';
 
 		if(@is_file($bashrc) || @is_link($bashrc)) unlink($bashrc);
 		file_put_contents($bashrc, $tpl->grab());
+		$app->system->chown($bashrc, $this->data['new']['username']);
+		$app->system->chgrp($bashrc, $this->data['new']['pgroup']);
+
 		$app->log("Added bashrc script: " . $bashrc, LOGLEVEL_DEBUG);
 
 		unset($tpl);
+
+
 
 
 	}

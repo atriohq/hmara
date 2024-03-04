@@ -48,15 +48,17 @@ class validate_cron {
 		global $app, $page;
 
 		if(preg_match("'^(\w+):\/\/'", $field_value, $matches)) {
-			if(preg_match("/\{DOMAIN\}/", $field_value)) {
+			//* Add the {DOMAIN} placeholder to the validation process
+			if(preg_match("/{DOMAIN}/", $field_value)) {
+
 				if(isset($app->remoting_lib->primary_id)) {
-					$domain = $app->remoting_lib->dataRecord;
+					$cronjob = $app->remoting_lib->dataRecord;
 				} else {
-					$domain = $page->dataRecord;
+					$cronjob = $page->dataRecord;
 				}
 
-				if($domain['parent_domain_id'] > 0){
-					$parent_domain = $app->db->queryOneRecord("SELECT `domain` FROM `web_domain` WHERE `domain_id` = ?", $domain['parent_domain_id']);
+				if($cronjob['parent_domain_id'] > 0) {
+					$parent_domain = $app->db->queryOneRecord("SELECT `domain` FROM `web_domain` WHERE `domain_id` = ?", $cronjob['parent_domain_id']);
 				}
 
 				$trans = array(
@@ -64,6 +66,7 @@ class validate_cron {
 				);
 
 				$field_value = strtr($field_value, $trans);
+
 			}
 
 			$parsed = parse_url($field_value);

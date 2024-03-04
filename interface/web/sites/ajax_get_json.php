@@ -264,7 +264,7 @@ if($type == 'getcronplaceholders') {
 
 		$domain_owner = $app->db->queryOneRecord("SELECT limit_cron_type FROM sys_group, client WHERE sys_group.client_id = client.client_id and sys_group.groupid = ?", $web["sys_groupid"]);
 
-		//* True when the site is assigned to a client
+		//* True if the site is assigned to a client
 		if(isset($domain_owner["limit_cron_type"])) {
 			if($domain_owner["limit_cron_type"] == 'full') {
 				$cron_type = 'full';
@@ -272,7 +272,7 @@ if($type == 'getcronplaceholders') {
 				$cron_type = 'chrooted';
 			}
 		} else {
-			//* True when the site is assigned to the admin
+			//* True if the site is assigned to the admin
 			$cron_type = 'full';
 		}
 

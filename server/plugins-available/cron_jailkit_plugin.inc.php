@@ -124,7 +124,7 @@ class cron_jailkit_plugin {
 
 				$this->_add_jailkit_user();
 
-				$this->_add_bashrc_jailkit();
+				$this->_setup_php_jailkit();
 
 				$command .= 'usermod -U ? 2>/dev/null';
 				$app->system->exec_safe($command, $parent_domain["system_user"]);
@@ -198,7 +198,7 @@ class cron_jailkit_plugin {
 
 				$this->_add_jailkit_user();
 
-				$this->_add_bashrc_jailkit();
+				$this->_setup_php_jailkit();
 
 				$this->_update_website_security_level();
 
@@ -369,7 +369,7 @@ class cron_jailkit_plugin {
 		}
 	}
 
-	function _add_bashrc_jailkit() {
+	function _setup_php_jailkit() {
 		global $app;
 
 		// Create .bashrc file
@@ -377,15 +377,16 @@ class cron_jailkit_plugin {
 
 		$tpl = new tpl();
 
-		// /etc/bash.bashrc is not supported by Red Hat OS
-		if($app->system->is_redhat_os() == true) {
-			$tpl->newTemplate("bashrc_el.master");
+		if($app->system->get_os_type() == "debian" || $app->system->get_os_type() == "ubuntu") {
+			$tpl->newTemplate("bashrc_user_deb.master");
+		} elseif($app->system->get_os_type() == "redhat") {
+			$tpl->newTemplate("bashrc_user_redhat.master");
 		} else {
-			$tpl->newTemplate("bash.bashrc.master");
+			$tpl->newTemplate("bashrc_user_generic.master");
 		}
 
 		// Predefine some template vars
-		$tpl->setVar('jailkit_chroot', true);
+		$tpl->setVar('jailkit_chroot', 'y');
 		$tpl->setVar('domain', $this->parent_domain['domain']);
 		$tpl->setVar('home_dir', $this->_get_home_dir(""));
 
@@ -393,9 +394,6 @@ class cron_jailkit_plugin {
 		$tpl->setVar('use_php_alias', false);
 
 		$php_bin_dir = dirname($this->parent_domain['php_cli_binary']);
-
-		if(!file_exists($this->_get_home_dir($this->parent_domain['system_user']))) $this->_add_jailkit_user();
-
 
 		if(($this->parent_domain['server_php_id'] > 0) && !empty($this->parent_domain['php_cli_binary'])) {
 			if(preg_match('/^(\/usr\/(s)?bin|\/(s)?bin)/', $php_bin_dir)) {
@@ -412,14 +410,24 @@ class cron_jailkit_plugin {
 				$app->log("The PHP cli binary " . $this->parent_domain['php_cli_binary'] . " is not available in the jail of the web " . $this->parent_domain['domain']  . " / cronjob_id: " . $this->cronjob_id  . ". Check your Jailkit setup!", LOGLEVEL_DEBUG);
 				$tpl->setVar('use_php_path', false);
 				$tpl->setVar('use_php_alias', false);
+				if(is_link($this->parent_domain['document_root'] . '/etc/alternatives/php'))
+				{
+					unlink($this->parent_domain['document_root'] . '/etc/alternatives/php');
+				}
+			} else {
+				if($app->system->get_os_type() == "debian" || $app->system->get_os_type() == "ubuntu") {
+					if(is_link($this->parent_domain['document_root'] . '/etc/alternatives/php') || is_file($this->parent_domain['document_root'] . '/etc/alternatives/php'))
+					{
+						unlink($this->parent_domain['document_root'] . '/etc/alternatives/php');
+						symlink($this->parent_domain['php_cli_binary'], $this->parent_domain['document_root'] . '/etc/alternatives/php');
+					} else {
+						symlink($this->parent_domain['php_cli_binary'], $this->parent_domain['document_root'] . '/etc/alternatives/php');
+					}
+				}
 			}
 		}
 
-		if($app->system->is_redhat_os() == true) {
-			$bashrc = $this->parent_domain['document_root'] . '/home/' . $this->parent_domain['system_user'] . '/.bashrc';
-		} else {
-			$bashrc = $this->parent_domain['document_root'] . '/etc/bash.bashrc';
-		}
+		$bashrc = $this->parent_domain['document_root'] . '/home/' .$this->parent_domain['system_user'] . '/.bashrc';
 
 		if(@is_file($bashrc) || @is_link($bashrc)) unlink($bashrc);
 		file_put_contents($bashrc, $tpl->grab());
