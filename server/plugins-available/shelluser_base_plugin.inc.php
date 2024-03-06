@@ -80,7 +80,9 @@ class shelluser_base_plugin {
 		}
 
 		//* Check if the resulting path is inside the docroot
-		$web = $app->db->queryOneRecord("SELECT * FROM web_domain LEFT JOIN server_php ON web_domain.server_php_id = server_php.server_php_id WHERE `domain_id` = ?", $data["new"]["parent_domain_id"]);
+		$web = $app->db->queryOneRecord("SELECT * FROM web_domain
+			LEFT JOIN server_php ON web_domain.server_php_id = server_php.server_php_id
+			WHERE `domain_id` = ?", $data["new"]["parent_domain_id"]);
 
 		$this->web = $web;
 
@@ -223,7 +225,9 @@ class shelluser_base_plugin {
 		}
 
 		//* Check if the resulting path is inside the docroot
-		$web = $app->db->queryOneRecord("SELECT * FROM web_domain LEFT JOIN server_php ON web_domain.server_php_id = server_php.server_php_id WHERE `domain_id` = ?", $data["new"]["parent_domain_id"]);
+		$web = $app->db->queryOneRecord("SELECT * FROM web_domain
+			LEFT JOIN server_php ON web_domain.server_php_id = server_php.server_php_id
+			WHERE `domain_id` = ?", $data["new"]["parent_domain_id"]);
 
 		$this->web = $web;
 

@@ -79,9 +79,9 @@ class page_action extends tform_actions {
 		}
 
 		$parent_domain = $app->db->queryOneRecord("SELECT `domain_id`, `system_user`, `system_group`, `domain`, `document_root`, `hd_quota`, `php_cli_binary`
-		FROM `web_domain`
-		LEFT JOIN server_php ON web_domain.server_php_id = server_php.server_php_id
-		WHERE `domain_id` = ?", $this->dataRecord["parent_domain_id"]);
+			FROM `web_domain`
+				LEFT JOIN server_php ON web_domain.server_php_id = server_php.server_php_id
+			WHERE `domain_id` = ?", $this->dataRecord["parent_domain_id"]);
 
 		$php_cli_binary = $parent_domain['php_cli_binary'];
 		$domain = $parent_domain['domain'];

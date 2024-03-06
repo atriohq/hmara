@@ -255,9 +255,9 @@ if($type == 'getcronplaceholders') {
 	if($web_id > 0) {
 
 		$web = $app->db->queryOneRecord("SELECT wd.sys_groupid, wd.domain, wd.document_root, sp.php_cli_binary
-		FROM web_domain wd
-		LEFT JOIN server_php sp ON wd.server_php_id = sp.server_php_id
-		WHERE wd.domain_id = ?", $web_id);
+			FROM web_domain wd
+				LEFT JOIN server_php sp ON wd.server_php_id = sp.server_php_id
+			WHERE wd.domain_id = ?", $web_id);
 
 		$php_cli_binary = $web['php_cli_binary'];
 		$domain = $web['domain'];
