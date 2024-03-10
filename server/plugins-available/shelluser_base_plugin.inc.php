@@ -181,11 +181,11 @@ class shelluser_base_plugin {
 				$app->system->chmod($homedir.'/.profile', 0644);
 				$app->system->chown($homedir.'/.profile', $data['new']['username']);
 				$app->system->chgrp($homedir.'/.profile', $data['new']['pgroup']);
-				$profile_content = "
-if [ -d ~/.bashrc ]
+				$profile_content = "if [ -d ~/.bashrc ]
 then
 	. ~/.bashrc
 fi
+
 ";
 				$app->system->file_put_contents($homedir.'/.profile', $profile_content);
 
@@ -333,13 +333,13 @@ fi
 						$app->system->chmod($homedir.'/.profile', 0644);
 						$app->system->chown($homedir.'/.profile', $data['new']['puser']);
 						$app->system->chgrp($homedir.'/.profile', $data['new']['pgroup']);
-						$profile_content = "
-if [ -d ~/.bashrc ]
-	then
-		. ~/.bashrc
-	fi
+						$profile_content = "if [ -d ~/.bashrc ]
+then
+	. ~/.bashrc
+fi
+
 ";
-						$app->system->file_put_contents(($data['new']['dir']).'/.profile', $profile_content);
+						$app->system->file_put_contents($homedir.'/.profile', $profile_content);
 					}
 
 					//* Create .bashrc.d directory
