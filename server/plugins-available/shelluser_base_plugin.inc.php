@@ -181,7 +181,7 @@ class shelluser_base_plugin {
 				$app->system->chmod($homedir.'/.profile', 0644);
 				$app->system->chown($homedir.'/.profile', $data['new']['username']);
 				$app->system->chgrp($homedir.'/.profile', $data['new']['pgroup']);
-				$profile_content = "if [ -d ~/.bashrc ]
+				$profile_content = "if [ -f ~/.bashrc ]
 then
 	. ~/.bashrc
 fi
@@ -333,7 +333,7 @@ fi
 						$app->system->chmod($homedir.'/.profile', 0644);
 						$app->system->chown($homedir.'/.profile', $data['new']['puser']);
 						$app->system->chgrp($homedir.'/.profile', $data['new']['pgroup']);
-						$profile_content = "if [ -d ~/.bashrc ]
+						$profile_content = "if [ -f ~/.bashrc ]
 then
 	. ~/.bashrc
 fi
