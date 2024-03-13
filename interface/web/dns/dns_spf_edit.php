@@ -110,6 +110,7 @@ class page_action extends tform_actions {
 			$spf_mechanism = substr($rec['data'], -4, 1);
 		}
 		else {
+			// Set the domainname itself as default name, to indicatie it's not for a subdomain.
 			$sql = "SELECT origin FROM dns_soa WHERE id = ? AND " . $app->tform->getAuthSQL('r');
 			$rec = $app->db->queryOneRecord($sql, $app->functions->intval($_REQUEST["zone"]));
 			$app->tpl->setVar("name", $rec['origin'], true);
@@ -162,15 +163,15 @@ class page_action extends tform_actions {
 		} // end if user is not admin
 		
 		// Check that the record does not yet exist.
-		// '' and 'example.com.' are effectively the same name.
+		// '' and 'example.com.' are effectively the same name so we also look for those variants.
 		$existing_records = $app->db->queryAllRecords("SELECT r.*, s.origin FROM dns_rr r
 					LEFT JOIN dns_soa s ON (r.zone=s.id)
-					WHERE zone = ? AND type = 'TXT' AND data LIKE 'v=spf1%' AND " . $app->tform->getAuthSQL('r'), $_POST['zone']);
-		foreach ($existing_records as $key => $r) {
-			if (!empty($r['name']) && $re['name'] != $r['origin'] ) {
-				unset($existing_records[$key]);
-			}
-		}
+					WHERE zone = ? AND (name = ? /* an exact match */
+										OR (name = s.origin AND ? = '') /* e.g. name = 'example.com.' and we're posting an empty value */
+										OR (name = '' AND s.origin = ?) /* e.g. name is empty and we're posting e.g. 'example.com' */ )
+						AND type = 'TXT' AND data LIKE 'v=spf1%'
+						AND " . $app->tform->getAuthSQL('r'),
+					$_POST['zone'], $_POST['name'], $_POST['name'], $_POST['name']);
 
 		if (!empty($existing_records)) {
 			if (count($existing_records) > 1) {
