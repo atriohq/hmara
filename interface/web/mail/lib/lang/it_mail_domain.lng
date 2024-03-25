@@ -23,4 +23,7 @@ $wb['dkim_selector_error'] = 'Selettore di chiave DKIM invalido. Usare solo cara
 $wb['relayhost_txt'] = 'Relayhost';
 $wb['relayhost_user_txt'] = 'Utente Relayhost';
 $wb['relayhost_password_txt'] = 'Relayhost Password';
+$wb['dkim_enabled_dns_not_found'] = 'DKIM enabled, record not found in DNS yet.';
+$wb['dkim_enabled_resolving_ok'] = 'DKIM enabled, DNS resolving OK.';
+$wb['dkim_enabled_mismatched_record'] = 'DKIM enabled, mismatched record.';
 ?>

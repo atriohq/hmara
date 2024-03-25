@@ -263,15 +263,14 @@ class page_action extends tform_actions {
 			$dns_record_status = dns_get_record($rec['dkim_selector'] . '._domainkey.' . $rec['domain'], DNS_TXT);
 			if (empty($dns_record_status) || empty($dns_record_status[0]['txt'])) {
 				// Record not found
-				$app->tpl->setVar('dkim_status', "DKIM enabled, record not found in DNS yet.", true);
+				$app->tpl->setVar('dkim_status', $app->lng('dkim_enabled_dns_not_found'), true);
 			}
 			elseif ($dns_record_status[0]['txt'] == $dkim_txt) {
-				$app->tpl->setVar('dkim_status', "<span class=\"fa fa-check-circle-o\" aria-hidden=\"false\" title=\"DKIM enabled, DNS resolving OK\"</span>", false);
+				$app->tpl->setVar('dkim_status', '<span class="fa fa-check-circle-o" aria-hidden="false" title="' . $app->lng('dkim_enabled_resolving_ok') . '"</span>', false);
 			}
 			else {
 				// Mismatch in record!
-				$app->tpl->setVar('dkim_status', "DKIM enabled, mismatched record", true);
-				//$app->tpl->setVar('dkim_auto_dns', "XX" . print_r($dns_record_status, 1) . "--", true);
+				$app->tpl->setVar('dkim_status', $app->lng('dkim_enabled_mismatched_record'), true);
 			}
 		}
 
