@@ -98,13 +98,20 @@
         </div></div>
 
 <script>
-    function createSSHWidget(type, comment, index, textarea) {
+    function createSSHWidget(type, comment, optionsString, index, textarea) {
         const widget = document.createElement('div');
         widget.classList.add('ssh-widget');
         widget.textContent = `${type}, ${comment}`;
-
         // Add a data attribute to the widget for later identification
         widget.setAttribute('data-index', index);
+
+        // Add a options span to the widget
+        if (optionsString != '') {
+            widget.appendChild(document.createElement('br'));
+            const optionsSpan = document.createElement('span');
+            optionsSpan.textContent = `Options: ${optionsString}`;
+            widget.appendChild(optionsSpan);
+        }
 
         // Add a delete icon to the widget
         const deleteIcon = document.createElement('i');
@@ -134,18 +141,41 @@
 
         const publicKeys = textarea.value.trim().split('\n');
         for (let i = 0; i < publicKeys.length; i++) {
-            const publicKey = publicKeys[i].trim();;
+            const publicKeyLine = publicKeys[i].trim();
 
             // Skip empty lines and comments
-            if (publicKey === '' || publicKey.startsWith('#')) {
+            if (publicKeyLine === '' || publicKeyLine.startsWith('#')) {
                 continue;
             }
 
-            const parts = publicKey.split(/\s+/);
-            const type = parts[0];
-            const comment = parts.slice(2).join(' '); // Handle comments with spaces
+            // Split the line into parts
+            const parts = publicKeyLine.split(/\s+/);
 
-            const widget = createSSHWidget(type, comment, i, textarea);
+            // Extract options and public key
+            let options = [];
+            let publicKey = '';
+            let publicKeyIndex = 0;
+
+            for (let j = 0; j < parts.length; j++) {
+                if (parts[j].includes('=')) {
+                    options.push(parts[j]);
+                } else {
+                    publicKey = parts[j];
+                    publicKeyIndex = j;
+                    break;
+                }
+            }
+
+            // Combine the options into a string
+            const optionsString = options.join(' ');
+
+            // Extract the type and comment from the public key
+            const type = publicKey.split(/\s+/)[0];
+
+            const comment = parts.slice(publicKeyIndex + 2).join(' '); // Handle comments with spaces
+
+            // Create the widget
+            const widget = createSSHWidget(type, comment, optionsString, i, textarea);
             widgetContainer.appendChild(widget);
         }
     }
