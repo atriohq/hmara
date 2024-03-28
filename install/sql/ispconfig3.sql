@@ -673,11 +673,27 @@ CREATE TABLE `domain` (
   `sys_perm_group` varchar(5) NOT NULL default '',
   `sys_perm_other` varchar(5) NOT NULL default '',
   `domain` varchar(255) NOT NULL default '',
+  `domain_type_flag` varchar(1) DEFAULT 'n',
   PRIMARY KEY  (`domain_id`),
   UNIQUE KEY `domain` (`domain`)
 ) DEFAULT CHARSET=utf8 ;
 
 -- --------------------------------------------------------
+
+
+CREATE TABLE `domain_verification` (
+  `domain_id` int(11) NOT NULL AUTO_INCREMENT,
+  `sys_userid` int(11) NOT NULL,
+  `sys_groupid` int(11) NOT NULL,
+  `sys_perm_user` varchar(5) DEFAULT NULL,
+  `sys_perm_group` varchar(5) DEFAULT NULL,
+  `sys_perm_other` varchar(5) DEFAULT NULL,
+  `domain` varchar(255) NOT NULL,
+  `dns_auth_record` varchar(255) NOT NULL,
+  `record_created` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`domain_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
+
 
 --
 -- Table structure for table  `firewall`

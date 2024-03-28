@@ -1,0 +1,136 @@
+<div class='page-header'>
+       <h1><tmpl_var name="list_head_txt"></h1>
+</div>
+<p><tmpl_var name="list_desc_txt"></p>
+
+
+<p class="fieldset-legend">{tmpl_var name="toolsarea_head_txt"}</p>
+<tmpl_if name="use_domain_verification">
+        <button class="btn btn-default formbutton-success" type="button" data-load-content="sites/domain_verification_edit.php" title="{tmpl_var name='add_new_domain_verification_long_txt'}">{tmpl_var name="add_new_domain_verification_txt"}</button>
+</tmpl_if>
+<tmpl_if name="use_domain_subdomain">
+        <button class="btn btn-default formbutton-success" type="button" data-load-content="sites/domain_verification_subdomain.php" title="{tmpl_var name='add_new_subdomain_long_txt'}">{tmpl_var name="add_new_subdomain_txt"}</button>
+</tmpl_if>
+
+
+<tmpl_if name="records">
+        <p class="fieldset-legend"><tmpl_var name="list_head_txt"></p>
+        <div class="table-wrapper marginTop15">
+               <table class="table">
+                       <thead class="dark form-group-sm">
+                               <tr>
+                                       <th data-column="domain"><tmpl_var name="domain_txt"></th>
+                                       <th ><tmpl_var name="dns_auth_record_txt"></th>
+                                       <th data-column="record_created_txt"><tmpl_var name="record_created_txt"></th>
+                                       <th class="small-col text-right">{tmpl_var name='search_limit'}</th>
+                               </tr>
+                       </thead>
+                       <tbody>
+                       <tmpl_loop name="records">
+                               <tr>
+                                       <td><a href="#" data-load-content="sites/domain_verification_info.php?newid={tmpl_var name='id'}">{tmpl_var name="domain"}</a></td>
+                                       <td>{tmpl_var name="dns_auth_record"}</td>
+                                       <td>{tmpl_var name="record_created"}</td>
+                                       <td class="text-right">
+                                               <a class="btn btn-default formbutton-danger formbutton-narrow" href="javascript: ISPConfig.confirm_action('sites/domain_verification_del.php?id={tmpl_var name='id'}&_csrf_id={tmpl_var name='csrf_id'}&_csrf_key={tmpl_var name='csrf_key'}&phpsessid={tmpl_var name='phpsessid'}','{tmpl_var name='delete_confirmation'}');"><span class="icon icon-delete"></span></a>
+                                       </td>
+                               </tr>
+                               </tmpl_loop>
+                               <tmpl_unless name="records">
+                                       <tr class="tbl_row_noresults tbl_row_<tmpl_if name='__EVEN__'}even<tmpl_else>uneven</tmpl_if>">
+                                               <td colspan="4">{tmpl_var name='globalsearch_noresults_text_txt'}</td>
+                                       </tr>
+                               </tmpl_unless>
+                       </tbody>
+
+                       <tfoot>
+                               <tr>
+                                       <td colspan="4"><tmpl_var name="paging"></td>
+                               </tr>
+                       </tfoot>
+            </table>
+        </div>
+</tmpl_if>
+
+<tmpl_if name="domain_records_ex">
+        <h3><tmpl_var name="external_domain_txt"></h3>
+        <div class="table-wrapper marginTop15">
+                <table class="table table-auto table-striped" style="padding: 5px;">
+                        <thead class="dark form-group-sm">
+                        <tr>
+                                <th data-column="Domain"><tmpl_var name="domainlist_ex_txt"></th>
+                                <th></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tmpl_loop name="domain_records_ex">
+                                <tr>
+                                    <td>{tmpl_var name="domain"}</td>
+                                <td class="text-right">
+                                     <a class="btn btn-default formbutton-danger formbutton-narrow" href="javascript: ISPConfig.confirm_action('sites/domain_verification_del.php?deldomain_id={tmpl_var name='domain_id'}&_csrf_id={tmpl_var name='_csrf_id'}&_csrf_key={tmpl_var name='_csrf_key'}&phpsessid={tmpl_var name='phpsessid'}','{tmpl_var name='delete_confirmation_exdom_txt'}');"><span class="icon icon-delete"></span></a>
+                                </td>
+                                </tr>
+                        </tmpl_loop>
+                        <tmpl_unless name="domain_records_ex">
+                                <tr class="tbl_row_noresults tbl_row_<tmpl_if name='__EVEN__'}even<tmpl_else>uneven</tmpl_if>">
+                                        <td colspan="4">{tmpl_var name='globalsearch_noresults_text_txt'}</td>
+                                </tr>
+                        </tmpl_unless>
+                        </tbody>
+                </table>
+        </div>
+</tmpl_if>
+
+<tmpl_if name="domain_records_subdomain">
+        <h3><tmpl_var name="subdomain_txt"></h3>
+        <div class="table-wrapper marginTop15">
+                <table class="table table-auto table-striped" style="padding: 5px;">
+                        <thead class="dark form-group-sm">
+                        <tr>
+                                <th data-column="Domain"><tmpl_var name="domainlist_subdomain_txt"></th>
+                                <th></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tmpl_loop name="domain_records_subdomain">
+                                <tr>
+                                        <td>{tmpl_var name="domain"}</td>
+                                        <td class="text-right">
+                                                <a class="btn btn-default formbutton-danger formbutton-narrow" href="javascript: ISPConfig.confirm_action('sites/domain_verification_del.php?deldomain_id={tmpl_var name='domain_id'}&_csrf_id={tmpl_var name='_csrf_id'}&_csrf_key={tmpl_var name='_csrf_key'}&phpsessid={tmpl_var name='phpsessid'}','{tmpl_var name='delete_confirmation_subdomain_txt'}');"><span class="icon icon-delete"></span></a>
+                                        </td>
+                                </tr>
+                        </tmpl_loop>
+                        <tmpl_unless name="domain_records_subdomain">
+                                <tr class="tbl_row_noresults tbl_row_<tmpl_if name='__EVEN__'}even<tmpl_else>uneven</tmpl_if>">
+                                        <td colspan="4">{tmpl_var name='globalsearch_noresults_text_txt'}</td>
+                                </tr>
+                        </tmpl_unless>
+                        </tbody>
+                </table>
+        </div>
+</tmpl_if>
+
+<tmpl_if name="domain_records">
+        <h3><tmpl_var name="internal_domain_txt"></h3>
+        <div class="table-wrapper marginTop15">
+                <table class="table table-auto table-striped" style="padding: 5px;">
+                        <thead class="dark form-group-sm">
+                        <tr>
+                                <th data-column="Domain"><tmpl_var name="domainlist_txt"></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tmpl_loop name="domain_records">
+                                <tr>
+                                        <td>{tmpl_var name="domain"}</td>
+                                </tr>
+                        </tmpl_loop>
+                        <tmpl_unless name="domain_records">
+                                <tr class="tbl_row_noresults tbl_row_<tmpl_if name='__EVEN__'}even<tmpl_else>uneven</tmpl_if>">
+                                        <td colspan="4">{tmpl_var name='globalsearch_noresults_text_txt'}</td>
+                                </tr>
+                        </tmpl_unless>
+                        </tbody>
+                </table>
+        </div>
+</tmpl_if>

@@ -63,6 +63,24 @@ if(count($items))
 		'items' => $items);
 }
 
+//Domain Menu
+$items=[];
+$app->uses('getconf');
+$global_domain_config = $app->getconf->get_global_config('domains');
+if($_SESSION['s']['user']['typ'] == 'user') {
+    if($global_domain_config['use_domain_verification'] == 'y' || $global_domain_config['use_domain_subdomain'] == 'y') {
+        $items[] = ['title'     => "Domains",
+                    'target'    => 'content',
+                    'link'      => 'sites/domain_verification_list.php',
+                    'html_id'   => 'domain_verification_list'];
+    }
+}
+if(count($items)) {
+    $module["nav"][] = array(   'title' => 'Domains',
+        'open'  => 1,
+        'items' => $items);
+}
+
 // Databases menu
 if($app->auth->get_client_limit($userid, 'database') != 0 && $app->system->has_service($userid, 'db'))
 {

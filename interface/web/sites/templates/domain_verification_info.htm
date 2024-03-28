@@ -1,0 +1,44 @@
+<div class="page-header">
+    <h1> {tmpl_var name='domain_verification_txt'} </h1>
+</div>
+<div class="panel panel-default" style="padding:15px">
+    <tmpl_if name="task_done" op="==" value="no">
+        <h4 style='line-height: 120%'>{tmpl_var name='domain_verification_info1_txt'} <strong>{tmpl_var
+            name='domain'}</strong> {tmpl_var name='domain_verification_info2_txt'}:
+            <nobr><strong> {tmpl_var name='dns_auth_record'}</strong></nobr>
+        </h4>
+        <br>
+        Detail:
+        <pre>@           IN TXT           "{tmpl_var name='dns_auth_record'}"</pre>
+
+        <br>
+        <br>
+        {tmpl_var name='domain_verification_desc_txt'}
+        <div class="clear">
+            <div class="right">
+                <button class="btn btn-default formbutton-success" type="button" value="{tmpl_var name='btn_check_txt'}"
+                        data-submit-form="pageForm"
+                        data-form-action="sites/domain_verification_info.php?newid={tmpl_var name='domain_id'}&refreshbutton=1">
+                    {tmpl_var name='btn_save_txt'}
+                </button>
+                <button class="btn btn-default formbutton-default" type="button"
+                        value="{tmpl_var name='btn_cancel_txt'}" data-load-content="sites/domain_verification_list.php">
+                    {tmpl_var name='btn_cancel_txt'}
+                </button>
+            </div>
+    </tmpl_if>
+    <tmpl_if name="task_done" op="==" value="yes">
+        <h4>{tmpl_var name='domain_verification_info3_txt'} {tmpl_var name='domain'} {tmpl_var
+            name='domain_verification_info4_txt'}</h4>
+        <br>
+        <button class="btn btn-default formbutton-default" type="button" value="{tmpl_var name='btn_cancel_txt'}"
+                data-load-content="sites/domain_verification_list.php">{tmpl_var name='btn_cancel_txt'}
+        </button>
+    </tmpl_if>
+
+    <input type="hidden" name="id" value="{tmpl_var name='id'}">
+
+
+</div>
+
+</div>

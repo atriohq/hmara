@@ -535,6 +535,31 @@ $form["tabs"]['domains'] = array (
 			'default' => '',
 			'value'  => ''
 		),
+       'use_domain_verification' => array (
+               'datatype' => 'VARCHAR',
+               'formtype' => 'CHECKBOX',
+               'default' => 'n',
+               'value'  => array(0 => 'n', 1 => 'y')
+       ),
+       'domain_verification_prefix' => array (
+               'datatype' => 'VARCHAR',
+               'formtype' => 'TEXT',
+               'validators' => array (  0 => array ( 'type' => 'REGEX',
+                               'regex' => '/^[A-Z]{2,10}$/u',
+                               'errmsg'=> 'domain_verification_prefix_error_regex'),
+               ),
+               'default' => 'ISP',
+               'value'  => '',
+               'width'  => '30',
+               'maxlength' => '255'
+       ),
+        'use_domain_subdomain' => array (
+            'datatype' => 'VARCHAR',
+            'formtype' => 'CHECKBOX',
+            'default' => 'n',
+            'value'  => array(0 => 'n', 1 => 'y')
+        ),
+
 		//#################################
 		// END Datatable fields
 		//#################################

@@ -108,5 +108,12 @@ $wb['show_aps_menu_note_url_txt'] = 'Clicca qui per maggiori informazioni.';
 $wb['dns_show_zoneexport_txt'] = 'Show zone export.';
 $wb['le_caa_autocreate_options_txt'] = 'Enable automatic creation of CAA record on issuing LE';
 $wb['show_delete_on_forms_txt'] = 'Show delete button on edit forms';
+$wb['monitor_key_txt'] = 'Monitor keyword';
 $wb['dns_external_slave_server_txt'] = 'External DNS servers (comma separated)';
+$wb['use_domain_verification_hint_txt'] = 'Allow client to add domains to their allowed domains after verification through TXT record. <br> [Only useful if domain limits is enabled]';
+$wb['use_domain_verification_txt'] = 'Allow client to add external domain';
+$wb['use_domain_subdomain_hint_txt'] = 'Enable clients to create emailaccounts on subdomains or create (main) websites with subdomains.<br> [Only useful if domain limits is enabled]';
+$wb['use_domain_subdomain_txt'] = 'Allow client to add subdomains as maindomain';
+$wb['domain_verification_prefix_txt'] = 'External domain:<br> Prefix for verification string';
+$wb['domain_verification_prefix_error_regex'] = 'Only A-Z allowed in verification string [2-10 chars]';
 ?>
