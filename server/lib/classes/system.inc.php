@@ -2829,11 +2829,27 @@ $app->log("update_jailkit_chroot: removing deprecated directory which jk_update 
 			$this->chmod($home_dir . '/var/tmp', 0770, true);
 		}
 
-		// TODO: Set /usr/bin/php symlink to php version of the website.
-		//
-		// Currently server_php does not have a field for the cli path;
-		// we can guess/determing according to OS-specific conventions or add that field.
-		// Then symlink /usr/bin/php (or correct OS-specific path) to that location.
+		if (!empty($options['php_cli_binary'])) {
+			if(!file_exists($home_dir . '/' . $options['php_cli_binary'])) {
+				$app->log("The PHP cli binary " . $options['php_cli_binary'] . " is not available in the jail of the web " . $this->web['domain']  . " / SSH/SFTP user: " . $this->username  . ". Check your Jailkit setup!", LOGLEVEL_DEBUG);
+				$tpl->setVar('use_php_path', false);
+				$tpl->setVar('use_php_alias', false);
+				if(is_link($home_dir . '/etc/alternatives/php'))
+				{
+					unlink($home_dir . '/etc/alternatives/php');
+				}
+			} else {
+				if($app->system->get_os_type() == "debian" || $app->system->get_os_type() == "ubuntu") {
+					$app->log("update_jailkit_chroot: setting alternatives/php to " . $options['php_cli_binary'], LOGLEVEL_DEBUG);
+					if(is_link($home_dir . '/etc/alternatives/php') || is_file($home_dir . '/etc/alternatives/php'))
+					{
+						unlink($home_dir . '/etc/alternatives/php');
+					}
+					symlink($options['php_cli_binary'], $home_dir . '/etc/alternatives/php');
+				}
+
+			}
+		}
 
 		// search for any hardlinked files which are now missing
 		if (!(in_array('hardlink', $opts) || in_array('allow_hardlink', $options))) {
