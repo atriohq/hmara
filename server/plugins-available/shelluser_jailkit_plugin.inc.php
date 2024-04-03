@@ -344,7 +344,10 @@ class shelluser_jailkit_plugin {
 			$options = array('allow_hardlink');
 		}
 
-		$web = $app->db->queryOneRecord("SELECT domain, last_jailkit_hash FROM web_domain WHERE domain_id = ?", $this->data['new']["parent_domain_id"]);
+		$web = $app->db->queryOneRecord("SELECT `domain`, `last_jailkit_hash`, `php_cli_binary` FROM web_domain
+			LEFT JOIN server_php ON web_domain.server_php_id = server_php.server_php_id
+			WHERE `domain_id` = ?", $data["new"]["parent_domain_id"]);
+
 
 		$last_updated = preg_split('/[\s,]+/', $this->jailkit_config['jailkit_chroot_app_sections']
 						  .' '.$this->jailkit_config['jailkit_chroot_app_programs']
@@ -389,6 +392,7 @@ class shelluser_jailkit_plugin {
 			foreach ($records as $record) {
 				$options[] = 'skip='.$record['web_folder'];
 			}
+			$options['php_cli_binary'] = $web['php_cli_binary'];
 
 			$app->system->update_jailkit_chroot($this->data['new']['dir'], $sections, $programs, $options);
 
@@ -725,21 +729,6 @@ class shelluser_jailkit_plugin {
 				$app->log("The PHP cli binary " . $this->web['php_cli_binary'] . " is not available in the jail of the web " . $this->web['domain']  . " / SSH/SFTP user: " . $this->username  . ". Check your Jailkit setup!", LOGLEVEL_DEBUG);
 				$tpl->setVar('use_php_path', false);
 				$tpl->setVar('use_php_alias', false);
-				if(is_link($this->web['document_root'] . '/etc/alternatives/php'))
-				{
-					unlink($this->web['document_root'] . '/etc/alternatives/php');
-				}
-			} else {
-				if($app->system->get_os_type() == "debian" || $app->system->get_os_type() == "ubuntu") {
-					if(is_link($this->web['document_root'] . '/etc/alternatives/php') || is_file($this->web['document_root'] . '/etc/alternatives/php'))
-					{
-						unlink($this->web['document_root'] . '/etc/alternatives/php');
-						symlink($this->web['php_cli_binary'], $this->web['document_root'] . '/etc/alternatives/php');
-					} else {
-						symlink($this->web['php_cli_binary'], $this->web['document_root'] . '/etc/alternatives/php');
-					}
-				}
-
 			}
 		}
 

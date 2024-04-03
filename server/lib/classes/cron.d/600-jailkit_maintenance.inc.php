@@ -42,12 +42,12 @@ class cronjob_jailkit_maintenance extends cronjob {
 		$jailkit_config = $app->getconf->get_server_config($conf['server_id'], 'jailkit');
 		if (isset($this->jailkit_config) && isset($this->jailkit_config['jailkit_hardlinks'])) {
 			if ($this->jailkit_config['jailkit_hardlinks'] == 'yes') {
-				$options = array('hardlink');
+				$global_options = array('hardlink');
 			} elseif ($this->jailkit_config['jailkit_hardlinks'] == 'no') {
-				$options = array();
+				$global_options = array();
 			}
 		} else {
-			$options = array('allow_hardlink');
+			$global_options = array('allow_hardlink');
 		}
 
 		// force all jails to update every 2 weeks
@@ -65,7 +65,12 @@ class cronjob_jailkit_maintenance extends cronjob {
 		// limit the number of jails we update at one time according to time of day
 		$num_jails_to_update = (date('H') < 6) ? 25 : 3;
 
-		$sql = "SELECT domain_id, domain, document_root, system_user, system_group, php_fpm_chroot, jailkit_chroot_app_sections, jailkit_chroot_app_programs, delete_unused_jailkit, last_jailkit_hash FROM web_domain WHERE type = 'vhost' AND (last_jailkit_update IS NULL OR last_jailkit_update < (NOW() - INTERVAL 24 HOUR)) AND server_id = ? ORDER by last_jailkit_update LIMIT ?";
+		$sql = "SELECT domain_id, domain, document_root, system_user, system_group, php_fpm_chroot, jailkit_chroot_app_sections, jailkit_chroot_app_programs, delete_unused_jailkit, last_jailkit_hash, `php_cli_binary`
+					FROM web_domain
+						LEFT JOIN server_php ON web_domain.server_php_id = server_php.server_php_id
+					WHERE type = 'vhost' AND (last_jailkit_update IS NULL OR last_jailkit_update < (NOW() - INTERVAL 24 HOUR)) AND web_domain.server_id = ? and domain_id=57
+					ORDER by last_jailkit_update
+					LIMIT ?";
 		$records = $app->db->queryAllRecords($sql, $conf['server_id'], $num_jails_to_update);
 
 		foreach($records as $rec) {
@@ -73,6 +78,9 @@ class cronjob_jailkit_maintenance extends cronjob {
 				$app->db->query("UPDATE `web_domain` SET `last_jailkit_update` = NOW() WHERE `document_root` = ?", $rec['document_root']);
 				continue;
 			}
+
+			$options = $global_options;
+			$options['php_cli_binary'] = $rec['php_cli_binary'];
 
 			//$app->log('Beginning jailkit maintenance for domain '.$rec['domain'].' at '.$rec['document_root'], LOGLEVEL_DEBUG);
 			print 'Beginning jailkit maintenance for domain '.$rec['domain'].' at '.$rec['document_root']."\n";
