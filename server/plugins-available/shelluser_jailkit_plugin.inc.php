@@ -692,7 +692,6 @@ class shelluser_jailkit_plugin {
 		$app->load('tpl');
 
 		$tpl = new tpl();
-		$tpl_deb_user_bashrc = new tpl();
 
 		// Predefine some template vars
 		$tpl->setVar('jailkit_chroot', 'y');
