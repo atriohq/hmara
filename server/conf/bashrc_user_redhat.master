@@ -1,6 +1,6 @@
 # .bashrc
 
-export TERM=xterm
+
 
 # Source global definitions
 if [ -f /etc/bashrc ]; then
@@ -8,6 +8,7 @@ if [ -f /etc/bashrc ]; then
 fi
 
 <tmpl_if name='jailkit_chroot' op='==' value='y'>
+export TERM=xterm
 ## Hack for Jailkit User to change back to the logged in user ##
 if [ -n "$LOGNAME" ]; then
  if [ "$LOGNAME" != $USER ]; then
