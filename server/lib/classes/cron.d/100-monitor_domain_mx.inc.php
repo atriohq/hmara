@@ -113,6 +113,7 @@ class cronjob_monitor_domain_mx  extends cronjob {
 				$found_mx = getmxrr($maildomain['domain'], $mx_records, $mx_weight) ;
 
 				$mx_sorted = array();
+				$mx_ip = '';
 
 				// Merge records and weight into a single array to sort on priority.
 				// ignore multiple mx's at the same weight
