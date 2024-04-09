@@ -28,7 +28,7 @@ query = /* The most basic forward */
                        AND active = 'y' AND server_id = {server_id}
                 )
             UNION
-              /* Get all forwards, lookup localpart on active alias domains on this server*/
+              /* Get all forwards, lookup localpart on active alias domains on this server */
              SELECT s.destination AS target FROM mail_forwarding AS s
               INNER JOIN mail_forwarding AS s2
                  ON ( s2.source = '@%d'
