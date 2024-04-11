@@ -368,20 +368,8 @@ class installer_base extends stdClass {
 		if(count($db_tables) > 0) {
 			$this->error('Stopped: Database already contains some tables.');
 		} else {
-			$command = "mysql --default-character-set=".escapeshellarg($conf['mysql']['charset'])
-				." -h ".escapeshellarg($conf['mysql']['host'])
-				." -u ".escapeshellarg($conf['mysql']['admin_user']);
 
-			if ($conf['mysql']['host'] != 'localhost' || $conf['mysql']['port'] != '3306') {
-				$command .= " -P ".escapeshellarg($conf['mysql']['port']);
-			}
-			if ($conf['mysql']['admin_password'] == '') {
-				$command .= " -p".escapeshellarg($conf['mysql']['admin_password']);
-			}
-			$command .= " ".escapeshellarg($conf['mysql']['database']);
-			caselog($command . " < '".ISPC_INSTALL_ROOT."/install/sql/ispconfig3.sql' &> /dev/null",
-				__FILE__, __LINE__, 'read in ispconfig3.sql', 'could not read in ispconfig3.sql');
-
+			load_sql_via_cli(ISPC_INSTALL_ROOT."/install/sql/ispconfig3.sql", __FILE__, __LINE__, 'read in ispconfig3.sql', 'could not read in ispconfig3.sql');
 
 			$db_tables = $this->db->getTables();
 			if(count($db_tables) == 0) {
@@ -394,6 +382,26 @@ class installer_base extends stdClass {
 
 		}
 	}
+
+	public function load_sql_via_cli($filename, $file = '', $line = '', $success = '', $failure = '') {
+		global $conf;
+
+		$command = "mysql --default-character-set=".escapeshellarg($conf['mysql']['charset'])
+			." -h ".escapeshellarg($conf['mysql']['host'])
+			." -u ".escapeshellarg($conf['mysql']['admin_user']);
+
+		// Localhost defaults to use a socket
+		if ($conf['mysql']['host'] != 'localhost' || $conf['mysql']['port'] != '3306') {
+			$command .= " -P ".escapeshellarg($conf['mysql']['port']);
+		}
+		if (!empty($conf['mysql']['admin_password']) {
+			$command .= " -p".escapeshellarg($conf['mysql']['admin_password']);
+		}
+		$command .= " ".escapeshellarg($conf['mysql']['database']);
+
+		caselog($command . " < '$filename' &> /dev/null", $file, $line, $success, $failure);
+	}
+
 
 	//** Create the server record in the database
 	public function add_database_server_record() {
