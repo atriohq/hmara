@@ -369,7 +369,7 @@ class installer_base extends stdClass {
 			$this->error('Stopped: Database already contains some tables.');
 		} else {
 
-			load_sql_via_cli(ISPC_INSTALL_ROOT."/install/sql/ispconfig3.sql", __FILE__, __LINE__, 'read in ispconfig3.sql', 'could not read in ispconfig3.sql');
+			$this->load_sql_via_cli($conf['mysql']['database'], ISPC_INSTALL_ROOT."/install/sql/ispconfig3.sql", __FILE__, __LINE__, 'read in ispconfig3.sql', 'could not read in ispconfig3.sql');
 
 			$db_tables = $this->db->getTables();
 			if(count($db_tables) == 0) {
@@ -383,7 +383,7 @@ class installer_base extends stdClass {
 		}
 	}
 
-	public function load_sql_via_cli($filename, $file = '', $line = '', $success = '', $failure = '') {
+	public function load_sql_via_cli($database, $filename, $file = '', $line = '', $success = '', $failure = '') {
 		global $conf;
 
 		$command = "mysql --default-character-set=".escapeshellarg($conf['mysql']['charset'])
@@ -397,7 +397,7 @@ class installer_base extends stdClass {
 		if (!empty($conf['mysql']['admin_password']) {
 			$command .= " -p".escapeshellarg($conf['mysql']['admin_password']);
 		}
-		$command .= " ".escapeshellarg($conf['mysql']['database']);
+		$command .= " ".escapeshellarg($database);
 
 		caselog($command . " < '$filename' &> /dev/null", $file, $line, $success, $failure);
 	}
@@ -2238,13 +2238,7 @@ class installer_base extends stdClass {
 		}
 
 		//* load the powerdns databse dump
-		if($conf['mysql']['admin_password'] == '') {
-			caselog("mysql --default-character-set=".$conf['mysql']['charset']." -h '".$conf['mysql']['host']."' -u '".$conf['mysql']['admin_user']."' --force '".$conf['powerdns']['database']."' < '".ISPC_INSTALL_ROOT."/install/sql/powerdns.sql' &> /dev/null",
-				__FILE__, __LINE__, 'read in ispconfig3.sql', 'could not read in powerdns.sql');
-		} else {
-			caselog("mysql --default-character-set=".$conf['mysql']['charset']." -h '".$conf['mysql']['host']."' -u '".$conf['mysql']['admin_user']."' -p'".$conf['mysql']['admin_password']."' --force '".$conf['powerdns']['database']."' < '".ISPC_INSTALL_ROOT."/install/sql/powerdns.sql' &> /dev/null",
-				__FILE__, __LINE__, 'read in ispconfig3.sql', 'could not read in powerdns.sql');
-		}
+		$this->load_sql_via_cli($conf['powerdns']['database'], ISPC_INSTALL_ROOT."/install/sql/powerdns.sql", __FILE__, __LINE__, 'read in powerdns.sql', 'could not read in powerdns.sql');
 
 		//* Create the powerdns config file
 		$configfile = 'pdns.local';
