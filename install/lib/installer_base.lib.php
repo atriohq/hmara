@@ -368,13 +368,21 @@ class installer_base extends stdClass {
 		if(count($db_tables) > 0) {
 			$this->error('Stopped: Database already contains some tables.');
 		} else {
-			if($conf['mysql']['admin_password'] == '') {
-				caselog("mysql --default-character-set=".escapeshellarg($conf['mysql']['charset'])." -h ".escapeshellarg($conf['mysql']['host'])." -u ".escapeshellarg($conf['mysql']['admin_user'])." -P ".escapeshellarg($conf['mysql']['port'])." ".escapeshellarg($conf['mysql']['database'])." < '".ISPC_INSTALL_ROOT."/install/sql/ispconfig3.sql' &> /dev/null",
-					__FILE__, __LINE__, 'read in ispconfig3.sql', 'could not read in ispconfig3.sql');
-			} else {
-				caselog("mysql --default-character-set=".escapeshellarg($conf['mysql']['charset'])." -h ".escapeshellarg($conf['mysql']['host'])." -u ".escapeshellarg($conf['mysql']['admin_user'])." -p".escapeshellarg($conf['mysql']['admin_password'])." -P ".escapeshellarg($conf['mysql']['port'])." ".escapeshellarg($conf['mysql']['database'])." < '".ISPC_INSTALL_ROOT."/install/sql/ispconfig3.sql' &> /dev/null",
-					__FILE__, __LINE__, 'read in ispconfig3.sql', 'could not read in ispconfig3.sql');
+			$command = "mysql --default-character-set=".escapeshellarg($conf['mysql']['charset'])
+				." -h ".escapeshellarg($conf['mysql']['host'])
+				." -u ".escapeshellarg($conf['mysql']['admin_user']);
+
+			if ($conf['mysql']['host'] != 'localhost' || $conf['mysql']['port'] != '3306') {
+				$command .= " -P ".escapeshellarg($conf['mysql']['port']);
 			}
+			if ($conf['mysql']['admin_password'] == '') {
+				$command .= " -p".escapeshellarg($conf['mysql']['admin_password']);
+			}
+			$command .= " ".escapeshellarg($conf['mysql']['database']);
+			caselog($command . " < '".ISPC_INSTALL_ROOT."/install/sql/ispconfig3.sql' &> /dev/null",
+				__FILE__, __LINE__, 'read in ispconfig3.sql', 'could not read in ispconfig3.sql');
+
+
 			$db_tables = $this->db->getTables();
 			if(count($db_tables) == 0) {
 				$this->error('Unable to load SQL-Dump into database table.');
