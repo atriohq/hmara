@@ -170,7 +170,7 @@ class page_action extends tform_actions {
 										OR (name = s.origin AND ? = '') /* e.g. name = 'example.com.' and we're posting an empty value */
 										OR (name = '' AND s.origin = ?) /* e.g. name is empty and we're posting e.g. 'example.com' */ )
 						AND type = 'TXT' AND data LIKE 'v=spf1%'
-						AND " . $app->tform->getAuthSQL('r'),
+						AND " . $app->tform->getAuthSQL('r', 'r'),
 					$_POST['zone'], $_POST['name'], $_POST['name'], $_POST['name']);
 
 		if (!empty($existing_records)) {
