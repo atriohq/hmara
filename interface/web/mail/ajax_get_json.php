@@ -46,7 +46,7 @@ if($type == 'create_dkim' && $domain_id != ''){
 		$temp = $app->db->queryOneRecord("SELECT domain FROM domain WHERE domain_id = ? AND ".$app->tform->getAuthSQL('r'), $domain_id);
 		$domain = $temp['domain'];
 	}
-	$rec = $app->db->queryOneRecord("SELECT server_id, domain FROM mail_domain WHERE domain = ?", $domain);
+	$rec = $app->db->queryOneRecord("SELECT server_id FROM mail_domain WHERE domain = ?", $domain);
 	$server_id = $rec['server_id'];
 	unset($rec);
 	$mail_config = $app->getconf->get_server_config($server_id, 'mail');
