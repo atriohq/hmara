@@ -335,7 +335,7 @@ if (!empty($conf['mysql']['admin_password'])) {
 $command .= " --database=".escapeshellarg($database);
 $command .= " --execute='SHOW DATABASES'";
 
-$retval = caselog($command . " &> /dev/null", $file, $line, $success, $failure);
+$retval = caselog($command . " &> /dev/null", __FILE__, __LINE__, 'Tested sql cli connection', 'sql cli connection failed');
 if($retval == false) {
 	die("Unable to call mysql command line with credentials from mysql_clientdb.conf\n");
 }
