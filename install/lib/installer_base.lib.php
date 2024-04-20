@@ -383,7 +383,7 @@ class installer_base extends stdClass {
 		}
 	}
 
-	public function load_sql_via_cli($database, $filename, $file = '', $line = '', $success = '', $failure = '') {
+	public function load_sql_via_cli($database, $filename, $file = '', $line = '', $success = '', $failure = '', $logfile = '/dev/null') {
 		global $conf;
 
 		$command = "mysql --default-character-set=".escapeshellarg($conf['mysql']['charset'])
@@ -399,7 +399,7 @@ class installer_base extends stdClass {
 		}
 		$command .= " ".escapeshellarg($database);
 
-		caselog($command . " < '$filename' &> /dev/null", $file, $line, $success, $failure);
+		caselog($command . " < '$filename' &> $logfile", $file, $line, $success, $failure);
 	}
 
 
