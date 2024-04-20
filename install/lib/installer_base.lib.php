@@ -399,7 +399,7 @@ class installer_base extends stdClass {
 		}
 		$command .= " --database=".escapeshellarg($database);
 
-		caselog($command . " < '$filename' &> $logfile", $file, $line, $success, $failure);
+		caselog($command . " < '$filename' &>> $logfile", $file, $line, $success, $failure);
 	}
 
 
