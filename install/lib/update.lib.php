@@ -39,11 +39,11 @@ class installer_patch_update {
 
 //* DB dump function
 function prepareDBDump() {
-	global $conf;
+	global $inst, $conf;
 
 	//** load the pre update sql script do perform modifications on the database before the database is dumped
 	if(is_file(ISPC_INSTALL_ROOT."/install/sql/pre_update.sql")) {
-		$this->load_sql_via_cli($conf['mysql']['database'], ISPC_INSTALL_ROOT.'/install/sql/pre_update.sql',  __FILE__, __LINE__, 'read in pre_update.sql', 'could not read in pre_update.sql');
+		$inst->load_sql_via_cli($conf['mysql']['database'], ISPC_INSTALL_ROOT.'/install/sql/pre_update.sql',  __FILE__, __LINE__, 'read in pre_update.sql', 'could not read in pre_update.sql');
 	}
 
 	//** export the current database data
@@ -205,21 +205,7 @@ function updateDbAndIni() {
 				}
 
 				//* Load patch file into database
-				$this->load_sql_via_cli($conf['mysql']['database'], $sql_patch_filename,  __FILE__, __LINE__, 'read in pre_update.sql', 'could not read in pre_update.sql');
-
-				if( !empty($conf["mysql"]["admin_password"]) ) {
-					$cmd = "mysql --default-character-set=".escapeshellarg($conf['mysql']['charset'])." --force -h ".escapeshellarg($conf['mysql']['host'])." -u ".escapeshellarg($conf['mysql']['admin_user'])." -p".escapeshellarg($conf['mysql']['admin_password'])." -P ".escapeshellarg($conf['mysql']['port'])." ".escapeshellarg($conf['mysql']['database'])." < ".$sql_patch_filename;
-				} else {
-					$cmd = "mysql --default-character-set=".escapeshellarg($conf['mysql']['charset'])." --force -h ".escapeshellarg($conf['mysql']['host'])." -u ".escapeshellarg($conf['mysql']['admin_user'])." -P ".escapeshellarg($conf['mysql']['port'])." ".escapeshellarg($conf['mysql']['database'])." < ".$sql_patch_filename;
-				}
-
-				if(in_array($next_db_version,explode(',',$silent_update_versions))) {
-					$cmd .= ' > /dev/null 2> /dev/null';
-				} else {
-					$cmd .= ' >> /var/log/ispconfig_install.log 2>> /var/log/ispconfig_install.log';
-				}
-				system($cmd);
-
+				$inst->load_sql_via_cli($conf['mysql']['database'], $sql_patch_filename,  __FILE__, __LINE__, "read in $sql_patch_filename", "could not read in $sql_patch_filename", '/var/log/ispconfig_install.log');
 				swriteln($inst->lng('Loading SQL patch file').': '.$sql_patch_filename);
 
 				//* Exec onAfterSQL function
@@ -264,11 +250,7 @@ function updateDbAndIni() {
 		}
 
 		//** load old data back into database
-		if( !empty($conf["mysql"]["admin_password"]) ) {
-			system("mysql --default-character-set=".escapeshellarg($conf['mysql']['charset'])." --force -h ".escapeshellarg($conf['mysql']['host'])." -u ".escapeshellarg($conf['mysql']['admin_user'])." -p".escapeshellarg($conf['mysql']['admin_password'])." ".escapeshellarg($conf['mysql']['database'])." < existing_db.sql");
-		} else {
-			system("mysql --default-character-set=".escapeshellarg($conf['mysql']['charset'])." --force -h ".escapeshellarg($conf['mysql']['host'])." -u ".escapeshellarg($conf['mysql']['admin_user'])." ".escapeshellarg($conf['mysql']['database'])." < existing_db.sql");
-		}
+		$inst->load_sql_via_cli($conf['mysql']['database'], 'existing_db.sql', __FILE__, __LINE__, 'read in existing_db.sql', 'could not read in existing_db.sql');
 
 		//** Get the database version number based on the patchfile
 		$found = true;
@@ -299,11 +281,7 @@ function updateDbAndIni() {
 			$inst->configure_powerdns();
 
 			//** load old data back into the PowerDNS database
-			if( !empty($conf["mysql"]["admin_password"]) ) {
-				system("mysql --default-character-set=".escapeshellarg($conf['mysql']['charset'])." --force -h ".escapeshellarg($conf['mysql']['host'])." -u ".escapeshellarg($conf['mysql']['admin_user'])." -p".escapeshellarg($conf['mysql']['admin_password'])." ".escapeshellarg($conf['powerdns']['database'])." < existing_powerdns_db.sql");
-			} else {
-				system("mysql --default-character-set=".escapeshellarg($conf['mysql']['charset'])." --force -h ".escapeshellarg($conf['mysql']['host'])." -u ".escapeshellarg($conf['mysql']['admin_user'])." ".escapeshellarg($conf['powerdns']['database'])." < existing_powerdns_db.sql");
-			}
+			$inst->load_sql_via_cli($conf['powerdns']['database'], 'existing_powerdns_db.sql', __FILE__, __LINE__, 'read in existing_powerdns_db.sql', 'could not read in existing_powerdns_db.sql');
 		}
 	}
 
