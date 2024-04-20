@@ -387,17 +387,17 @@ class installer_base extends stdClass {
 		global $conf;
 
 		$command = "mysql --default-character-set=".escapeshellarg($conf['mysql']['charset'])
-			." -h ".escapeshellarg($conf['mysql']['host'])
-			." -u ".escapeshellarg($conf['mysql']['admin_user']);
+			." --host=".escapeshellarg($conf['mysql']['host'])
+			." --user=".escapeshellarg($conf['mysql']['admin_user']);
 
 		// Localhost defaults to use a socket
 		if ($conf['mysql']['host'] != 'localhost' || $conf['mysql']['port'] != '3306') {
-			$command .= " -P ".escapeshellarg($conf['mysql']['port']);
+			$command .= " --port=".escapeshellarg($conf['mysql']['port']);
 		}
 		if (!empty($conf['mysql']['admin_password']) {
-			$command .= " -p".escapeshellarg($conf['mysql']['admin_password']);
+			$command .= " --password=".escapeshellarg($conf['mysql']['admin_password']);
 		}
-		$command .= " ".escapeshellarg($database);
+		$command .= " --database=".escapeshellarg($database);
 
 		caselog($command . " < '$filename' &> $logfile", $file, $line, $success, $failure);
 	}
