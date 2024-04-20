@@ -328,12 +328,12 @@ $command = "mysql --default-character-set=".escapeshellarg($conf['mysql']['chars
 if ($conf['mysql']['host'] != 'localhost' || $conf['mysql']['port'] != '3306') {
   $command .= " --port=".escapeshellarg($conf['mysql']['port']);
 }
-if (!empty($conf['mysql']['admin_password']) {
+if (!empty($conf['mysql']['admin_password'])) {
   $command .= " --password=".escapeshellarg($conf['mysql']['admin_password']);
 }
 
 $command .= " --database=".escapeshellarg($database);
-$command .= " --execute='SHOW DATABASES'");
+$command .= " --execute='SHOW DATABASES'";
 
 $retval = caselog($command . " &> /dev/null", $file, $line, $success, $failure);
 if($retval == false) {
