@@ -99,7 +99,22 @@ function checkDbHealth() {
 	$notok = array();
 
 	echo "Checking ISPConfig database .. ";
-	exec("mysqlcheck -h ".escapeshellarg($conf['mysql']['host'])." -u ".escapeshellarg($conf['mysql']['admin_user'])." -p".escapeshellarg($conf['mysql']['admin_password'])." -P ".escapeshellarg($conf['mysql']['port'])." --auto-repair ".escapeshellarg($conf["mysql"]["database"]), $result);
+
+	$command = "mysqlcheck --auto-repair"
+		." --host=".escapeshellarg($conf['mysql']['host'])
+		." --user=".escapeshellarg($conf['mysql']['admin_user']);
+
+	// Localhost defaults to use a socket
+	if ($conf['mysql']['host'] != 'localhost' || $conf['mysql']['port'] != '3306') {
+		$command .= " --port=".escapeshellarg($conf['mysql']['port']);
+	}
+	if (!empty($conf['mysql']['admin_password'])) {
+		$command .= " --password=".escapeshellarg($conf['mysql']['admin_password']);
+	}
+	$command .= " ".escapeshellarg($conf["mysql"]["database"]);
+
+	exec($command, $result);
+
 	for( $i=0; $i<sizeof($result);$i++) {
 		if ( substr($result[$i], -2) != "OK" ) {
 			$notok[] = $result[$i];
