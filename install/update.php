@@ -332,7 +332,7 @@ if (!empty($conf['mysql']['admin_password'])) {
   $command .= " --password=".escapeshellarg($conf['mysql']['admin_password']);
 }
 
-$command .= " --database=".escapeshellarg($database);
+$command .= " --database=".escapeshellarg($conf['mysql']['database']);
 $command .= " --execute='SHOW DATABASES'";
 
 $retval = caselog($command . " &> /dev/null", __FILE__, __LINE__, 'Tested sql cli connection', 'sql cli connection failed');
