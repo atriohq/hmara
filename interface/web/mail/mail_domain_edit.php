@@ -263,14 +263,14 @@ class page_action extends tform_actions {
 			$dns_record_status = dns_get_record($rec['dkim_selector'] . '._domainkey.' . $rec['domain'], DNS_TXT);
 			if (empty($dns_record_status) || empty($dns_record_status[0]['txt'])) {
 				// Record not found
-				$app->tpl->setVar('dkim_status', $app->lng('dkim_enabled_dns_not_found'), true);
+				$app->tpl->setVar('dkim_status', $app->tform->wordbook['dkim_enabled_dns_not_found'], true);
 			}
 			elseif ($dns_record_status[0]['txt'] == $dkim_txt) {
-				$app->tpl->setVar('dkim_status', '<span class="fa fa-check-circle-o" aria-hidden="false" title="' . $app->lng('dkim_enabled_resolving_ok') . '"</span>', false);
+				$app->tpl->setVar('dkim_status', '<span class="fa fa-check-circle-o" aria-hidden="false" title="' . $app->tform->wordbook['dkim_enabled_resolving_ok'] . '"</span>', false);
 			}
 			else {
 				// Mismatch in record!
-				$app->tpl->setVar('dkim_status', $app->lng('dkim_enabled_mismatched_record'), true);
+				$app->tpl->setVar('dkim_status', $app->tform->wordbook['dkim_enabled_mismatched_record'], true);
 			}
 		}
 
