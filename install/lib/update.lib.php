@@ -225,8 +225,8 @@ function updateDbAndIni() {
 				} else {
 					$logfile = '/var/log/ispconfig_install.log';
 				}
-				$inst->load_sql_via_cli($conf['mysql']['database'], $sql_patch_filename,  __FILE__, __LINE__, "read in $sql_patch_filename", "could not read in $sql_patch_filename", $logfile);
 				swriteln($inst->lng('Loading SQL patch file').': '.$sql_patch_filename);
+				$inst->load_sql_via_cli($conf['mysql']['database'], $sql_patch_filename,  __FILE__, __LINE__, "read in $sql_patch_filename", "could not read in $sql_patch_filename", $logfile);
 
 				//* Exec onAfterSQL function
 				if(isset($php_patch) && is_object($php_patch) && method_exists($php_patch, 'onAfterSQL')) {
