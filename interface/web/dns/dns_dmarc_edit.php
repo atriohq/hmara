@@ -73,6 +73,10 @@ class page_action extends tform_actions {
 		global $app, $conf;
 
 		$zone = $app->functions->intval($_GET['zone']);
+		// get domain-name
+		$sql = "SELECT * FROM dns_soa WHERE id = ? AND " . $app->tform->getAuthSQL('r');
+		$rec = $app->db->queryOneRecord($sql, $zone);
+		$domain_name = rtrim($rec['origin'], '.');
 
 		// set defaults
 		$dmarc_policy = 'none';
@@ -123,12 +127,6 @@ class page_action extends tform_actions {
 			// Default to active.
 			$app->tpl->setVar("active", '<input name="active" id="active" value="1" type="checkbox" checked="">');
 		}
-
-		// get domain-name
-		$sql = "SELECT * FROM dns_soa WHERE id = ? AND " . $app->tform->getAuthSQL('r');
-		$rec = $app->db->queryOneRecord($sql, $zone);
-		$domain_name = rtrim($rec['origin'], '.');
-
 
 		//set html-values
 		$app->tpl->setVar('domain', $domain_name, true);
