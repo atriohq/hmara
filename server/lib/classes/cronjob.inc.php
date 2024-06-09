@@ -149,10 +149,10 @@ class cronjob {
 
 		// next_run time reached (reached === 0 or -1)
 
-		// calculare next run time based on last_run or current time
+		// calculate next run time based on last_run or current time
 		$app->cron->parseCronLine($this->getSchedule());
 		if($this->_no_skip == true) {
-			// we need to calculare the next run based on the previous next_run, as we may not skip one.
+			// we need to calculate the next run based on the previous next_run, as we may not skip one.
 			$next_run = $app->cron->getNextRun($this->_next_run);
 			if($next_run === false) {
 				// we could not calculate next run, try it with current time
