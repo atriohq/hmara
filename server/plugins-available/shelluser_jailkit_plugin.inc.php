@@ -36,6 +36,7 @@ class shelluser_jailkit_plugin {
 	var $min_uid = 499;
 	var $data = array();
 	var $jailkit_config = array();
+	var $web = array();
 
 	//* This function is called during ispconfig installation to determine
 	//  if a symlink shall be created for this plugin.
@@ -86,8 +87,6 @@ class shelluser_jailkit_plugin {
 		$web = $app->db->queryOneRecord("SELECT * FROM web_domain LEFT JOIN server_php ON web_domain.server_php_id = server_php.server_php_id WHERE `domain_id` = ?", $data["new"]["parent_domain_id"]);
 
 		$this->web = $web;
-
-		$this->username = $data['new']['username'];
 
 		if(!$app->system->is_allowed_user($data['new']['username'], false, false)
 			|| !$app->system->is_allowed_user($data['new']['puser'], true, true)
@@ -202,8 +201,7 @@ class shelluser_jailkit_plugin {
 			$web = $app->db->queryOneRecord("SELECT * FROM web_domain LEFT JOIN server_php ON web_domain.server_php_id = server_php.server_php_id WHERE `domain_id` = ?", $data["new"]["parent_domain_id"]);
 
 			$this->web = $web;
-
-			$this->username = $data['new']['username'];
+			$username = $data['new']['username'];
 
 			// Get the UID of the parent user
 			$uid = intval($app->system->getuid($data['new']['puser']));
@@ -346,7 +344,7 @@ class shelluser_jailkit_plugin {
 
 		$web = $app->db->queryOneRecord("SELECT `domain`, `last_jailkit_hash`, `php_cli_binary` FROM web_domain
 			LEFT JOIN server_php ON web_domain.server_php_id = server_php.server_php_id
-			WHERE `domain_id` = ?", $data["new"]["parent_domain_id"]);
+			WHERE `domain_id` = ?", $this->data["new"]["parent_domain_id"]);
 
 
 		$last_updated = preg_split('/[\s,]+/', $this->jailkit_config['jailkit_chroot_app_sections']
@@ -686,19 +684,10 @@ class shelluser_jailkit_plugin {
 	function _setup_php_jailkit() {
 		global $app;
 
-		$app->uses('system');
-
 		// Create .bashrc file
 		$app->load('tpl');
 
 		$tpl = new tpl();
-
-		// Predefine some template vars
-		$tpl->setVar('jailkit_chroot', 'y');
-		$tpl->setVar('domain', $this->web['domain']);
-		$tpl->setVar('home_dir', $this->_get_home_dir(""));
-		$tpl->setVar('use_php_path', false);
-		$tpl->setVar('use_php_alias', false);
 
 		if($app->system->get_os_type() == "debian" || $app->system->get_os_type() == "ubuntu") {
 			$tpl->newTemplate("bashrc_user_deb.master");
@@ -708,26 +697,45 @@ class shelluser_jailkit_plugin {
 			$tpl->newTemplate("bashrc_user_generic.master");
 		}
 
+		// Predefine some template vars
+		$tpl->setVar('jailkit_chroot', 'y');
+		$tpl->setVar('domain', $this->web['domain']);
+		$tpl->setVar('home_dir', $this->_get_home_dir(""));
+
+		$tpl->setVar('use_php_path', false);
+		$tpl->setVar('use_php_alias', false);
 
 		$php_bin_dir = dirname($this->web['php_cli_binary']);
 
 		if(($this->web['server_php_id'] > 0) && !empty($this->web['php_cli_binary'])) {
-			if($app->system->get_os_type() != "debian" || $app->system->get_os_type() != "ubuntu") {
-				if(preg_match('/^(\/usr\/(s)?bin|\/(s)?bin)/', $php_bin_dir)) {
-					$tpl->setVar('use_php_path', false);
-					$tpl->setVar('use_php_alias', true);
-					$tpl->setVar('php_alias', $this->web['php_cli_binary']);
-				} else {
-					$tpl->setVar('use_php_path', true);
-					$tpl->setVar('use_php_alias', false);
-					$tpl->setVar('php_bin_dir', $php_bin_dir);
-				}
+			if(preg_match('/^(\/usr\/(s)?bin|\/(s)?bin)/', $php_bin_dir)) {
+				$tpl->setVar('use_php_path', false);
+				$tpl->setVar('use_php_alias', true);
+				$tpl->setVar('php_alias', $this->web['php_cli_binary']);
+			} else {
+				$tpl->setVar('use_php_path', true);
+				$tpl->setVar('use_php_alias', false);
+				$tpl->setVar('php_bin_dir', $php_bin_dir);
 			}
 
 			if(!file_exists($this->web['document_root'] . '/' . $this->web['php_cli_binary'])) {
-				$app->log("The PHP cli binary " . $this->web['php_cli_binary'] . " is not available in the jail of the web " . $this->web['domain']  . " / SSH/SFTP user: " . $this->username  . ". Check your Jailkit setup!", LOGLEVEL_DEBUG);
+				$app->log("The PHP cli binary " . $this->web['php_cli_binary'] . " is not available in the jail of the web " . $this->web['domain']  . " / SSH/SFTP user: " . $this->data['new']['username']  . ". Check your Jailkit setup!", LOGLEVEL_DEBUG);
 				$tpl->setVar('use_php_path', false);
 				$tpl->setVar('use_php_alias', false);
+				if(is_link($this->web['document_root'] . '/etc/alternatives/php'))
+				{
+					unlink($this->web['document_root'] . '/etc/alternatives/php');
+				}
+			} else {
+				if($app->system->get_os_type() == "debian" || $app->system->get_os_type() == "ubuntu") {
+					if(is_link($this->web['document_root'] . '/etc/alternatives/php') || is_file($this->web['document_root'] . '/etc/alternatives/php'))
+					{
+						unlink($this->web['document_root'] . '/etc/alternatives/php');
+						symlink($this->web['php_cli_binary'], $this->web['document_root'] . '/etc/alternatives/php');
+					} else {
+						symlink($this->web['php_cli_binary'], $this->web['document_root'] . '/etc/alternatives/php');
+					}
+				}
 			}
 		}
 
@@ -741,9 +749,6 @@ class shelluser_jailkit_plugin {
 		$app->log("Added bashrc script: " . $bashrc, LOGLEVEL_DEBUG);
 
 		unset($tpl);
-
-
-
 
 	}
 

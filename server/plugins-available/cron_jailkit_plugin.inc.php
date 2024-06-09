@@ -36,6 +36,7 @@ class cron_jailkit_plugin {
 	var $class_name = 'cron_jailkit_plugin';
 	var $parent_domain = array();
 
+
 	//* This function is called during ispconfig installation to determine
 	//  if a symlink shall be created for this plugin.
 	function onInstall() {
@@ -91,9 +92,9 @@ class cron_jailkit_plugin {
 		}
 
 
-		$this->parent_domain = $parent_domain;
+		//$this->parent_domain = $parent_domain;
 
-		$this->cronjob_id = $data['new']['id'];
+		//$this->cronjob_id = $data['new']['id'];
 
 		$app->uses('system');
 
@@ -166,14 +167,7 @@ class cron_jailkit_plugin {
 
 		$app->uses('system');
 
-		$this->parent_domain = $parent_domain;
-
-		$this->cronjob_id = $data['new']['id'];
-
 		if($app->system->is_user($parent_domain['system_user'])) {
-
-
-
 			/**
 			 * Setup Jailkit Chroot System If Enabled
 			 */
@@ -407,7 +401,7 @@ class cron_jailkit_plugin {
 			}
 
 			if(!file_exists($this->parent_domain['document_root'] . '/' . $this->parent_domain['php_cli_binary'])) {
-				$app->log("The PHP cli binary " . $this->parent_domain['php_cli_binary'] . " is not available in the jail of the web " . $this->parent_domain['domain']  . " / cronjob_id: " . $this->cronjob_id  . ". Check your Jailkit setup!", LOGLEVEL_DEBUG);
+				$app->log("The PHP cli binary " . $this->parent_domain['php_cli_binary'] . " is not available in the jail of the web " . $this->parent_domain['domain']  . " / cronjob_id: " . $this->data['new']['id']  . ". Check your Jailkit setup!", LOGLEVEL_DEBUG);
 				$tpl->setVar('use_php_path', false);
 				$tpl->setVar('use_php_alias', false);
 				if(is_link($this->parent_domain['document_root'] . '/etc/alternatives/php'))
