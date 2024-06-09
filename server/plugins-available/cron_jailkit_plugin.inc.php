@@ -91,11 +91,6 @@ class cron_jailkit_plugin {
 			return false;
 		}
 
-
-		//$this->parent_domain = $parent_domain;
-
-		//$this->cronjob_id = $data['new']['id'];
-
 		$app->uses('system');
 
 		if($app->system->is_user($parent_domain['system_user'])) {
