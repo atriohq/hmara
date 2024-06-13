@@ -68,7 +68,7 @@ class cronjob_jailkit_maintenance extends cronjob {
 		$sql = "SELECT domain_id, domain, document_root, system_user, system_group, php_fpm_chroot, jailkit_chroot_app_sections, jailkit_chroot_app_programs, delete_unused_jailkit, last_jailkit_hash, `php_cli_binary`
 					FROM web_domain
 						LEFT JOIN server_php ON web_domain.server_php_id = server_php.server_php_id
-					WHERE type = 'vhost' AND (last_jailkit_update IS NULL OR last_jailkit_update < (NOW() - INTERVAL 24 HOUR)) AND web_domain.server_id = ? and domain_id=57
+					WHERE type = 'vhost' AND (last_jailkit_update IS NULL OR last_jailkit_update < (NOW() - INTERVAL 24 HOUR)) AND web_domain.server_id = ?
 					ORDER by last_jailkit_update
 					LIMIT ?";
 		$records = $app->db->queryAllRecords($sql, $conf['server_id'], $num_jails_to_update);
@@ -80,7 +80,15 @@ class cronjob_jailkit_maintenance extends cronjob {
 			}
 
 			$options = $global_options;
-			$options['php_cli_binary'] = $rec['php_cli_binary'];
+
+			$options['domain'] = $rec['domain'];
+
+			if(empty($rec['php_cli_binary'])) {
+				$options['php_cli_binary'] = "/usr/bin/php";
+			} else {
+				$options['php_cli_binary'] = $rec['php_cli_binary'];
+			}
+
 
 			//$app->log('Beginning jailkit maintenance for domain '.$rec['domain'].' at '.$rec['document_root'], LOGLEVEL_DEBUG);
 			print 'Beginning jailkit maintenance for domain '.$rec['domain'].' at '.$rec['document_root']."\n";

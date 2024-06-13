@@ -34,6 +34,8 @@ class shelluser_base_plugin {
 	var $class_name = 'shelluser_base_plugin';
 	var $min_uid = 499;
 	var $data = array();
+	var $web = array();
+
 
 	//* This function is called during ispconfig installation to determine
 	//  if a symlink shall be created for this plugin.

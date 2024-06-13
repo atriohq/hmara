@@ -2831,10 +2831,8 @@ $app->log("update_jailkit_chroot: removing deprecated directory which jk_update 
 
 		if (!empty($options['php_cli_binary'])) {
 			if(!file_exists($home_dir . '/' . $options['php_cli_binary'])) {
-				$app->log("The PHP cli binary " . $options['php_cli_binary'] . " is not available in the jail of the web " . $this->web['domain']  . " / SSH/SFTP user: " . $this->username  . ". Check your Jailkit setup!", LOGLEVEL_DEBUG);
-				$tpl->setVar('use_php_path', false);
-				$tpl->setVar('use_php_alias', false);
-				if(is_link($home_dir . '/etc/alternatives/php'))
+				$app->log("update_jailkit_chroot: The PHP cli binary " . $options['php_cli_binary'] . " is not available in the jail of the web " . $options['domain'], LOGLEVEL_DEBUG);
+				if(is_link($home_dir . '/etc/alternatives/php') || is_file($home_dir . '/etc/alternatives/php'))
 				{
 					unlink($home_dir . '/etc/alternatives/php');
 				}

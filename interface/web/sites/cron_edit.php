@@ -83,21 +83,23 @@ class page_action extends tform_actions {
 				LEFT JOIN server_php ON web_domain.server_php_id = server_php.server_php_id
 			WHERE `domain_id` = ?", $this->dataRecord["parent_domain_id"]);
 
-		$php_cli_binary = $parent_domain['php_cli_binary'];
-		$domain = $parent_domain['domain'];
+
+		if(empty($parent_domain['php_cli_binary'])) {
+			$php_cli_binary = "/usr/bin/php";
+		} else {
+			$php_cli_binary = $parent_domain['php_cli_binary'];
+		}
+
+		if(empty($parent_domain['domain'])) {
+			$domain = $app->tform->wordbook["domain_not_selected_placeholder_txt"];
+		} else {
+			$domain = $parent_domain['domain'];
+		}
 
 		if($this->dataRecord['type'] != 'chrooted') {
 			$web_docroot_client = $parent_domain['document_root'];
 		} else {
 			$web_docroot_client = '';
-		}
-
-		if(empty($parent_domain['php_cli_binary'])) {
-			$php_cli_binary = "/usr/bin/php";
-		}
-
-		if(empty($parent_domain['domain'])) {
-			$domain = $app->tform->wordbook["domain_not_selected_placeholder_txt"];
 		}
 
 		// web folder is hardcoded to /web:
