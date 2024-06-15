@@ -253,11 +253,12 @@ class installer_base extends stdClass {
 		if ($conf['default_php'] != '') {
 			if(version_compare(phpversion('tidy'), $conf['default_php'], '==')) $msg .= "Your PHP version is not the OS default. Change the PHP version back to the default version of the OS. The currently used PHP version is " . phpversion() . "The default version for your OS is PHP " . $conf['default_php'] . ".\n";
 		}
-		if(version_compare(phpversion(), '5.4', '<')) $msg .= "PHP Version 5.4 or newer is required. The currently used PHP version is " . phpversion() . ".\n";
+		if(version_compare(phpversion(), '7.0', '<')) $msg .= "PHP Version 7.0 or newer is required. The currently used PHP version is " . phpversion() . ".\n";
 		//if(version_compare(phpversion(), '8.2', '>=')) $msg .= "PHP Version 8.2+ is not supported yet. Change the PHP version back to the default version of the OS. The currently used PHP version is " . phpversion() . ".\n";
 		if(!function_exists('curl_init')) $msg .= "PHP Curl Module is missing.\n";
 		if(!function_exists('mysqli_connect')) $msg .= "PHP MySQLi Module is nmissing.\n";
 		if(!function_exists('mb_detect_encoding')) $msg .= "PHP Multibyte Module (MB) is missing.\n";
+        if(!function_exists('openssl_pkey_get_details')) $msg .= "PHP OpenSSL fiúnctions are missing.\n";
 
 		if($msg != '') die($msg);
 	}
@@ -436,7 +437,7 @@ class installer_base extends stdClass {
 		$tpl_ini_array['fastcgi']['fastcgi_bin'] = $conf['fastcgi']['fastcgi_bin'];
 		$tpl_ini_array['server']['hostname'] = $conf['hostname'];
 		$tpl_ini_array['server']['ip_address'] = @gethostbyname($conf['hostname']);
-		$tpl_ini_array['server']['firewall'] = ($conf['ufw']['installed'] == true)?'ufw':'bastille';
+		$tpl_ini_array['server']['firewall'] = (@$conf['ufw']['installed'] == true)?'ufw':'bastille';
 		$tpl_ini_array['web']['website_basedir'] = $conf['web']['website_basedir'];
 		$tpl_ini_array['web']['website_path'] = $conf['web']['website_path'];
 		$tpl_ini_array['web']['website_symlinks'] = $conf['web']['website_symlinks'];
@@ -2098,6 +2099,18 @@ class installer_base extends stdClass {
 		$tpl->setVar('rspamd_password', $rspamd_password);
 		wf('/etc/rspamd/local.d/worker-controller.inc', $tpl->grab());
 		chmod('/etc/rspamd/local.d/worker-controller.inc', 0644);
+
+		// rspamd.local.lua
+		if(file_exists($conf['ispconfig_install_dir']."/server/conf-custom/install/rspamd.local.lua.master")) {
+			exec('cp '.$conf['ispconfig_install_dir']."/server/conf-custom/install/rspamd.local.lua.master /etc/rspamd/rspamd.local.lua");
+		} else {
+			exec("cp tpl/rspamd.local.lua.master /etc/rspamd/rspamd.local.lua");
+		}
+		if(file_exists('/etc/rspamd/rspamd.local.lua')) {
+			exec('chgrp _rspamd /etc/rspamd/rspamd.local.lua');
+			exec('chmod 640 /etc/rspamd/rspamd.local.lua');
+		}
+
 	}
 
 	public function configure_spamassassin() {
@@ -2603,21 +2616,23 @@ class installer_base extends stdClass {
 
 		$row = $this->db->queryOneRecord('SELECT * FROM ?? WHERE server_id = ?', $conf["mysql"]["database"] . '.firewall', $conf['server_id']);
 
-		if(trim($row['tcp_port']) != '' || trim($row['udp_port']) != '') {
-			$tcp_public_services = trim(str_replace(',', ' ', $row['tcp_port']));
-			$udp_public_services = trim(str_replace(',', ' ', $row['udp_port']));
-		} else {
-			$tcp_public_services = '21 22 25 53 80 110 143 443 3306 8080 10000';
-			$udp_public_services = '53';
-		}
+		if (!empty($row)) {
+			if(trim($row['tcp_port']) != '' || trim($row['udp_port']) != '') {
+				$tcp_public_services = trim(str_replace(',', ' ', $row['tcp_port']));
+				$udp_public_services = trim(str_replace(',', ' ', $row['udp_port']));
+			} else {
+				$tcp_public_services = '21 22 25 53 80 110 143 443 3306 8080 10000';
+				$udp_public_services = '53';
+			}
 
-		if(!stristr($tcp_public_services, $conf['apache']['vhost_port'])) {
-			$tcp_public_services .= ' '.intval($conf['apache']['vhost_port']);
-			if($row['tcp_port'] != '') $this->db->query("UPDATE firewall SET tcp_port = tcp_port + ? WHERE server_id = ?", ',' . intval($conf['apache']['vhost_port']), $conf['server_id']);
-		}
+			if(!stristr($tcp_public_services, $conf['apache']['vhost_port'])) {
+				$tcp_public_services .= ' '.intval($conf['apache']['vhost_port']);
+				if($row['tcp_port'] != '') $this->db->query("UPDATE firewall SET tcp_port = tcp_port + ? WHERE server_id = ?", ',' . intval($conf['apache']['vhost_port']), $conf['server_id']);
+			}
 
-		$content = str_replace('{TCP_PUBLIC_SERVICES}', $tcp_public_services, $content);
-		$content = str_replace('{UDP_PUBLIC_SERVICES}', $udp_public_services, $content);
+			$content = str_replace('{TCP_PUBLIC_SERVICES}', $tcp_public_services, $content);
+			$content = str_replace('{UDP_PUBLIC_SERVICES}', $udp_public_services, $content);
+		}
 
 		wf('/etc/Bastille/bastille-firewall.cfg', $content);
 
@@ -3319,7 +3334,7 @@ class installer_base extends stdClass {
 		}
 
 		// If the LE SSL certs for this hostname exists
-		if(!is_dir($acme_cert_dir) || !file_exists($check_acme_file) || !$issued_successfully) {
+		if(!is_dir($acme_cert_dir) || !file_exists($check_acme_file) || !isset($issued_successfully) || !$issued_successfully) {
 			if(!$issued_successfully) {
 				swriteln('Could not issue letsencrypt certificate, falling back to self-signed.');
 			} else {
@@ -3810,6 +3825,12 @@ class installer_base extends stdClass {
 		chmod($install_dir.'/server/scripts/ispconfig_update.sh', 0700);
 		if(!is_link('/usr/local/bin/ispconfig_update_from_dev.sh')) symlink($install_dir.'/server/scripts/ispconfig_update.sh', '/usr/local/bin/ispconfig_update_from_dev.sh');
 		if(!is_link('/usr/local/bin/ispconfig_update.sh')) symlink($install_dir.'/server/scripts/ispconfig_update.sh', '/usr/local/bin/ispconfig_update.sh');
+
+		// Install ISPConfig cli command
+		if(is_file('/usr/local/bin/ispc')) unlink('/usr/local/bin/ispc');
+		chown($install_dir.'/server/cli/ispc', 'root');
+		chmod($install_dir.'/server/cli/ispc', 0700);
+		symlink($install_dir.'/server/cli/ispc', '/usr/local/bin/ispc');
 
 		// Make executable then unlink and symlink letsencrypt pre, post and renew hook scripts
 		chown($install_dir.'/server/scripts/letsencrypt_pre_hook.sh', 'root');
