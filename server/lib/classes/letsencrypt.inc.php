@@ -44,7 +44,7 @@ class letsencrypt {
 	}
 
 	public function get_acme_script() {
-		$acme = explode("\n", shell_exec('which acme.sh /usr/local/ispconfig/server/scripts/acme.sh /root/.acme.sh/acme.sh'));
+		$acme = explode("\n", shell_exec('which acme.sh /usr/local/ispconfig/server/scripts/acme.sh /root/.acme.sh/acme.sh 2> /dev/null') ?? '');
 		$acme = reset($acme);
 		if(is_executable($acme)) {
 			return $acme;
@@ -80,7 +80,8 @@ class letsencrypt {
 	}
 
 	public function get_certbot_script() {
-		$letsencrypt = explode("\n", shell_exec('which certbot /root/.local/share/letsencrypt/bin/letsencrypt /opt/eff.org/certbot/venv/bin/certbot letsencrypt'));
+		$which_certbot = shell_exec('which certbot /root/.local/share/letsencrypt/bin/letsencrypt /opt/eff.org/certbot/venv/bin/certbot letsencrypt');
+		$letsencrypt = explode("\n", $which_certbot ? $which_certbot : '');
 		$letsencrypt = reset($letsencrypt);
 		if(is_executable($letsencrypt)) {
 			return $letsencrypt;
@@ -303,6 +304,7 @@ class letsencrypt {
 				'domain' => $domain,
 				'key' => $ssl_dir.'/'.$domain.'-le.key',
 				'key2' => $ssl_dir.'/'.$domain.'-le.key.org',
+				'csr' => '', # Not used for LE.
 				'crt' => $ssl_dir.'/'.$domain.'-le.crt',
 				'bundle' => $ssl_dir.'/'.$domain.'-le.bundle'
 			);
@@ -404,6 +406,10 @@ class letsencrypt {
 			$app->log("There were " . $le_domain_count . " domains in the domain list. LE only supports 100, so we strip the rest.", LOGLEVEL_WARN);
 		}
 
+		if ($le_domain_count == 0) {
+			return false;
+		}
+
 		// unset useless data
 		unset($subdomains);
 		unset($aliasdomains);
@@ -458,7 +464,7 @@ class letsencrypt {
 
 
 			$letsencrypt_cmd = $this->get_certbot_script() . " certificates " . $cli_domain_arg;
-			$output = explode("\n", shell_exec($letsencrypt_cmd . " 2>/dev/null | grep -v '^\$'"));
+			$output = explode("\n", shell_exec($letsencrypt_cmd . " 2>/dev/null | grep -v '^\$'") ?? '');
 			$le_path = '';
 			$skip_to_next = true;
 			$matches = null;

@@ -925,13 +925,18 @@ class system{
 	}
 
 	function unlink($filename) {
-		if(file_exists($filename) || is_link($filename)) {
+		if(!empty($filename) && file_exists($filename) || is_link($filename)) {
 			return unlink($filename);
 		}
 	}
 
 	function copy($file1, $file2) {
-		return copy($file1, $file2);
+        if(!empty($file1) && !empty($file2)) {
+            return copy($file1, $file2);
+        } else {
+            return false;
+        }
+		
 	}
 
 	function move($file1, $file2) {
@@ -942,6 +947,7 @@ class system{
         }
 
 	function rmdir($path, $recursive=false) {
+        global $app;
 		// Disallow operating on root directory
 		if(realpath($path) == '/') {
 			$app->log("rmdir: afraid I might delete root: $path", LOGLEVEL_WARN);
@@ -1117,7 +1123,7 @@ class system{
 	function check_free_space($path, $limit = 0, &$free_space = 0) {
 		$path = rtrim($path, '/');
 
-		/**
+		/*
 		* Make sure that we have only existing directories in the path.
 
 		* Given a file name instead of a directory, the behaviour of the disk_free_space
@@ -1125,7 +1131,7 @@ class system{
         */
 		while(!is_dir($path) && $path != '/') $path = realpath(dirname($path));
 
-		$free_space = disk_free_space($out);
+		$free_space = disk_free_space($path);
 
 		if (!$free_space) {
 			$free_space = 0;
@@ -1151,6 +1157,7 @@ class system{
 		$group_file = $app->file->rf($this->server_conf['group_datei']);
 		$group_file_lines = explode("\n", $group_file);
 		foreach($group_file_lines as $group_file_line){
+			if(empty($group_file_line)) continue;
 			list($group_name, $group_x, $group_id, $group_users) = explode(':', $group_file_line);
 			if($group_name == $group){
 				$group_users = explode(',', str_replace(' ', '', $group_users));
@@ -2072,7 +2079,7 @@ class system{
 		}
 		*/
 		
-		if(!in_array($action,array('restart','reload','force-reload'))) {
+		if(!in_array($action,array('start','stop','restart','reload','force-reload'))) {
 			$app->log('Invalid init command action '.$action,LOGLEVEL_WARN);
 			return false;
 		}
@@ -2132,6 +2139,26 @@ class system{
 		}
 		
 		$full_init_script_path = realpath($init_script_directory.'/'.$servicename);
+    
+    //** Gentoo, keep symlink as init script, but do some checks
+    if(file_exists('/etc/gentoo-release')) {  
+      //* check if init script is symlink
+      if(is_link($init_script_directory.'/'.$servicename)) {                 
+        //* Check init script owner (realpath, symlink is checked later)
+      	if(fileowner($full_init_script_path) !== 0) {
+      		$app->log('Init script '.$full_init_script_path.' not owned by root user',LOGLEVEL_WARN);
+      		return false;
+        }
+        
+        //* full path is symlink
+        $full_init_script_path_symlink = $init_script_directory.'/'.$servicename;
+        
+        //* check if realpath matches symlink
+        if(strpos($full_init_script_path_symlink,$full_init_script_path) == 0) {
+          $full_init_script_path = $full_init_script_path_symlink;
+        }
+      }
+    }
 		
 		if($full_init_script_path == '') {
 			$app->log('No init script, we quit here.',LOGLEVEL_WARN);
@@ -2325,6 +2352,16 @@ class system{
 		if($restrict_names == true && preg_match('/^client\d+$/', $groupname) == false) return false;
 
 		return true;
+	}
+
+	public function is_redhat_os() {
+		global $app;
+
+		if(file_exists('/etc/redhat-release') && (filesize('/etc/redhat-release') > 0)) {
+			return true;
+		} else {
+			return false;
+		}
 	}
 
 	public function is_allowed_path($path) {

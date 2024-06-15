@@ -82,6 +82,7 @@ class cronjob_monitor_mail_queue extends cronjob {
 
 		/* Get the data from the mailq */
 		$data['output'] = shell_exec('mailq');
+		if ($data['output'] == null) $data['output'] = "";
 
 		/*
 		 *  The last line has more informations
@@ -89,8 +90,8 @@ class cronjob_monitor_mail_queue extends cronjob {
 		$tmp = explode("\n", $data['output']);
 		$more = $tmp[sizeof($tmp) - 1];
 		$res = $this->_getIntArray($more);
-		$data['bytes'] = $res[0];
-		$data['requests'] = $res[1];
+		$data['bytes'] = (isset($res[0]))?$res[0]:0;
+		$data['requests'] = (isset($res[1]))?$res[1]:0;
 
 		/** The state of the mailq. */
 		$state = 'ok';

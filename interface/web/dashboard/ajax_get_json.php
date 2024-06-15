@@ -54,6 +54,9 @@ if($type == 'globalsearch'){
 	// resellers
 	$result[] = _search('client', 'reseller', "AND limit_client != 0");
 
+	// client domains
+	$result[] = _search('client', 'domain');
+
 	// web sites
 	$result[] = _search('sites', 'web_vhost_domain', "AND type = 'vhost'");
 
@@ -109,7 +112,7 @@ if($type == 'globalsearch'){
 	$result[] = _search('mail', 'mail_get');
 
 	// dns zones
-	$result[] = _search('dns', 'dns_soa');
+	$result[] = _search('dns', 'dns_soa', '', 'next_tab=dns_records');
 
 	// secondary dns zones
 	$result[] = _search('dns', 'dns_slave');

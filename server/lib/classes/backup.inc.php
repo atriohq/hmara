@@ -448,7 +448,7 @@ class backup
                 }
             }
         } else {
-            $app->log('Failed to restore web backup ' . $full_filename . ', backup mode "' . $backup_mode . '" not recognized.', LOGLEVEL_DEBUG);
+            $app->log('Failed to restore web backup ' . $filename . ', backup mode "' . $backup_mode . '" not recognized.', LOGLEVEL_DEBUG);
         }
         $app->system->web_folder_protection($web_root, true);
         return $result;
@@ -504,7 +504,7 @@ class backup
         if ($success) {
             $sql = "DELETE FROM web_backup WHERE server_id = ? AND parent_domain_id = ? AND filename = ?";
             $app->db->query($sql, $server_id, $domain_id, $filename);
-            if($app->db->dbHost != $app->dbmaster->dbHost)
+            if($app->running_on_slaveserver())
                 $app->dbmaster->query($sql, $server_id, $domain_id, $filename);
             $app->log($sql . ' - ' . json_encode([$server_id, $domain_id, $filename]), LOGLEVEL_DEBUG);
         }
@@ -632,7 +632,14 @@ class backup
         elseif(file_exists($backup_dir.'/'.$filename) && file_exists($domain['document_root'].'/backup/') && !stristr($backup_dir.'/'.$filename, '..') && !stristr($backup_dir.'/'.$filename, 'etc')) {
             $success = copy($backup_dir.'/'.$filename, $domain['document_root'].'/backup/'.$filename);
         }
+        if (file_exists($domain['document_root'].'/backup') && fileowner($domain['document_root'].'/backup') === 0) {
+            // Fix old web backup dir permissions from before #6628
+            chown($domain['document_root'].'/backup', $domain['system_user']);
+            chgrp($domain['document_root'].'/backup', $domain['system_group']);
+            $app->log('Fixed old directory permissions from root:root to '.$domain['system_user'].':'.$domain['system_group'].' for backup dir '.$domain['document_root'].'/backup/', LOGLEVEL_DEBUG);
+        }
         if (file_exists($domain['document_root'].'/backup/'.$filename)) {
+            // Change backup file permissions
             chgrp($domain['document_root'].'/backup/'.$filename, $domain['system_group']);
             chown($domain['document_root'].'/backup/'.$filename, $domain['system_user']);
             chmod($domain['document_root'].'/backup/'.$filename,0600);
@@ -1076,11 +1083,10 @@ class backup
     {
         global $app;
         if ( ! is_dir($repos_path)) {
+            $dbt = debug_backtrace();
+            $dbt_info = $dbt[1]['file'] . ':' . $dbt[1]['line'];
             $app->log("Unknown path " . var_export($repos_path, TRUE)
-                . ' called from ' . (function() {
-                    $dbt = debug_backtrace();
-                    return $dbt[1]['file'] . ':' . $dbt[1]['line'];
-                })(), LOGLEVEL_ERROR);
+                . ' called from ' . $dbt_info, LOGLEVEL_ERROR);
             return FALSE;
         }
         switch ($backup_mode) {
@@ -1127,7 +1133,7 @@ class backup
         $password = NULL;
 
         $db_list = array($app->db);
-        if ($app->db->dbHost != $app->dbmaster->dbHost)
+        if ($app->running_on_slaveserver())
             array_push($db_list, $app->dbmaster);
 
         if ($backup_mode == "userzip" || $backup_mode == "rootgz") {
@@ -1150,7 +1156,7 @@ class backup
                 @unlink($full_filename);
             }
         } elseif (self::backupModeIsRepos($backup_mode)) {
-            $repos_archives = self::getAllArchives($backup_dir, $backup_mode, $password);
+            $repos_archives = self::getAllArchives($backup_dir, $backup_mode, $password, $prefix_list);
             usort($repos_archives, function ($a, $b)  {
                 return ($a['created_at'] > $b['created_at']) ? -1 : 1;
             });
@@ -1169,8 +1175,11 @@ class backup
         return true;
     }
 
-    protected static function getAllArchives($backup_dir, $backup_mode, $password)
-    {
+    protected static function getAllArchives($backup_dir, $backup_mode, $password, $prefix_list = null) {
+        if (is_null($prefix_list)) {
+            global $app;
+            $app->log("prefix_list is null - [backupdir = $backup_dir, backupmode = $backup_mode ]", LOGLEVEL_WARN);
+        }
         $d = dir($backup_dir);
         $archives = [];
         /**
@@ -1188,13 +1197,28 @@ class backup
                 case 'borg':
                     $repos_path = $backup_dir . '/' . $entry;
                     if (is_dir($repos_path) && strncmp('borg_', $entry, 5) === 0) {
-                        $archivesJson = json_decode(implode("", self::getReposArchives($backup_mode, $repos_path, $password, 'json')), TRUE);
-                        foreach ($archivesJson['archives'] as $archive) {
-                            $archives[] = [
-                                'repos'      => $entry,
-                                'archive'    => $archive['name'],
-                                'created_at' => strtotime($archive['time']),
-                            ];
+                        $repos_archives = self::getReposArchives($backup_mode, $repos_path, $password, 'json');
+                        if(is_array($repos_archives)) {
+                            $archivesJson = json_decode(implode("", $repos_archives), TRUE);
+                            foreach ($archivesJson['archives'] as $archive) {
+                                if (is_null($prefix_list)) { //fallback if no prefix_list
+                                    $archives[] = [
+                                        'repos' => $entry,
+                                        'archive' => $archive['name'],
+                                        'created_at' => strtotime($archive['time']),
+                                    ];
+                                } else {
+                                    foreach ($prefix_list as $prefix) {
+                                        if (substr($archive['name'], 0, strlen($prefix)) == $prefix) { //filter backup list of all if no prefix_list
+                                            $archives[] = [
+                                                'repos' => $entry,
+                                                'archive' => $archive['name'],
+                                                'created_at' => strtotime($archive['time']),
+                                            ];
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                     break;
@@ -1257,7 +1281,7 @@ class backup
         }
 
         $db_list = array($app->db);
-        if ($app->db->dbHost != $app->dbmaster->dbHost)
+        if ($app->running_on_slaveserver())
             array_push($db_list, $app->dbmaster);
 
         // Cleanup web_backup entries for non-existent backup files
@@ -1292,8 +1316,8 @@ class backup
                         }
                     }
                 }
-                array_unique( $untracked_backup_files );
-                foreach ($untracked_backup_files as $f) {
+                $unique_untracked_backup_files = array_unique( $untracked_backup_files );
+                foreach ($unique_untracked_backup_files as $f) {
                     $backup_file = $backup_dir . '/web' . $domain_id . '/' . $f;
                     $app->log('Backup file ' . $backup_file . ' is not contained in database, deleting this file from disk', LOGLEVEL_DEBUG);
                     @unlink($backup_file);
@@ -1306,13 +1330,13 @@ class backup
         foreach ($domains as $rec) {
             $domain_id = $rec['domain_id'];
             $domain_backup_dir = $backup_dir . '/web' . $domain_id;
+            $web_path = $rec['document_root'];
+            $backup_download_dir = $web_path . '/backup';
 
             // Remove backupdir symlink and create as directory instead
             if (is_link($backup_download_dir) || !is_dir($backup_download_dir)) {
-                $web_path = $rec['document_root'];
                 $app->system->web_folder_protection($web_path, false);
 
-                $backup_download_dir = $web_path . '/backup';
                 if (is_link($backup_download_dir)) {
                     unlink($backup_download_dir);
                 }
@@ -1476,9 +1500,9 @@ class backup
         foreach ($backup_excludes as $ex) {
             # pass through escapeshellarg if not already done
             if ( preg_match( "/^'.+'$/", $ex ) ) {
-                $excludes .= "${arg}${pre}${ex}${post} ";
+                $excludes .= "{$arg}{$pre}{$ex}{$post} ";
             } else {
-                $excludes .= "${arg}" . escapeshellarg("${pre}${ex}${post}") . " ";
+                $excludes .= "{$arg}" . escapeshellarg("{$pre}{$ex}{$post}") . " ";
             }
         }
 
@@ -1777,7 +1801,7 @@ class backup
                             //* password is for `Encrypted` column informative purposes, on download password is obtained from web_domain settings
                             $password = $repos_password ? '*secret*' : '';
                             $app->db->query($sql, $server_id, $domain_id, 'mysql', $backup_mode, $backup_format_db, time(), $db_backup_archive, $archive_size, $password);
-                            if ($app->db->dbHost != $app->dbmaster->dbHost)
+                            if ($app->running_on_slaveserver())
                                 $app->dbmaster->query($sql, $server_id, $domain_id, 'mysql', $backup_mode, $backup_format_db, time(), $db_backup_archive, $archive_size, $password);
                             $success = true;
                         } else {
@@ -1833,7 +1857,7 @@ class backup
                             //Making compatible with previous versions of ISPConfig:
                             $sql_mode = ($backup_format_db == 'gzip') ? 'sqlgz' : ('sql' . $backup_format_db);
                             $app->db->query($sql, $server_id, $domain_id, 'mysql', $sql_mode, $backup_format_db, time(), $db_compressed_file, $file_size, $password);
-                            if ($app->db->dbHost != $app->dbmaster->dbHost)
+                            if ($app->running_on_slaveserver())
                                 $app->dbmaster->query($sql, $server_id, $domain_id, 'mysql', $sql_mode, $backup_format_db, time(), $db_compressed_file, $file_size, $password);
                             $success = true;
                         }
@@ -1849,8 +1873,8 @@ class backup
             //* Remove old backups
             self::backups_garbage_collection($server_id, 'mysql', $domain_id);
             $prefix_list = array(
-                        "db_${db_name}_",
-                        "manual-db_${db_name}_",
+                        "db_{$db_name}_",
+                        "manual-db_{$db_name}_",
                     );
             self::clearBackups($server_id, $domain_id, intval($rec['backup_copies']), $db_backup_dir, $prefix_list);
         }
@@ -1976,14 +2000,14 @@ class backup
             if ($success) {
                 $backup_username = ($global_config['backups_include_into_web_quota'] == 'y') ? $web_user : 'root';
                 $backup_group = ($global_config['backups_include_into_web_quota'] == 'y') ? $web_group : 'root';
-    
+
                 //Insert web backup record in database
                 $archive_size = self::getReposArchiveSize($backup_mode, $backup_repos_path, $web_backup_archive, $repos_password);
                 $password = $repos_password ? '*secret*' : '';
                 $sql = "INSERT INTO web_backup (server_id, parent_domain_id, backup_type, backup_mode, backup_format, tstamp, filename, filesize, backup_password) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
                 $backup_time = time();
                 $app->db->query($sql, $server_id, $web_id, 'web', $backup_mode, $backup_format_web, $backup_time, $web_backup_archive, $archive_size, $password);
-                if ($app->db->dbHost != $app->dbmaster->dbHost)
+                if ($app->running_on_slaveserver())
                     $app->dbmaster->query($sql, $server_id, $web_id, 'web', $backup_mode, $backup_format_web, $backup_time, $web_backup_archive, $archive_size, $password);
                 unset($archive_size);
                 $app->log('Backup of web files for domain ' . $web_domain['domain'] . ' completed successfully to archive ' . $full_archive_path, LOGLEVEL_DEBUG);
@@ -2005,7 +2029,7 @@ class backup
                     $file_size = filesize($full_filename);
                     $sql = "INSERT INTO web_backup (server_id, parent_domain_id, backup_type, backup_mode, backup_format, tstamp, filename, filesize, backup_password) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
                     $app->db->query($sql, $server_id, $web_id, 'web', $backup_mode, $backup_format_web, time(), $web_backup_file, $file_size, $password);
-                    if ($app->db->dbHost != $app->dbmaster->dbHost)
+                    if ($app->running_on_slaveserver())
                         $app->dbmaster->query($sql, $server_id, $web_id, 'web', $backup_mode, $backup_format_web, time(), $web_backup_file, $file_size, $password);
                     unset($file_size);
                     $app->log('Backup of web files for domain ' . $web_domain['domain'] . ' completed successfully to file ' . $full_filename, LOGLEVEL_DEBUG);
@@ -2265,7 +2289,7 @@ class backup
             }
         }
 
-        $sql = "SELECT DISTINCT d.*, db.server_id as `server_id` FROM web_database as db INNER JOIN web_domain as d ON (d.domain_id = db.parent_domain_id) WHERE db.server_id = ? AND db.active = 'y' AND d.backup_interval != 'none' AND d.backup_interval != ''";
+        $sql = "SELECT DISTINCT d.domain_id, db.backup_interval, db.server_id, db.parent_domain_id FROM web_database as db INNER JOIN web_domain as d ON (d.domain_id = db.parent_domain_id) WHERE db.server_id = ? AND db.active = 'y' AND db.backup_interval != 'none' AND db.backup_interval != ''";
         $databases = $app->dbmaster->queryAllRecords($sql, $server_id);
 
         foreach ($databases as $database) {

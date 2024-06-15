@@ -62,6 +62,7 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 $form["title"]    = "Additional PHP Versions";
 //$form["description"]  = "Form to edit additional PHP versions";
 $form["name"]    = "server_php";
+$form["record_name_field"] = "name";
 $form["action"]   = "server_php_edit.php";
 $form["db_table"]  = "server_php";
 $form["db_table_idx"] = "server_php_id";
@@ -246,6 +247,22 @@ $form["tabs"]['php_fpm'] = array(
 		//#################################
 		// END Datatable fields
 		//#################################
+	)
+);
+$form["tabs"]['php_sort'] = array (
+    	'title' => "PHP Sort Priority",
+	'width' => 80,
+	'template' => "templates/server_php_sort_edit.htm",
+	'fields' => array(
+                   'sortprio' => array (
+			'datatype' => 'INTEGER',
+			'formtype' => 'TEXT',
+			'default' => '100',
+			'value'  => '',
+			'separator' => '',
+			'width'  => '10',
+			'maxlength' => '20'
+		),
 	)
 );
 ?>

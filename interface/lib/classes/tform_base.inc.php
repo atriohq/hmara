@@ -277,7 +277,8 @@ class tform_base {
 
 			$querystring = str_replace("{CLIENTNAMESQL}", $app->functions->get_client_sql_concat_query(), $querystring);
 			$querystring = str_replace("{AUTHSQL}", $this->getAuthSQL('r'), $querystring);
-			$querystring = preg_replace_callback('@{AUTHSQL::(.+?)}@', create_function('$matches','global $app; $tmp = $app->tform->getAuthSQL("r", $matches[1]); return $tmp;'), $querystring);
+			//$querystring = preg_replace_callback('@{AUTHSQL::(.+?)}@', create_function('$matches','global $app; $tmp = $app->tform->getAuthSQL("r", $matches[1]); return $tmp;'), $querystring);
+			$querystring = preg_replace_callback('@{AUTHSQL::(.+?)}@', function($matches) {global $app; $tmp = $app->tform->getAuthSQL("r", $matches[1]); return $tmp;}, $querystring);
 
 			// Getting the records
 			$tmp_records = $app->db->queryAllRecords($querystring);
@@ -478,7 +479,7 @@ class tform_base {
 					if(isset($record[$key])) {
 						$val = $record[$key];
 					} else {
-						$val = '';
+						$val = $field['default'];
 					}
 
 					// If Datasource is set, get the data from there
@@ -560,8 +561,12 @@ class tform_base {
 								foreach($vals as $tvl) {
 									if(trim($tvl) == trim($k)) $checked = ' CHECKED';
 								}
+								$datacheckfields = '';
+								if (isset($field['data-check-fields'])) {
+									$datacheckfields = " data-check-fields=\"{$field['data-check-fields']}\"";
+								}
 								// $out .= "<label for=\"".$key."[]\" class=\"inlineLabel\"><input name=\"".$key."[]\" id=\"".$key."[]\" value=\"$k\" type=\"checkbox\" $checked /> $v</label>\r\n";
-								$out .= "<label for=\"".$key.$elementNo."\" class=\"inlineLabel\"><input name=\"".$key."[]\" id=\"".$key.$elementNo."\" value=\"$k\" type=\"checkbox\" $checked /> $v</label>";
+								$out .= "<label for=\"".$key.$elementNo."\" class=\"inlineLabel\"$datacheckfields><input name=\"".$key."[]\" id=\"".$key.$elementNo."\" value=\"$k\" type=\"checkbox\" $checked /> $v</label>";
 								if (isset($field['render_inline']) && $field['render_inline'] == 'n') {
 									$out .= "<br/>\r\n";
 								}
@@ -617,11 +622,7 @@ class tform_base {
 						break;
 
 					default:
-						if(isset($record[$key])) {
-							$new_record[$key] = $app->functions->htmlentities($record[$key]);
-						} else {
-							$new_record[$key] = '';
-						}
+						$new_record[$key] = $app->functions->htmlentities($val);
 					}
 				}
 			}
@@ -1183,7 +1184,7 @@ class tform_base {
 				if (count($sql_v6_explode) < count($explode_field_value) && isset($sql_v6['ip_address'])) {
 					$errmsg = $validator['errmsg'];
 					if(isset($this->wordbook[$errmsg])) {
-						$this->errorMessage .= $this->wordbook[$errmsg].$sql_v6[ip_address]."<br />\r\n";
+						$this->errorMessage .= $this->wordbook[$errmsg].$sql_v6['ip_address']."<br />\r\n";
 					} else {
 						$this->errorMessage .= $errmsg."<br />\r\n";
 					}
@@ -1585,7 +1586,7 @@ class tform_base {
 
 		// Set form title
 		$form_hint = $this->lng($this->formDef["title"]);
-		if($this->formDef["description"] != '') $form_hint .= '<div class="pageForm_description">'.$this->lng($this->formDef["description"]).'</div>';
+		if(isset($this->formDef["description"]) && $this->formDef["description"] != '') $form_hint .= '<div class="pageForm_description">'.$this->lng($this->formDef["description"]).'</div>';
 		$app->tpl->setVar('form_hint', $form_hint);
 
 		// Set Wordbook for this form
@@ -1610,17 +1611,27 @@ class tform_base {
 		return true;
 	}
 
-	function getAuthSQL($perm, $table = '') {
-		if($_SESSION["s"]["user"]["typ"] == 'admin' || $_SESSION['s']['user']['mailuser_id'] > 0) {
+       function getAuthSQL($perm, $table = '', $userid = NULL, $groups  = NULL) {
+               if(($_SESSION["s"]["user"]["typ"] == 'admin' || $_SESSION['s']['user']['mailuser_id'] > 0 ) && $userid == NULL && $groups == NULL) {
 			return '1';
 		} else {
 			if ($table != ''){
 				$table = ' ' . $table . '.';
 			}
-			$groups = ( $_SESSION["s"]["user"]["groups"] ) ? $_SESSION["s"]["user"]["groups"] : 0;
 			$sql = '(';
-			$sql .= "(" . $table . "sys_userid = ".$_SESSION["s"]["user"]["userid"]." AND " . $table . "sys_perm_user like '%$perm%') OR  ";
-			$sql .= "(" . $table . "sys_groupid IN (".$groups.") AND " . $table ."sys_perm_group like '%$perm%') OR ";
+                       if ($userid === NULL) {
+                               $userid = $_SESSION["s"]["user"]["userid"];
+                       }
+                       if ($userid > 0) {
+                               $sql .= "(" . $table . "sys_userid = ".$userid." AND " . $table . "sys_perm_user like '%$perm%') OR  ";
+                       }
+
+                       if ($groups === NULL) {
+                               $groups = ( $_SESSION["s"]["user"]["groups"] ) ? $_SESSION["s"]["user"]["groups"] : 0;
+                       }
+                       if ($groups > 0) {
+                               $sql .= "(" . $table . "sys_groupid IN (".$groups.") AND " . $table ."sys_perm_group like '%$perm%') OR ";
+                       }
 			$sql .= $table . "sys_perm_other like '%$perm%'";
 			$sql .= ')';
 

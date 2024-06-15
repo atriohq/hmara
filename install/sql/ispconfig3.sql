@@ -559,6 +559,7 @@ INSERT INTO `dns_ssl_ca` (`id`, `sys_userid`, `sys_groupid`, `sys_perm_user`, `s
 (NULL, 1, 1, 'riud', 'riud', '', 'Y', 'ACCV', 'accv.es', 'Y', '', 0),
 (NULL, 1, 1, 'riud', 'riud', '', 'Y', 'Actalis', 'actalis.it', 'Y', '', 0),
 (NULL, 1, 1, 'riud', 'riud', '', 'Y', 'Amazon', 'amazon.com', 'Y', '', 0),
+(NULL, 1, 1, 'riud', 'riud', '', 'Y', 'Amazon Trust Services', 'amazontrust.com', 'Y', '', 0),
 (NULL, 1, 1, 'riud', 'riud', '', 'Y', 'Asseco', 'certum.pl', 'Y', '', 0),
 (NULL, 1, 1, 'riud', 'riud', '', 'Y', 'Buypass', 'buypass.com', 'Y', '', 0),
 (NULL, 1, 1, 'riud', 'riud', '', 'Y', 'CA Disig', 'disig.sk', 'Y', '', 0),
@@ -568,7 +569,7 @@ INSERT INTO `dns_ssl_ca` (`id`, `sys_userid`, `sys_groupid`, `sys_perm_user`, `s
 (NULL, 1, 1, 'riud', 'riud', '', 'Y', 'certSIGN', 'certsign.ro', 'Y', '', 0),
 (NULL, 1, 1, 'riud', 'riud', '', 'Y', 'CFCA', 'cfca.com.cn', 'Y', '', 0),
 (NULL, 1, 1, 'riud', 'riud', '', 'Y', 'Chunghwa Telecom', 'cht.com.tw', 'Y', '', 0),
-(NULL, 1, 1, 'riud', 'riud', '', 'Y', 'Sectigo / Comodo CA', 'comodoca.com', 'Y', '', 0),
+(NULL, 1, 1, 'riud', 'riud', '', 'Y', 'Sectigo (formerly Comodo CA)', 'sectigo.com', 'Y', '', 0),
 (NULL, 1, 1, 'riud', 'riud', '', 'Y', 'D-TRUST', 'd-trust.net', 'Y', '', 0),
 (NULL, 1, 1, 'riud', 'riud', '', 'Y', 'DigiCert', 'digicert.com', 'Y', '', 0),
 (NULL, 1, 1, 'riud', 'riud', '', 'Y', 'DocuSign', 'docusign.fr', 'Y', '', 0),
@@ -1070,7 +1071,7 @@ CREATE TABLE `mail_user` (
   `gid` int(11) NOT NULL default '5000',
   `maildir` varchar(255) NOT NULL default '',
   `maildir_format` varchar(255) NOT NULL default 'maildir',
-  `quota` bigint(20) NOT NULL default '-1',
+  `quota` bigint(20) NOT NULL default '0',
   `cc` text,
   `forward_in_lda` enum('n','y') NOT NULL default 'n',
   `sender_cc` varchar(255) NOT NULL default '',
@@ -1096,11 +1097,13 @@ CREATE TABLE `mail_user` (
   `disablelda` enum('n','y') NOT NULL default 'n',
   `disablelmtp` enum('n','y') NOT NULL default 'n',
   `disabledoveadm` enum('n','y') NOT NULL default 'n',
+  `last_access` int(11) NULL DEFAULT NULL,
   `disablequota-status` enum('n','y') NOT NULL default 'n',
   `disableindexer-worker` enum('n','y') NOT NULL default 'n',
   `last_quota_notification` date NULL default NULL,
   `backup_interval` VARCHAR( 255 ) NOT NULL default 'none',
   `backup_copies` INT NOT NULL DEFAULT '1',
+  `imap_prefix` varchar(255) NULL default NULL,
   PRIMARY KEY  (`mailuser_id`),
   KEY `server_id` (`server_id`,`email`),
   KEY `email_access` (`email`,`access`)
@@ -1460,6 +1463,7 @@ CREATE TABLE `server_php` (
   `php_fpm_pool_dir` varchar(255) DEFAULT NULL,
   `php_fpm_socket_dir` varchar(255) DEFAULT NULL,
   `active` enum('n','y') NOT NULL DEFAULT 'y',
+  `sortprio` int(20) NOT NULL DEFAULT 100,
   PRIMARY KEY (`server_php_id`)
 ) DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
@@ -1530,9 +1534,9 @@ CREATE TABLE `spamfilter_policy` (
   `addr_extension_spam` varchar(64) default NULL,
   `addr_extension_banned` varchar(64) default NULL,
   `addr_extension_bad_header` varchar(64) default NULL,
-  `warnvirusrecip` enum('N','Y') default 'N',
-  `warnbannedrecip` enum('N','Y') default 'N',
-  `warnbadhrecip` enum('N','Y') default 'N',
+  `warnvirusrecip` VARCHAR(1) NULL default 'N',
+  `warnbannedrecip` VARCHAR(1) NULL default 'N',
+  `warnbadhrecip` VARCHAR(1) NULL default 'N',
   `newvirus_admin` varchar(64) default NULL,
   `virus_admin` varchar(64) default NULL,
   `banned_admin` varchar(64) default NULL,
@@ -1739,8 +1743,8 @@ CREATE TABLE `sys_group` (
 CREATE TABLE `sys_ini` (
   `sysini_id` int(11) unsigned NOT NULL auto_increment,
   `config` longtext,
-  `default_logo` text NOT NULL,
-  `custom_logo` text NOT NULL,
+  `default_logo` text NULL,
+  `custom_logo` text NULL,
   PRIMARY KEY  (`sysini_id`)
 ) DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
@@ -2044,6 +2048,7 @@ CREATE TABLE `web_domain` (
   `delete_unused_jailkit` enum('n','y') NOT NULL default 'n',
   `last_jailkit_update` date NULL DEFAULT NULL,
   `last_jailkit_hash` varchar(255) DEFAULT NULL,
+  `disable_symlinknotowner` enum('n','y') NOT NULL default 'n',
   PRIMARY KEY  (`domain_id`),
   UNIQUE KEY `serverdomain` (  `server_id` , `ip_address`,  `domain` )
 ) ENGINE=InnoDB ROW_FORMAT=DYNAMIC DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;

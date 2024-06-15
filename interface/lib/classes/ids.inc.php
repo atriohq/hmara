@@ -49,11 +49,14 @@ class ids {
 		require_once(ISPC_CLASS_PATH.'/IDS/Report.php');
 		require_once(ISPC_CLASS_PATH.'/IDS/Event.php');
 		require_once(ISPC_CLASS_PATH.'/IDS/Converter.php');
+
+		$ispcookie = array();
+		$ispcookie['ISPCSESS'] = $_COOKIE['ISPCSESS'];
 		
 		$ids_request = array(
 			'GET' => $_GET,
 			'POST' => $_POST,
-			'COOKIE' => $_COOKIE
+			'COOKIE' => $ispcookie
 		);
 		
 		$ids_init = IDS\Init::init(ISPC_CLASS_PATH.'/IDS/Config/Config.ini.php');
@@ -77,7 +80,7 @@ class ids {
 				$line = trim($line);
 				if(substr($line,0,1) != '#') {
 					list($user,$path,$varname) = explode(':',$line);
-					if($current_script_name == $path) {
+					if($current_script_name == $path || $path == '*') {
 						if($user = 'any' 
 							|| ($user == 'user' && ($_SESSION['s']['user']['typ'] == 'user' || $_SESSION['s']['user']['typ'] == 'admin')) 
 							|| ($user == 'admin' && $_SESSION['s']['user']['typ'] == 'admin')) {
@@ -100,7 +103,7 @@ class ids {
 				$line = trim($line);
 				if(substr($line,0,1) != '#') {
 					list($user,$path,$varname) = explode(':',$line);
-					if($current_script_name == $path) {
+					if($current_script_name == $path || $path == '*') {
 						if($user = 'any' 
 							|| ($user == 'user' && ($_SESSION['s']['user']['typ'] == 'user' || $_SESSION['s']['user']['typ'] == 'admin')) 
 							|| ($user == 'admin' && $_SESSION['s']['user']['typ'] == 'admin')) {

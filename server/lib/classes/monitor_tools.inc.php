@@ -1,7 +1,7 @@
 <?php
 
 /*
-	Copyright (c) 2007-2011, Till Brehm, projektfarm Gmbh and Oliver Vogel www.muv.com
+	Copyright (c) 2007-2024, Till Brehm, projektfarm Gmbh and Oliver Vogel www.muv.com
 	All rights reserved.
 
 	Redistribution and use in source and binary forms, with or without modification,
@@ -87,6 +87,14 @@ class monitor_tools {
 				$mainver = $ver;
 			}
 			switch ($mainver){
+			case "24.04":
+				$relname = "(Noble Numbat)";
+				$distconfid = 'ubuntu2404';
+				break;
+			case "22.04":
+				$relname = "(Jammy Jellyfish)";
+				$distconfid = 'ubuntu2204';
+				break;
 			case "20.04":
 				$relname = "(Focal Fossa)";
 				$distconfid = 'ubuntu2004';
@@ -227,6 +235,12 @@ class monitor_tools {
 			$distconfid = 'debian110';
 			$distid = 'debian60';
 			$distbaseid = 'debian';
+		} elseif(substr(trim(file_get_contents('/etc/debian_version')),0,2) == '12') {
+			$distname = 'Debian';
+			$distver = 'Bookworm';
+			$distconfid = 'debian120';
+			$distid = 'debian60';
+			$distbaseid = 'debian';
 		} elseif(strstr(trim(file_get_contents('/etc/debian_version')), '/sid')) {
 			$distname = 'Debian';
 			$distver = 'Testing';
@@ -275,7 +289,6 @@ class monitor_tools {
 		}
 	}
 
-
 	//** RHEL (including compatible clones) & Fedora
 	elseif(file_exists('/etc/redhat-release') && file_exists('/etc/os-release')) {
 
@@ -296,7 +309,7 @@ class monitor_tools {
 			$distver = '33';
 			$distid = 'fedora33';
 			$distbaseid = 'fedora';
-                //** RHEL 7 and compatible clones 
+        //** RHEL 7 and compatible clones 
 		} elseif(preg_match('/^(?:7|7\.[0-9]{1,2})$/', $versionid[0])) {
 			preg_match_all('/([0-9]{1,2})\.?([0-9]{0,2})\.?([0-9]*)/', file_get_contents('/etc/redhat-release'), $centos7_version);
 			$distname = $name[0];
@@ -309,6 +322,12 @@ class monitor_tools {
 			$distver = $version[0];
 			$distid = 'centos80';
 			$distbaseid = 'fedora';
+		//** RHEL 9 and compatible clones
+		} elseif(preg_match('/^(?:9|9\.[0-9]{1,2})$/', $versionid[0])) {
+			$distname = $name[0];
+			$distver = $version[0];
+			$distid = 'centos90';
+			$distbaseid = 'fedora';
 		} else {
 			$distname = 'Redhat';
 			$distver = 'Unknown';
@@ -316,41 +335,40 @@ class monitor_tools {
 			$distbaseid = 'fedora';
 		}
         //** CentOS 6
-        } elseif(file_exists('/etc/redhat-release') && !file_exists('/etc/os-release') && !file_exists('/etc/els-release')) {
+		} elseif(file_exists('/etc/redhat-release') && !file_exists('/etc/os-release') && !file_exists('/etc/els-release')) {
 
-                $content = file_get_contents('/etc/redhat-release');
+			$content = file_get_contents('/etc/redhat-release');
 
-                if(stristr($content, 'CentOS Linux release 6') || stristr($content, 'CentOS release 6')) {
-                        preg_match_all('/(6\.?([0-9]{0,2})\.?(\s)?([a-zA-Z()]+))$/', $content, $centos6_version);
-                        $distname = 'CentOS Linux';
-                        $distver = $centos6_version[0][0] ? $centos6_version[0][0] : '6';
-                        $distid = 'centos53';
-                        $distbaseid = 'fedora';
-                } else {
-                        $distname = 'Redhat';
-                        $distver = 'Unknown';
-                        $distid = 'fedora9';
-                        $distbaseid = 'fedora';
-                }
+			if(stristr($content, 'CentOS Linux release 6') || stristr($content, 'CentOS release 6')) {
+				preg_match_all('/(6\.?([0-9]{0,2})\.?(\s)?([a-zA-Z()]+))$/', $content, $centos6_version);
+				$distname = 'CentOS Linux';
+				$distver = $centos6_version[0][0] ? $centos6_version[0][0] : '6';
+				$distid = 'centos53';
+				$distbaseid = 'fedora';
+			} else {
+				$distname = 'Redhat';
+				$distver = 'Unknown';
+				$distid = 'fedora9';
+				$distbaseid = 'fedora';
+			}
         //** CentOS 6 Extended Lifecycle Support by CloudLinux
         } elseif(file_exists('/etc/redhat-release') && file_exists('/etc/els-release') && !file_exists('/etc/os-release')) {
 
-                $content = file_get_contents('/etc/els-release');
+			$content = file_get_contents('/etc/els-release');
 
-                if(stristr($content, 'CentOS Linux release 6') || stristr($content, 'CentOS release 6')) {
-                        preg_match_all('/(6)\.?([0-9]{0,2})?\.?\s([a-zA-Z(), ]+)?$/', $content, $centos6_version);
-                        $distname = 'CentOS Linux';
-                        $distver = $centos6_version[0][0] ? $centos6_version[0][0] : '6';
-                        $distid = 'centos53';
-                        $distbaseid = 'fedora';
-                } else {
-                        $distname = 'Redhat';
-                        $distver = 'Unknown';
-                        $distid = 'fedora9';
-                        $distbaseid = 'fedora';
-                }
-        }
-
+			if(stristr($content, 'CentOS Linux release 6') || stristr($content, 'CentOS release 6')) {
+				preg_match_all('/(6)\.?([0-9]{0,2})?\.?\s([a-zA-Z(), ]+)?$/', $content, $centos6_version);
+				$distname = 'CentOS Linux';
+				$distver = $centos6_version[0][0] ? $centos6_version[0][0] : '6';
+				$distid = 'centos53';
+				$distbaseid = 'fedora';
+			} else {
+				$distname = 'Redhat';
+				$distver = 'Unknown';
+				$distid = 'fedora9';
+				$distbaseid = 'fedora';
+			}
+		}
 
 	//** Gentoo
 	elseif(file_exists('/etc/gentoo-release')) {
@@ -470,16 +488,21 @@ class monitor_tools {
 			}
 		}
 
-		/* Monitor MySQL Server */
-		$data['mysqlserver'] = -1; // unknown - not needed
-		if ($services['db_server'] == 1) {
-                       if ($this->_checkTcp($conf['db_host'], $conf['db_port'])) {
-				$data['mysqlserver'] = 1;
-			} else {
-				$data['mysqlserver'] = 0;
-				$state = 'error'; // because service is down
-			}
-		}
+        /* Monitor MySQL Server */
+        $data['mysqlserver'] = -1; // unknown - not needed
+        if ($services['db_server'] == 1) {
+            // hail MySQL server:
+            mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+            $ispcDB = mysqli_connect($conf['db_host'], $conf['db_user'], $conf['db_password'], $conf['db_database'], $conf['db_port']);
+            if ($ispcDB !== false) {
+                $data['mysqlserver'] = 1;
+            } else {
+                $data['mysqlserver'] = 0;
+                $state = 'error'; // because service is down
+            }
+            mysqli_close($ispcDB);  // we can ignore the result (gwyneth 20220605)
+        }
+		
 /*
 		$data['mongodbserver'] = -1;
 		if ($this->_checkTcp('localhost', 27017)) {
@@ -658,14 +681,14 @@ class monitor_tools {
 				$log = 'Logfile path error.';
 			} else {
 				if (is_readable($logfile)) {
-					$log = $this->_getOutputFromExecCommand('tail -n '.intval($max_lines).' ' . escapeshellarg($logfile));
+					$log = $this->_getOutputFromExecCommand('tail -n '.intval($max_lines).' ' . escapeshellarg($logfile), $max_lines);
 				} else {
 					$log = 'Unable to read ' . $logfile;
 				}
 			}
 		} else {
 			if($journalmatch != ''){
-				$log = $this->_getOutputFromExecCommand('journalctl -n '.intval($max_lines).' --no-pager ' . escapeshellcmd($journalmatch));
+				$log = $this->_getOutputFromExecCommand('journalctl -n '.intval($max_lines).' --no-pager ' . escapeshellcmd($journalmatch), $max_lines);
 			}else{
 				$log = 'Unable to read logfile';
 			}
@@ -675,7 +698,7 @@ class monitor_tools {
 		return $log;
 	}
 
-	private function _getOutputFromExecCommand ($command) {
+	private function _getOutputFromExecCommand ($command, $max4k = 1000) {
 		$log = '';
 		$fd = popen($command, 'r');
 		if ($fd) {
@@ -683,7 +706,7 @@ class monitor_tools {
 			while (!feof($fd)) {
 				$log .= fgets($fd, 4096);
 				$n++;
-				if ($n > 1000)
+				if ($n > $max4k)
 					break;
 			}
 			fclose($fd);

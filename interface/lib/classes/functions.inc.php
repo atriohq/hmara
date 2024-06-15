@@ -287,11 +287,33 @@ class functions {
 	 * @return string - formated bytes
 	 */
 	public function formatBytes($size, $precision = 2) {
+		// 0 is a special as it would give NAN otehrwise.
+		if ($size == 0) {
+			return 0;
+		}
+
 		$base=log($size)/log(1024);
 		$suffixes=array('', ' kB', ' MB', ' GB', ' TB');
 		return round(pow(1024, $base-floor($base)), $precision).$suffixes[floor($base)];
 	}
 
+	/**
+	 * Function to change bytes to kB, MB, GB or TB or the translated string 'Unlimited' for -1
+	 * @param int $size - size in bytes
+	 * @param int precicion - after-comma-numbers (default: 2)
+	 * @return string - formated bytes
+	 */
+	public function formatBytesOrUnlimited($size, $precision = 2) {
+		global $app;
+
+		if ($size == -1) {
+			return $app->lng('unlimited_txt');
+		}
+		else {
+			return $this->formatBytes($size, $precision);
+		}
+
+	}
 
 	/**
 	 * Normalize a path and strip duplicate slashes from it
@@ -332,6 +354,14 @@ class functions {
 		if(strpos($domain, '@') !== false) {
 			$user_part = substr($domain, 0, strrpos($domain, '@'));
 			$domain = substr($domain, strrpos($domain, '@') + 1);
+		}
+
+		// idn_to_* chokes on leading dots, but we need them for amavis, so remove it for later
+		if(substr($domain, 0, 1) === '.') {
+			$leading_dot = true;
+			$domain = substr($domain, 1);
+		} else {
+			$leading_dot = false;
 		}
 
 		if($encode == true) {
@@ -376,6 +406,10 @@ class functions {
 				}
 				$domain = $this->idn_converter->decode($domain);
 			}
+		}
+
+		if($leading_dot == true) {
+			$domain = '.' . $domain;
 		}
 
 		if($user_part !== false) return $user_part . '@' . $domain;
@@ -625,7 +659,7 @@ class functions {
 		unset($entries);
 		unset($to_disable);
     }
-    // Function to cancel disable/enable a client
+	// Function to cancel disable/enable a client
 	public function func_client_cancel($client_id,$cancel) {
 		global $app;
 		if ($cancel == 'y') {
@@ -644,6 +678,23 @@ class functions {
 	function get_client_sql_concat_query() {
 		return "CONCAT(IF(client.company_name != '', CONCAT(client.company_name, ' :: '), ''), client.contact_name, ' (', client.username, IF(client.customer_no != '', CONCAT(', ', client.customer_no), ''), ')')";
 	}
+
+	/**
+	 * Lookup a client's group + all groups he is reselling.
+	 *
+	 * @return string Comma separated list of groupid's
+	 */
+	function clientid_to_groups_list($client_id) {
+		global $app;
+
+		if ($client_id != null) {
+			// Get the clients groupid, and incase it's a reseller the groupid's of it's clients.
+			$group = $app->db->queryOneRecord("SELECT GROUP_CONCAT(groupid) AS groups FROM `sys_group` WHERE client_id IN (SELECT client_id FROM `client` WHERE client_id=? OR parent_client_id=?)", $client_id, $client_id);
+			return $group['groups'];
+		}
+		return null;
+	}
+
 }
 
 ?>

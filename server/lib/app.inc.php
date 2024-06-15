@@ -1,5 +1,5 @@
 <?php
-/**
+/*
 Copyright (c) 2007-2022, Till Brehm, projektfarm Gmbh
 All rights reserved.
 
@@ -36,6 +36,11 @@ if(isset($conf['timezone']) && $conf['timezone'] != '') {	// note: !empty($conf[
 	date_default_timezone_set($conf['timezone']);
 }
 
+//* Set error reporting level when we are not on a developer system
+if(DEVSYSTEM !== true) {
+	@ini_set('error_reporting', E_ALL & ~E_NOTICE & ~E_DEPRECATED & ~E_WARNING);
+}
+
 /**
  * Class for defining (mostly static) methods that are commonly used across the whole application.
  *
@@ -45,7 +50,7 @@ if(isset($conf['timezone']) && $conf['timezone'] != '') {	// note: !empty($conf[
  * @license bsd-3-clause
  * @link empty
  **/
-class app {
+class app extends stdClass {
 	/** @var array	List of modules that have been loaded. */
 	var $loaded_modules = [];
 	/** @var array	List of plugins that have been loaded. */
@@ -78,7 +83,10 @@ class app {
 				if we are in a multiserver setup
 			*/
 
-			if($conf['dbmaster_host'] != '' && ($conf['dbmaster_host'] != $conf['db_host'] || ($conf['dbmaster_host'] == $conf['db_host'] && $conf['dbmaster_database'] != $conf['db_database']))) {
+			if($conf['dbmaster_host'] != ''
+					&& ($conf['dbmaster_host'] != $conf['db_host']
+						|| ($conf['dbmaster_host'] == $conf['db_host']
+								&& ($conf['dbmaster_database'] != $conf['db_database'] || $conf['dbmaster_port'] != $conf['db_port'])))) {
 				try {
 					$this->dbmaster = new db($conf['dbmaster_host'], $conf['dbmaster_user'], $conf['dbmaster_password'], $conf['dbmaster_database'], $conf['dbmaster_port'], $conf['dbmaster_client_flags']);
 				} catch (Exception $e) {
@@ -316,7 +324,7 @@ class app {
 
 		// Send an email to the administrator if the current priority demands it.
 		if(isset($conf['admin_notify_priority']) && $priority >= $conf['admin_notify_priority'] && $conf['admin_mail'] != '') {
-			if($conf['hostname'] != 'localhost' && $conf['hostname'] != '') {
+			if(isset($conf['hostname']) && $conf['hostname'] != 'localhost' && $conf['hostname'] != '') {
 				$hostname = $conf['hostname'];
 			} else {
 				$hostname = exec('hostname -f');
@@ -348,6 +356,26 @@ class app {
 	function error($msg) {
 		$this->log($msg, 3);	// isn't this supposed to be error code 2? (gwyneth 20220315)
 		die($msg);
+	}
+
+	/**
+	 * Determin if the current process is running on the master or a slave server.
+	 *
+	 * @return boolean
+	 */
+	function running_on_masterserver() {
+
+		return $this->dbmaster == $this->db;
+	}
+
+	/**
+	 * Determin if the current process is running on the master or a slave server.
+	 *
+	 * @return boolean
+	 */
+	function running_on_slaveserver() {
+
+		return $this->dbmaster != $this->db;
 	}
 }
 
