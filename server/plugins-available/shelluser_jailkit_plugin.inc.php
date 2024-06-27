@@ -105,6 +105,7 @@ class shelluser_jailkit_plugin {
 
 
 		if($app->system->is_user($data['new']['puser'])) {
+
 			// Get the UID of the parent user
 			$uid = intval($app->system->getuid($data['new']['puser']));
 			if($uid > $this->min_uid) {
@@ -165,7 +166,6 @@ class shelluser_jailkit_plugin {
 		} else {
 			$app->log("Skipping insertion of user:".$data['new']['username'].", parent user ".$data['new']['puser']." does not exist.", LOGLEVEL_WARN);
 		}
-
 	}
 
 	//* This function is called, when a shell user is updated in the database
@@ -467,6 +467,21 @@ class shelluser_jailkit_plugin {
 		$app->system->chown($this->data['new']['dir'].$jailkit_chroot_puserhome, $this->data['new']['puser']);
 		$app->system->chgrp($this->data['new']['dir'].$jailkit_chroot_puserhome, $this->data['new']['pgroup']);
 
+		// Create user .my.cnf file
+		$mycnf = $this->data['new']['dir'].$jailkit_chroot_userhome .  '/.my.cnf';
+		if(!file_exists($this->data['new']['dir'].$jailkit_chroot_userhome . '/.my.cnf')) {
+			$app->load('tpl');
+
+			$tpl = new tpl();
+			$tpl->newTemplate("user_my.cnf.master");
+
+			file_put_contents($mycnf, $tpl->grab());
+			$app->system->chown($mycnf, $this->data['new']['username']);
+			$app->system->chgrp($mycnf, $this->data['new']['pgroup']);
+			$app->system->exec_safe("chmod 600 ?", $this->data['new']['dir'].$jailkit_chroot_userhome . '/.my.cnf');
+			$app->log("Added user .my.cnf: ".$this->data['new']['dir'].$jailkit_chroot_userhome . '/.my.cnf', LOGLEVEL_DEBUG);
+		}
+
 		$app->log("Added jailkit parent user home in: ".$this->data['new']['dir'].$jailkit_chroot_puserhome, LOGLEVEL_DEBUG);
 
 
@@ -522,19 +537,18 @@ class shelluser_jailkit_plugin {
 			//Generate ssh-rsa-keys
 			$app->uses('functions');
 			$app->functions->generate_ssh_key($id, $username);
-
 			$app->log("ssh-rsa keypair generated for ".$username, LOGLEVEL_DEBUG);
 		};
 
 		if (!file_exists($sshkeys)){
 			// add root's key
-			$app->file->mkdirs($sshdir, '0755');
+			$app->file->mkdirs($sshdir, '0700');
 			$authorized_keys_template = $this->jailkit_config['jailkit_chroot_authorized_keys_template'];
 			if(is_file($authorized_keys_template)) $app->system->file_put_contents($sshkeys, $app->system->file_get_contents($authorized_keys_template));
 
 			// Remove duplicate keys
 			$existing_keys = @file($sshkeys, FILE_IGNORE_NEW_LINES);
-			$new_keys = (!is_null($userkey))?explode("\n", $userkey):'';
+			$new_keys = (!is_null($userkey))?explode("\n", $userkey):array();
 			if(is_array($existing_keys)) {
 				$final_keys_arr = @array_merge($existing_keys, $new_keys);
 			} else {
@@ -549,10 +563,11 @@ class shelluser_jailkit_plugin {
 			$final_keys = implode("\n", array_flip(array_flip($new_final_keys_arr))) . "\n";
 
 			// add the user's key
-			file_put_contents($sshkeys, $final_keys);
+			$app->system->file_put_contents($sshkeys, $final_keys);
 			$app->file->remove_blank_lines($sshkeys);
 			$app->log("ssh-rsa authorisation keyfile created in ".$sshkeys, LOGLEVEL_DEBUG);
 		}
+
 		//* Get the keys
 		$existing_keys = file($sshkeys, FILE_IGNORE_NEW_LINES);
 		if(!$existing_keys) {
@@ -593,7 +608,6 @@ class shelluser_jailkit_plugin {
 
 		// set proper file permissions
 		$app->system->exec_safe("chown -R ?:? ?", $this->data['new']['puser'], $this->data['new']['pgroup'], $sshdir);
-		$app->system->exec_safe("chmod 700 ?", $sshdir);
 		$app->system->exec_safe("chmod 600 ?", $sshkeys);
 
 	}

@@ -30,6 +30,7 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 class shelluser_base_plugin {
 
+	//* $plugin_name and $class_name have to be the same then the name of this class
 	var $plugin_name = 'shelluser_base_plugin';
 	var $class_name = 'shelluser_base_plugin';
 	var $min_uid = 499;
@@ -69,7 +70,7 @@ class shelluser_base_plugin {
 
 	}
 
-
+	//* This function is called, when a shell user is inserted in the database
 	function insert($event_name, $data) {
 		global $app, $conf;
 
@@ -222,6 +223,7 @@ fi
 		}
 	}
 
+	//* This function is called, when a shell user is updated in the database
 	function update($event_name, $data) {
 		global $app, $conf;
 
@@ -524,11 +526,12 @@ fi
 		if (!file_exists($sshkeys)){
 			// add root's key
 			$app->file->mkdirs($sshdir, '0700');
+
 			if(is_file('/root/.ssh/authorized_keys')) $app->system->file_put_contents($sshkeys, $app->system->file_get_contents('/root/.ssh/authorized_keys'));
 
 			// Remove duplicate keys
 			$existing_keys = @file($sshkeys, FILE_IGNORE_NEW_LINES);
-			$new_keys = explode("\n", $userkey);
+			$new_keys = (!is_null($userkey))?explode("\n", $userkey):array();
 			if(is_array($existing_keys)) {
 				$final_keys_arr = @array_merge($existing_keys, $new_keys);
 			} else {
@@ -550,6 +553,9 @@ fi
 
 		//* Get the keys
 		$existing_keys = file($sshkeys, FILE_IGNORE_NEW_LINES);
+		if(!$existing_keys) {
+			$existing_keys = array();
+		}
 		$new_keys = explode("\n", $sshrsa);
 		$old_keys = explode("\n", $this->data['old']['ssh_rsa']);
 

@@ -253,11 +253,12 @@ class installer_base extends stdClass {
 		if ($conf['default_php'] != '') {
 			if(version_compare(phpversion('tidy'), $conf['default_php'], '==')) $msg .= "Your PHP version is not the OS default. Change the PHP version back to the default version of the OS. The currently used PHP version is " . phpversion() . "The default version for your OS is PHP " . $conf['default_php'] . ".\n";
 		}
-		if(version_compare(phpversion(), '5.4', '<')) $msg .= "PHP Version 5.4 or newer is required. The currently used PHP version is " . phpversion() . ".\n";
+		if(version_compare(phpversion(), '7.0', '<')) $msg .= "PHP Version 7.0 or newer is required. The currently used PHP version is " . phpversion() . ".\n";
 		//if(version_compare(phpversion(), '8.2', '>=')) $msg .= "PHP Version 8.2+ is not supported yet. Change the PHP version back to the default version of the OS. The currently used PHP version is " . phpversion() . ".\n";
 		if(!function_exists('curl_init')) $msg .= "PHP Curl Module is missing.\n";
 		if(!function_exists('mysqli_connect')) $msg .= "PHP MySQLi Module is nmissing.\n";
 		if(!function_exists('mb_detect_encoding')) $msg .= "PHP Multibyte Module (MB) is missing.\n";
+        if(!function_exists('openssl_pkey_get_details')) $msg .= "PHP OpenSSL fiúnctions are missing.\n";
 
 		if($msg != '') die($msg);
 	}
@@ -3333,7 +3334,7 @@ class installer_base extends stdClass {
 		}
 
 		// If the LE SSL certs for this hostname exists
-		if(!is_dir($acme_cert_dir) || !file_exists($check_acme_file) || !$issued_successfully) {
+		if(!is_dir($acme_cert_dir) || !file_exists($check_acme_file) || !isset($issued_successfully) || !$issued_successfully) {
 			if(!$issued_successfully) {
 				swriteln('Could not issue letsencrypt certificate, falling back to self-signed.');
 			} else {
