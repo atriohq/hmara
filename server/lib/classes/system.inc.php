@@ -936,7 +936,7 @@ class system{
         } else {
             return false;
         }
-		
+
 	}
 
 	function move($file1, $file2) {
@@ -3024,4 +3024,35 @@ $app->log("delete_jailkit_chroot called for $home_dir with options ".print_r($op
 			return false;
 		}
 	}
+
+	public function get_newest_php_bin($bin_directory) {
+
+		if(empty($bin_directory)) {
+			$bin_directory = '/usr/bin';
+		}
+
+		$php_binaries = [];
+
+		if($handle = opendir($bin_directory)) {
+			while(false !== ($entry = readdir($handle))) {
+			$full_path = $bin_directory . '/' . $entry;
+				// Check if the filename matches a pattern for commonly available PHP CLI binaries
+				// and ensure they are not symbolic links
+				if(preg_match('/^php(\d{1,2}\.?\d{1,2})?$/', $entry) && !is_link($full_path) && is_file($full_path)) {
+					$php_binaries[] = $entry;
+				}
+			}
+			closedir($handle);
+		}
+		// Find and return the newest/highest version PHP binary
+		$newest_php_bin = null;
+		foreach($php_binaries as $php_bin) {
+			if($newest_php_bin === null || version_compare($php_bin, $newest_php_bin) > 0) {
+				$newest_php_bin = $php_bin;
+			}
+		}
+
+		return $newest_php_bin ? $bin_directory . '/' . $newest_php_bin : null;
+	}
+
 }

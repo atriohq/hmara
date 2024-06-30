@@ -618,9 +618,9 @@ fi
 			$tpl->newTemplate("bashrc_user_generic.master");
 		}
 
-		$php_bin_dir = dirname($this->web['php_cli_binary']);
-
 		if(($this->web['server_php_id'] > 0) && !empty($this->web['php_cli_binary'])) {
+			$php_bin_dir = dirname($this->web['php_cli_binary']);
+
 			if(preg_match('/^(\/usr\/(s)?bin|\/(s)?bin)/', $php_bin_dir)) {
 				$tpl->setVar('use_php_path', false);
 				$tpl->setVar('use_php_alias', true);

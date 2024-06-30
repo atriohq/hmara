@@ -719,9 +719,10 @@ class shelluser_jailkit_plugin {
 		$tpl->setVar('use_php_path', false);
 		$tpl->setVar('use_php_alias', false);
 
-		$php_bin_dir = dirname($this->web['php_cli_binary']);
 
 		if(($this->web['server_php_id'] > 0) && !empty($this->web['php_cli_binary'])) {
+			$php_bin_dir = dirname($this->web['php_cli_binary']);
+
 			if(preg_match('/^(\/usr\/(s)?bin|\/(s)?bin)/', $php_bin_dir)) {
 				$tpl->setVar('use_php_path', false);
 				$tpl->setVar('use_php_alias', true);
@@ -736,9 +737,19 @@ class shelluser_jailkit_plugin {
 				$app->log("The PHP cli binary " . $this->web['php_cli_binary'] . " is not available in the jail of the web " . $this->web['domain']  . " / SSH/SFTP user: " . $this->data['new']['username']  . ". Check your Jailkit setup!", LOGLEVEL_DEBUG);
 				$tpl->setVar('use_php_path', false);
 				$tpl->setVar('use_php_alias', false);
-				if(is_link($this->web['document_root'] . '/etc/alternatives/php'))
-				{
-					unlink($this->web['document_root'] . '/etc/alternatives/php');
+
+				if(!empty($app->system->get_newest_php_bin($this->web['document_root'] . $php_bin_dir))) {
+					if(is_link($this->web['document_root'] . '/etc/alternatives/php') || is_file($this->web['document_root'] . '/etc/alternatives/php'))
+					{
+						unlink($this->web['document_root'] . '/etc/alternatives/php');
+					}
+
+					$fallback_php = $app->system->get_newest_php_bin($this->web['document_root'] . $php_bin_dir);
+					$fallback_php_bin = str_replace($this->web['document_root'], '', $fallback_php);
+
+					symlink($fallback_php_bin, $this->web['document_root'] . '/etc/alternatives/php');
+
+					$app->log("Found " . $fallback_php_bin . " as a fallback in the jail of ". $this->web['domain'], LOGLEVEL_DEBUG);
 				}
 			} else {
 				if($app->system->get_os_type() == "debian" || $app->system->get_os_type() == "ubuntu") {
