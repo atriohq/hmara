@@ -2196,26 +2196,25 @@ class system{
 		}
 	}
 
-        function getopensslversion($get_minor = false) {
-                global $app;
-                if($this->is_installed('openssl')) $cmd = 'openssl version';
-                else {
+	function getopensslversion($get_minor = false) {
+		global $app;
+		if($this->is_installed('openssl')) $cmd = 'openssl version';
+		else {
 			$app->log("Could not check OpenSSL version, openssl not found.", LOGLEVEL_DEBUG);
-                        return '1.0.1';
-                }
+			return '1.0.1';
+		}
 
 		exec($cmd, $output, $return_var);
-                if($return_var != 0 || !$output[0]) {
+		if($return_var != 0 || !$output[0]) {
 			$app->log("Could not check OpenSSL version, openssl did not return any data.", LOGLEVEL_WARN);
-                        return '1.0.1';
-                }
-                if(preg_match('/OpenSSL\s*(\d+)(\.(\d+)(\.(\d+))*)?(\D|$)/i', $output[0], $matches)) {
+			return '1.0.1';
+		}
+		if(preg_match('/OpenSSL\s*(\d+)(\.(\d+)(\.(\d+))*)?(\D|$)/i', $output[0], $matches)) {
 			return $matches[1] . (isset($matches[3]) ? '.' . $matches[3] : '') . (isset($matches[5]) && $get_minor == true ? '.' . $matches[5] : '');
-                } else {
+		} else {
 			$app->log("Could not check OpenSSL version, did not find version string in openssl output.", LOGLEVEL_WARN);
 			return '1.0.1';
-                }
-
+		}
 	}
 
 	function getnginxversion($get_minor = false) {
@@ -2223,23 +2222,23 @@ class system{
 
 		if($this->is_installed('nginx')) $cmd = 'nginx -v 2>&1';
 		else {
-                        $app->log("Could not check Nginx version, nginx not found.", LOGLEVEL_DEBUG);
-                        return false;
-                }
+			$app->log("Could not check Nginx version, nginx not found.", LOGLEVEL_DEBUG);
+			return false;
+		}
 
 		exec($cmd, $output, $return_var);
 
 		if($return_var != 0 || !$output[0]) {
-                        $app->log("Could not check Nginx version, nginx did not return any data.", LOGLEVEL_WARN);
-                        return false;
+			$app->log("Could not check Nginx version, nginx did not return any data.", LOGLEVEL_WARN);
+			return false;
 		}
 
 		if(preg_match('/nginx version: nginx\/\s*(\d+)(\.(\d+)(\.(\d+))*)?(\D|$)/i', $output[0], $matches)) {
 			return $matches[1] . (isset($matches[3]) ? '.' . $matches[3] : '') . (isset($matches[5]) && $get_minor == true ? '.' . $matches[5] : '');
-                } else {
-                        $app->log("Could not check Nginx version, did not find version string in nginx output.", LOGLEVEL_WARN);
-                        return false;
-                }
+		} else {
+			$app->log("Could not check Nginx version, did not find version string in nginx output.", LOGLEVEL_WARN);
+			return false;
+		}
 	}
 
 	function getapacheversion($get_minor = false) {
@@ -2497,7 +2496,7 @@ class system{
 
 	public function create_jailkit_chroot($home_dir, $app_sections = array(), $options = array()) {
 		global $app;
-$app->log("create_jailkit_chroot: called for home_dir $home_dir with options: " . print_r($options, true), LOGLEVEL_DEBUG);
+		$app->log("create_jailkit_chroot: called for home_dir $home_dir with options: " . print_r($options, true), LOGLEVEL_DEBUG);
 
 		// Disallow operating on root directory
 		if(realpath($home_dir) == '/') {
@@ -2574,7 +2573,7 @@ $app->log("create_jailkit_chroot: called for home_dir $home_dir with options: " 
 
 	public function create_jailkit_programs($home_dir, $programs = array(), $options = array()) {
 		global $app;
-$app->log("create_jailkit_programs: called for home_dir $home_dir with options: " . print_r($options, true), LOGLEVEL_DEBUG);
+		$app->log("create_jailkit_programs: called for home_dir $home_dir with options: " . print_r($options, true), LOGLEVEL_DEBUG);
 
 		// Disallow operating on root directory
 		if(realpath($home_dir) == '/') {
@@ -2652,7 +2651,7 @@ $app->log("create_jailkit_programs: called for home_dir $home_dir with options: 
 	public function update_jailkit_chroot($home_dir, $sections = array(), $programs = array(), $options = array()) {
 		global $app;
 
-$app->log("update_jailkit_chroot called for $home_dir with options ".print_r($options, true), LOGLEVEL_DEBUG);
+		$app->log("update_jailkit_chroot called for $home_dir with options ".print_r($options, true), LOGLEVEL_DEBUG);
 		$app->uses('ini_parser');
 
 		// Disallow operating on root directory
@@ -2735,7 +2734,7 @@ $app->log("update_jailkit_chroot called for $home_dir with options ".print_r($op
 
 			// save list of hardlinked files
 			if (!(in_array('hardlink', $opts) || in_array('allow_hardlink', $options))) {
-$app->log("update_jailkit_chroot: searching for hardlinks in $jail_dir", LOGLEVEL_DEBUG);
+				$app->log("update_jailkit_chroot: searching for hardlinks in $jail_dir", LOGLEVEL_DEBUG);
                                 $find_multiple_links = function ( $path ) use ( &$find_multiple_links ) {
 					$found = array();
 					if (is_dir($path) && !is_link($path)) {
@@ -2762,8 +2761,9 @@ $app->log("update_jailkit_chroot: searching for hardlinks in $jail_dir", LOGLEVE
 
 				// remove broken symlinks a second time after hardlink cleanup
 				$this->remove_broken_symlinks($jail_dir, true);
+			} else {
+				$app->log("update_jailkit_chroot: NOT searching for hardlinks in $jail_dir, options: ".print_r($options, true), LOGLEVEL_DEBUG);
 			}
-else { $app->log("update_jailkit_chroot: NOT searching for hardlinks in $jail_dir, options: ".print_r($options, true), LOGLEVEL_DEBUG); }
 		}
 
 		foreach ($multiple_links as $file) {
@@ -2773,7 +2773,7 @@ else { $app->log("update_jailkit_chroot: NOT searching for hardlinks in $jail_di
 
 		$cmd = 'jk_update --jail=?' . $jk_update_args . $skips;
 		$this->exec_safe($cmd, $home_dir);
-$app->log('jk_update returned: '.print_r($this->_last_exec_out, true), LOGLEVEL_DEBUG);
+		$app->log('jk_update returned: '.print_r($this->_last_exec_out, true), LOGLEVEL_DEBUG);
 		# handle jk_update output
 		foreach ($this->_last_exec_out as $line) {
 			# jk_update sample output:
@@ -2791,10 +2791,10 @@ $app->log('jk_update returned: '.print_r($this->_last_exec_out, true), LOGLEVEL_
 			if (preg_match('@^(?:[^ ]+ ){6}(?:.+)('.preg_quote($home_dir, '@').'.+)@', $line, $matches)) {
 				# remove deprecated files that jk_update failed to remove
 				if (is_file($matches[1]) || is_link($matches[1])) {
-$app->log("update_jailkit_chroot: removing deprecated file which jk_update failed to remove:  ".$matches[1], LOGLEVEL_DEBUG);
+					$app->log("update_jailkit_chroot: removing deprecated file which jk_update failed to remove:  ".$matches[1], LOGLEVEL_DEBUG);
 					unlink($matches[1]);
 				} elseif (is_dir($matches[1]) && !is_link($matches[1])) {
-$app->log("update_jailkit_chroot: removing deprecated directory which jk_update failed to remove:  ".$matches[1], LOGLEVEL_DEBUG);
+					$app->log("update_jailkit_chroot: removing deprecated directory which jk_update failed to remove:  ".$matches[1], LOGLEVEL_DEBUG);
 					$this->rmdir($matches[1], true);
 				} else {
 					# unhandled error
@@ -2901,7 +2901,7 @@ $app->log("update_jailkit_chroot: removing deprecated directory which jk_update 
 	public function delete_jailkit_chroot($home_dir, $options = array()) {
 		global $app;
 
-$app->log("delete_jailkit_chroot called for $home_dir with options ".print_r($options, true), LOGLEVEL_DEBUG);
+		$app->log("delete_jailkit_chroot called for $home_dir with options ".print_r($options, true), LOGLEVEL_DEBUG);
 		$app->uses('ini_parser');
 
 		// Disallow operating on root directory
