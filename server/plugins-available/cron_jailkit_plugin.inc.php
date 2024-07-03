@@ -402,17 +402,16 @@ class cron_jailkit_plugin {
 				$tpl->setVar('use_php_alias', false);
 
 				if(!empty($app->system->get_newest_php_bin($this->parent_domain['document_root'] . $php_bin_dir))) {
-					if(is_link($this->parent_domain['document_root'] . '/etc/alternatives/php'))
-					{
-						unlink($this->parent_domain['document_root'] . '/etc/alternatives/php');
-					}
-
 					$fallback_php = $app->system->get_newest_php_bin($this->parent_domain['document_root'] . $php_bin_dir);
 					$fallback_php_bin = str_replace($this->parent_domain['document_root'], '', $fallback_php);
 
-					symlink($fallback_php_bin, $this->parent_domain['document_root'] . '/etc/alternatives/php');
-
-					$app->log("Found " . $fallback_php_bin . " as a fallback in the jail of ". $this->parent_domain['domain'], LOGLEVEL_DEBUG);
+					if(!empty($fallback_php) && file_exists($fallback_php_bin)) {
+						if(is_link($this->parent_domain['document_root'] . '/etc/alternatives/php') || is_file($this->parent_domain['document_root'] . '/etc/alternatives/php')) {
+							unlink($this->parent_domain['document_root'] . '/etc/alternatives/php');
+							symlink($fallback_php_bin, $this->parent_domain['document_root'] . '/etc/alternatives/php');
+							$app->log("Found " . $fallback_php_bin . " as a fallback for alternatives/php in the jail of ". $this->parent_domain['domain'], LOGLEVEL_DEBUG);
+						}
+					}
 				}
 			} else {
 				if($app->system->get_os_type() == "debian" || $app->system->get_os_type() == "ubuntu") {

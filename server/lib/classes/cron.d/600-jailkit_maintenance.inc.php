@@ -40,10 +40,10 @@ class cronjob_jailkit_maintenance extends cronjob {
 		$server_config = $app->getconf->get_server_config($conf['server_id'], 'server');
 
 		$jailkit_config = $app->getconf->get_server_config($conf['server_id'], 'jailkit');
-		if (isset($this->jailkit_config) && isset($this->jailkit_config['jailkit_hardlinks'])) {
-			if ($this->jailkit_config['jailkit_hardlinks'] == 'yes') {
+		if(isset($this->jailkit_config) && isset($this->jailkit_config['jailkit_hardlinks'])) {
+			if($this->jailkit_config['jailkit_hardlinks'] == 'yes') {
 				$global_options = array('hardlink');
-			} elseif ($this->jailkit_config['jailkit_hardlinks'] == 'no') {
+			} elseif($this->jailkit_config['jailkit_hardlinks'] == 'no') {
 				$global_options = array();
 			}
 		} else {
@@ -51,12 +51,12 @@ class cronjob_jailkit_maintenance extends cronjob {
 		}
 
 		// force all jails to update every 2 weeks
-		if (! is_file('/usr/local/ispconfig/server/temp/jailkit_force_update.ts')) {
+		if(!is_file('/usr/local/ispconfig/server/temp/jailkit_force_update.ts')) {
 			if(!@is_dir('/usr/local/ispconfig/server/temp')) {
 				$app->system->mkdirpath('/usr/local/ispconfig/server/temp');
 			}
 			$app->system->touch('/usr/local/ispconfig/server/temp/jailkit_force_update.ts');
-		} elseif ( time() - filemtime('/usr/local/ispconfig/server/temp/jailkit_force_update.ts') > 60 * 60 * 24 * 14 ) {
+		} elseif(time() - filemtime('/usr/local/ispconfig/server/temp/jailkit_force_update.ts') > 60 * 60 * 24 * 14) {
 			$update_hash = 'force_update'.time();
 			$app->db->query("UPDATE web_domain SET last_jailkit_hash = ? WHERE type = 'vhost' AND server_id = ?", $update_hash, $conf['server_id']);
 			$app->system->touch('/usr/local/ispconfig/server/temp/jailkit_force_update.ts');

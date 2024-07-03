@@ -2835,21 +2835,30 @@ class system{
 			$this->chmod($home_dir . '/var/tmp', 0770, true);
 		}
 
-		if (!empty($options['php_cli_binary'])) {
+
+		if(!empty($options['php_cli_binary'])) {
+			$php_bin_dir = dirname($options['php_cli_binary']);
 			if(!file_exists($home_dir . '/' . $options['php_cli_binary'])) {
 				$app->log("update_jailkit_chroot: The PHP cli binary " . $options['php_cli_binary'] . " is not available in the jail of the web " . $options['domain'], LOGLEVEL_DEBUG);
-				if(is_link($home_dir . '/etc/alternatives/php') || is_file($home_dir . '/etc/alternatives/php'))
-				{
-					unlink($home_dir . '/etc/alternatives/php');
+
+				$fallback_php = $app->system->get_newest_php_bin($home_dir . $php_bin_dir);
+				$fallback_php_bin = str_replace($home_dir, '', $fallback_php);
+
+				if(!empty($fallback_php) && file_exists($fallback_php_bin)) {
+					if(is_link($home_dir . '/etc/alternatives/php') || is_file($home_dir . '/etc/alternatives/php')) {
+						unlink($home_dir . '/etc/alternatives/php');
+						symlink($fallback_php_bin, $home_dir . '/etc/alternatives/php');
+						$app->log("update_jailkit_chroot: Found " . $fallback_php_bin . " as a fallback for alternatives/php in the jail of " . $options['domain'], LOGLEVEL_DEBUG);
+					}
 				}
+
 			} else {
 				if($app->system->get_os_type() == "debian" || $app->system->get_os_type() == "ubuntu") {
 					$app->log("update_jailkit_chroot: setting alternatives/php to " . $options['php_cli_binary'], LOGLEVEL_DEBUG);
-					if(is_link($home_dir . '/etc/alternatives/php') || is_file($home_dir . '/etc/alternatives/php'))
-					{
+					if(is_link($home_dir . '/etc/alternatives/php') || is_file($home_dir . '/etc/alternatives/php')) {
 						unlink($home_dir . '/etc/alternatives/php');
+						symlink($options['php_cli_binary'], $home_dir . '/etc/alternatives/php');
 					}
-					symlink($options['php_cli_binary'], $home_dir . '/etc/alternatives/php');
 				}
 
 			}
