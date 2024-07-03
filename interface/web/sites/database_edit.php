@@ -352,7 +352,7 @@ class page_action extends tform_actions {
 
 		if ($app->tform->errorMessage == ''){
 			/* restrict the names if there is no error */
-			/* crop user and db names if they are too long -> mysql: user: 16 chars / db: 64 chars */
+			/* crop user and db names if they are too long -> mysql: user: 32 chars / db: 64 chars */
 			$this->dataRecord['database_name'] = substr($dbname_prefix . $this->dataRecord['database_name'], 0, 64);
 		}
 
