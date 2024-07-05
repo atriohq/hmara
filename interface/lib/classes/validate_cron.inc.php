@@ -59,11 +59,10 @@ class validate_cron {
 
 				if($cronjob['parent_domain_id'] > 0) {
 					$parent_domain = $app->db->queryOneRecord("SELECT `domain` FROM `web_domain` WHERE `domain_id` = ?", $cronjob['parent_domain_id']);
+					$trans = array(
+						'{DOMAIN}' => $parent_domain['domain']
+					);
 				}
-
-				$trans = array(
-					'{DOMAIN}' => $parent_domain['domain']
-				);
 
 				$field_value = strtr($field_value, $trans);
 
