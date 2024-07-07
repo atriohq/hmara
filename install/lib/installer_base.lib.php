@@ -1070,6 +1070,7 @@ class installer_base extends stdClass {
 
 			# reduce 3 or more newlines to 2
 			$content = rf($conf['postfix']['config_dir'].'/master.cf');
+			$content = preg_replace( '/^# Data returning from Amavis .*$/m', '', $content );  # Cleanup comment we generated
 			$content = preg_replace( '/(\r?\n){3,}/', '$1$1', $content );
 			wf( $conf['postfix']['config_dir'].'/master.cf', $content );
 
