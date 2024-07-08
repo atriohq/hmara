@@ -334,7 +334,8 @@ class mysql_clientdb_plugin {
 			}
 
 			// check if the database exists
-			if($data['new']['database_name'] == $data['old']['database_name']) {
+			if($data['new']['database_name'] == $data['old']['database_name']
+				&& $data['new']['server_id'] ==  $data['old']['server_id']) {
 				$result = $link->query("SHOW DATABASES LIKE '".$link->escape_string($data['new']['database_name'])."'");
 				if($result->num_rows === 0) $this->db_insert($event_name, $data);
 			}
@@ -362,6 +363,39 @@ class mysql_clientdb_plugin {
 			}
 			if($old_host_list != '') $old_host_list .= ',';
 			$old_host_list .= 'localhost';
+
+			// Migrating a DB to a different server.
+			if ( $data['new']['server_id'] !=  $data['old']['server_id'] ) {
+				// This should run on the receiving server.
+				// Requires ssh authentication to be in place from the receiving server to the originating server.
+
+				// Check...
+				$result = $link->query("SHOW DATABASES LIKE '".$link->escape_string($data['new']['database_name'])."'");
+				if($result->num_rows != 0) {
+					$app->log('Db already exists on destination server', LOGLEVEL_WARN);
+					$app->dbmaster->datalogError('Db already exists on destination server.');
+					return;
+				}
+
+				// Prepare the receiving database
+				$this->db_insert($event_name, $data);
+
+				// TODO work with data from ./server/lib/mysql_clientdb.conf ??
+				$migrate_command = "ssh ? mysqldump --extended-insert --no-create-db ? "
+									. "| mysql ?";
+
+				$tmp = $app->db->queryOneRecord("SELECT `server_name` FROM `server` WHERE `server_id` = ?", $data['old']['server_id']);
+				$src_hostname = $tmp['server_name'];
+
+				# TODO better handle errors, now continues when the dump command fails.  $app->system->_last_exec_retcode represents the latter pipe end.   Bash pipe fail mode?
+				$app->system->exec_safe($migrate_command, $src_hostname, $data['old']['database_name'], $data['new']['database_name']);
+
+				// Check something???  but what?  the source db could be empty, so checking for tables is not useful.
+
+				// Remove on the old server....
+				# TODO what of that's also the master?
+				$app->dbmaster->datalogSave('web_database', 'DELETE', 'database_id', $data['old']['database_id'], $data['old'], array());
+			}
 
 			//* rename database
 			if ( $data['new']['database_name'] !=  $data['old']['database_name'] ) {
