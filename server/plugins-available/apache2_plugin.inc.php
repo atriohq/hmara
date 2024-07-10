@@ -1508,7 +1508,7 @@ class apache2_plugin {
 
 			// begin a new ServerAlias line after 30 alias domains
 			foreach($server_alias as $tmp_alias) {
-				if($n % 30 == 0) $server_alias_str .= "\n    ServerAlias ";
+				if($n % 30 == 0) $server_alias_str .= "\n                ServerAlias ";
 				$server_alias_str .= $tmp_alias;
 			}
 			unset($tmp_alias);
