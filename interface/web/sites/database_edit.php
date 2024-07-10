@@ -322,6 +322,8 @@ class page_action extends tform_actions {
 				$app->tform->errorMessage .= $app->tform->wordbook["database_charset_change_txt"].'<br />';
 			}
 
+
+// TODO check a config flag to see if migration is available ...otherwise do this check below
 			//* Check if the server has been changed
 			// We do this only for the admin or reseller users, as normal clients can not change the server ID anyway
 #			if($_SESSION["s"]["user"]["typ"] == 'admin' || $app->auth->has_clients($_SESSION['s']['user']['userid'])) {

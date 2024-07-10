@@ -377,6 +377,9 @@ class mysql_clientdb_plugin {
 					return;
 				}
 
+				// TODO close access on the originating database to prevent changes while we're migrating.
+
+
 				// Prepare the receiving database
 				$this->db_insert($event_name, $data);
 
@@ -393,7 +396,6 @@ class mysql_clientdb_plugin {
 				// Check something???  but what?  the source db could be empty, so checking for tables is not useful.
 
 				// Remove on the old server....
-				# TODO what of that's also the master?
 				$app->dbmaster->datalogSave('web_database', 'DELETE', 'database_id', $data['old']['database_id'], $data['old'], array());
 			}
 
