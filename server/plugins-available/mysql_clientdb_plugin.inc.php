@@ -378,7 +378,7 @@ class mysql_clientdb_plugin {
 				}
 
 				// Close access on the originating database to prevent changes while we're migrating.
-				$app->dbmaster->datalogSave('web_database', 'UPDATE', 'database_id', $data['old']['database_id'], $data['old'] + array(['active'] => 'n'), array());
+				$app->dbmaster->datalogSave('web_database', 'UPDATE', 'database_id', $data['old']['database_id'], $data['old'], $data['old'] + array('active' => 'n'));
 
 				// Wait for the other server to process the update, should run every minute, wait two to be sure
 				sleep(120);
