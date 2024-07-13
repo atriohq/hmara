@@ -377,8 +377,12 @@ class mysql_clientdb_plugin {
 					return;
 				}
 
-				// TODO close access on the originating database to prevent changes while we're migrating.
+				// Close access on the originating database to prevent changes while we're migrating.
+				$app->dbmaster->datalogSave('web_database', 'UPDATE', 'database_id', $data['old']['database_id'], $data['old'] + array(['active'] => 'n'), array());
 
+				// Wait for the other server to process the update, should run every minute, wait two to be sure
+				sleep(120);
+				// TODO call old server and trigger an extra cron run to speed it up?
 
 				// Prepare the receiving database
 				$this->db_insert($event_name, $data);
