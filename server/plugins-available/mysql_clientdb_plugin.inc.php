@@ -399,7 +399,7 @@ class mysql_clientdb_plugin {
 
 				// Check something???  but what?  the source db could be empty, so checking for tables is not useful.
 
-				// Remove on the old server....
+				// Remove on the old server....['old'] had the originating server_id.
 				$app->dbmaster->datalogSave('web_database', 'DELETE', 'database_id', $data['old']['database_id'], $data['old'], array());
 			}
 
