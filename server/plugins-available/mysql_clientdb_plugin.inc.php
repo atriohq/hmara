@@ -391,7 +391,7 @@ class mysql_clientdb_plugin {
 				$migrate_command = "ssh ? mysqldump --extended-insert --no-create-db ? "
 									. "| mysql ?";
 
-				$tmp = $app->db->queryOneRecord("SELECT `server_name` FROM `server` WHERE `server_id` = ?", $data['old']['server_id']);
+				$tmp = $app->dbmaster->queryOneRecord("SELECT `server_name` FROM `server` WHERE `server_id` = ?", $data['old']['server_id']);
 				$src_hostname = $tmp['server_name'];
 
 				# TODO better handle errors, now continues when the dump command fails.  $app->system->_last_exec_retcode represents the latter pipe end.   Bash pipe fail mode?
