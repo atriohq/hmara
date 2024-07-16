@@ -199,7 +199,7 @@
           },
           "hide": false,
           "refId": "A",
-          "target": "aliasByNode(derivative(keepLastValue(ispconfig.$server.monitor_data.disk_quota.$username)), 4)",
+          "target": "aliasByNode(derivative(keepLastValue(scale(ispconfig.$server.monitor_data.disk_quota.$username, 1024))), 4)",
           "textEditor": true
         }
       ],
