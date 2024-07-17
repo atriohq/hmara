@@ -141,6 +141,7 @@ class cronjob_monitor_database_size extends cronjob {
 				$database_name = preg_replace('/\./', '_', $db['database_name']);
 				$graphite_lines .= "ispconfig.$hostname.monitor_data.database_quota.$database_name " . $data[$i]['size'] . " $timestamp" . PHP_EOL;
 			}
+			// Store in a 'space separated values' file. (Useful for debugging and possibly other scripting)
 			file_put_contents('/tmp/usage_db.ssv', $graphite_lines);
 			shell_exec("cat /tmp/usage_db.ssv | " . $conf['graphite_collector_command']);
 		}

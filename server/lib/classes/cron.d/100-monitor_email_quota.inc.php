@@ -173,6 +173,7 @@ class cronjob_monitor_email_quota extends cronjob {
 				$username = preg_replace('/\./', '_', $username);
 				$graphite_lines .= "ispconfig.$hostname.monitor_data.email_quota.$username $size[used] $timestamp" . PHP_EOL;
 			}
+			// Store in a 'space separated values' file. (Useful for debugging and possibly other scripting)
 			file_put_contents('/tmp/usage.ssv', $graphite_lines);
 			shell_exec("cat /tmp/usage.ssv | " . $conf['graphite_collector_command']);
 		}
