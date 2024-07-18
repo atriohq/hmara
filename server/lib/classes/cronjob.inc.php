@@ -103,7 +103,7 @@ class cronjob {
 		// check the run time and values for this job
 
 		// remove stale cronjobs
-		$data = $app->db->queryAllRecords("SELECT `last_run` FROM `sys_cron` WHERE `name` = ? AND (`last_run` IS NOT NULL AND `last_run` < DATE_SUB(NOW(), INTERVAL 24 HOUR)) AND `running` = 1", get_class($this));
+               $data = $app->db->queryAllRecords("SELECT `name`, `last_run` FROM `sys_cron` WHERE `name` = ? AND (`last_run` IS NOT NULL AND `last_run` < DATE_SUB(NOW(), INTERVAL 24 HOUR)) AND `running` = 1", get_class($this));
 		foreach ($data as $rec) {
 			if($conf['log_priority'] <= LOGLEVEL_WARN) print "Removing stale sys_cron entry for ".get_class($this)." (last run ".$rec['last_run'].")\n";
 			$app->db->query("DELETE FROM `sys_cron` WHERE `name` = ? AND `last_run` = ? AND `running` = 1", $rec['name'], $rec['last_run']);
