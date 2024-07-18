@@ -36,6 +36,8 @@ class cronjob_mailbox_stats_hourly extends cronjob {
 	protected $mail_boxes = array();
 	protected $mail_rewrites = array();
 
+	private $_tools = null;
+
 	/* this function is optional if it contains no custom code */
 	public function onPrepare() {
 		global $app;
