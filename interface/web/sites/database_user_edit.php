@@ -168,6 +168,13 @@ class page_action extends tform_actions {
 			$this->dataRecord['database_user'] = substr($dbuser_prefix . $this->dataRecord['database_user'], 0, 32);
 		}
 
+		// always copy over the password to the SHA2 column
+		if ($this->dataRecord['database_password']) {
+			$this->dataRecord['database_password_sha2'] = $this->dataRecord['database_password'];
+		} else {
+			$this->dataRecord['database_password_sha2'] = '';
+		}
+
 		/* prepare password for MongoDB */
 		// TODO: this still doens't work as when only the username changes we have no database_password.
 		// taking the one from oldData doesn't work as it's encrypted...shit!
@@ -184,9 +191,12 @@ class page_action extends tform_actions {
 
 		//* Database username shall not be empty
 		if($this->dataRecord['database_user'] == '') $app->tform->errorMessage .= $app->tform->wordbook["database_user_error_empty"].'<br />';
-		
+
 		//* Database password shall not be empty
 		if($this->dataRecord['database_password'] == '') $app->tform->errorMessage .= $app->tform->wordbook["database_password_error_empty"].'<br />';
+
+		// always copy over the password to the SHA2 column
+		$this->dataRecord['database_password_sha2'] = $this->dataRecord['database_password'];
 
 		//* Get the database name and database user prefix
 		$app->uses('getconf,tools_sites');

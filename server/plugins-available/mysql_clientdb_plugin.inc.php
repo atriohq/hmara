@@ -71,7 +71,7 @@ class mysql_clientdb_plugin {
 
 	}
 
-	function process_host_list($action, $database_name, $database_user, $database_password, $host_list, $link, $database_rename_user = '', $user_access_mode = 'rw') {
+	protected function process_host_list($action, $database_name, $database_user, $database_password, $database_password_sha2, $host_list, $link, $user_access_mode = 'rw') {
 		global $app;
 
 		// check mysql-plugins
@@ -100,9 +100,6 @@ class mysql_clientdb_plugin {
 		if(!is_array($host_list)) $host_list = explode(',', $host_list);
 
 		$success = true;
-		if(!preg_match('/\*[A-F0-9]{40}$/', $database_password)) {
-				$database_password = $app->db->getPasswordHash($password);
-		}
 
 		$app->log("Calling $action for $database_name with access $user_access_mode and hosts " . implode(', ', $host_list), LOGLEVEL_DEBUG);
 
@@ -150,8 +147,19 @@ class mysql_clientdb_plugin {
 				$link->query("CREATE USER '".$link->escape_string($database_user)."'@'$db_host'");
 				$app->log("CREATE USER '".$link->escape_string($database_user)."'@'$db_host'", LOGLEVEL_DEBUG);
 
+				$db_type = $this->getDatabaseType($link);
+				$db_version = $this->getDatabaseVersion($link);
+				if (!preg_match('/^\*[A-F0-9]{40}$/', $database_password)) {
+					$database_password = $app->db->getPasswordHash($database_password, 'mysql_native_password');
+				}
+				if ($database_password_sha2 && $db_type == 'mysql' && version_compare($db_version, '8.0', '>=')) {
+					$auth_plugin = 'caching_sha2_password';
+				} else {
+					$auth_plugin = 'mysql_native_password';
+				}
+
 				// mariadb or mysql < 5.7
-				if($this->getDatabaseType($link) == 'mariadb' || version_compare($this->getDatabaseVersion($link), '5.7', '<')) {
+				if ($db_type == 'mariadb' || version_compare($db_version, '5.7', '<')) {
 					$query = sprintf("SET PASSWORD FOR '%s'@'%s' = '%s'",
 						$link->escape_string($database_user),
 						$db_host,
@@ -160,16 +168,17 @@ class mysql_clientdb_plugin {
 				}
 				// mysql >= 5.7
 				else {
-					$query = sprintf("ALTER USER IF EXISTS '%s'@'%s' IDENTIFIED WITH mysql_native_password AS '%s'",
+					$query = sprintf("ALTER USER IF EXISTS '%s'@'%s' IDENTIFIED WITH %s AS '%s'",
 						$link->escape_string($database_user),
 						$db_host,
-						$link->escape_string($database_password));
+						$auth_plugin,
+						$link->escape_string($auth_plugin == 'mysql_native_password' ? $database_password : $database_password_sha2));
 					if(!$link->query($query)) $success = false;
 				}
 
 				$app->log("PASSWORD SET FOR '".$link->escape_string($database_user)."'@'$db_host' success? " . ($success ? 'yes' : 'no'), LOGLEVEL_DEBUG);
 
-				if($success == true){
+				if ($success){
 					$link->query("FLUSH PRIVILEGES");
 				}
 
@@ -177,34 +186,10 @@ class mysql_clientdb_plugin {
 				if(!$link->query("GRANT " . $grants . " ON `".$database_name."`.* TO '".$link->escape_string($database_user)."'@'$db_host'")) $success = false;
 				$app->log("GRANT " . $grants . " ON `".$database_name."`.* TO '".$link->escape_string($database_user)."'@'$db_host' success? " . ($success ? 'yes' : 'no'), LOGLEVEL_DEBUG);
 
-				} elseif($action == 'REVOKE') {
+			} elseif($action == 'REVOKE') {
 				if(!$link->query("REVOKE ALL PRIVILEGES ON `".$database_name."`.* FROM '".$link->escape_string($database_user)."'@'$db_host'")) $success = false;
 			} elseif($action == 'DROP') {
 				if(!$link->query("DROP USER '".$link->escape_string($database_user)."'@'$db_host'")) $success = false;
-			} elseif($action == 'RENAME') {
-				if(!$link->query("RENAME USER '".$link->escape_string($database_user)."'@'$db_host' TO '".$link->escape_string($database_rename_user)."'@'$db_host'")) $success = false;
-			} elseif($action == 'PASSWORD') {
-				//if(!$link->query("SET PASSWORD FOR '".$link->escape_string($database_user)."'@'$db_host' = '".$link->escape_string($database_password)."'")) $success = false;
-				// SET PASSWORD for already hashed passwords is not supported by latest MySQL 5.7 anymore, so we have to set the hashed password directly
-				if(trim($database_password) != '') {
-					// mariadb or mysql < 5.7
-					if($this->getDatabaseType($link) == 'mariadb' || version_compare($this->getDatabaseVersion($link), '5.7', '<')) {
-						$query = sprintf("SET PASSWORD FOR '%s'@'%s' = '%s'",
-							$link->escape_string($database_user),
-							$db_host,
-							$link->escape_string($database_password));
-						if(!$link->query($query)) $success = false;
-					}
-					// mysql >= 5.7
-					else {
-						$query = sprintf("ALTER USER IF EXISTS '%s'@'%s' IDENTIFIED WITH mysql_native_password AS '%s'",
-							$link->escape_string($database_user),
-							$db_host,
-							$link->escape_string($database_password));
-						if(!$link->query($query)) $success = false;
-					}
-					if($success == true) $link->query("FLUSH PRIVILEGES");
-				}
 			}
 		}
 
@@ -300,11 +285,11 @@ class mysql_clientdb_plugin {
 
 				if($db_user) {
 					if($db_user['database_user'] == 'root') $app->log('User root not allowed for Client databases', LOGLEVEL_WARN);
-					else $this->process_host_list('GRANT', $data['new']['database_name'], $db_user['database_user'], $db_user['database_password'], $host_list, $link, '', ($data['new']['quota_exceeded'] == 'y' ? 'rd' : 'rw'));
+					else $this->process_host_list('GRANT', $data['new']['database_name'], $db_user['database_user'], $db_user['database_password'], $db_user['database_password_sha2'], $host_list, $link, ($data['new']['quota_exceeded'] == 'y' ? 'rd' : 'rw'));
 				}
 				if($db_ro_user && $data['new']['database_user_id'] != $data['new']['database_ro_user_id']) {
 					if($db_ro_user['database_user'] == 'root') $app->log('User root not allowed for Client databases', LOGLEVEL_WARN);
-					else $this->process_host_list('GRANT', $data['new']['database_name'], $db_ro_user['database_user'], $db_ro_user['database_password'], $host_list, $link, '', 'r');
+					else $this->process_host_list('GRANT', $data['new']['database_name'], $db_ro_user['database_user'], $db_ro_user['database_password'], $db_ro_user['database_password_sha2'], $host_list, $link, 'r');
 				}
 
 			}
@@ -492,11 +477,11 @@ class mysql_clientdb_plugin {
 			if($data['new']['active'] == 'y') {
 				if($db_user) {
 					if($db_user['database_user'] == 'root') $app->log('User root not allowed for Client databases', LOGLEVEL_WARN);
-					else $this->process_host_list('GRANT', $data['new']['database_name'], $db_user['database_user'], $db_user['database_password'], $host_list, $link, '', ($data['new']['quota_exceeded'] == 'y' ? 'rd' : 'rw'));
+					else $this->process_host_list('GRANT', $data['new']['database_name'], $db_user['database_user'], $db_user['database_password'], $db_user['database_password_sha2'], $host_list, $link, ($data['new']['quota_exceeded'] == 'y' ? 'rd' : 'rw'));
 				}
 				if($db_ro_user && $data['new']['database_user_id'] != $data['new']['database_ro_user_id']) {
 					if($db_ro_user['database_user'] == 'root') $app->log('User root not allowed for Client databases', LOGLEVEL_WARN);
-					else $this->process_host_list('GRANT', $data['new']['database_name'], $db_ro_user['database_user'], $db_ro_user['database_password'], $host_list, $link, '', 'r');
+					else $this->process_host_list('GRANT', $data['new']['database_name'], $db_ro_user['database_user'], $db_ro_user['database_password'], $db_ro_user['database_password_sha2'], $host_list, $link,'r');
 				}
 			} elseif($data['new']['active'] == 'n' && $data['old']['active'] == 'y') { // revoke database user, if inactive
 				if($old_db_user) {
@@ -505,8 +490,8 @@ class mysql_clientdb_plugin {
 					} else {
 						// Find out users to drop and users to revoke
 						$drop_or_revoke_user = $this->drop_or_revoke_user($data['old']['database_id'], $data['old']['database_user_id'], $old_host_list);
-						if($drop_or_revoke_user['drop_hosts'] != '') $this->process_host_list('DROP', $data['old']['database_name'], $old_db_user['database_user'], $old_db_user['database_password'], $drop_or_revoke_user['drop_hosts'], $link);
-						if($drop_or_revoke_user['revoke_hosts'] != '') $this->process_host_list('REVOKE', $data['old']['database_name'], $old_db_user['database_user'], $old_db_user['database_password'], $drop_or_revoke_user['revoke_hosts'], $link);
+						if($drop_or_revoke_user['drop_hosts'] != '') $this->process_host_list('DROP', $data['old']['database_name'], $old_db_user['database_user'], $old_db_user['database_password'], $old_db_user['database_password_sha2'], $drop_or_revoke_user['drop_hosts'], $link);
+						if($drop_or_revoke_user['revoke_hosts'] != '') $this->process_host_list('REVOKE', $data['old']['database_name'], $old_db_user['database_user'], $old_db_user['database_password'], $old_db_user['database_password_sha2'], $drop_or_revoke_user['revoke_hosts'], $link);
 					}
 
 				}
@@ -516,8 +501,8 @@ class mysql_clientdb_plugin {
 					} else {
 						// Find out users to drop and users to revoke
 						$drop_or_revoke_user = $this->drop_or_revoke_user($data['old']['database_id'], $data['old']['database_ro_user_id'], $old_host_list);
-						if($drop_or_revoke_user['drop_hosts'] != '') $this->process_host_list('DROP', $data['old']['database_name'], $old_db_ro_user['database_user'], $old_db_ro_user['database_password'], $drop_or_revoke_user['drop_hosts'], $link);
-						if($drop_or_revoke_user['revoke_hosts'] != '') $this->process_host_list('REVOKE', $data['old']['database_name'], $old_db_ro_user['database_user'], $old_db_ro_user['database_password'], $drop_or_revoke_user['revoke_hosts'], $link);
+						if($drop_or_revoke_user['drop_hosts'] != '') $this->process_host_list('DROP', $data['old']['database_name'], $old_db_ro_user['database_user'], $old_db_ro_user['database_password'], $old_db_ro_user['database_password_sha2'], $drop_or_revoke_user['drop_hosts'], $link);
+						if($drop_or_revoke_user['revoke_hosts'] != '') $this->process_host_list('REVOKE', $data['old']['database_name'], $old_db_ro_user['database_user'], $old_db_ro_user['database_password'], $old_db_ro_user['database_password_sha2'], $drop_or_revoke_user['revoke_hosts'], $link);
 					}
 				}
 				// Database is not active, so stop processing here
@@ -534,14 +519,14 @@ class mysql_clientdb_plugin {
 						} else {
 							// Find out users to drop and users to revoke
 							$drop_or_revoke_user = $this->drop_or_revoke_user($data['old']['database_id'], $data['old']['database_user_id'], $old_host_list);
-							if($drop_or_revoke_user['drop_hosts'] != '') $this->process_host_list('DROP', $data['old']['database_name'], $old_db_user['database_user'], $old_db_user['database_password'], $drop_or_revoke_user['drop_hosts'], $link);
-							if($drop_or_revoke_user['revoke_hosts'] != '') $this->process_host_list('REVOKE', $data['old']['database_name'], $old_db_user['database_user'], $old_db_user['database_password'], $drop_or_revoke_user['revoke_hosts'], $link);
+							if($drop_or_revoke_user['drop_hosts'] != '') $this->process_host_list('DROP', $data['old']['database_name'], $old_db_user['database_user'], $old_db_user['database_password'], $old_db_user['database_password_sha2'], $drop_or_revoke_user['drop_hosts'], $link);
+							if($drop_or_revoke_user['revoke_hosts'] != '') $this->process_host_list('REVOKE', $data['old']['database_name'], $old_db_user['database_user'], $old_db_user['database_password'], $old_db_user['database_password_sha2'], $drop_or_revoke_user['revoke_hosts'], $link);
 						}
 					}
 				}
 				if($db_user) {
 					if($db_user['database_user'] == 'root') $app->log('User root not allowed for Client databases', LOGLEVEL_WARN);
-					else $this->process_host_list('GRANT', $data['new']['database_name'], $db_user['database_user'], $db_user['database_password'], $host_list, $link, '', ($data['new']['quota_exceeded'] == 'y' ? 'rd' : 'rw'));
+					else $this->process_host_list('GRANT', $data['new']['database_name'], $db_user['database_user'], $db_user['database_password'], $db_user['database_password_sha2'], $host_list, $link, ($data['new']['quota_exceeded'] == 'y' ? 'rd' : 'rw'));
 				}
 			}
 			if($data['new']['database_ro_user_id'] != $data['old']['database_ro_user_id']) {
@@ -552,14 +537,14 @@ class mysql_clientdb_plugin {
 						} else {
 							// Find out users to drop and users to revoke
 							$drop_or_revoke_user = $this->drop_or_revoke_user($data['old']['database_id'], $data['old']['database_ro_user_id'], $old_host_list);
-							if($drop_or_revoke_user['drop_hosts'] != '') $this->process_host_list('DROP', $data['old']['database_name'], $old_db_ro_user['database_user'], $old_db_ro_user['database_password'], $drop_or_revoke_user['drop_hosts'], $link);
-							if($drop_or_revoke_user['revoke_hosts'] != '') $this->process_host_list('REVOKE', $data['old']['database_name'], $old_db_ro_user['database_user'], $old_db_ro_user['database_password'], $drop_or_revoke_user['revoke_hosts'], $link);
+							if($drop_or_revoke_user['drop_hosts'] != '') $this->process_host_list('DROP', $data['old']['database_name'], $old_db_ro_user['database_user'], $old_db_ro_user['database_password'], $old_db_ro_user['database_password_sha2'], $drop_or_revoke_user['drop_hosts'], $link);
+							if($drop_or_revoke_user['revoke_hosts'] != '') $this->process_host_list('REVOKE', $data['old']['database_name'], $old_db_ro_user['database_user'], $old_db_ro_user['database_password'], $old_db_ro_user['database_password_sha2'], $drop_or_revoke_user['revoke_hosts'], $link);
 						}
 					}
 				}
 				if($db_ro_user && $data['new']['database_user_id'] != $data['new']['database_ro_user_id']) {
 					if($db_ro_user['database_user'] == 'root') $app->log('User root not allowed for Client databases', LOGLEVEL_WARN);
-					else $this->process_host_list('GRANT', $data['new']['database_name'], $db_ro_user['database_user'], $db_ro_user['database_password'], $host_list, $link, '', 'r');
+					else $this->process_host_list('GRANT', $data['new']['database_name'], $db_ro_user['database_user'], $db_ro_user['database_password'], $db_ro_user['database_password_sha2'], $host_list, $link, 'r');
 				}
 			}
 
@@ -572,12 +557,12 @@ class mysql_clientdb_plugin {
 						if($db_user['database_user'] == 'root'){
 							$app->log('User root not allowed for Client databases', LOGLEVEL_WARN);
 						} else {
-							$this->process_host_list('GRANT', $data['new']['database_name'], $db_user['database_user'], $db_user['database_password'], $data['new']['remote_ips'], $link, '', ($data['new']['quota_exceeded'] == 'y' ? 'rd' : 'rw'));
+							$this->process_host_list('GRANT', $data['new']['database_name'], $db_user['database_user'], $db_user['database_password'], $db_user['database_password_sha2'], $data['new']['remote_ips'], $link, ($data['new']['quota_exceeded'] == 'y' ? 'rd' : 'rw'));
 						}
 					}
 					if($db_ro_user && $data['new']['database_user_id'] != $data['new']['database_ro_user_id']) {
 						if($db_ro_user['database_user'] == 'root') $app->log('User root not allowed for Client databases', LOGLEVEL_WARN);
-						else $this->process_host_list('GRANT', $data['new']['database_name'], $db_ro_user['database_user'], $db_ro_user['database_password'], $data['new']['remote_ips'], $link, '', 'r');
+						else $this->process_host_list('GRANT', $data['new']['database_name'], $db_ro_user['database_user'], $db_ro_user['database_password'], $db_ro_user['database_password_sha2'], $data['new']['remote_ips'], $link, 'r');
 					}
 				} else {
 					if($old_db_user) {
@@ -586,8 +571,8 @@ class mysql_clientdb_plugin {
 						} else {
 							// Find out users to drop and users to revoke
 							$drop_or_revoke_user = $this->drop_or_revoke_user($data['old']['database_id'], $data['old']['database_user_id'], $data['old']['remote_ips']);
-							if($drop_or_revoke_user['drop_hosts'] != '') $this->process_host_list('DROP', $data['old']['database_name'], $old_db_user['database_user'], $old_db_user['database_password'], $drop_or_revoke_user['drop_hosts'], $link);
-							if($drop_or_revoke_user['revoke_hosts'] != '') $this->process_host_list('REVOKE', $data['old']['database_name'], $old_db_user['database_user'], $old_db_user['database_password'], $drop_or_revoke_user['revoke_hosts'], $link);
+							if($drop_or_revoke_user['drop_hosts'] != '') $this->process_host_list('DROP', $data['old']['database_name'], $old_db_user['database_user'], $old_db_user['database_password'], $old_db_user['database_password_sha2'], $drop_or_revoke_user['drop_hosts'], $link);
+							if($drop_or_revoke_user['revoke_hosts'] != '') $this->process_host_list('REVOKE', $data['old']['database_name'], $old_db_user['database_user'], $old_db_user['database_password'], $old_db_user['database_password_sha2'], $drop_or_revoke_user['revoke_hosts'], $link);
 						}
 					}
 					if($old_db_ro_user && $data['old']['database_user_id'] != $data['old']['database_ro_user_id']) {
@@ -596,8 +581,8 @@ class mysql_clientdb_plugin {
 						} else {
 							// Find out users to drop and users to revoke
 							$drop_or_revoke_user = $this->drop_or_revoke_user($data['old']['database_id'], $data['old']['database_ro_user_id'], $data['old']['remote_ips']);
-							if($drop_or_revoke_user['drop_hosts'] != '') $this->process_host_list('DROP', $data['old']['database_name'], $old_db_ro_user['database_user'], $old_db_ro_user['database_password'], $drop_or_revoke_user['drop_hosts'], $link);
-							if($drop_or_revoke_user['revoke_hosts'] != '') $this->process_host_list('REVOKE', $data['old']['database_name'], $old_db_ro_user['database_user'], $old_db_ro_user['database_password'], $drop_or_revoke_user['revoke_hosts'], $link);
+							if($drop_or_revoke_user['drop_hosts'] != '') $this->process_host_list('DROP', $data['old']['database_name'], $old_db_ro_user['database_user'], $old_db_ro_user['database_password'], $old_db_ro_user['database_password_sha2'], $drop_or_revoke_user['drop_hosts'], $link);
+							if($drop_or_revoke_user['revoke_hosts'] != '') $this->process_host_list('REVOKE', $data['old']['database_name'], $old_db_ro_user['database_user'], $old_db_ro_user['database_password'], $old_db_ro_user['database_password_sha2'], $drop_or_revoke_user['revoke_hosts'], $link);
 						}
 					}
 				}
@@ -610,15 +595,15 @@ class mysql_clientdb_plugin {
 					} else {
 						// Find out users to drop and users to revoke
 						$drop_or_revoke_user = $this->drop_or_revoke_user($data['old']['database_id'], $data['old']['database_user_id'], $data['old']['remote_ips']);
-						if($drop_or_revoke_user['drop_hosts'] != '') $this->process_host_list('DROP', $data['old']['database_name'], $old_db_user['database_user'], $old_db_user['database_password'], $drop_or_revoke_user['drop_hosts'], $link);
-						if($drop_or_revoke_user['revoke_hosts'] != '') $this->process_host_list('REVOKE', $data['old']['database_name'], $old_db_user['database_user'], $old_db_user['database_password'], $drop_or_revoke_user['revoke_hosts'], $link);
+						if($drop_or_revoke_user['drop_hosts'] != '') $this->process_host_list('DROP', $data['old']['database_name'], $old_db_user['database_user'], $old_db_user['database_password'], $old_db_user['database_password_sha2'], $drop_or_revoke_user['drop_hosts'], $link);
+						if($drop_or_revoke_user['revoke_hosts'] != '') $this->process_host_list('REVOKE', $data['old']['database_name'], $old_db_user['database_user'], $old_db_user['database_password'], $old_db_user['database_password_sha2'], $drop_or_revoke_user['revoke_hosts'], $link);
 					}
 				}
 				if($db_user) {
 					if($db_user['database_user'] == 'root'){
 						$app->log('User root not allowed for Client databases', LOGLEVEL_WARN);
 					} else {
-						$this->process_host_list('GRANT', $data['new']['database_name'], $db_user['database_user'], $db_user['database_password'], $data['new']['remote_ips'], $link, '', ($data['new']['quota_exceeded'] == 'y' ? 'rd' : 'rw'));
+						$this->process_host_list('GRANT', $data['new']['database_name'], $db_user['database_user'], $db_user['database_password'], $db_user['database_password_sha2'], $data['new']['remote_ips'], $link, ($data['new']['quota_exceeded'] == 'y' ? 'rd' : 'rw'));
 					}
 				}
 
@@ -628,8 +613,8 @@ class mysql_clientdb_plugin {
 					} else {
 						// Find out users to drop and users to revoke
 						$drop_or_revoke_user = $this->drop_or_revoke_user($data['old']['database_id'], $data['old']['database_ro_user_id'], $data['old']['remote_ips']);
-						if($drop_or_revoke_user['drop_hosts'] != '') $this->process_host_list('DROP', $data['old']['database_name'], $old_db_ro_user['database_user'], $old_db_ro_user['database_password'], $drop_or_revoke_user['drop_hosts'], $link);
-						if($drop_or_revoke_user['revoke_hosts'] != '') $this->process_host_list('REVOKE', $data['old']['database_name'], $old_db_ro_user['database_user'], $old_db_ro_user['database_password'], $drop_or_revoke_user['revoke_hosts'], $link);
+						if($drop_or_revoke_user['drop_hosts'] != '') $this->process_host_list('DROP', $data['old']['database_name'], $old_db_ro_user['database_user'], $old_db_ro_user['database_password'], $old_db_ro_user['database_password_sha2'], $drop_or_revoke_user['drop_hosts'], $link);
+						if($drop_or_revoke_user['revoke_hosts'] != '') $this->process_host_list('REVOKE', $data['old']['database_name'], $old_db_ro_user['database_user'], $old_db_ro_user['database_password'], $old_db_ro_user['database_password_sha2'], $drop_or_revoke_user['revoke_hosts'], $link);
 					}
 				}
 
@@ -637,7 +622,7 @@ class mysql_clientdb_plugin {
 					if($db_ro_user['database_user'] == 'root'){
 						$app->log('User root not allowed for Client databases', LOGLEVEL_WARN);
 					} else {
-						$this->process_host_list('GRANT', $data['new']['database_name'], $db_ro_user['database_user'], $db_ro_user['database_password'], $data['new']['remote_ips'], $link, '', 'r');
+						$this->process_host_list('GRANT', $data['new']['database_name'], $db_ro_user['database_user'], $db_ro_user['database_password'], $db_ro_user['database_password_sha2'], $data['new']['remote_ips'], $link,'r');
 					}
 				}
 			}
@@ -675,14 +660,14 @@ class mysql_clientdb_plugin {
 			if($data['old']['database_user_id']) {
 				$old_db_user = $app->db->queryOneRecord("SELECT `database_user`, `database_password` FROM `web_database_user` WHERE `database_user_id` = ?", $data['old']['database_user_id']);
 				$drop_or_revoke_user = $this->drop_or_revoke_user($data['old']['database_id'], $data['old']['database_user_id'], $old_host_list);
-				if($drop_or_revoke_user['drop_hosts'] != '') $this->process_host_list('DROP', $data['old']['database_name'], $old_db_user['database_user'], $old_db_user['database_password'], $drop_or_revoke_user['drop_hosts'], $link);
-				if($drop_or_revoke_user['revoke_hosts'] != '') $this->process_host_list('REVOKE', $data['old']['database_name'], $old_db_user['database_user'], $old_db_user['database_password'], $drop_or_revoke_user['revoke_hosts'], $link);
+				if($drop_or_revoke_user['drop_hosts'] != '') $this->process_host_list('DROP', $data['old']['database_name'], $old_db_user['database_user'], $old_db_user['database_password'], $old_db_user['database_password_sha2'], $drop_or_revoke_user['drop_hosts'], $link);
+				if($drop_or_revoke_user['revoke_hosts'] != '') $this->process_host_list('REVOKE', $data['old']['database_name'], $old_db_user['database_user'], $old_db_user['database_password'], $old_db_user['database_password_sha2'], $drop_or_revoke_user['revoke_hosts'], $link);
 			}
 			if($data['old']['database_ro_user_id']) {
 				$old_db_user = $app->db->queryOneRecord("SELECT `database_user`, `database_password` FROM `web_database_user` WHERE `database_user_id` = ?", $data['old']['database_ro_user_id']);
 				$drop_or_revoke_user = $this->drop_or_revoke_user($data['old']['database_id'], $data['old']['database_ro_user_id'], $old_host_list);
-				if($drop_or_revoke_user['drop_hosts'] != '') $this->process_host_list('DROP', $data['old']['database_name'], $old_db_user['database_user'], $old_db_user['database_password'], $drop_or_revoke_user['drop_hosts'], $link);
-				if($drop_or_revoke_user['revoke_hosts'] != '') $this->process_host_list('REVOKE', $data['old']['database_name'], $old_db_user['database_user'], $old_db_user['database_password'], $drop_or_revoke_user['revoke_hosts'], $link);
+				if($drop_or_revoke_user['drop_hosts'] != '') $this->process_host_list('DROP', $data['old']['database_name'], $old_db_user['database_user'], $old_db_user['database_password'], $old_db_user['database_password_sha2'], $drop_or_revoke_user['drop_hosts'], $link);
+				if($drop_or_revoke_user['revoke_hosts'] != '') $this->process_host_list('REVOKE', $data['old']['database_name'], $old_db_user['database_user'], $old_db_user['database_password'], $old_db_user['database_password_sha2'], $drop_or_revoke_user['revoke_hosts'], $link);
 			}
 
 
@@ -751,11 +736,11 @@ class mysql_clientdb_plugin {
 			}
 
 			if($data['new']['database_password'] != $data['old']['database_password'] && $data['new']['database_password'] != '') {
-				$result = $app->db->queryOneRecord("SELECT VERSION() as version");
-				$dbversion = $result['version'];
+				$db_type = $this->getDatabaseType($link);
+				$db_version = $this->getDatabaseVersion($link);
 
 				// mariadb or mysql < 5.7
-				if(stripos($dbversion, 'mariadb') !== false || version_compare($dbversion, '5.7', '<')) {
+				if($db_type == 'mariadb' || version_compare($db_version, '5.7', '<')) {
 					$query = sprintf("SET PASSWORD FOR '%s'@'%s' = '%s'",
 						$link->escape_string($data['new']['database_user']),
 						$db_host,
@@ -764,10 +749,18 @@ class mysql_clientdb_plugin {
 				}
 				// mysql >= 5.7
 				else {
-					$query = sprintf("ALTER USER IF EXISTS '%s'@'%s' IDENTIFIED WITH mysql_native_password AS '%s'",
+					if ($data['new']['database_password_sha2'] && $db_type == 'mysql' && version_compare($db_version, '8.0', '>=')) {
+						$auth_plugin = 'caching_sha2_password';
+						$hash = $data['new']['database_password_sha2'];
+					} else {
+						$auth_plugin = 'mysql_native_password';
+						$hash = $data['new']['database_password'];
+					}
+					$query = sprintf("ALTER USER IF EXISTS '%s'@'%s' IDENTIFIED WITH %s AS '%s'",
 						$link->escape_string($data['new']['database_user']),
 						$db_host,
-						$link->escape_string($data['new']['database_password']));
+						$auth_plugin,
+						$link->escape_string($hash));
 					$link->query($query);
 				}
 				$app->log('Changing MySQL user password for: ' . $data['new']['database_user'] . '@' . $db_host, LOGLEVEL_DEBUG);
