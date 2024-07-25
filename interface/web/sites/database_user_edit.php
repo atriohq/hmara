@@ -169,7 +169,7 @@ class page_action extends tform_actions {
 		}
 
 		// always copy over the password to the SHA2 column
-		if ($this->dataRecord['database_password']) {
+		if($this->dataRecord['database_password']) {
 			$this->dataRecord['database_password_sha2'] = $this->dataRecord['database_password'];
 		} else {
 			$this->dataRecord['database_password_sha2'] = '';

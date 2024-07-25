@@ -239,7 +239,7 @@ class db
 						}
 					}
 				}
-				if($ok == true) {
+				if($ok) {
 					return true;
 				} else {
 					if($ids_config['sql_scan_action'] == 'warn') {
@@ -252,6 +252,8 @@ class db
 				}
 			}
 		}
+
+		return true;
 	}
 
 	private function _query($sQuery = '') {
@@ -298,7 +300,9 @@ class db
 		} while($ok == false);
 
 		$sQuery = call_user_func_array(array(&$this, '_build_query_string'), $aArgs);
-		$this->securityScan($sQuery);
+		if (!$this->securityScan($sQuery)) {
+			return false;
+		}
 		$this->_iQueryId = mysqli_query($this->_iConnId, $sQuery);
 		if (!$this->_iQueryId) {
 			$this->_sqlerror('Falsche Anfrage / Wrong Query', 'SQL-Query = ' . $sQuery);
@@ -590,6 +594,7 @@ class db
 	}
 
 	public function toLower($record) {
+		$out = [];
 		if(is_array($record)) {
 			foreach($record as $key => $val) {
 				$key = strtolower($key);
@@ -678,7 +683,7 @@ class db
 		$result = $db->_query("SELECT SUM(data_length+index_length) FROM information_schema.TABLES WHERE table_schema='".$db->escape($database_name)."'");
 		if(!$result) {
 			$db->_sqlerror('Unable to determine the size of database ' . $database_name);
-			return;
+			return 0;
 		}
 		$database_size = $result->getAsRow();
 		$result->free();
@@ -1075,7 +1080,7 @@ class db
 	}
 
 	public function mapType($metaType, $typeValue) {
-		global $go_api;
+		global $app;
 		$metaType = strtolower($metaType);
 		switch ($metaType) {
 		case 'int16':
@@ -1107,6 +1112,8 @@ class db
 			return 'date';
 			break;
 		}
+		$app->error('Unknown meta type: '.$metaType);
+		return false;
 	}
 
 	/**
@@ -1157,7 +1164,7 @@ class db
 		if($hash_type == 'caching_sha2_password') {
 			$password_hash = $this->mysqlSha256Crypt($password, $this->genSalt(20), 5000);
 		} else {
-			$password_hash = '*'.strtoupper(sha1(sha1($password, true)));
+			$password_hash = '*' . strtoupper(sha1(sha1($password, true)));
 		}
 
 		return $password_hash;
@@ -1168,18 +1175,17 @@ class db
 	 *
 	 * @return string
 	 */
-	private function genSalt($size)
-	{
+	private function genSalt($size) {
 		$salt = random_bytes($size);
-		if ($salt === false) {
+		if($salt === false) {
 			throw new Exception('Cannot generate salt.');
 		}
-		for ($i = 0; $i < $size; $i++) {
+		for($i = 0; $i < $size; $i++) {
 			$ord = ord($salt[$i]) & 0x7f;
-			if ($ord < 32) {
+			if($ord < 32) {
 				$ord += 32;
 			}
-			if ($ord == 36 /* $ */) {
+			if($ord == 36 /* $ */) {
 				$ord += 1;
 			}
 			$salt[$i] = chr($ord);
@@ -1199,10 +1205,9 @@ class db
 	 *
 	 * @return string hashed password in MySQL format
 	 */
-	private function mysqlSha256Crypt($plaintext, $salt, $rounds)
-	{
+	private function mysqlSha256Crypt($plaintext, $salt, $rounds) {
 		$plaintext_len = strlen($plaintext);
-		$salt_len      = strlen($salt);
+		$salt_len = strlen($salt);
 
 		// 1
 		$ctxA = hash_init('sha256');
@@ -1221,14 +1226,14 @@ class db
 		// 8
 		$B = hash_final($ctxB, true);
 		// 9
-		for ($i = $plaintext_len; $i > 32; $i -= 32) {
+		for($i = $plaintext_len; $i > 32; $i -= 32) {
 			hash_update($ctxA, $B);
 		}
 		// 10
 		hash_update($ctxA, substr($B, 0, $i));
 		// 11
-		for ($i = $plaintext_len; $i > 0; $i >>= 1) {
-			if (($i & 1) != 0) {
+		for($i = $plaintext_len; $i > 0; $i >>= 1) {
+			if(($i & 1) != 0) {
 				hash_update($ctxA, $B);
 			} else {
 				hash_update($ctxA, $plaintext);
@@ -1239,50 +1244,50 @@ class db
 		// 13
 		$ctxDP = hash_init('sha256');
 		// 14
-		for ($i = 0; $i < $plaintext_len; $i++) {
+		for($i = 0; $i < $plaintext_len; $i++) {
 			hash_update($ctxDP, $plaintext);
 		}
 		// 15
 		$DP = hash_final($ctxDP, true);
 		// 16
 		$P = "";
-		for ($i = $plaintext_len; $i > 32; $i -= 32) {
+		for($i = $plaintext_len; $i > 32; $i -= 32) {
 			$P .= $DP;
 		}
 		$P .= substr($DP, 0, $i);
 		// 17
 		$ctxDS = hash_init('sha256');
 		// 18
-		for ($i = 0; $i < 16 + ord($A[0]); $i++) {
+		for($i = 0; $i < 16 + ord($A[0]); $i++) {
 			hash_update($ctxDS, $salt);
 		}
 		// 19
 		$DS = hash_final($ctxDS, true);
 		// 20
 		$S = "";
-		for ($i = $salt_len; $i >= 32; $i -= 32) {
+		for($i = $salt_len; $i >= 32; $i -= 32) {
 			$S .= $DS;
 		}
 		$S .= substr($DS, 0, $i);
 		// 21
 		$C = "";
-		for ($i = 0; $i < $rounds; $i++) {
+		for($i = 0; $i < $rounds; $i++) {
 			$ctxC = hash_init('sha256');
-			if (($i & 1) != 0) {
+			if(($i & 1) != 0) {
 				hash_update($ctxC, $P);
 			} else {
 				hash_update($ctxC, $i == 0 ? $A : $C);
 			}
 
-			if ($i % 3 != 0) {
+			if($i % 3 != 0) {
 				hash_update($ctxC, $S);
 			}
 
-			if ($i % 7 != 0) {
+			if($i % 7 != 0) {
 				hash_update($ctxC, $P);
 			}
 
-			if (($i & 1) != 0) {
+			if(($i & 1) != 0) {
 				hash_update($ctxC, $i == 0 ? $A : $C);
 			} else {
 				hash_update($ctxC, $P);
@@ -1291,14 +1296,15 @@ class db
 		}
 
 		// 22
-		$b64result      = str_repeat(' ', 43);
-		$p              = 0;
-		$b64_from_24bit = function ($B2, $B1, $B0, $N) use (&$b64result, &$p) {
+		$b64result = str_repeat(' ', 43);
+		$p = 0;
+		$b64_from_24bit = function($B2, $B1, $B0, $N) use (&$b64result, &$p) {
+			$b64_alphabet = "./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 			$w = ($B2 << 16) | ($B1 << 8) | $B0;
 			$n = $N;
-			while (--$n >= 0) {
-				$b64result[$p++] = "./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"[$w & 0x3f];
-				$w               = $w >> 6;
+			while(--$n >= 0) {
+				$b64result[$p++] = $b64_alphabet[$w & 0x3f];
+				$w = $w >> 6;
 			}
 		};
 		$b64_from_24bit(ord($C[0]), ord($C[10]), ord($C[20]), 4);
@@ -1329,10 +1335,11 @@ class db_result {
 
 	/**
 	 *
-	 *
+	 * @var mysqli_result|null
 	 * @access private
 	 */
 	private $_iResId = null;
+	/** @var mysqli|null  */
 	private $_iConnection = null;
 
 
@@ -1544,7 +1551,7 @@ class fakedb_result {
 	 *
 	 * @access public
 	 * @param int     $iStart offset to start read
-	 * @param int     iLength amount of datasets to read
+	 * @param int     $iLength amount of datasets to read
 	 */
 	public function limit_result($iStart, $iLength) {
 		$this->aLimitedData = array_slice($this->aResultData, $iStart, $iLength, true);
