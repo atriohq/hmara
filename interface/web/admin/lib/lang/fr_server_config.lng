@@ -363,3 +363,8 @@ $wb['sysbackup_copies_txt'] = 'Nombre de sauvegardes système';
 $wb['sysbackup_copies_error_empty'] = 'Le nombre de sauvegardes système ne doit pas être vide';
 $wb['sysbackup_copies_error_regex'] = 'Le nombre de sauvegardes système doit être un nombre entre 1 et 3';
 $wb['sysbackup_copies_note_txt'] = '(0 = désactivé)';
+$wb['le_signature_type_txt'] = 'Certificate signature type';
+$wb['le_auto_cleanup_txt'] = 'Automatically purge unused Let\'s Encrypt certificates';
+$wb['le_auto_cleanup_denylist_txt'] = 'Domains that should never be purged';
+$wb['le_auto_cleanup_denylist_note_txt'] = 'Comma separated list of domain globs that should not be purged. <br>E.g. <code>mail.*, externally-managed.example.com</code> <br>Placeholders:';
+$wb['le_auto_cleanup_denylist_error_custom'] = 'Invalid list of domain globs';

@@ -150,7 +150,7 @@ $wb['php_fpm_socket_dir_error_empty'] = 'PHP-FPM adresář pro socket je prázdn
 $wb['try_rescue_txt'] = 'Povolit monitorování služeb a restartovat při selhání';
 $wb['do_not_try_rescue_mysql_txt'] = 'Zakázat MySQL monitorování';
 $wb['do_not_try_rescue_mail_txt'] = 'Zakázat E-mail monitorování';
-$wb['rescue_description_txt'] = '<b>Informace:</b> Pokud chcete např. vypnout MySQL službu zatrhněte políčko \"Zakázat MySQL monitorování\" změna se provede do 2-3 minut.<br>Pokud nepočkáte 2-3 minuty, monitorování nastartuje službu MySQL automaticky znovu !';
+$wb['rescue_description_txt'] = '<b>Informace:</b> Pokud chcete např. vypnout MySQL službu zatrhněte políčko "Zakázat MySQL monitorování" změna se provede do 2-3 minut.<br>Pokud nepočkáte 2-3 minuty, monitorování nastartuje službu MySQL automaticky znovu !';
 $wb['enable_sni_txt'] = 'Aktivovat SNI (Server Name Indication)';
 $wb['do_not_try_rescue_httpd_txt'] = 'Zakázat HTTPD monitorování';
 $wb['set_folder_permissions_on_update_txt'] = 'Nastavení oprávnění složky při aktualizaci';
@@ -363,3 +363,8 @@ $wb['sysbackup_copies_txt'] = 'Number of ISPConfig backups';
 $wb['sysbackup_copies_error_empty'] = 'Number of ISPConfig backups must not be empty';
 $wb['sysbackup_copies_error_regex'] = 'Number of ISPConfig backups must be a number between 1 and 3';
 $wb['sysbackup_copies_note_txt'] = '(0 = off)';
+$wb['le_signature_type_txt'] = 'Certificate signature type';
+$wb['le_auto_cleanup_txt'] = 'Automatically purge unused Let\'s Encrypt certificates';
+$wb['le_auto_cleanup_denylist_txt'] = 'Domains that should never be purged';
+$wb['le_auto_cleanup_denylist_note_txt'] = 'Comma separated list of domain globs that should not be purged. <br>E.g. <code>mail.*, externally-managed.example.com</code> <br>Placeholders:';
+$wb['le_auto_cleanup_denylist_error_custom'] = 'Invalid list of domain globs';
