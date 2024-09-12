@@ -726,7 +726,7 @@ class db
 			if($action == 'UPDATE') $action = 'u';
 			if($action == 'DELETE') $action = 'd';
 			$sql = "INSERT INTO sys_datalog (dbtable,dbidx,server_id,action,tstamp,user,data,session_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-			$app->db->query($sql, $db_table, $dbidx, $server_id, $action, time(), $username, $diffstr, session_id());
+			return $this->query($sql, $db_table, $dbidx, $server_id, $action, time(), $username, $diffstr, session_id());
 		}
 
 		return true;
