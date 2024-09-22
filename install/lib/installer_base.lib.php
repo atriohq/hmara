@@ -2788,6 +2788,11 @@ class installer_base extends stdClass {
 			$apps_vhost_group = escapeshellcmd($conf['web']['apps_vhost_group']);
 			$install_dir = escapeshellcmd($conf['web']['website_basedir'].'/apps');
 
+			//* Get the apps vhost port
+			if($this->is_update == true) {
+				$conf['web']['apps_vhost_port'] = get_apps_vhost_port_number();
+			}
+
 			$command = 'groupadd '.$apps_vhost_user;
 			if(!is_group($apps_vhost_group)) caselog($command.' &> /dev/null 2> /dev/null', __FILE__, __LINE__, "EXECUTED: $command", "Failed to execute the command $command");
 
