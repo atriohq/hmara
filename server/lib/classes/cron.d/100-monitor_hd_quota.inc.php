@@ -85,7 +85,7 @@ class cronjob_monitor_hd_quota extends cronjob {
 				$options['user'][$record['system_user']] = $record['hd_quota']*1024;
 			}
 
-			//* ignore the first 5 lines, process the rest
+			//* Loop over all the output lines, for groups.
 			for ($i = 0; $i <= sizeof($df); $i++) {
 				if (isset($df[$i]) && $df[$i] != '') {
 					//* Make a array of the data
@@ -106,7 +106,7 @@ class cronjob_monitor_hd_quota extends cronjob {
 				}
 			}		
 			
-			//* ignore the first 5 lines, process the rest
+			//* Loop over all the output lines, for users.
 			for ($i = 0; $i <= sizeof($df); $i++) {
 				if (isset($df[$i]) && $df[$i] != '') {
 					//* Make a array of the data
