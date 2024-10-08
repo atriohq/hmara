@@ -59,6 +59,7 @@ class cronjob_monitor_hd_quota extends cronjob {
 
 		//* Initialize data array
 		$data = array();
+		$df = array();
 
 		//* the id of the server as int
 		$server_id = intval($conf['server_id']);
@@ -72,17 +73,19 @@ class cronjob_monitor_hd_quota extends cronjob {
 		if(!$app->system->is_installed('setquota')) {
 			//* No Quota on this System ... 
 
-			//** Fetch the data for all users
-			$dfData = shell_exec('du -s /var/www/clients/client*/web[0-9]*');
-
-			//* split into array
-			$df = explode("\n", $dfData);
-
 			//* Get Limits for Calculation
 			$records = $app->db->queryAllRecords('SELECT hd_quota, system_user, system_group FROM `web_domain`  WHERE `server_id` = ?', $conf['server_id']);
 			foreach ($records as $record) {
 				$options['group'][$record['system_group']] = $record['hd_quota']*1024;
 				$options['user'][$record['system_user']] = $record['hd_quota']*1024;
+			}
+
+			if (!empty($records)) {
+				//** Fetch the data for all users
+				$dfData = shell_exec('du -s /var/www/clients/client*/web[0-9]*');
+
+				//* split into array
+				$df = explode("\n", $dfData);
 			}
 
 			//* Loop over all the output lines, for groups.
