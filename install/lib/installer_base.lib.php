@@ -3954,7 +3954,19 @@ class installer_base extends stdClass {
 
 		$install_dir = $conf['ispconfig_install_dir'];
 
-		# TODO  add code to cleanup old crontab in /var/spool/cron/
+		// Cleanup legacy crontab in /var/spool/cron/crontabs/
+		// This cleanup code should remain untill after the 3.4. release.
+		exec('crontab -u root -l > crontab.txt 2>/dev/null');
+		$existing_root_cron_jobs = file('crontab.txt');
+
+		// remove existing ispconfig cronjobs, in case the syntax has changed
+		foreach($existing_root_cron_jobs as $key => $val) {
+			if(stristr($val, $install_dir)) unset($existing_root_cron_jobs[$key]);
+		}
+		file_put_contents('crontab.txt', $existing_root_cron_jobs);
+		exec('crontab -u root crontab.txt &> /dev/null');
+		unlink('crontab.txt');
+		// END cleanup
 
 		$root_cron_jobs = array(
 			"# THIS FILE IS MANAGED BY ISPCONFIG, changed will be overridden on future updates.",
@@ -3974,6 +3986,19 @@ class installer_base extends stdClass {
 		//* Getmail crontab
 		if(is_user('getmail')) {
 			$cf = $conf['getmail'];
+
+			// Cleanup legacy crontab in /var/spool/cron/crontabs/
+			// This cleanup code should remain untill after the 3.4. release.
+			exec('crontab -u getmail -l > crontab.txt 2>/dev/null');
+			$existing_cron_jobs = file('crontab.txt');
+			// remove existing ispconfig cronjobs, in case the syntax has changed
+			foreach($existing_cron_jobs as $key => $val) {
+				if(stristr($val, 'getmail')) unset($existing_cron_jobs[$key]);
+			}
+			file_put_contents('crontab.txt', $existing_cron_jobs);
+			exec('crontab -u getmail crontab.txt &> /dev/null');
+			unlink('crontab.txt');
+			// END cleanup
 
 			$cron_jobs = array(
 				"# THIS FILE IS MANAGED BY ISPCONFIG, changed will be overridden on future updates.",
