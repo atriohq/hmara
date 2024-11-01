@@ -116,7 +116,7 @@ class cronjob_monitor_hd_quota extends cronjob {
 					$s1 = preg_split('/[\s]+/', $df[$i]);
 					$s2 = preg_split('/\//', $s1[1]);
 					$username = $s2[5];
-					if (substr($username, 0, 3) == 'web') {
+					if (preg_match('/^web\d+$/', $username)) {
 						if (isset($data['user'][$username])) {
 							$data['user'][$username]['used'] += $s1[0];
 							$data['user'][$username]['soft'] = $options['user'][$username];
