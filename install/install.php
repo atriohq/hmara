@@ -154,14 +154,14 @@ swriteln($inst->lng('    Default values are in [brackets] and can be accepted wi
 swriteln($inst->lng('    Tap in "quit" (without the quotes) to stop the installer.'."\n\n"));
 
 //** Check log file is writable (probably not root or sudo)
-define('ISPC_LOG_FILE', $conf['ispconfig_log_dir'] . '/install.log');
-if(!is_writable(dirname(ISPC_LOG_FILE))){
-	die("ERROR: Cannot write to the ".dirname(ISPC_LOG_FILE)." directory. Are you root or sudo ?\n\n");
+if(!is_writable(dirname($conf['ispconfig_log_dir']))){
+	die("ERROR: Cannot write to the ".$conf['ispconfig_log_dir']." directory. Are you root or sudo ?\n\n");
 }
 
 if(!is_dir($conf['ispconfig_log_dir'])) {
 	mkdir($conf['ispconfig_log_dir'], 0755, true);
 }
+define('ISPC_LOG_FILE', $conf['ispconfig_log_dir'] . '/install.log');
 
 //** Check for ISPConfig 2.x versions
 if(is_dir('/root/ispconfig') || is_dir('/home/admispconfig')) {
