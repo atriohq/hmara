@@ -672,7 +672,7 @@ class functions {
 			$result = false;
 		}
 		return $result;
-	}	
+	}
 
     /**
      * Lookup a client's group + all groups he is reselling.
@@ -683,8 +683,8 @@ class functions {
       global $app;
 
       if ($client_id != null) {
-        // Get the clients groupid, and incase it's a reseller the groupid's of it's clients.
-        $group = $app->db->queryOneRecord("SELECT GROUP_CONCAT(groupid) AS groups FROM `sys_group` WHERE client_id IN (SELECT client_id FROM `client` WHERE client_id=? OR parent_client_id=?)", $client_id, $client_id);
+        // Get the clients groupid, and in case it's a reseller the groupid's of its clients.
+        $group = $app->db->queryOneRecord("SELECT GROUP_CONCAT(groupid) AS `groups` FROM `sys_group` WHERE client_id IN (SELECT client_id FROM `client` WHERE client_id=? OR parent_client_id=?)", $client_id, $client_id);
         return $group['groups'];
       }
       return null;
