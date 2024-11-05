@@ -73,7 +73,7 @@ class cronjob_monitor_hd_quota extends cronjob {
 			//* No Quota on this System ... 
 
 			//** Fetch the data for all users
-			$dfData = shell_exec('du -s /var/www/clients/client*/we*');
+			$dfData = shell_exec('du -s /var/www/clients/client*/web[0-9]*');
 
 			//* split into array
 			$df = explode("\n", $dfData);

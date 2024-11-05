@@ -672,7 +672,7 @@ class functions {
 			$result = false;
 		}
 		return $result;
-	}	
+	}
 
 	// SQL query snippit for the client's company and username.
 	function get_client_sql_concat_query() {
@@ -694,7 +694,6 @@ class functions {
 		}
 		return null;
 	}
-
 }
 
 ?>

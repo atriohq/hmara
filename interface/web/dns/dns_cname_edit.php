@@ -61,6 +61,20 @@ class page_action extends dns_page_action {
 		if($this->dataRecord["data"] === '@') {
 			$this->dataRecord["data"] = $soa['origin'];
 		}
+
+		// The target name should either end in a . or exist in the current zone.
+		if (!empty($this->dataRecord["data"]) && substr($this->dataRecord["data"], -1) != '.') {
+			$tmp = $app->db->queryOneRecord("SELECT dns_rr.id
+				FROM dns_rr
+					LEFT JOIN dns_soa ON dns_rr.zone = dns_soa.id
+				WHERE (name = ?
+					OR name = CONCAT(?, '.', dns_soa.origin)) AND dns_rr.zone = ?",
+				$this->dataRecord["data"], $this->dataRecord["data"], $this->dataRecord["zone"]);
+
+			if (empty($tmp)) {
+				$app->tform->errorMessage .= $app->tform->wordbook['data_error_not_found'] . '<br/>';
+			}
+		}
 		parent::onSubmit();
 	}
 }

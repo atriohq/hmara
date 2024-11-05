@@ -380,7 +380,7 @@ class tform_base {
 					if($client['parent_client_id'] != 0) {
 
 						//* first we need to know the groups of this reseller
-						$tmp = $app->db->queryOneRecord("SELECT userid, groups FROM sys_user WHERE client_id = ?", $client['parent_client_id']);
+						$tmp = $app->db->queryOneRecord("SELECT userid, `groups` FROM sys_user WHERE client_id = ?", $client['parent_client_id']);
 						$reseller_groups = $tmp["groups"];
 						$reseller_userid = $tmp["userid"];
 
@@ -1377,6 +1377,9 @@ class tform_base {
 							} elseif (isset($field['encryption']) && $field['encryption'] == 'MYSQL') {
 								$record[$key] = $app->db->getPasswordHash($record[$key]);
 								$sql_insert_val .= "'".$app->db->quote($record[$key])."', ";
+							} elseif (isset($field['encryption']) && $field['encryption'] == 'MYSQLSHA2') {
+								$record[$key] = $app->db->getPasswordHash($record[$key], 'caching_sha2_password');
+								$sql_insert_val .= "'".$app->db->quote($record[$key])."', ";
 							} else {
 								$record[$key] = md5(stripslashes($record[$key]));
 								$sql_insert_val .= "'".$app->db->quote($record[$key])."', ";
@@ -1407,6 +1410,9 @@ class tform_base {
 								$sql_update .= "`$key` = '".$app->db->quote($record[$key])."', ";
 							} elseif (isset($field['encryption']) && $field['encryption'] == 'MYSQL') {
 								$record[$key] = $app->db->getPasswordHash($record[$key]);
+								$sql_update .= "`$key` = '".$app->db->quote($record[$key])."', ";
+							} elseif (isset($field['encryption']) && $field['encryption'] == 'MYSQLSHA2') {
+								$record[$key] = $app->db->getPasswordHash($record[$key], 'caching_sha2_password');
 								$sql_update .= "`$key` = '".$app->db->quote($record[$key])."', ";
 							} else {
 								$record[$key] = md5(stripslashes($record[$key]));
