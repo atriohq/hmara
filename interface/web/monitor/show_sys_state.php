@@ -566,11 +566,11 @@ function _processDbState($type, $serverId, $serverState, $messages) {
 			break;
 		case 'warning':
 			$messages[$app->lng("monitor_serverstate_listwarning_txt")][] = $app->lng("monitor_serverstate_syslogwarning_txt") . ' ' .
-				"<a href='#' data-load-content='monitor/log_list.php'>[" . $app->lng("monitor_serverstate_more_txt") . "]</a>";
+				"<a href='#' data-load-content='monitor/log_list.php?search_loglevel=1'>[" . $app->lng("monitor_serverstate_more_txt") . "]</a>";
 			break;
 		case 'error':
 			$messages[$app->lng("monitor_serverstate_listerror_txt")][] = $app->lng("monitor_serverstate_syslogerror_txt") . ' ' .
-				"<a href='#' data-load-content='monitor/log_list.php'>[" . $app->lng("monitor_serverstate_more_txt") . "]</a>";
+				"<a href='#' data-load-content='monitor/log_list.php?search_loglevel=2'>[" . $app->lng("monitor_serverstate_more_txt") . "]</a>";
 			break;
 		default:
 			$messages[$app->lng("monitor_serverstate_listunknown_txt")][] = $app->lng("monitor_serverstate_syslogunknown_txt") . ' ' .
