@@ -35,6 +35,7 @@ $wb['Mail-Log'] = 'E-Mail-Protokoll anzeigen';
 $wb['Mail warn-Log'] = 'E-Mail Warn-Protokoll anzeigen';
 $wb['Mail err-Log'] = 'E-Mail-Fehler-Protokoll anzeigen';
 $wb['System-Log'] = 'System-Protokoll anzeigen';
+$wb['ISPConfig Log'] = 'ISPConfig Log';
 $wb['Freshclam-Log'] = 'Freshclam-Protokoll anzeigen';
 $wb['Lets-Encrypt-log'] = 'Let\'s Encrypt log';
 $wb['Clamav-Log'] = 'ClamAV-Protokoll anzeigen';

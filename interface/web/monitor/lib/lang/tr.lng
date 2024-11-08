@@ -40,6 +40,7 @@ $wb['Mail-Log'] = 'E-posta Günlüğü';
 $wb['Mail warn-Log'] = 'E-posta Uyarı Günlüğü';
 $wb['Mail err-Log'] = 'E-posta Hata Günlüğü';
 $wb['System-Log'] = 'Sistem Günlüğü';
+$wb['ISPConfig Log'] = 'ISPConfig Log';
 $wb['ISPC Cron-Log'] = 'Zamanlı Görev Günlüğü';
 $wb['Freshclam-Log'] = 'Freshclam Günlüğü';
 $wb['Lets-Encrypt-log'] = 'Let\'s Encrypt log';

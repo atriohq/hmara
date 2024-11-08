@@ -156,6 +156,7 @@ $wb['RKHunter-Log'] = 'Mostrar el registro de RKHunter';
 $wb['Server load'] = 'Mostrar la carga del servidor';
 $wb['Services'] = 'Mostrar los servicios';
 $wb['System-Log'] = 'Mostrar el registro del sistema';
+$wb['ISPConfig Log'] = 'ISPConfig Log';
 $wb['Update State'] = 'Mostrar estado de actualizaciones';
 $wb['Status of services'] = 'Estado de los servicios';
 $wb['System load 1 minute'] = 'Carga del sistema hace 1 minuto';
