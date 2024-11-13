@@ -35,6 +35,7 @@ $wb['Mail-Log'] = 'Статус Mail-Log';
 $wb['Mail warn-Log'] = 'Статус Mail warn-Log';
 $wb['Mail err-Log'] = 'Покажи Mail err-Log';
 $wb['System-Log'] = 'Покажи System-Log';
+$wb['ISPConfig Log'] = 'ISPConfig Log';
 $wb['Freshclam-Log'] = 'Покажи Freshclam-Log';
 $wb['Lets-Encrypt-log'] = 'Let\'s Encrypt log';
 $wb['Clamav-Log'] = 'Покажи Clamav-Log';

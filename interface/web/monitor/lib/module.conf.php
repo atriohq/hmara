@@ -16,7 +16,7 @@ $items[] = array( 'title'  => "Overview",
 	'link' => 'monitor/show_sys_state.php?state=system',
 	'html_id' => 'system');
 
-$items[] = array( 'title'  => "System-Log",
+$items[] = array( 'title'  => "ISPConfig Log",
 	'target'  => 'content',
 	'link' => 'monitor/log_list.php',
 	'html_id' => 'system_log');

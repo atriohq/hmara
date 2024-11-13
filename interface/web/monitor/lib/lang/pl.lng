@@ -39,6 +39,7 @@ $wb['Mail-Log'] = 'Pokaż Log Mail';
 $wb['Mail warn-Log'] = 'Pokaż Log ostrzeżeń Mail';
 $wb['Mail err-Log'] = 'Pokaż Log błędów Mail';
 $wb['System-Log'] = 'Pokaż Log systemowy';
+$wb['ISPConfig Log'] = 'ISPConfig Log';
 $wb['ISPC Cron-Log'] = 'Pokaż Log ISPC Crone';
 $wb['Freshclam-Log'] = 'Pokaż Log Freshclam';
 $wb['Lets-Encrypt-log'] = 'Let\'s Encrypt log';

@@ -35,6 +35,7 @@ $wb['Mail-Log'] = 'E-Mail mail-log';
 $wb['Mail warn-Log'] = 'E-Mail warn-log';
 $wb['Mail err-Log'] = 'E-Mail mail-err-log';
 $wb['System-Log'] = 'Systeem logboek';
+$wb['ISPConfig Log'] = 'ISPConfig Log';
 $wb['Freshclam-Log'] = 'Freshclam-log';
 $wb['Lets-Encrypt-log'] = 'Let\'s Encrypt log';
 $wb['Clamav-Log'] = 'Clamav-Log';
