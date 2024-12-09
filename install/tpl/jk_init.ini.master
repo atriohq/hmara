@@ -29,8 +29,8 @@ comment = alias for jk_lsh
 includesections = jk_lsh
 
 [openssl]
-comment = Generic openssl files
-paths =  /bin/openssl, /etc/ssl, /usr/lib/ssl, /usr/share/ca-certificates
+comment = Generic openssl files (excluded: /etc/ssl/private, /usr/lib/ssl/private)
+paths =  /bin/openssl, /etc/ssl/openssl.cnf, /etc/ssl/certs, /usr/lib/ssl/cert.pem, /usr/lib/ssl/certs, /usr/lib/ssl/misc, /usr/lib/ssl/openssl.cnf, /usr/share/ca-certificates
 
 [cvs]
 comment = Concurrent Versions System
