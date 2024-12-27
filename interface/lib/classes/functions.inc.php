@@ -241,8 +241,11 @@ class functions {
 				if(preg_match($regex, $result['ip'])) $ips[] = $result['ip'];
 			}
 		}
-
-		$results = $groupid != 1 ? $app->db->queryAllRecords("SELECT rr.data AS server_ip, rr.name as server_name, soa.origin as domain FROM dns_rr as rr, dns_soa as soa WHERE (rr.type = 'A' OR rr.type = 'AAAA') AND soa.id = rr.zone AND rr.sys_groupid = ?", $groupid) : $results = $app->db->queryAllRecords("SELECT rr.data AS server_ip, rr.name as server_name, soa.origin as domain FROM dns_rr as rr, dns_soa as soa WHERE (rr.type = 'A' OR rr.type = 'AAAA') AND soa.id = rr.zone");
+		if ($app->auth->is_admin()) {
+			$results = $app->db->queryAllRecords("SELECT rr.data AS server_ip, rr.name as server_name, soa.origin as domain FROM dns_rr as rr, dns_soa as soa WHERE (rr.type = 'A' OR rr.type = 'AAAA') AND soa.id = rr.zone");
+		} else {
+			$results = $app->db->queryAllRecords("SELECT rr.data AS server_ip, rr.name as server_name, soa.origin as domain FROM dns_rr as rr, dns_soa as soa WHERE (rr.type = 'A' OR rr.type = 'AAAA') AND soa.id = rr.zone AND rr.sys_groupid = ?", $groupid);
+		}
 		if(!empty($results) && is_array($results)){
 			foreach($results as $result){
 				$result['server_name'] = substr($result['server_name'], -1) == '.' ? $result['server_name'] : $result['server_name'] . '.' . $result['domain'];
@@ -253,7 +256,11 @@ class functions {
 			}
 		}
 
-		$results = $groupid != 1 ? $app->db->queryAllRecords("SELECT ns AS ip FROM dns_slave WHERE sys_groupid = ?", $groupid) : $results = $app->db->queryAllRecords("SELECT ns AS ip FROM dns_slave");
+		if ($app->auth->is_admin()) {
+			$results = $app->db->queryAllRecords("SELECT ns AS ip FROM dns_slave");
+		} else {
+			$results = $app->db->queryAllRecords("SELECT ns AS ip FROM dns_slave WHERE sys_groupid = ?", $groupid);
+		}
 		if(!empty($results) && is_array($results)){
 			foreach($results as $result){
 				if (!array_key_exists($result['ip'],$server_by_ip)) {
@@ -262,7 +269,11 @@ class functions {
 			}
 		}
 
-		$results = $groupid != 1 ? $app->db->queryAllRecords("SELECT database_name as name,remote_ips as ip FROM web_database WHERE remote_ips != '' AND sys_groupid = ?", $groupid) : $results = $app->db->queryAllRecords("SELECT database_name as name,remote_ips as ip FROM web_database WHERE remote_ips != ''");
+		if ($app->auth->is_admin()) {
+			$results = $app->db->queryAllRecords("SELECT database_name as name,remote_ips as ip FROM web_database WHERE remote_ips != ''");
+		} else {
+			$results = $app->db->queryAllRecords("SELECT database_name as name,remote_ips as ip FROM web_database WHERE remote_ips != '' AND sys_groupid = ?", $groupid);
+		}
 		if(!empty($results) && is_array($results)){
 			foreach($results as $result){
 				$tmp_ips = explode(',', $result['ip']);
