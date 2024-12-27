@@ -1994,7 +1994,8 @@ class backup
                         'cd ? && ' . $command . ' ' . $command_opts . ' ' . $excludes . ' ? .',
                         $web_path, $backup_repos_path . '::' . $web_backup_archive
                     );
-                    $success = $app->system->last_exec_retcode() == 0;
+                    // Exit code 1 means a file changed during backup, not ideal but not a failure either.
+                    $success = $app->system->last_exec_retcode() == 0 || $app->system->last_exec_retcode() == 1;
             }
 
             if ($success) {
