@@ -349,7 +349,7 @@ class page_action extends tform_actions {
 
 		if ($app->tform->errorMessage == ''){
 			/* restrict the names if there is no error */
-			/* crop user and db names if they are too long -> mysql: user: 16 chars / db: 64 chars */
+			/* crop user and db names if they are too long -> mysql: user: 32 chars / db: 64 chars */
 			$this->dataRecord['database_name'] = substr($dbname_prefix . $this->dataRecord['database_name'], 0, 64);
 		}
 
@@ -369,7 +369,15 @@ class page_action extends tform_actions {
 			} else {
 				$remote_ips = explode(",", $global_config['default_remote_dbserver']);
 			}
-			if (!in_array($server_config['ip_address'], $default_remote_db)) { $remote_ips[] = $server_config['ip_address']; }
+			if (!in_array($server_config['ip_address'], $remote_ips)) { $remote_ips[] = $server_config['ip_address']; }
+
+			// If server has a slave ... add it.
+			$mirrors = $app->db->queryAllRecords("SELECT server_id FROM server WHERE mirror_server_id = ?", $tmp['server_id']);
+			foreach ($mirrors as $mirror) {
+				// we need remote access rights for this server, so get it's ip address
+				$mirror_server_config = $app->getconf->get_server_config($mirror['server_id'], 'server');
+				if (!in_array($server_config['ip_address'], $remote_ips)) { $remote_ips[] = $mirror_server_config['ip_address']; }
+			}
 
 			if($server_config['ip_address']!='') {
 				if($this->dataRecord['remote_access'] != 'y'){
@@ -386,6 +394,16 @@ class page_action extends tform_actions {
 						$this->dataRecord['remote_ips'] = implode(',', $tmp);
 						unset($tmp);
 					}
+				}
+			}
+		} else {
+			if(!empty($global_config['default_remote_dbserver'])) {
+				// Add default remote_ips from Main Configuration.
+				$remote_ips = explode(",", $global_config['default_remote_dbserver']);
+
+				if($this->dataRecord['remote_access'] != 'y'){
+					$this->dataRecord['remote_ips'] = implode(',', $remote_ips);
+					$this->dataRecord['remote_access'] = 'y';
 				}
 			}
 		}
@@ -459,7 +477,7 @@ class page_action extends tform_actions {
 				$remote_ips = explode(",", $global_config['default_remote_dbserver']);
 			}
 			
-			if (!in_array($server_config['ip_address'], $default_remote_db)) { $remote_ips[] = $server_config['ip_address']; }
+			if (!in_array($server_config['ip_address'], $remote_ips)) { $remote_ips[] = $server_config['ip_address']; }
 
 			if($server_config['ip_address']!='') {
 				if($this->dataRecord['remote_access'] != 'y'){
@@ -476,6 +494,16 @@ class page_action extends tform_actions {
 						$this->dataRecord['remote_ips'] = implode(',', $tmp);
 						unset($tmp);
 					}
+				}
+			}
+		} else {
+			if(!empty($global_config['default_remote_dbserver'])) {
+				// Add default remote_ips from Main Configuration.
+				$remote_ips = explode(",", $global_config['default_remote_dbserver']);
+
+				if($this->dataRecord['remote_access'] != 'y'){
+					$this->dataRecord['remote_ips'] = implode(',', $remote_ips);
+					$this->dataRecord['remote_access'] = 'y';
 				}
 			}
 		}

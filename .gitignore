@@ -1,5 +1,66 @@
-.DS_Store
 .idea
 /nbproject/private/
 .phplint-cache
+
+# Vim and patch specific excludes
 *.swp
+*.orig
+*.rej
+
+# macOS-specific things to exclude
+
+# General
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Icon must end with two \r
+Icon
+
+
+Icon?
+
+# Thumbnails
+._*
+
+# Files that might appear in the root of a volume
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Directories potentially created on remote AFP share
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Configuration for the Nova editor
+.nova
+
+# VS Code files for those working on multiple tools
+.vscode/*
+*.code-workspace
+
+# Local History for Visual Studio Code
+.history/
+
+# Built Visual Studio Code Extensions
+*.vsix
+
+# Visual Studio code coverage results
+*.coverage
+*.coveragexml
+
+# Visual Studio IDE cache/options directory
+.vs/
+
+# do not version control generated config files
+/server/lib/mysql_clientdb.conf
+/server/lib/config.inc.php
+/server/lib/config.inc.local.php
+/interface/lib/config.inc.local.php

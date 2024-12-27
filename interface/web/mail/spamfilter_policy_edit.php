@@ -93,6 +93,7 @@ class page_action extends tform_actions {
 	function onAfterUpdate() {
 		$this->record_has_changed = false;
 		foreach($this->dataRecord as $key => $val) {
+            if ($key == 'policy_name') { continue; } // Don't trigger update of all spamfilter users if only policy_name is changed
 			if(isset($this->oldDataRecord[$key]) && @$this->oldDataRecord[$key] != $val) {
 				// Record has changed
 				$this->record_has_changed = true;
@@ -113,16 +114,9 @@ class page_action extends tform_actions {
 					// check if this is an email domain
 					if(substr($spamfilter_user['email'],0,1) == '@') {
 						$domain = substr($spamfilter_user['email'],1);
-						$forwardings = $app->db->queryAllRecords("SELECT * FROM mail_forwarding WHERE source LIKE ? OR destination LIKE ?", "%@" . $domain, "%@" . $domain);
 
-						// Force-update aliases and forwards
-						if(is_array($forwardings)) {
-							foreach($forwardings as $rec) {
-								$app->db->datalogUpdate('mail_forwarding', array("source" => $rec['source']), 'forwarding_id', $rec['forwarding_id'],true);
-							}
-						}
+						// Nothing special to do for a domain
 					}
-
 				}
 			}
 		}

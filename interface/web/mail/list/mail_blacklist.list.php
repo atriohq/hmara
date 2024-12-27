@@ -59,11 +59,11 @@ $liste["item"][] = array( 'field'  => "active",
 
 
 $liste["item"][] = array( 'field'  => "server_id",
-	'datatype' => "VARCHAR",
+	'datatype' => "INTEGER",
 	'formtype' => "SELECT",
-	'op'  => "like",
-	'prefix' => "%",
-	'suffix' => "%",
+	'op'  => "=",
+	'prefix' => "",
+	'suffix' => "",
 	'datasource' => array (  'type' => 'SQL',
 		'querystring' => 'SELECT server_id,server_name FROM server WHERE {AUTHSQL} AND mirror_server_id = 0 ORDER BY server_name',
 		'keyfield'=> 'server_id',
@@ -78,10 +78,20 @@ $liste["item"][] = array( 'field'  => "source",
 	'op'  => "like",
 	'prefix' => "%",
 	'suffix' => "%",
+	'datasource' => array (  'type' => 'SQL',
+		'querystring' => 'SELECT access_id,source FROM mail_access WHERE {AUTHSQL} ORDER BY source',
+		'keyfield'=> 'access_id',
+		'valuefield'=> 'source'
+	),
 	'width'  => "",
 	'value'  => "");
 
 
+if ($app->auth->is_admin()) {
+	$type_values = array('recipient' => 'Recipient', 'sender' => 'Sender', 'client' => 'Client');
+} else {
+	$type_values = array('recipient' => 'Recipient', 'sender' => 'Sender');
+}
 $liste["item"][] = array( 'field'  => "type",
 	'datatype' => "VARCHAR",
 	'formtype' => "SELECT",
@@ -89,7 +99,6 @@ $liste["item"][] = array( 'field'  => "type",
 	'prefix' => "",
 	'suffix' => "",
 	'width'  => "",
-	'value'  => array('recipient' => 'Recipient', 'sender' => 'Sender', 'client' => 'Client'));
-
+	'value'  => $type_values);
 
 ?>

@@ -29,7 +29,7 @@ $autoinstall['ssl_cert_email'] = 'hostmaster@'.$autoinstall['hostname'];
 
 /* optional expert mode settings, needed only for expert mode */
 $autoinstall['mysql_ispconfig_user'] = 'ispconfig'; // default: ispconfig
-$autoinstall['mysql_ispconfig_password'] = md5(uniqid(rand()));
+$autoinstall['mysql_ispconfig_password'] = bin2hex(random_bytes(20));
 $autoinstall['join_multiserver_setup'] = 'n'; // y, n (default)
 $autoinstall['mysql_master_hostname'] = 'master.example.com';
 $autoinstall['mysql_master_root_user'] = 'root';
@@ -61,7 +61,7 @@ $autoupdate['ignore_hostname_dns'] = 'n';
 $autoupdate['ispconfig_postfix_ssl_symlink'] = 'y';
 $autoupdate['ispconfig_pureftpd_ssl_symlink'] = 'y';
 
-/* These are for service-detection (defaulting to old behaviour where alle changes were automatically accepted) */
+/* These are for service-detection (defaulting to old behaviour where all changes were automatically accepted) */
 $autoupdate['svc_detect_change_mail_server'] = 'yes'; // yes (default), no
 $autoupdate['svc_detect_change_web_server'] = 'yes'; // yes (default), no
 $autoupdate['svc_detect_change_dns_server'] = 'yes'; // yes (default), no

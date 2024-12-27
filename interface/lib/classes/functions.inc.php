@@ -28,6 +28,8 @@ NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+require_once __DIR__.'/../compatibility.inc.php';
+
 //* The purpose of this library is to provide some general functions.
 //* This class is loaded automatically by the ispconfig framework.
 
@@ -316,11 +318,33 @@ class functions {
 	 * @return string - formated bytes
 	 */
 	public function formatBytes($size, $precision = 2) {
+		// 0 is a special as it would give NAN otehrwise.
+		if ($size == 0) {
+			return 0;
+		}
+
 		$base=log($size)/log(1024);
 		$suffixes=array('', ' kB', ' MB', ' GB', ' TB');
 		return round(pow(1024, $base-floor($base)), $precision).$suffixes[floor($base)];
 	}
 
+	/**
+	 * Function to change bytes to kB, MB, GB or TB or the translated string 'Unlimited' for -1
+	 * @param int $size - size in bytes
+	 * @param int precicion - after-comma-numbers (default: 2)
+	 * @return string - formated bytes
+	 */
+	public function formatBytesOrUnlimited($size, $precision = 2) {
+		global $app;
+
+		if ($size == -1) {
+			return $app->lng('unlimited_txt');
+		}
+		else {
+			return $this->formatBytes($size, $precision);
+		}
+
+	}
 
 	/**
 	 * Normalize a path and strip duplicate slashes from it
@@ -361,6 +385,14 @@ class functions {
 		if(strpos($domain, '@') !== false) {
 			$user_part = substr($domain, 0, strrpos($domain, '@'));
 			$domain = substr($domain, strrpos($domain, '@') + 1);
+		}
+
+		// idn_to_* chokes on leading dots, but we need them for amavis, so remove it for later
+		if(substr($domain, 0, 1) === '.') {
+			$leading_dot = true;
+			$domain = substr($domain, 1);
+		} else {
+			$leading_dot = false;
 		}
 
 		if($encode == true) {
@@ -405,6 +437,10 @@ class functions {
 				}
 				$domain = $this->idn_converter->decode($domain);
 			}
+		}
+
+		if($leading_dot == true) {
+			$domain = '.' . $domain;
 		}
 
 		if($user_part !== false) return $user_part . '@' . $domain;
@@ -468,10 +504,10 @@ class functions {
 		$iteration = 0;
 		$password = "";
 		$maxLength = $minLength + 5;
-		$length = $this->getRandomInt($minLength, $maxLength);
+		$length = random_int($minLength, $maxLength);
 
 		while($iteration < $length){
-			$randomNumber = (floor(((mt_rand() / mt_getrandmax()) * 100)) % 94) + 33;
+			$randomNumber = random_int(33, 126);
 			if(!$special){
 				if (($randomNumber >=33) && ($randomNumber <=47)) { continue; }
 				if (($randomNumber >=58) && ($randomNumber <=64)) { continue; }
@@ -484,10 +520,6 @@ class functions {
 		$app->uses('validate_password');
 		if($app->validate_password->password_check('', $password, '') !== false) $password = $this->password($minLength, $special);
 		return $password;
-	}
-
-	public function getRandomInt($min, $max){
-		return floor((mt_rand() / mt_getrandmax()) * ($max - $min + 1)) + $min;
 	}
 
 	public function generate_customer_no(){
@@ -505,14 +537,17 @@ class functions {
 		global $app;
 
 		// generate the SSH key pair for the client
-		$id_rsa_file = '/tmp/'.uniqid('',true);
+		if (! $tmpdir = $app->system->exec_safe('mktemp -dt id_rsa.XXXXXXXX')) {
+			$app->log("mktemp failed, cannot create SSH keypair for ".$username, LOGLEVEL_WARN);
+		}
+		$id_rsa_file = $tmpdir . uniqid('',true);
 		$id_rsa_pub_file = $id_rsa_file.'.pub';
 		if(file_exists($id_rsa_file)) unset($id_rsa_file);
 		if(file_exists($id_rsa_pub_file)) unset($id_rsa_pub_file);
 		if(!file_exists($id_rsa_file) && !file_exists($id_rsa_pub_file)) {
 			$app->system->exec_safe('ssh-keygen -t rsa -C ? -f ? -N ""', $username.'-rsa-key-'.time(), $id_rsa_file);
 			$app->db->query("UPDATE client SET created_at = UNIX_TIMESTAMP(), id_rsa = ?, ssh_rsa = ? WHERE client_id = ?", @file_get_contents($id_rsa_file), @file_get_contents($id_rsa_pub_file), $client_id);
-			$app->system->exec_safe('rm -f ? ?', $id_rsa_file, $id_rsa_pub_file);
+			$app->system->rmdir($tmpdir, true);
 		} else {
 			$app->log("Failed to create SSH keypair for ".$username, LOGLEVEL_WARN);
 		}
@@ -558,6 +593,133 @@ class functions {
 			return 'en';
 		}
 	}
+
+        // Function to lock a client
+	public function func_client_lock($client_id,$locked) {
+		global $app;
+		$client_data = $app->db->queryOneRecord('SELECT `tmp_data` FROM `client` WHERE `client_id` = ?', $client_id);
+		if($client_data['tmp_data'] == '') $tmp_data = array();
+		else $tmp_data = unserialize($client_data['tmp_data']);
+		if(!is_array($tmp_data)) $tmp_data = array();
+		$to_disable = array('cron' => 'id',
+							'ftp_user' => 'ftp_user_id',
+							'mail_domain' => 'domain_id',
+							'mail_user' => 'mailuser_id',
+							'mail_user_smtp' => 'mailuser_id',
+							'mail_forwarding' => 'forwarding_id',
+							'mail_get' => 'mailget_id',
+							'openvz_vm' => 'vm_id',
+							'shell_user' => 'shell_user_id',
+							'webdav_user' => 'webdav_user_id',
+							'web_database' => 'database_id',
+							'web_domain' => 'domain_id',
+							'web_folder' => 'web_folder_id',
+							'web_folder_user' => 'web_folder_user_id'
+							);
+		$udata = $app->db->queryOneRecord('SELECT `userid` FROM `sys_user` WHERE `client_id` = ?', $client_id);
+		$gdata = $app->db->queryOneRecord('SELECT `groupid` FROM `sys_group` WHERE `client_id` = ?', $client_id);
+		$sys_groupid = $gdata['groupid'];
+		$sys_userid = $udata['userid'];
+		if($locked == 'y') {
+			$prev_active = array();
+			$prev_sysuser = array();
+			foreach($to_disable as $current => $keycolumn) {
+				$active_col = 'active';
+				$reverse = false;
+				if($current == 'mail_user') {
+						$active_col = 'postfix';
+				} elseif($current == 'mail_user_smtp') {
+						$current = 'mail_user';
+						$active_col = 'disablesmtp';
+						$reverse = true;
+				}
+
+				if(!isset($prev_active[$current])) $prev_active[$current] = array();
+				if(!isset($prev_sysuser[$current])) $prev_sysuser[$current] = array();
+
+				$entries = $app->db->queryAllRecords('SELECT ?? as `id`, `sys_userid`, ?? FROM ?? WHERE `sys_groupid` = ?', $keycolumn, $active_col, $current, $sys_groupid);
+				foreach($entries as $item) {
+
+						if($item[$active_col] != 'y' && $reverse == false) $prev_active[$current][$item['id']][$active_col] = 'n';
+						elseif($item[$active_col] == 'y' && $reverse == true) $prev_active[$current][$item['id']][$active_col] = 'y';
+						if($item['sys_userid'] != $sys_userid) $prev_sysuser[$current][$item['id']] = $item['sys_userid'];
+						// we don't have to store these if y, as everything without previous state gets enabled later
+
+						//$app->db->datalogUpdate($current, array($active_col => ($reverse == true ? 'y' : 'n'), 'sys_userid' => $_SESSION["s"]["user"]["userid"]), $keycolumn, $item['id']);
+						$app->db->datalogUpdate($current, array($active_col => ($reverse == true ? 'y' : 'n'), 'sys_userid' => $sys_userid), $keycolumn, $item['id']);
+				}
+			}
+
+			$tmp_data['prev_active'] = $prev_active;
+			$tmp_data['prev_sys_userid'] = $prev_sysuser;
+			$app->db->query("UPDATE `client` SET `tmp_data` = ? WHERE `client_id` = ?", serialize($tmp_data), $client_id);
+			unset($prev_active);
+			unset($prev_sysuser);
+		} elseif ($locked == 'n') {
+			foreach($to_disable as $current => $keycolumn) {
+				$active_col = 'active';
+				$reverse = false;
+				if($current == 'mail_user') {
+						$active_col = 'postfix';
+				} elseif($current == 'mail_user_smtp') {
+						$current = 'mail_user';
+						$active_col = 'disablesmtp';
+						$reverse = true;
+				}
+
+				$entries = $app->db->queryAllRecords('SELECT ?? as `id` FROM ?? WHERE `sys_groupid` = ?', $keycolumn, $current, $sys_groupid);
+				foreach($entries as $item) {
+						$set_active = ($reverse == true ? 'n' : 'y');
+						$set_inactive = ($reverse == true ? 'y' : 'n');
+						$set_sysuser = $sys_userid;
+						if(array_key_exists('prev_active', $tmp_data) == true
+								&& array_key_exists($current, $tmp_data['prev_active']) == true
+								&& array_key_exists($item['id'], $tmp_data['prev_active'][$current]) == true
+								&& $tmp_data['prev_active'][$current][$item['id']][$active_col] == $set_inactive) $set_active = $set_inactive;
+						if(array_key_exists('prev_sysuser', $tmp_data) == true
+								&& array_key_exists($current, $tmp_data['prev_sysuser']) == true
+								&& array_key_exists($item['id'], $tmp_data['prev_sysuser'][$current]) == true
+								&& $tmp_data['prev_sysuser'][$current][$item['id']] != $sys_userid) $set_sysuser = $tmp_data['prev_sysuser'][$current][$item['id']];
+						$app->db->datalogUpdate($current, array($active_col => $set_active, 'sys_userid' => $set_sysuser), $keycolumn, $item['id']);
+				}
+			}
+			if(array_key_exists('prev_active', $tmp_data)) unset($tmp_data['prev_active']);
+			$app->db->query("UPDATE `client` SET `tmp_data` = ? WHERE `client_id` = ?", serialize($tmp_data), $client_id);
+		}
+		unset($tmp_data);
+		unset($entries);
+		unset($to_disable);
+    }
+    // Function to cancel disable/enable a client
+	public function func_client_cancel($client_id,$cancel) {
+		global $app;
+		if ($cancel == 'y') {
+			$sql = "UPDATE sys_user SET active = '0' WHERE client_id = ?";
+			$result = $app->db->query($sql, $client_id);
+		} elseif($cancel == 'n') {
+			$sql = "UPDATE sys_user SET active = '1' WHERE client_id = ?";
+			$result = $app->db->query($sql, $client_id);
+		} else {
+			$result = false;
+		}
+		return $result;
+	}
+
+    /**
+     * Lookup a client's group + all groups he is reselling.
+     *
+     * @return string Comma separated list of groupid's
+     */
+    function clientid_to_groups_list($client_id) {
+      global $app;
+
+      if ($client_id != null) {
+        // Get the clients groupid, and in case it's a reseller the groupid's of its clients.
+        $group = $app->db->queryOneRecord("SELECT GROUP_CONCAT(groupid) AS `groups` FROM `sys_group` WHERE client_id IN (SELECT client_id FROM `client` WHERE client_id=? OR parent_client_id=?)", $client_id, $client_id);
+        return $group['groups'];
+      }
+      return null;
+    }
 
 }
 

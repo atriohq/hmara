@@ -96,6 +96,7 @@ $wb['pm_min_spare_servers_error_regex'] = 'PHP-FPM pm.min_spare_servers debe ser
 $wb['pm_max_spare_servers_error_regex'] = 'PHP-FPM pm.max_spare_servers debe ser un valor entero positivo.';
 $wb['ssl_key_txt'] = 'Clave SSL';
 $wb['web_folder_error_regex'] = 'La carpeta introducida no es válida. Por favor no introduzcas una barra.';
+$wb['web_folder_error_empty'] = 'Web folder cannot be empty.  Use /web/ to make the same as the Parent Website';
 $wb['domain_error_autosub'] = 'Ya hay un subdominio con estas configuraciones.';
 $wb['perl_txt'] = 'Perl';
 $wb['hd_quota_error_regex'] = 'Cuota de disco no es válida.';
@@ -201,3 +202,6 @@ $wb['tooltip_jailkit_chroot_app_programs_txt'] = 'When empty, uses Jailkit chroo
 $wb['delete_unused_jailkit_txt'] = 'Delete unused jailkit chroot';
 $wb['tooltip_delete_unused_jailkit_txt'] = 'Delete the jailkit chroot environment when there are no shell users or cron jobs which require it.';
 $wb['ssl_options_not_for_le_txt'] = 'You have Let\'s Encrypt certificates enabled for this website. Please be aware that all options on this page apply to non-Let\'s Encrypt certificates only. Remember to uncheck Let\'s Encrypt on the main tab if you want to switch to a different certificate.';
+$wb['disable_symlinknotowner_txt'] = 'Deactivate symlinks restriction of the web space';
+$wb['tooltip_disable_symlinknotowner_txt'] = 'WARNING: This function deactivates the restriction SymLinksIfOwnerMatch (Apache) and disable_symlinks if_not_owner (Nginx).';
+

@@ -46,7 +46,7 @@ $revision = str_replace(array('Revision:', '$', ' '), '', $svn_revision);
 //** Application
 define('ISPC_APP_TITLE', 'ISPConfig');
 define('ISPC_APP_VERSION', '3.2dev');
-define('DEVSYSTEM', 0);
+define('DEVSYSTEM', false);
 
 
 //** Database
@@ -128,10 +128,6 @@ $conf['log_file'] = $conf['ispconfig_log_dir'].'/ispconfig.log';
 $conf['log_priority'] = 0; // 0 = Debug, 1 = Warning, 2 = Error
 
 
-//** Allow software package installations
-$conf['software_updates_enabled'] = false;
-
-
 //** Themes
 $conf['theme'] = 'default';
 $conf['html_content_encoding'] = 'utf-8'; // example: utf-8, iso-8859-1, ...
@@ -162,5 +158,8 @@ $conf['start_session'] = true;
 define('LOGLEVEL_DEBUG', 0);
 define('LOGLEVEL_WARN', 1);
 define('LOGLEVEL_ERROR', 2);
+
+//** Admin IP whitelist file
+$conf['admin_ip_whitelist_file'] = '/usr/local/ispconfig/security/admin_ip.whitelist';
 
 ?>

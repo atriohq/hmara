@@ -44,7 +44,7 @@ class auth {
 			return false;
 		}
 	}
-	
+
 	public function is_superadmin() {
 		if($_SESSION['s']['user']['typ'] == 'admin' && $_SESSION['s']['user']['userid'] == 1) {
 			return true;
@@ -53,6 +53,13 @@ class auth {
 		}
 	}
 
+	public function is_reseller() {
+		if($this->has_clients($_SESSION['s']['user']['userid'])) {
+			return true;
+		} else {
+			return false;
+		}
+	}
 	public function has_clients($userid) {
 		global $app, $conf;
 
@@ -64,11 +71,11 @@ class auth {
 			return false;
 		}
 	}
-	
+
 	// Function to check if a client belongs to a reseller
 	public function is_client_of_reseller($userid = 0) {
 		global $app, $conf;
-		
+
 		if($userid == 0) $userid = $_SESSION['s']['user']['userid'];
 
 		$client = $app->db->queryOneRecord("SELECT client.sys_userid, client.sys_groupid FROM sys_user, client WHERE sys_user.userid = ? AND sys_user.client_id = client.client_id", $userid);
@@ -91,7 +98,7 @@ class auth {
 			$groups = explode(',', $user['groups']);
 			if(!in_array($groupid, $groups)) $groups[] = $groupid;
 			$groups_string = implode(',', $groups);
-			$sql = "UPDATE sys_user SET groups = ? WHERE userid = ?";
+			$sql = "UPDATE sys_user SET `groups` = ? WHERE userid = ?";
 			$app->db->query($sql, $groups_string, $userid);
 			return true;
 		} else {
@@ -103,10 +110,10 @@ class auth {
 	public function get_client_limit($userid, $limitname)
 	{
 		global $app;
-		
+
 		$userid = $app->functions->intval($userid);
 		if(!preg_match('/^[a-zA-Z0-9\-\_]{1,64}$/',$limitname)) $app->error('Invalid limit name '.$limitname);
-		
+
 		// simple query cache
 		if($this->client_limits===null)
 			$this->client_limits = $app->db->queryOneRecord("SELECT client.* FROM sys_user, client WHERE sys_user.userid = ? AND sys_user.client_id = client.client_id", $userid);
@@ -133,7 +140,7 @@ class auth {
 			$key = array_search($groupid, $groups);
 			unset($groups[$key]);
 			$groups_string = implode(',', $groups);
-			$sql = "UPDATE sys_user SET groups = ? WHERE userid = ?";
+			$sql = "UPDATE sys_user SET `groups` = ? WHERE userid = ?";
 			$app->db->query($sql, $groups_string, $userid);
 			return true;
 		} else {
@@ -181,11 +188,11 @@ class auth {
                        exit;
 		}
 	}
-	
+
 	public function check_security_permissions($permission) {
-		
+
 		global $app;
-		
+
 		$app->uses('getconf');
 		$security_config = $app->getconf->get_security_config('permissions');
 
@@ -195,7 +202,7 @@ class auth {
 		if($security_check !== true) {
 			$app->error($app->lng('security_check1_txt').' '.$permission.' '.$app->lng('security_check2_txt'));
 		}
-		
+
 	}
 
 	/**
@@ -231,39 +238,39 @@ class auth {
 	public function get_random_password($minLength = 8, $special = false) {
 		if($minLength < 8) $minLength = 8;
 		$maxLength = $minLength + 5;
-		$length = mt_rand($minLength, $maxLength);
-		
+		$length = random_int($minLength, $maxLength);
+
 		$alphachars = "abcdefghijklmnopqrstuvwxyz";
 		$upperchars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 		$numchars = "1234567890";
 		$specialchars = "!@#_";
-		
+
 		$num_special = 0;
 		if($special == true) {
-			$num_special = intval(mt_rand(0, round($length / 4))) + 1;
+			$num_special = intval(random_int(0, round($length / 4))) + 1;
 		}
-		$numericlen = mt_rand(1, 2);
+		$numericlen = random_int(1, 2);
 		$alphalen = $length - $num_special - $numericlen;
 		$upperlen = intval($alphalen / 2);
 		$alphalen = $alphalen - $upperlen;
 		$password = '';
-		
+
 		for($i = 0; $i < $alphalen; $i++) {
-			$password .= substr($alphachars, mt_rand(0, strlen($alphachars) - 1), 1);
+			$password .= substr($alphachars, random_int(0, strlen($alphachars) - 1), 1);
 		}
-		
+
 		for($i = 0; $i < $upperlen; $i++) {
-			$password .= substr($upperchars, mt_rand(0, strlen($upperchars) - 1), 1);
+			$password .= substr($upperchars, random_int(0, strlen($upperchars) - 1), 1);
 		}
-		
+
 		for($i = 0; $i < $num_special; $i++) {
-			$password .= substr($specialchars, mt_rand(0, strlen($specialchars) - 1), 1);
+			$password .= substr($specialchars, random_int(0, strlen($specialchars) - 1), 1);
 		}
-		
+
 		for($i = 0; $i < $numericlen; $i++) {
-			$password .= substr($numchars, mt_rand(0, strlen($numchars) - 1), 1);
+			$password .= substr($numchars, random_int(0, strlen($numchars) - 1), 1);
 		}
-		
+
 		return str_shuffle($password);
 	}
 
@@ -271,7 +278,7 @@ class auth {
 		if($charset != 'UTF-8') {
 			$cleartext_password = mb_convert_encoding($cleartext_password, $charset, 'UTF-8');
 		}
-		
+
 		if(defined('CRYPT_SHA512') && CRYPT_SHA512 == 1) {
 			$salt = '$6$rounds=5000$';
 			$salt_length = 16;
@@ -282,7 +289,7 @@ class auth {
 			$salt = '$1$';
 			$salt_length = 12;
 		}
-		
+
 		if(function_exists('openssl_random_pseudo_bytes')) {
 			$salt .= substr(bin2hex(openssl_random_pseudo_bytes($salt_length)), 0, $salt_length);
 		} else {
@@ -294,23 +301,23 @@ class auth {
 		$salt .= "$";
 		return crypt($cleartext_password, $salt);
 	}
-	
+
 	public function csrf_token_get($form_name) {
 		/* CSRF PROTECTION */
 		// generate csrf protection id and key
-		$_csrf_id = uniqid($form_name . '_'); // form id
-		$_csrf_key = sha1(uniqid(microtime(true), true)); // the key
+		$_csrf_id = $form_name . '_' . bin2hex(random_bytes(12)); // form id
+		$_csrf_key = sha1(random_bytes(20)); // the key
 		if(!isset($_SESSION['_csrf'])) $_SESSION['_csrf'] = array();
 		if(!isset($_SESSION['_csrf_timeout'])) $_SESSION['_csrf_timeout'] = array();
 		$_SESSION['_csrf'][$_csrf_id] = $_csrf_key;
 		$_SESSION['_csrf_timeout'][$_csrf_id] = time() + 3600; // timeout hash in 1 hour
-		
+
 		return array('csrf_id' => $_csrf_id,'csrf_key' => $_csrf_key);
 	}
-	
+
 	public function csrf_token_check($method = 'POST') {
 		global $app;
-		
+
 		if($method == 'POST') {
 			$input_vars = $_POST;
 		} elseif ($method == 'GET') {
@@ -318,10 +325,10 @@ class auth {
 		} else {
 			$app->error('Unknown CSRF verification method.');
 		}
-		
+
 		//print_r($input_vars);
 		//die(print_r($_SESSION['_csrf']));
-		
+
 		if(isset($input_vars) && is_array($input_vars)) {
 			$_csrf_valid = false;
 			if(isset($input_vars['_csrf_id']) && isset($input_vars['_csrf_key'])) {
@@ -339,7 +346,7 @@ class auth {
 			$_SESSION['_csrf_timeout'][$_csrf_id] = null;
 			unset($_SESSION['_csrf'][$_csrf_id]);
 			unset($_SESSION['_csrf_timeout'][$_csrf_id]);
-			
+
 			if(isset($_SESSION['_csrf_timeout']) && is_array($_SESSION['_csrf_timeout'])) {
 				$to_unset = array();
 				foreach($_SESSION['_csrf_timeout'] as $_csrf_id => $timeout) {

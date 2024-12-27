@@ -1,5 +1,7 @@
 #!/bin/bash
 
+PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/sbin:/usr/local/bin:/usr/X11R6/bin
+
 _UPD=1
 
 # padding handles script being overwritten during updates
@@ -26,7 +28,7 @@ if [[ "$SOURCE" == "stable" ]] ; then
 elif [[ "$SOURCE" == "nightly" ]] ; then
 	URL="https://www.ispconfig.org/downloads/ISPConfig-3-nightly.tar.gz"
 elif [[ "$SOURCE" == "git-develop" ]] ; then
-	URL="https://git.ispconfig.org/ispconfig/ispconfig3/repository/archive.tar.gz?ref=develop"
+	URL="https://git.ispconfig.org/ispconfig/ispconfig3/-/archive/develop/ispconfig3-develop.tar.gz"
 else 
 	echo "Please choose an installation source (stable, nightly, git-develop)"
 	exit 1
@@ -40,19 +42,23 @@ cd /tmp
 if [ -n "${_UPD}" ]
 then
     {
+        save_umask=`umask`
         umask 0077 \
         && tmpdir=`mktemp -dt "$(basename $0).XXXXXXXXXX"` \
         && test -d "${tmpdir}" \
         && cd "${tmpdir}"
+        umask $save_umask
     } || {
         echo 'mktemp failed'
         exit 1
     }
 
-    wget -O ISPConfig-3.tar.gz "${URL}"
+    echo "Downloading ISPConfig update."
+    wget -q -O ISPConfig-3.tar.gz "${URL}"
     if [ -f ISPConfig-3.tar.gz ]
     then
-        tar xvzf ISPConfig-3.tar.gz --strip-components=1
+        echo "Unpacking ISPConfig update."
+        tar xzf ISPConfig-3.tar.gz --strip-components=1
         cd install/
         php -q \
             -d disable_classes= \

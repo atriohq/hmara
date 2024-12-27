@@ -43,6 +43,9 @@ class cronjob {
 	protected $_next_run = null;
 	private $_running = false;
 
+	// services for delayed restart/reload
+	private $_delayed_restart_services = array();
+
 	/** return schedule */
 
 
@@ -100,7 +103,7 @@ class cronjob {
 		// check the run time and values for this job
 
 		// remove stale cronjobs
-		$data = $app->db->queryAllRecords("SELECT `last_run` FROM `sys_cron` WHERE `name` = ? AND (`last_run` IS NOT NULL AND `last_run` < DATE_SUB(NOW(), INTERVAL 24 HOUR)) AND `running` = 1", get_class($this));
+               $data = $app->db->queryAllRecords("SELECT `name`, `last_run` FROM `sys_cron` WHERE `name` = ? AND (`last_run` IS NOT NULL AND `last_run` < DATE_SUB(NOW(), INTERVAL 24 HOUR)) AND `running` = 1", get_class($this));
 		foreach ($data as $rec) {
 			if($conf['log_priority'] <= LOGLEVEL_WARN) print "Removing stale sys_cron entry for ".get_class($this)." (last run ".$rec['last_run'].")\n";
 			$app->db->query("DELETE FROM `sys_cron` WHERE `name` = ? AND `last_run` = ? AND `running` = 1", $rec['name'], $rec['last_run']);
@@ -146,10 +149,10 @@ class cronjob {
 
 		// next_run time reached (reached === 0 or -1)
 
-		// calculare next run time based on last_run or current time
+		// calculate next run time based on last_run or current time
 		$app->cron->parseCronLine($this->getSchedule());
 		if($this->_no_skip == true) {
-			// we need to calculare the next run based on the previous next_run, as we may not skip one.
+			// we need to calculate the next run based on the previous next_run, as we may not skip one.
 			$next_run = $app->cron->getNextRun($this->_next_run);
 			if($next_run === false) {
 				// we could not calculate next run, try it with current time
@@ -178,6 +181,12 @@ class cronjob {
 		global $app, $conf;
 
 		if($conf['log_priority'] <= LOGLEVEL_DEBUG) print "Called onAfterRun() for class " . get_class($this) . "\n";
+
+		if(is_array($this->_delayed_restart_services)) {
+			foreach ($this->_delayed_restart_services as $service => $mode) {
+				$this->restartService($service, $mode);
+			}
+		}
 	}
 
 	// child classes may NOT override this!
@@ -188,6 +197,29 @@ class cronjob {
 		$app->db->query("UPDATE `sys_cron` SET `running` = 0 WHERE `name` = ?", get_class($this));
 	}
 
+	// child classes may NOT override this!
+	protected function restartService($service, $action='restart') {
+		global $app;
+
+		$app->uses('system');
+
+		$retval = array('output' => '', 'retval' => 0);
+		if($action == 'reload') {
+			exec($app->system->getinitcommand($service, 'reload').' 2>&1', $retval['output'], $retval['retval']);
+		} else {
+			exec($app->system->getinitcommand($service, 'restart').' 2>&1', $retval['output'], $retval['retval']);
+		}
+		return $retval;
+	}
+
+	// child classes may NOT override this!
+	protected function restartServiceDelayed($service, $action='restart') {
+		$action = ($action == 'reload' ? 'reload' : 'restart');
+
+		if (is_array($this->_delayed_restart_services)) {
+			$this->_delayed_restart_services[$service] = $action;
+		}
+	}
+
 }
 
-?>

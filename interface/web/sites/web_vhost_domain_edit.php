@@ -673,9 +673,17 @@ class page_action extends tform_actions {
 			$app->tpl->setVar('fixed_folder', 'y');
 			if($this->_vhostdomain_type == 'domain') {
 				$app->tpl->setVar("server_id_value", $this->dataRecord["server_id"], true);
-				$app->tpl->setVar("document_root", $this->dataRecord["document_root"], true);
-			}
-			else $app->tpl->setVar('server_id_value', $parent_domain['server_id']);
+                if(isset($this->dataRecord["document_root"])) {
+                    $app->tpl->setVar("document_root", $this->dataRecord["document_root"], true);
+                } else {
+                    $tmp = $app->tform->getDataRecord($this->id);
+                    $app->tpl->setVar("document_root", $tmp["document_root"], true);
+                    unset($tmp);
+                }
+				
+			} else {
+                $app->tpl->setVar('server_id_value', $parent_domain['server_id']);
+            } 
 		} else {
 			$app->tpl->setVar("edit_disabled", 0);
 			$app->tpl->setVar('fixed_folder', 'n');
@@ -694,7 +702,8 @@ class page_action extends tform_actions {
 			/*
 			 * The domain-module is in use.
 			*/
-			$domains = $app->tools_sites->getDomainModuleDomains($this->_vhostdomain_type == 'subdomain' ? null : "web_domain");
+			$domains = $app->tools_sites->getDomainModuleDomains($this->_vhostdomain_type == 'subdomain' ? null : "web_domain", $this->dataRecord['domain']);
+
 			$domain_select = "<option value=''></option>";
 			$selected_domain = '';
 			if(is_array($domains) && sizeof($domains) > 0) {
@@ -725,6 +734,12 @@ class page_action extends tform_actions {
 			// remove the parent domain part of the domain name before we show it in the text field.
 			if($this->dataRecord["type"] == 'vhostsubdomain') $this->dataRecord["domain"] = str_replace('.'.$selected_domain, '', $this->dataRecord["domain"]);
 
+			// We have to set the client group id value as the client select field is hidden in this mode
+			if($is_admin) {
+				$app->tpl->setVar("client_group_id_value", $this->dataRecord["sys_groupid"], true);
+			} else {
+				$app->tpl->setVar("client_group_id_value", $_SESSION["s"]["user"]["default_group"], true);
+			}
 
 		} else {
 			// remove the parent domain part of the domain name before we show it in the text field.
@@ -835,6 +850,15 @@ class page_action extends tform_actions {
 		} else {
 			$app->tpl->setVar('is_pagespeed_enabled', ($web_config['nginx_enable_pagespeed']));
 		}
+
+               $csrf_token = $app->auth->csrf_token_get('web_vhost_domain_del');
+               $app->tpl->setVar('_csrf_id', $csrf_token['csrf_id']);
+               $app->tpl->setVar('_csrf_key', $csrf_token['csrf_key']);
+
+               $global_config = $app->getconf->get_global_config();
+               $app->tpl->setVar('show_delete_on_forms', $global_config['misc']['show_delete_on_forms']);
+
+		$app->tpl->setVar('app_module', 'sites');
 
 		parent::onShowEnd();
 	}

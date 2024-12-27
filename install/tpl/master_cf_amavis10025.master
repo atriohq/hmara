@@ -1,4 +1,5 @@
 
+# Data returning from Amavis content filtering, defaults to incomming amavis port(10024) +1
 127.0.0.1:10025 inet n - n - - smtpd
         -o content_filter=
         -o local_recipient_maps=
@@ -14,4 +15,6 @@
         -o receive_override_options=no_unknown_recipient_checks,no_header_body_checks
         -o smtp_send_xforward_command=yes
         -o disable_dns_lookups=yes
+        -o address_verify_virtual_transport=$virtual_transport
+        -o address_verify_transport_maps=$transport_maps
 

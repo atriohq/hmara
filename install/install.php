@@ -85,8 +85,6 @@ if(realpath(dirname(__FILE__)) != $cur_dir) {
 	chdir( realpath(dirname(__FILE__)) );
 }
 
-//** Install logfile
-define('ISPC_LOG_FILE', '/var/log/ispconfig_install.log');
 define('ISPC_INSTALL_ROOT', realpath(dirname(__FILE__).'/../'));
 
 //** Include the templating lib
@@ -146,7 +144,6 @@ include_once 'dist/conf/'.$dist['confid'].'.conf.php';
 //** Installer Interface
 //****************************************************************************************************
 $inst = new installer();
-if (!$inst->get_php_version()) die('ISPConfig requires PHP '.$inst->min_php."\n");
 $retval=shell_exec("which which");
 if (empty($retval)) die ("ISPConfig requires which \n");
 
@@ -157,12 +154,22 @@ swriteln($inst->lng('    Default values are in [brackets] and can be accepted wi
 swriteln($inst->lng('    Tap in "quit" (without the quotes) to stop the installer.'."\n\n"));
 
 //** Check log file is writable (probably not root or sudo)
-if(!is_writable(dirname(ISPC_LOG_FILE))){
-	die("ERROR: Cannot write to the ".dirname(ISPC_LOG_FILE)." directory. Are you root or sudo ?\n\n");
+if(!is_writable(dirname($conf['ispconfig_log_dir']))){
+	die("ERROR: Cannot write to the ".$conf['ispconfig_log_dir']." directory. Are you root or sudo ?\n\n");
 }
 
+if(!is_dir($conf['ispconfig_log_dir'])) {
+	mkdir($conf['ispconfig_log_dir'], 0755, true);
+}
+define('ISPC_LOG_FILE', $conf['ispconfig_log_dir'] . '/install.log');
+
+//** Check for ISPConfig 2.x versions
 if(is_dir('/root/ispconfig') || is_dir('/home/admispconfig')) {
-	die('This software cannot be installed on a server wich runs ISPConfig 2.x.');
+	if(is_dir('/home/admispconfig')) {
+		die('This software cannot be installed on a server which runs ISPConfig 2.x.');
+	} else {
+		die('This software cannot be installed on a server which runs ISPConfig 2.x; the presence of the /root/ispconfig/ directory may indicate an ISPConfig 2.x installation, otherwise you can remove or rename it to continue.');
+	}
 }
 
 if(is_dir('/usr/local/ispconfig')) {
@@ -247,6 +254,9 @@ unset($tmp);
 //** Initializing database connection
 include_once 'lib/mysql.lib.php';
 $inst->db = new db();
+
+//* Check MySQL version
+$inst->check_mysql_version();
 
 //** Begin with standard or expert installation
 
@@ -496,8 +506,17 @@ if($force) {
 	swriteln('Configuring OpenVZ');
 }
 
+// Configure AppArmor
+if($conf['apparmor']['installed']){
+  swriteln('Configuring AppArmor');
+  $inst->configure_apparmor();
+}
+
 if($install_mode == 'standard' || strtolower($inst->simple_query('Configure Firewall Server', array('y', 'n'), 'y','configure_firewall')) == 'y') {
 	//* Check for Firewall
+	if(!isset($conf['firewall']['installed'])) {
+		$conf['firewall']['installed'] = false;
+	}
 	if(!$conf['ufw']['installed'] && !$conf['firewall']['installed']) {
 		$conf['ufw']['installed'] = $inst->force_configure_app('Ubuntu Firewall', ($install_mode == 'expert'));
 		$conf['firewall']['installed'] = $inst->force_configure_app('Bastille Firewall', ($install_mode == 'expert'));
@@ -598,6 +617,9 @@ if(!$issue_asked) {
     }
 }
 
+// update acme.sh if installed
+$inst->update_acme();
+
 if($conf['services']['web'] == true) {
 	//** Configure apps vhost
 	swriteln('Configuring Apps vhost');
@@ -618,12 +640,12 @@ swriteln('Detect IP addresses');
 $inst->detect_ips();
 
 swriteln('Restarting services ...');
-if($conf['mysql']['installed'] == true && $conf['mysql']['init_script'] != '') system($inst->getinitcommand($conf['mysql']['init_script'], 'restart').' >/dev/null 2>&1');
-if($conf['postfix']['installed'] == true && $conf['postfix']['init_script'] != '') system($inst->getinitcommand($conf['postfix']['init_script'], 'restart'));
-if($conf['saslauthd']['installed'] == true && $conf['saslauthd']['init_script'] != '') system($inst->getinitcommand($conf['saslauthd']['init_script'], 'restart'));
-if($conf['amavis']['installed'] == true && $conf['amavis']['init_script'] != '') system($inst->getinitcommand($conf['amavis']['init_script'], 'restart'));
-if($conf['rspamd']['installed'] == true && $conf['rspamd']['init_script'] != '') system($inst->getinitcommand($conf['rspamd']['init_script'], 'restart'));
-if($conf['clamav']['installed'] == true && $conf['clamav']['init_script'] != '' && $conf['amavis']['installed'] == true) system($inst->getinitcommand($conf['clamav']['init_script'], 'restart'));
+if($conf['mysql']['installed'] == true && isset($conf['mysql']['init_script']) && $conf['mysql']['init_script'] != '') system($inst->getinitcommand($conf['mysql']['init_script'], 'restart').' >/dev/null 2>&1');
+if($conf['postfix']['installed'] == true && isset($conf['postfix']['init_script']) && $conf['postfix']['init_script'] != '') system($inst->getinitcommand($conf['postfix']['init_script'], 'restart'));
+if($conf['saslauthd']['installed'] == true && isset($conf['saslauthd']['init_script']) && $conf['saslauthd']['init_script'] != '') system($inst->getinitcommand($conf['saslauthd']['init_script'], 'restart'));
+if($conf['amavis']['installed'] == true && isset($conf['amavis']['init_script']) && $conf['amavis']['init_script'] != '') system($inst->getinitcommand($conf['amavis']['init_script'], 'restart'));
+if($conf['rspamd']['installed'] == true && isset($conf['rspamd']['init_script']) && $conf['rspamd']['init_script'] != '') system($inst->getinitcommand($conf['rspamd']['init_script'], 'restart'));
+if($conf['clamav']['installed'] == true && isset($conf['clamav']['init_script']) && $conf['clamav']['init_script'] != '' && $conf['amavis']['installed'] == true) system($inst->getinitcommand($conf['clamav']['init_script'], 'restart'));
 if($conf['courier']['installed'] == true){
 	if($conf['courier']['courier-authdaemon'] != '') system($inst->getinitcommand($conf['courier']['courier-authdaemon'], 'restart'));
 	if($conf['courier']['courier-imap'] != '') system($inst->getinitcommand($conf['courier']['courier-imap'], 'restart'));
@@ -631,22 +653,22 @@ if($conf['courier']['installed'] == true){
 	if($conf['courier']['courier-pop'] != '') system($inst->getinitcommand($conf['courier']['courier-pop'], 'restart'));
 	if($conf['courier']['courier-pop-ssl'] != '') system($inst->getinitcommand($conf['courier']['courier-pop-ssl'], 'restart'));
 }
-if($conf['dovecot']['installed'] == true && $conf['dovecot']['init_script'] != '') system($inst->getinitcommand($conf['dovecot']['init_script'], 'restart'));
-if($conf['mailman']['installed'] == true && $conf['mailman']['init_script'] != '') system('nohup '.$inst->getinitcommand($conf['mailman']['init_script'], 'restart').' >/dev/null 2>&1 &');
-if($conf['apache']['installed'] == true && $conf['apache']['init_script'] != '') system($inst->getinitcommand($conf['apache']['init_script'], 'restart'));
+if($conf['dovecot']['installed'] == true && isset($conf['dovecot']['init_script']) && $conf['dovecot']['init_script'] != '') system($inst->getinitcommand($conf['dovecot']['init_script'], 'restart'));
+if($conf['mailman']['installed'] == true && isset($conf['mailman']['init_script']) && $conf['mailman']['init_script'] != '') system('nohup '.$inst->getinitcommand($conf['mailman']['init_script'], 'restart').' >/dev/null 2>&1 &');
+if($conf['apache']['installed'] == true && isset($conf['apache']['init_script']) && $conf['apache']['init_script'] != '') system($inst->getinitcommand($conf['apache']['init_script'], 'restart'));
 //* Reload is enough for nginx
 if($conf['nginx']['installed'] == true){
 	if($conf['nginx']['php_fpm_init_script'] != '') system($inst->getinitcommand($conf['nginx']['php_fpm_init_script'], 'reload'));
-	if($conf['nginx']['init_script'] != '') system($inst->getinitcommand($conf['nginx']['init_script'], 'reload'));
+	if(isset($conf['nginx']['init_script']) && $conf['nginx']['init_script'] != '') system($inst->getinitcommand($conf['nginx']['init_script'], 'reload'));
 }
-if($conf['pureftpd']['installed'] == true && $conf['pureftpd']['init_script'] != '') system($inst->getinitcommand($conf['pureftpd']['init_script'], 'restart'));
-if($conf['mydns']['installed'] == true && $conf['mydns']['init_script'] != '') system($inst->getinitcommand($conf['mydns']['init_script'], 'restart').' &> /dev/null');
-if($conf['powerdns']['installed'] == true && $conf['powerdns']['init_script'] != '') system($inst->getinitcommand($conf['powerdns']['init_script'], 'restart').' &> /dev/null');
-if($conf['bind']['installed'] == true && $conf['bind']['init_script'] != '') system($inst->getinitcommand($conf['bind']['init_script'], 'restart').' &> /dev/null');
-//if($conf['squid']['installed'] == true && $conf['squid']['init_script'] != '' && is_file($conf['init_scripts'].'/'.$conf['squid']['init_script']))     system($conf['init_scripts'].'/'.$conf['squid']['init_script'].' restart &> /dev/null');
-if($conf['nginx']['installed'] == true && $conf['nginx']['init_script'] != '') system($inst->getinitcommand($conf['nginx']['init_script'], 'restart').' &> /dev/null');
-if($conf['ufw']['installed'] == true && $conf['ufw']['init_script'] != '') system($inst->getinitcommand($conf['ufw']['init_script'], 'restart').' &> /dev/null');
-if($conf['xmpp']['installed'] == true && $conf['xmpp']['init_script'] != '') system($inst->getinitcommand($conf['xmpp']['init_script'], 'restart').' &> /dev/null');
+if($conf['pureftpd']['installed'] == true && isset($conf['pureftpd']['init_script']) && $conf['pureftpd']['init_script'] != '') system($inst->getinitcommand($conf['pureftpd']['init_script'], 'restart'));
+if($conf['mydns']['installed'] == true && isset($conf['mydns']['init_script']) && $conf['mydns']['init_script'] != '') system($inst->getinitcommand($conf['mydns']['init_script'], 'restart').' &> /dev/null');
+if($conf['powerdns']['installed'] == true && isset($conf['powerdns']['init_script']) && $conf['powerdns']['init_script'] != '') system($inst->getinitcommand($conf['powerdns']['init_script'], 'restart').' &> /dev/null');
+if($conf['bind']['installed'] == true && isset($conf['bind']['init_script']) && $conf['bind']['init_script'] != '') system($inst->getinitcommand($conf['bind']['init_script'], 'restart').' &> /dev/null');
+//if($conf['squid']['installed'] == true && isset($conf['squid']['init_script']) && $conf['squid']['init_script'] != '' && is_file($conf['init_scripts'].'/'.$conf['squid']['init_script']))     system($conf['init_scripts'].'/'.$conf['squid']['init_script'].' restart &> /dev/null');
+if($conf['nginx']['installed'] == true && isset($conf['nginx']['init_script']) && $conf['nginx']['init_script'] != '') system($inst->getinitcommand($conf['nginx']['init_script'], 'restart').' &> /dev/null');
+if(isset($conf['ufw']['installed']) && $conf['ufw']['installed'] == true && isset($conf['ufw']['init_script']) && $conf['ufw']['init_script'] != '') system($inst->getinitcommand($conf['ufw']['init_script'], 'restart').' &> /dev/null');
+if($conf['xmpp']['installed'] == true && isset($conf['xmpp']['init_script']) && $conf['xmpp']['init_script'] != '') system($inst->getinitcommand($conf['xmpp']['init_script'], 'restart').' &> /dev/null');
 
 
 $inst->create_mount_script();

@@ -77,10 +77,12 @@ class db
 		$this->dbPort = $port ? $port : $conf['db_port'];
 		$this->dbName = $database ? $database : $conf['db_database'];
 		$this->dbUser = $user ? $user : $conf['db_user'];
-		$this->dbPass = $pass ? $pass : $conf['db_password'];
+		$this->dbPass = ( $pass !== NULL ) ? $pass : $conf['db_password'];
 		$this->dbCharset = $conf['db_charset'];
 		$this->dbClientFlags = ($flags !== NULL) ? $flags : $conf['db_client_flags'];
 		$this->_iConnId = mysqli_init();
+
+		mysqli_report(MYSQLI_REPORT_OFF);
 
 		mysqli_real_connect($this->_iConnId, $this->dbHost, $this->dbUser, $this->dbPass, '', (int)$this->dbPort, NULL, $this->dbClientFlags);
 		for($try=0;(!is_object($this->_iConnId) || mysqli_connect_errno()) && $try < 5;++$try) {
@@ -171,14 +173,10 @@ class db
 					} elseif(is_null($sValue) || (is_string($sValue) && (strcmp($sValue, '#NULL#') == 0))) {
 						$sTxt = 'NULL';
 					} elseif(is_array($sValue)) {
-						if(isset($sValue['SQL'])) {
-							$sTxt = $sValue['SQL'];
-						} else {
-							$sTxt = '';
-							foreach($sValue as $sVal) $sTxt .= ',\'' . $this->escape($sVal) . '\'';
-							$sTxt = '(' . substr($sTxt, 1) . ')';
-							if($sTxt == '()') $sTxt = '(0)';
-						}
+						$sTxt = '';
+						foreach($sValue as $sVal) $sTxt .= ',\'' . $this->escape($sVal) . '\'';
+						$sTxt = '(' . substr($sTxt, 1) . ')';
+						if($sTxt == '()') $sTxt = '(0)';
 					} else {
 						$sTxt = '\'' . $this->escape($sValue) . '\'';
 					}
@@ -241,7 +239,7 @@ class db
 						}
 					}
 				}
-				if($ok == true) {
+				if($ok) {
 					return true;
 				} else {
 					if($ids_config['sql_scan_action'] == 'warn') {
@@ -254,11 +252,13 @@ class db
 				}
 			}
 		}
+
+		return true;
 	}
 
 	private function _query($sQuery = '') {
 		global $app;
-		
+
 		$aArgs = func_get_args();
 
 		if ($sQuery == '') {
@@ -300,7 +300,9 @@ class db
 		} while($ok == false);
 
 		$sQuery = call_user_func_array(array(&$this, '_build_query_string'), $aArgs);
-		$this->securityScan($sQuery);
+		if (!$this->securityScan($sQuery)) {
+			return false;
+		}
 		$this->_iQueryId = mysqli_query($this->_iConnId, $sQuery);
 		if (!$this->_iQueryId) {
 			$this->_sqlerror('Falsche Anfrage / Wrong Query', 'SQL-Query = ' . $sQuery);
@@ -354,7 +356,7 @@ class db
 	 * @return array result row or NULL if none found
 	 */
 	public function queryOneRecord($sQuery = '') {
-		
+
 		$aArgs = func_get_args();
 		if(!empty($aArgs)) {
 			$sQuery = array_shift($aArgs);
@@ -363,7 +365,7 @@ class db
 		}
 		array_unshift($aArgs, $sQuery);
 		}
-  
+
 		$oResult = call_user_func_array([&$this, 'query'], $aArgs);
 		if(!$oResult) return null;
 
@@ -592,6 +594,7 @@ class db
 	}
 
 	public function toLower($record) {
+		$out = [];
 		if(is_array($record)) {
 			foreach($record as $key => $val) {
 				$key = strtolower($key);
@@ -670,7 +673,7 @@ class db
 			$clientdb_user     = ($conf['db_user']) ? $conf['db_user'] : NULL;
 			$clientdb_password = ($conf['db_password']) ? $conf['db_password'] : NULL;
 			$clientdb_port     = ((int)$conf['db_port']) ? (int)$conf['db_port'] : NULL;
-			$clientdb_flags    = ($conf['db_flags'] !== NULL) ? $conf['db_flags'] : NULL;
+			$clientdb_flags    = (isset($conf['db_flags']) && $conf['db_flags'] !== NULL) ? $conf['db_flags'] : NULL;
 
 			require_once 'lib/mysql_clientdb.conf';
 
@@ -680,7 +683,7 @@ class db
 		$result = $db->_query("SELECT SUM(data_length+index_length) FROM information_schema.TABLES WHERE table_schema='".$db->escape($database_name)."'");
 		if(!$result) {
 			$db->_sqlerror('Unable to determine the size of database ' . $database_name);
-			return;
+			return 0;
 		}
 		$database_size = $result->getAsRow();
 		$result->free();
@@ -750,7 +753,7 @@ class db
 			foreach($insert_data as $key => $val) {
 				$key_str .= '??,';
 				$params[] = $key;
-				
+
 				$val_str .= '?,';
 				$v_params[] = $val;
 			}
@@ -764,7 +767,7 @@ class db
 			$this->query("INSERT INTO ?? $insert_data_str", $tablename);
 			$app->log("deprecated use of passing values to datalogInsert() - table " . $tablename, 1);
 		}
-		
+
 		$old_rec = array();
 		$index_value = $this->insertID();
 		if(!$index_value && isset($insert_data[$index_field])) {
@@ -827,12 +830,13 @@ class db
 		return true;
 	}
 
-	//** Deletes a record and saves the changes into the datalog
+	// Updates a datalog record to store an error state.
 	public function datalogError($errormsg) {
 		global $app;
 
-		if(isset($app->modules->current_datalog_id) && $app->modules->current_datalog_id > 0) $this->query("UPDATE sys_datalog set error = ? WHERE datalog_id = ?", $errormsg, $app->modules->current_datalog_id);
-
+		if(isset($app->modules->current_datalog_id) && $app->modules->current_datalog_id > 0) {
+			$this->query("UPDATE sys_datalog set error = ? WHERE datalog_id = ?", $errormsg, $app->modules->current_datalog_id);
+		}
 		return true;
 	}
 
@@ -1072,7 +1076,7 @@ class db
 	}
 
 	public function mapType($metaType, $typeValue) {
-		global $go_api;
+		global $app;
 		$metaType = strtolower($metaType);
 		switch ($metaType) {
 		case 'int16':
@@ -1104,6 +1108,8 @@ class db
 			return 'date';
 			break;
 		}
+		$app->error('Unknown meta type: '.$metaType);
+		return false;
 	}
 
 	/**
@@ -1140,39 +1146,177 @@ class db
 			return $version[0];
 		}
 	}
-	
+
 	/**
 	 * Get a mysql password hash
 	 *
 	 * @access public
-	 * @param string   cleartext password
+	 * @param string $password cleartext password
+	 * @param string $hash_type MySQL hash type to use. either mysql_native_password or caching_sha2_password
 	 * @return string  Password hash
 	 */
-	
-	public function getPasswordHash($password) {
-		
-		$password_type = 'password';
-		
-		/* Disabled until caching_sha2_password is implemented
-		if($this->getDatabaseType() == 'mysql' && $this->getDatabaseVersion(true) >= 8) {
-			// we are in MySQL 8 mode
-			$tmp = $this->queryOneRecord("show variables like 'default_authentication_plugin'");
-			if($tmp['default_authentication_plugin'] == 'caching_sha2_password') {
-				$password_type = 'caching_sha2_password';
+
+	public function getPasswordHash($password, $hash_type = 'mysql_native_password') {
+		if($hash_type == 'caching_sha2_password') {
+			$password_hash = $this->mysqlSha256Crypt($password, $this->genSalt(20), 5000);
+		} else {
+			$password_hash = '*' . strtoupper(sha1(sha1($password, true)));
+		}
+
+		return $password_hash;
+	}
+
+	/**
+	 * @param $size int length of salt in bytes
+	 *
+	 * @return string
+	 */
+	private function genSalt($size) {
+		$salt = random_bytes($size);
+		if($salt === false) {
+			throw new Exception('Cannot generate salt.');
+		}
+		for($i = 0; $i < $size; $i++) {
+			$ord = ord($salt[$i]) & 0x7f;
+			if($ord < 32) {
+				$ord += 32;
+			}
+			if($ord == 36 /* $ */) {
+				$ord += 1;
+			}
+			$salt[$i] = chr($ord);
+		}
+
+		return $salt;
+	}
+
+	/**
+	 * this is the SHA256 algorithm of the crypt unix call – the only difference is that we do not truncate the salt to 16 chars
+	 * @see https://www.akkadia.org/drepper/SHA-crypt.txt
+	 * @see https://github.com/mysql/mysql-server/blob/trunk/mysys/crypt_genhash_impl.cc
+	 *
+	 * @param string $plaintext the plain text password
+	 * @param string $salt the raw salt (needs to be 20 bytes long)
+	 * @param int $rounds number of rounds. MySQL default is 5000.  Must be between 1000 and 4095000 (0xFFF * 1000)
+	 *
+	 * @return string hashed password in MySQL format
+	 */
+	private function mysqlSha256Crypt($plaintext, $salt, $rounds) {
+		$plaintext_len = strlen($plaintext);
+		$salt_len = strlen($salt);
+
+		// 1
+		$ctxA = hash_init('sha256');
+		// 2
+		hash_update($ctxA, $plaintext);
+		// 3
+		hash_update($ctxA, $salt);
+		// 4
+		$ctxB = hash_init('sha256');
+		// 5
+		hash_update($ctxB, $plaintext);
+		// 6
+		hash_update($ctxB, $salt);
+		// 7
+		hash_update($ctxB, $plaintext);
+		// 8
+		$B = hash_final($ctxB, true);
+		// 9
+		for($i = $plaintext_len; $i > 32; $i -= 32) {
+			hash_update($ctxA, $B);
+		}
+		// 10
+		hash_update($ctxA, substr($B, 0, $i));
+		// 11
+		for($i = $plaintext_len; $i > 0; $i >>= 1) {
+			if(($i & 1) != 0) {
+				hash_update($ctxA, $B);
+			} else {
+				hash_update($ctxA, $plaintext);
 			}
 		}
-		*/
-		
-		if($password_type == 'caching_sha2_password') {
-			/*
-				caching_sha2_password hashing needs to be implemented, have not 
-				found valid PHP implementation for the new password hash type.
-			*/
-		} else {
-			$password_hash = '*'.strtoupper(sha1(sha1($password, true)));
+		// 12
+		$A = hash_final($ctxA, true);
+		// 13
+		$ctxDP = hash_init('sha256');
+		// 14
+		for($i = 0; $i < $plaintext_len; $i++) {
+			hash_update($ctxDP, $plaintext);
 		}
-		
-		return $password_hash;
+		// 15
+		$DP = hash_final($ctxDP, true);
+		// 16
+		$P = "";
+		for($i = $plaintext_len; $i > 32; $i -= 32) {
+			$P .= $DP;
+		}
+		$P .= substr($DP, 0, $i);
+		// 17
+		$ctxDS = hash_init('sha256');
+		// 18
+		for($i = 0; $i < 16 + ord($A[0]); $i++) {
+			hash_update($ctxDS, $salt);
+		}
+		// 19
+		$DS = hash_final($ctxDS, true);
+		// 20
+		$S = "";
+		for($i = $salt_len; $i >= 32; $i -= 32) {
+			$S .= $DS;
+		}
+		$S .= substr($DS, 0, $i);
+		// 21
+		$C = "";
+		for($i = 0; $i < $rounds; $i++) {
+			$ctxC = hash_init('sha256');
+			if(($i & 1) != 0) {
+				hash_update($ctxC, $P);
+			} else {
+				hash_update($ctxC, $i == 0 ? $A : $C);
+			}
+
+			if($i % 3 != 0) {
+				hash_update($ctxC, $S);
+			}
+
+			if($i % 7 != 0) {
+				hash_update($ctxC, $P);
+			}
+
+			if(($i & 1) != 0) {
+				hash_update($ctxC, $i == 0 ? $A : $C);
+			} else {
+				hash_update($ctxC, $P);
+			}
+			$C = hash_final($ctxC, true);
+		}
+
+		// 22
+		$b64result = str_repeat(' ', 43);
+		$p = 0;
+		$b64_from_24bit = function($B2, $B1, $B0, $N) use (&$b64result, &$p) {
+			$b64_alphabet = "./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+			$w = ($B2 << 16) | ($B1 << 8) | $B0;
+			$n = $N;
+			while(--$n >= 0) {
+				$b64result[$p++] = $b64_alphabet[$w & 0x3f];
+				$w = $w >> 6;
+			}
+		};
+		$b64_from_24bit(ord($C[0]), ord($C[10]), ord($C[20]), 4);
+		$b64_from_24bit(ord($C[21]), ord($C[1]), ord($C[11]), 4);
+		$b64_from_24bit(ord($C[12]), ord($C[22]), ord($C[2]), 4);
+		$b64_from_24bit(ord($C[3]), ord($C[13]), ord($C[23]), 4);
+		$b64_from_24bit(ord($C[24]), ord($C[4]), ord($C[14]), 4);
+		$b64_from_24bit(ord($C[15]), ord($C[25]), ord($C[5]), 4);
+		$b64_from_24bit(ord($C[6]), ord($C[16]), ord($C[26]), 4);
+		$b64_from_24bit(ord($C[27]), ord($C[7]), ord($C[17]), 4);
+		$b64_from_24bit(ord($C[18]), ord($C[28]), ord($C[8]), 4);
+		$b64_from_24bit(ord($C[9]), ord($C[19]), ord($C[29]), 4);
+		$b64_from_24bit(0, ord($C[31]), ord($C[30]), 3);
+
+		// we do not truncate $salt to 16 chars since MySQL does not do that and uses 20 bytes salts
+		return sprintf('$A$%03x$%s%s', $rounds / 1000, $salt, $b64result);
 	}
 
 }
@@ -1187,10 +1331,11 @@ class db_result {
 
 	/**
 	 *
-	 *
+	 * @var mysqli_result|null
 	 * @access private
 	 */
 	private $_iResId = null;
+	/** @var mysqli|null  */
 	private $_iConnection = null;
 
 
@@ -1402,7 +1547,7 @@ class fakedb_result {
 	 *
 	 * @access public
 	 * @param int     $iStart offset to start read
-	 * @param int     iLength amount of datasets to read
+	 * @param int     $iLength amount of datasets to read
 	 */
 	public function limit_result($iStart, $iLength) {
 		$this->aLimitedData = array_slice($this->aResultData, $iStart, $iLength, true);
