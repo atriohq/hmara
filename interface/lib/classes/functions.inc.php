@@ -244,6 +244,8 @@ class functions {
 				if(preg_match($regex, $result['ip'])) $ips[] = $result['ip'];
 			}
 		}
+
+		// Regular DNS A or AAAA records.
 		if ($app->auth->is_admin()) {
 			$results = $app->db->queryAllRecords("SELECT rr.data AS server_ip, rr.name as server_name, soa.origin as domain FROM dns_rr as rr, dns_soa as soa WHERE (rr.type = 'A' OR rr.type = 'AAAA') AND soa.id = rr.zone");
 		} else {
