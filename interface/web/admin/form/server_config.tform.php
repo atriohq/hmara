@@ -1074,6 +1074,12 @@ $form["tabs"]['web'] = array(
 			'default' => 'n',
 			'value' => array(0 => 'n', 1 => 'y')
 		),
+		'web_folder_permission' => array(
+			'datatype' => 'VARCHAR',
+			'formtype' => 'TEXT',
+			'default' => '0710',
+			'maxlength' => '4'
+		),
 		'web_folder_protection' => array(
 			'datatype' => 'VARCHAR',
 			'formtype' => 'CHECKBOX',
