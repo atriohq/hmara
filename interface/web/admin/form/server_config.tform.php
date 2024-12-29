@@ -1076,9 +1076,13 @@ $form["tabs"]['web'] = array(
 		),
 		'web_folder_permission' => array(
 			'datatype' => 'VARCHAR',
-			'formtype' => 'TEXT',
+			'formtype' => 'SELECT',
 			'default' => '0710',
-			'maxlength' => '4'
+			'maxlength' => '4',
+			'value' => array('0710' => '0710', '0711' => '0711', '0750' => '0750', '0751' => '0751'),
+			'validators' => array(	0 => array ('type' => 'REGEX',
+										'regex' => '/^0[0-7]{3}$/',
+										'errmsg'=> 'incorrect_permissions_regex')),
 		),
 		'web_folder_protection' => array(
 			'datatype' => 'VARCHAR',
