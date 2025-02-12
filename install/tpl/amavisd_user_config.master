@@ -85,6 +85,9 @@ $interface_policy{'10026'} = 'ORIGINATING';
 $policy_bank{'ORIGINATING'} = {
   originating => 1,
 };
+$policy_bank{'MYNETS'} = {
+  originating => 1,
+};
 
 # IP-Addresses for internal networks => load policy MYNETS
 # - requires -o smtp_send_xforward_command=yes in postfix master.cf
