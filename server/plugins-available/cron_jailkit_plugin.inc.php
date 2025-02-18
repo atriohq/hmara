@@ -78,7 +78,10 @@ class cron_jailkit_plugin {
 		}
 
 		//* get data from web
-		$parent_domain = $app->db->queryOneRecord("SELECT * FROM web_domain LEFT JOIN server_php ON web_domain.server_php_id = server_php.server_php_id WHERE domain_id = ?", $data["new"]["parent_domain_id"]);
+		$parent_domain = $app->db->queryOneRecord("SELECT web_domain.*, server_php.php_jk_section
+		FROM web_domain
+			LEFT JOIN server_php ON web_domain.server_php_id = server_php.server_php_id
+		WHERE web_domain.domain_id = ?", $data["new"]["parent_domain_id"]);
 
 		if(!$parent_domain["domain_id"]) {
 			$app->log("Parent domain not found", LOGLEVEL_WARN);
@@ -107,8 +110,20 @@ class cron_jailkit_plugin {
 				$this->data = $data;
 				$this->jailkit_config = $app->getconf->get_server_config($conf["server_id"], 'jailkit');
 				foreach (array('jailkit_chroot_app_sections', 'jailkit_chroot_app_programs') as $section) {
+					// Replace and don't inherit the server's Jailkit config
 					if (isset($parent_domain[$section]) && $parent_domain[$section] != '' ) {
 						$this->jailkit_config[$section] = $parent_domain[$section];
+					}
+					// Add selected PHP version to the jailkit chroot
+					if ($section == 'jailkit_chroot_app_sections') {
+						if (isset($parent_domain['php_jk_section']) && $parent_domain['php_jk_section'] != '' ) {
+							$this->jailkit_config['jailkit_chroot_app_sections'] = $this->jailkit_config['jailkit_chroot_app_sections'] . ' ' . $parent_domain['php_jk_section'];
+							$jk_temp_config = preg_split('/[\s,]+/', $this->jailkit_config['jailkit_chroot_app_sections']);
+
+							// Merge the arrays and remove duplicates
+							$this->jailkit_config[$section] = array_unique($jk_temp_config, SORT_REGULAR);
+							sort($this->jailkit_config[$section], SORT_STRING);
+						}
 					}
 				}
 
@@ -148,7 +163,10 @@ class cron_jailkit_plugin {
 		}
 
 		//* get data from web
-		$parent_domain = $app->db->queryOneRecord("SELECT * FROM web_domain LEFT JOIN server_php ON web_domain.server_php_id = server_php.server_php_id WHERE domain_id = ?", $data["new"]["parent_domain_id"]);
+		$parent_domain = $app->db->queryOneRecord("SELECT web_domain.*, server_php.php_jk_section
+		FROM web_domain
+		LEFT JOIN server_php ON web_domain.server_php_id = server_php.server_php_id
+		WHERE web_domain.domain_id = ?", $data["new"]["parent_domain_id"]);
 
 		if(!$parent_domain["domain_id"]) {
 			$app->log("Parent domain not found", LOGLEVEL_WARN);
@@ -174,8 +192,20 @@ class cron_jailkit_plugin {
 				$this->data = $data;
 				$this->jailkit_config = $app->getconf->get_server_config($conf["server_id"], 'jailkit');
 				foreach (array('jailkit_chroot_app_sections', 'jailkit_chroot_app_programs') as $section) {
+					// Replace and don't inherit the server's Jailkit config
 					if (isset($parent_domain[$section]) && $parent_domain[$section] != '' ) {
 						$this->jailkit_config[$section] = $parent_domain[$section];
+					}
+					// Add selected PHP version to the jailkit chroot
+					if ($section == 'jailkit_chroot_app_sections') {
+						if (isset($parent_domain['php_jk_section']) && $parent_domain['php_jk_section'] != '' ) {
+							$this->jailkit_config['jailkit_chroot_app_sections'] = $this->jailkit_config['jailkit_chroot_app_sections'] . ' ' . $parent_domain['php_jk_section'];
+							$jk_temp_config = preg_split('/[\s,]+/', $this->jailkit_config['jailkit_chroot_app_sections']);
+
+							// Merge the arrays and remove duplicates
+							$this->jailkit_config[$section] = array_unique($jk_temp_config, SORT_REGULAR);
+							sort($this->jailkit_config[$section], SORT_STRING);
+						}
 					}
 				}
 
@@ -366,9 +396,16 @@ class cron_jailkit_plugin {
 
 		$tpl = new tpl();
 
-		if($app->system->get_os_type() == "debian" || $app->system->get_os_type() == "ubuntu") {
+		$os_type = $app->system->get_os_type();
+		if (isset($os_type['type'])) {
+			$used_os_type = $os_type['type'];
+		} else {
+			$used_os_type = 'unknown';
+		}
+
+		if($used_os_type == "debian" || $used_os_type == "ubuntu") {
 			$tpl->newTemplate("bashrc_user_deb.master");
-		} elseif($app->system->get_os_type() == "redhat") {
+		} elseif($used_os_type == "redhat") {
 			$tpl->newTemplate("bashrc_user_redhat.master");
 		} else {
 			$tpl->newTemplate("bashrc_user_generic.master");
@@ -380,7 +417,6 @@ class cron_jailkit_plugin {
 		$tpl->setVar('home_dir', $this->_get_home_dir(""));
 
 		$tpl->setVar('use_php_path', false);
-		$tpl->setVar('use_php_alias', false);
 
 
 		if(($this->parent_domain['server_php_id'] > 0) && !empty($this->parent_domain['php_cli_binary'])) {
@@ -389,17 +425,14 @@ class cron_jailkit_plugin {
 			if(preg_match('/^(\/usr\/(s)?bin|\/(s)?bin)/', $php_bin_dir)) {
 				$tpl->setVar('use_php_path', false);
 				$tpl->setVar('use_php_alias', true);
-				$tpl->setVar('php_alias', $this->parent_domain['php_cli_binary']);
 			} else {
 				$tpl->setVar('use_php_path', true);
-				$tpl->setVar('use_php_alias', false);
 				$tpl->setVar('php_bin_dir', $php_bin_dir);
 			}
 
 			if(!file_exists($this->parent_domain['document_root'] . '/' . $this->parent_domain['php_cli_binary'])) {
 				$app->log("The PHP cli binary " . $this->parent_domain['php_cli_binary'] . " is not available in the jail of the web " . $this->parent_domain['domain']  . " / cronjob_id: " . $this->data['new']['id']  . ". Check your Jailkit setup!", LOGLEVEL_DEBUG);
 				$tpl->setVar('use_php_path', false);
-				$tpl->setVar('use_php_alias', false);
 
 				if(!empty($app->system->get_newest_php_bin($this->parent_domain['document_root'] . $php_bin_dir))) {
 					$fallback_php = $app->system->get_newest_php_bin($this->parent_domain['document_root'] . $php_bin_dir);
@@ -414,7 +447,7 @@ class cron_jailkit_plugin {
 					}
 				}
 			} else {
-				if($app->system->get_os_type() == "debian" || $app->system->get_os_type() == "ubuntu") {
+				if($used_os_type == "debian" || $used_os_type == "ubuntu") {
 					if(is_link($this->parent_domain['document_root'] . '/etc/alternatives/php') || is_file($this->parent_domain['document_root'] . '/etc/alternatives/php'))
 					{
 						unlink($this->parent_domain['document_root'] . '/etc/alternatives/php');

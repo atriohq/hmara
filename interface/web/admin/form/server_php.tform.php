@@ -271,14 +271,29 @@ $form["tabs"]['php_cli'] = array (
 		'width' => '40',
 		'maxlength' => '255'
 	),
+	'php_jk_section' => array(
+		'datatype' => 'TEXT',
+		'formtype' => 'TEXT',
+		'default' => '',
+		'validators' => array(
+			0 => array (
+				'type' => 'REGEX',
+				'regex' => '/^[a-zA-Z0-9\-\_\ ]*$/',
+				'errmsg'=> 'php_cli_jk_section_error_regex'
+			),
+		),
+		'value' => '',
+		'width' => '40',
+		'maxlength' => '255'
+	),
 )
 );
 $form["tabs"]['php_sort'] = array (
-    	'title' => "PHP Sort Priority",
+	'title' => "PHP Sort Priority",
 	'width' => 80,
 	'template' => "templates/server_php_sort_edit.htm",
 	'fields' => array(
-                   'sortprio' => array (
+		'sortprio' => array (
 			'datatype' => 'INTEGER',
 			'formtype' => 'TEXT',
 			'default' => '100',

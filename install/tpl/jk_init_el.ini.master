@@ -1,0 +1,272 @@
+# jk_init.ini:  jailkit initialization config
+
+# Includes paths to handle Enterprise Linux systems like RHEL and its derivatives AlmaLinux, Rocky Linux et cetera
+# if other paths are needed please create an issue with the details or a merge request at:
+# https://git.ispconfig.org/ispconfig/ispconfig3
+
+[uidbasics]
+comment = common files for all jails that need user/group information
+paths = /lib*/libnsl.so.*, /lib*/libnss*.so.*, /lib/*/libnsl.so.*, /lib/*/libnss*.so.*, /etc/nsswitch.conf, /etc/ld.so.conf
+
+[netbasics]
+comment = common files for all jails that need any internet connectivity
+paths = /lib*/libnss_dns.so.*, /lib*/libnss_mdns*.so.*, /lib/*/libnss_dns.so.*, /lib/*/libnss_mdns*.so.*, /etc/resolv.conf, /etc/host.conf, /etc/hosts, /etc/protocols, /etc/services, /etc/ssl/certs/, /usr/lib/ssl/certs
+
+[logbasics]
+comment = timezone information and log sockets
+paths = /etc/localtime
+need_logsocket = 1
+
+[enterpriselinuxbasics]
+comment = Various Enterprise Linux specific directories and programs
+paths = /usr/lib/locale, /usr/share/modulefiles, /usr/share/Modules, /usr/share/tcl*, /usr/bin/lesspipe.sh, /usr/libexec/grepconf.sh, /usr/bin/tclsh, /usr/bin/tty
+includesections = enterpriselinux_etc_env
+
+[enterpriselinux_etc_env]
+comment = Enterprise Linux /etc specific environment related files
+paths = /etc/profile, /etc/modulefiles, /etc/alternatives/modulecmd, /etc/DIR_COLORS*,  /etc/sysconfig/bash-prompt-default, /etc/profile.d/bash_completion.sh, /etc/profile.d/color*, /etc/profile.d/lang*, /etc/profile.d/less*, /etc/profile.d/sh.local, /etc/profile.d/vim*, /etc/profile.d/composer*, /etc/profile.d/conda*, /etc/profile.d/guestfish.sh, /etc/locale.conf, /etc/inputrc
+emptydirs = /etc/ssl, /etc/pki
+
+[jk_lsh]
+comment = Jailkit limited shell
+paths = /usr/sbin/jk_lsh, /etc/jailkit/jk_lsh.ini
+users = root
+groups = root
+includesections = uidbasics, logbasics
+
+[limitedshell]
+comment = alias for jk_lsh
+includesections = jk_lsh
+
+[cvs]
+comment = Concurrent Versions System
+paths = cvs
+devices = /dev/null
+
+[git]
+comment = Fast Version Control System
+paths = /usr/bin/git*, /usr/lib/git-core, /usr/share/git-core, pager
+includesections = editors, perl, netbasics, basicshell, coreutils
+
+[scp]
+comment = ssh secure copy
+paths = scp
+includesections = netbasics, uidbasics
+devices = /dev/urandom, /dev/null
+
+[sftp]
+comment = ssh secure ftp
+paths = /usr/lib/sftp-server, /usr/libexec/openssh/sftp-server, /usr/lib/misc/sftp-server, /usr/libexec/sftp-server, /usr/lib/openssh/sftp-server
+includesections = netbasics, uidbasics
+devices = /dev/urandom, /dev/null
+
+[ssh]
+comment = ssh secure shell
+paths = ssh
+includesections = netbasics, uidbasics
+devices = /dev/urandom, /dev/tty, /dev/null
+
+[rsync]
+paths = rsync
+includesections = netbasics, uidbasics
+
+[procmail]
+comment = procmail mail delivery
+paths = procmail, /bin/sh
+devices = /dev/null
+
+[basicshell]
+comment = bash based shell with several basic utilities
+paths = /bin/sh, bash, ls, cat, chmod, mkdir, cp, cpio, date, dd, echo, egrep, false, fgrep, grep, gunzip, gzip, ln, ls, mkdir, mktemp, more, mv, pwd, rm, rmdir, sed, sh, sleep, sync, tar, touch, true, uncompress, zcat, /etc/motd, /etc/issue, /etc/bash.bashrc, /etc/bashrc, /etc/profile, /usr/lib/locale/en_US.utf8, uname, expr, xargs
+users = root
+groups = root
+includesections = uidbasics, enterpriselinuxbasics
+
+[interactiveshell]
+comment = for ssh access to a full shell
+includesections = uidbasics, basicshell, terminfo, editors, extendedshell
+
+[midnightcommander]
+comment = Midnight Commander
+paths = mc, mcedit, mcview, /usr/share/mc
+includesections = basicshell, terminfo
+
+[extendedshell]
+comment = bash shell including things like awk, bzip, tail, less
+paths = awk, bzip2, bunzip2, ldd, less, clear, cut, du, find, head, less, md5sum, nice, sort, tac, tail, tr, sort, wc, watch, whoami
+includesections = basicshell, midnightcommander, editors
+
+[terminfo]
+comment = terminfo databases, required for example for ncurses or vim
+paths = /etc/terminfo, /usr/share/terminfo, /lib/terminfo
+
+[editors]
+comment = vim, joe and nano
+includesections = terminfo
+paths = joe, nano, vi, vim, /etc/vimrc, /etc/joe, /usr/share/vim
+
+[netutils]
+comment = several internet utilities like curl, wget, ftp, rsync, scp, ssh
+paths = curl, wget, lynx, ftp, host, rsync, smbclient
+includesections = netbasics, ssh, sftp, scp
+
+[apacheutils]
+comment = htpasswd utility
+paths = htpasswd
+
+[extshellplusnet]
+comment = alias for extendedshell + netutils + apacheutils
+includesections = extendedshell, netutils, apacheutils
+
+[openvpn]
+comment = jail for the openvpn daemon
+paths = /usr/sbin/openvpn
+users = root,nobody
+groups = root,nogroup
+devices = /dev/urandom, /dev/random, /dev/net/tun
+includesections = netbasics, uidbasics
+need_logsocket = 1
+
+[apache]
+comment = the apache webserver, very basic setup, probably too limited for you
+paths = /usr/sbin/apache
+users = root, www-data
+groups = root, www-data
+includesections = netbasics, uidbasics
+
+[perl]
+comment = the perl interpreter and libraries
+paths = perl, /usr/lib64/perl, /usr/lib64/perl5, /usr/share/perl, /usr/share/perl5
+
+[xauth]
+comment = getting X authentication to work
+paths = /usr/bin/X11/xauth, /usr/X11R6/lib/X11/rgb.txt, /etc/ld.so.conf
+
+[xclients]
+comment = minimal files for X clients
+paths = /usr/X11R6/lib/X11/rgb.txt
+includesections = xauth
+
+[vncserver]
+comment = the VNC server program
+paths = Xvnc, Xrealvnc, /usr/X11R6/lib/X11/fonts/
+includesections = xclients
+
+[ping]
+comment = Ping program
+paths_w_setuid = /bin/ping
+
+#[xterm]
+#comment = xterm
+#paths = /usr/bin/X11/xterm, /usr/share/terminfo, /etc/terminfo
+#devices = /dev/pts/0, /dev/pts/1, /dev/pts/2, /dev/pts/3, /dev/pts/4, /dev/ptyb4, /dev/ptya4, /dev/tty, /dev/tty0, /dev/tty4
+
+[coreutils]
+comment = Progs from coreutils
+paths = arch, b2sum, base32, base64, basename, cat, chcon, chgrp, chmod, chown, cksum, comm, cp, csplit, cut, date, dir, dircolors, dirname, du, echo, env, expand, expr, factor, false, fmt, fold, groups, head, hostid, id, install, join, link, ln, logname, ls, md5sum, mkdir, mkfifo, mknod, mktemp, mv, nice, nl, nohup, nproc, numfmt, od, paste, pathchk, pinky, pr, printenv, printf, ptx, pwd, readlink, realpath, rm, rmdir, runcon, seq, sha1sum, sha224sum, sha256sum, sha384sum, sha512sum, shred, shuf, sleep, sort, split, stat, stdbuf, stty, sum, tac, tail, tee, test, timeout, touch, tr, true, truncate, tsort, uname, unexpand, uniq, unlink, users, vdir, wc, who, whoami, yes
+
+[webutils]
+comment = Collection of commonly used utils for webapps
+paths = /usr/bin/gm, /usr/bin/convert, /usr/bin/identify, /usr/bin/composite, /usr/bin/combine, /usr/bin/cwebp, /usr/bin/pdf*
+
+[mysqlutils]
+comment = MySQL client utils
+paths = mysql, mysqldump, mysqlshow
+
+[composer]
+comment = composer
+paths = composer, /usr/local/bin/composer, /usr/share/doc/composer
+includesections = php, uidbasics, netbasics
+
+[node]
+comment = NodeJS
+paths = npm, npx, node, nodejs, semver, /usr/lib/nodejs, /usr/share/nodejs, /usr/share/npm, /usr/share/node-mime, /usr/lib/node_modules, /usr/local/lib/nodejs, /usr/local/lib/node_modules, /etc/npmrc, /etc/npmignore, elmi-to-json, /usr/local/bin/elmi-to-json
+
+[env]
+comment = /usr/bin/env for environment variables
+paths = env
+
+[php]
+comment = default php version and libraries
+paths = /usr/bin/php
+includesections = php_common
+
+[php_common]
+comment = Common PHP directories and libraries
+# notice:  potential information leak
+#  do not add all of /etc/php/ or any of the fpm directories
+#  or the php config (which includes custom php snippets) from *all*
+#  sites which use fpm will be copied to *every* jailkit
+paths = /usr/bin/php, /usr/bin/phar, /usr/lib64/php/, /usr/share/php/, /usr/share/zoneinfo/
+includesections = env, logbasics, netbasics, mysqlutils, webutils, imagemagick
+
+[php5_4]
+comment = PHP 5.4
+paths = /opt/remi/php54/root/bin/php, /opt/remi/php54/root/bin/phar, /opt/remi/php54/root/usr/lib64/, /opt/remi/php54/root/usr/share/
+includesections = php_common
+
+[php5_5]
+comment = PHP 5.5
+paths = /opt/remi/php55/root/bin/php, /opt/remi/php55/root/bin/phar, /opt/remi/php55/root/usr/lib64/, /opt/remi/php55/root/usr/share/
+includesections = php_common
+
+[php5_6]
+comment = PHP 5.6
+paths = /opt/remi/php56/root/bin/php, /opt/remi/php56/root/bin/phar, /opt/remi/php56/root/usr/lib64/, /opt/remi/php56/root/usr/share/
+includesections = php_common
+
+[php7_0]
+comment = PHP 7.0
+paths = /opt/remi/php70/root/bin/php, /opt/remi/php70/root/bin/phar, /opt/remi/php70/root/usr/lib64/, /opt/remi/php70/root/usr/share/
+includesections = php_common
+
+[php7_1]
+comment = PHP 7.1
+paths = /opt/remi/php71/root/bin/php, /opt/remi/php71/root/bin/phar, /opt/remi/php71/root/usr/lib64/, /opt/remi/php71/root/usr/share/
+includesections = php_common
+
+[php7_2]
+comment = PHP 7.2
+paths = /opt/remi/php72/root/bin/php, /opt/remi/php72/root/bin/phar, /opt/remi/php72/root/usr/lib64/, /opt/remi/php72/root/usr/share/
+includesections = php_common
+
+[php7_3]
+comment = PHP 7.3
+paths = /opt/remi/php73/root/bin/php, /opt/remi/php73/root/bin/phar, /opt/remi/php73/root/usr/lib64/, /opt/remi/php73/root/usr/share/
+includesections = php_common
+
+[php7_4]
+comment = PHP 7.4
+paths = /opt/remi/php74/root/bin/php, /opt/remi/php74/root/bin/phar, /opt/remi/php74/root/usr/lib64/, /opt/remi/php74/root/usr/share/
+includesections = php_common
+
+[php8_0]
+comment = PHP 8.0
+paths = /opt/remi/php80/root/bin/php, /opt/remi/php80/root/bin/phar, /opt/remi/php80/root/usr/lib64/, /opt/remi/php80/root/usr/share/
+includesections = php_common
+
+[php8_1]
+comment = PHP 8.1
+paths = /opt/remi/php81/root/bin/php, /opt/remi/php81/root/bin/phar, /opt/remi/php81/root/usr/lib64/, /opt/remi/php81/root/usr/share/
+includesections = php_common
+
+[php8_2]
+comment = PHP 8.2
+paths = /opt/remi/php82/root/bin/php, /opt/remi/php82/root/bin/phar, /opt/remi/php82/root/usr/lib64/, /opt/remi/php82/root/usr/share/
+includesections = php_common
+
+[php8_3]
+comment = PHP 8.3
+paths = /opt/remi/php83/root/bin/php, /opt/remi/php83/root/bin/phar, /opt/remi/php83/root/usr/lib64/, /opt/remi/php83/root/usr/share/
+includesections = php_common
+
+[php8_4]
+comment = PHP 8.4
+paths = /opt/remi/php84/root/bin/php, /opt/remi/php84/root/bin/phar, /opt/remi/php84/root/usr/lib64/, /opt/remi/php84/root/usr/share/
+includesections = php_common
+
+[imagemagick]
+comment = ImageMagick needed for php-imagemagick extension
+paths = /usr/share/ImageMagick-*, /etc/ImageMagick-*, /usr/lib64/ImageMagick-*
+
+

@@ -2366,22 +2366,64 @@ class system{
 	public function get_os_type() {
 		global $app;
 
-
 		$dist = "undetected";
+		$version = "unknown";
+		$full_version = "unknown";
 
-		if(file_exists('/etc/redhat-release') && (filesize('/etc/redhat-release') > 0)) {
+		if (file_exists('/etc/redhat-release') && (filesize('/etc/redhat-release') > 0)) {
 			$dist = "redhat";
-		} elseif(file_exists('/etc/debian_version') && (filesize('/etc/debian_version') > 0)) {
+			if (file_exists('/etc/os-release')) {
+				$os_release = file_get_contents('/etc/os-release');
+				if (preg_match('/VERSION_ID="([^"]+)"/', $os_release, $matches)) {
+					$version = $matches[1];
+				}
+			}
+			$full_version = trim(file_get_contents('/etc/redhat-release'));
+		} elseif (file_exists('/etc/debian_version') && (filesize('/etc/debian_version') > 0)) {
 			$dist = "debian";
-		} elseif(strstr(trim(file_get_contents('/etc/issue')), 'Ubuntu') || (is_file('/etc/os-release') && stristr(file_get_contents('/etc/os-release'), 'Ubuntu'))) {
+			if (file_exists('/etc/os-release')) {
+				$os_release = file_get_contents('/etc/os-release');
+				if (preg_match('/VERSION_ID="([^"]+)"/', $os_release, $matches)) {
+					$version = $matches[1];
+				}
+			}
+			$full_version = trim(file_get_contents('/etc/debian_version'));
+		} elseif (strstr(trim(file_get_contents('/etc/issue')), 'Ubuntu') || (is_file('/etc/os-release') && stristr(file_get_contents('/etc/os-release'), 'Ubuntu'))) {
 			$dist = "ubuntu";
-		} elseif(file_exists('/etc/SuSE-release') && (filesize('/etc/SuSE-release') > 0)) {
+			if (file_exists('/etc/os-release')) {
+				$os_release = file_get_contents('/etc/os-release');
+				if (preg_match('/VERSION="([^"]+)"/', $os_release, $matches)) {
+					$full_version = $matches[1];
+				}
+				if (preg_match('/VERSION_ID="([^"]+)"/', $os_release, $matches)) {
+					$version = $matches[1];
+				}
+			}
+		} elseif (file_exists('/etc/SuSE-release') && (filesize('/etc/SuSE-release') > 0)) {
 			$dist = "suse";
-		} elseif(file_exists('/etc/gentoo-release') && (filesize('/etc/gentoo-release') > 0)) {
+			if (file_exists('/etc/os-release')) {
+				$os_release = file_get_contents('/etc/os-release');
+				if (preg_match('/VERSION_ID="([^"]+)"/', $os_release, $matches)) {
+					$version = $matches[1];
+				}
+			}
+			$full_version = trim(file_get_contents('/etc/SuSE-release'));
+		} elseif (file_exists('/etc/gentoo-release') && (filesize('/etc/gentoo-release') > 0)) {
 			$dist = "gentoo";
+			if (file_exists('/etc/os-release')) {
+				$os_release = file_get_contents('/etc/os-release');
+				if (preg_match('/VERSION_ID="([^"]+)"/', $os_release, $matches)) {
+					$version = $matches[1];
+				}
+			}
+			$full_version = trim(file_get_contents('/etc/gentoo-release'));
 		}
 
-		return $dist;
+		return [
+			'type' => $dist,
+			'version' => $version,
+			'full_version' => $full_version
+		];
 	}
 
 	public function is_allowed_path($path) {
@@ -2835,32 +2877,39 @@ class system{
 			$this->chmod($home_dir . '/var/tmp', 0770, true);
 		}
 
+		$os_type = $app->system->get_os_type();
+		if (isset($os_type['type'])) {
+			$used_os_type = $os_type['type'];
+		} else {
+			$used_os_type = 'unknown';
+		}
 
-		if(!empty($options['php_cli_binary'])) {
-			$php_bin_dir = dirname($options['php_cli_binary']);
-			if(!file_exists($home_dir . '/' . $options['php_cli_binary'])) {
-				$app->log("update_jailkit_chroot: The PHP cli binary " . $options['php_cli_binary'] . " is not available in the jail of the web " . $options['domain'], LOGLEVEL_DEBUG);
+		if($options['jk_php_maintenance_check'] == 'yes') {
 
-				$fallback_php = $app->system->get_newest_php_bin($home_dir . $php_bin_dir);
-				$fallback_php_bin = str_replace($home_dir, '', $fallback_php);
+			if(!empty($options['php_cli_binary'])) {
+				$php_bin_dir = dirname($options['php_cli_binary']);
+				if(!file_exists($home_dir . '/' . $options['php_cli_binary'])) {
+					$app->log("update_jailkit_chroot: The PHP cli binary " . $options['php_cli_binary'] . " is not available in the jail of the web " . $options['domain'], LOGLEVEL_DEBUG);
 
-				if(!empty($fallback_php) && file_exists($fallback_php_bin)) {
-					if(is_link($home_dir . '/etc/alternatives/php') || is_file($home_dir . '/etc/alternatives/php')) {
-						unlink($home_dir . '/etc/alternatives/php');
-						symlink($fallback_php_bin, $home_dir . '/etc/alternatives/php');
-						$app->log("update_jailkit_chroot: Found " . $fallback_php_bin . " as a fallback for alternatives/php in the jail of " . $options['domain'], LOGLEVEL_DEBUG);
+					$fallback_php = $app->system->get_newest_php_bin($home_dir . $php_bin_dir);
+					$fallback_php_bin = str_replace($home_dir, '', $fallback_php);
+
+					if(!empty($fallback_php) && file_exists($fallback_php_bin)) {
+						if(is_link($home_dir . '/etc/alternatives/php') || is_file($home_dir . '/etc/alternatives/php')) {
+							unlink($home_dir . '/etc/alternatives/php');
+							symlink($fallback_php_bin, $home_dir . '/etc/alternatives/php');
+							$app->log("update_jailkit_chroot: Found " . $fallback_php_bin . " as a fallback for alternatives/php in the jail of " . $options['domain'], LOGLEVEL_DEBUG);
+						}
+					}
+				} else {
+					if($used_os_type == "debian" || $$used_os_type == "ubuntu") {
+						$app->log("update_jailkit_chroot: setting alternatives/php to " . $options['php_cli_binary'], LOGLEVEL_DEBUG);
+						if(is_link($home_dir . '/etc/alternatives/php') || is_file($home_dir . '/etc/alternatives/php')) {
+							unlink($home_dir . '/etc/alternatives/php');
+							symlink($options['php_cli_binary'], $home_dir . '/etc/alternatives/php');
+						}
 					}
 				}
-
-			} else {
-				if($app->system->get_os_type() == "debian" || $app->system->get_os_type() == "ubuntu") {
-					$app->log("update_jailkit_chroot: setting alternatives/php to " . $options['php_cli_binary'], LOGLEVEL_DEBUG);
-					if(is_link($home_dir . '/etc/alternatives/php') || is_file($home_dir . '/etc/alternatives/php')) {
-						unlink($home_dir . '/etc/alternatives/php');
-						symlink($options['php_cli_binary'], $home_dir . '/etc/alternatives/php');
-					}
-				}
-
 			}
 		}
 

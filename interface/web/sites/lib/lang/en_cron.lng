@@ -25,3 +25,4 @@ $wb['limit_cron_url_txt'] = 'URL cron only. Please enter a URL starting with htt
 $wb['command_error_empty'] = 'Command is empty.';
 $wb['variables_txt'] = 'Variables';
 $wb['domain_not_selected_placeholder_txt'] = 'No domain selected';
+$wb['is_jailed_txt'] = 'Jailkit secured cronjob';

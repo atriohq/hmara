@@ -914,20 +914,22 @@ class installer_base extends stdClass {
 		$config_dir = $cf['config_dir'];
 		$jk_init = $cf['jk_init'];
 		$jk_chrootsh = $cf['jk_chrootsh'];
+		$dest_jk_init = 'jk_init.ini';
+		$dest_jk_chrootsh = 'jk_chrootsh.ini';
 
 		if (is_dir($config_dir)) {
-			if(is_file($config_dir.'/'.$jk_init)) copy($config_dir.'/'.$jk_init, $config_dir.'/'.$jk_init.'~');
-			if(is_file($config_dir.'/'.$jk_chrootsh)) copy($config_dir.'/'.$jk_chrootsh, $config_dir.'/'.$jk_chrootsh.'~');
+			if(is_file($config_dir.'/'.$jk_init)) copy($config_dir.'/'.$jk_init, $config_dir.'/'.$dest_jk_init.'~');
+			if(is_file($config_dir.'/'.$jk_chrootsh)) copy($config_dir.'/'.$jk_chrootsh, $config_dir.'/'.$dest_jk_chrootsh.'~');
 
 			if(is_file($conf['ispconfig_install_dir'].'/server/conf-custom/install/'.$jk_init.'.master')) {
-				copy($conf['ispconfig_install_dir'].'/server/conf-custom/install/'.$jk_init.'.master', $config_dir.'/'.$jk_init);
+				copy($conf['ispconfig_install_dir'].'/server/conf-custom/install/'.$jk_init.'.master', $config_dir.'/'.$dest_jk_init);
 			} else {
-				copy('tpl/'.$jk_init.'.master', $config_dir.'/'.$jk_init);
+				copy('tpl/'.$jk_init.'.master', $config_dir.'/'.$dest_jk_init);
 			}
 			if(is_file($conf['ispconfig_install_dir'].'/server/conf-custom/install/'.$jk_chrootsh.'.master')) {
-				copy($conf['ispconfig_install_dir'].'/server/conf-custom/install/'.$jk_chrootsh.'.master', $config_dir.'/'.$jk_chrootsh);
+				copy($conf['ispconfig_install_dir'].'/server/conf-custom/install/'.$jk_chrootsh.'.master', $config_dir.'/'.$dest_jk_chrootsh);
 			} else {
-				copy('tpl/'.$jk_chrootsh.'.master', $config_dir.'/'.$jk_chrootsh);
+				copy('tpl/'.$jk_chrootsh.'.master', $config_dir.'/'.$dest_jk_chrootsh);
 			}
 		}
 

@@ -24,4 +24,5 @@ $wb['command_error_empty'] = 'Le champ Commande à exécuter est vide.';
 $wb['command_hint_txt'] = 'par exemple /var/www/clients/clientX/webY/monscript.sh ou https://www.mondomaine.com/chemin/script.php, vous pouvez utiliser la constante [web_root] qui sera remplacée par /var/www/clients/clientX/webY/web.';
 $wb['log_output_txt'] = 'Journaliser la sortie du cron';
 $wb['domain_not_selected_placeholder_txt'] = 'No domain selected';
+$wb['is_jailed_txt'] = 'Jailkit secured cronjob';
 ?>

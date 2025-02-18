@@ -25,4 +25,5 @@ $wb['limit_cron_url_txt'] = 'Es sind nur URL cronjobs möglich. Der Cron-Befehl 
 $wb['command_error_empty'] = 'Befehl ist leer.';
 $wb['variables_txt'] = 'Variablen';
 $wb['domain_not_selected_placeholder_txt'] = 'Bitte wähle eine Domain aus';
+$wb['is_jailed_txt'] = 'Jailkit gesicherter Cronjob';
 

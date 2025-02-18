@@ -1,18 +1,23 @@
-            <div class="form-group">
-                <tmpl_if name="edit_disabled">
-
-                    <label for="parent_domain_id" class="col-sm-3 control-label">{tmpl_var name='parent_domain_id_txt'}</label>
-                    <div class="col-sm-9"><select name="parent_domain_id" id="parent_domain_id" class="form-control" disabled="disabled">
-                        {tmpl_var name='parent_domain_id'}
-                    </select></div>
-                    <input type="hidden" name="parent_domain_id" value="{tmpl_var name='parent_domain_id_value'}" />
-                    <tmpl_else>
-                        <label for="parent_domain_id" class="col-sm-3 control-label">{tmpl_var name='parent_domain_id_txt'}</label>
-                        <div class="col-sm-9"><select name="parent_domain_id" id="parent_domain_id" class="form-control">
-                            {tmpl_var name='parent_domain_id'}
-                        </select></div>
-                </tmpl_if>
+<div class="form-group">
+    <tmpl_if name="edit_disabled">
+        <label for="parent_domain_id" class="col-sm-3 control-label">{tmpl_var name='parent_domain_id_txt'}</label>
+        <div class="col-sm-9 position-relative">
+            <select name="parent_domain_id" id="parent_domain_id" class="form-control" disabled="disabled">
+                {tmpl_var name='parent_domain_id'}
+            </select>
+            <span class="jail-symbol" title="{tmpl_var name='is_jailed_txt'}"><i class="fa fa-lock"></i></span>
+        </div>
+        <input type="hidden" name="parent_domain_id" value="{tmpl_var name='parent_domain_id_value'}" />
+        <tmpl_else>
+            <label for="parent_domain_id" class="col-sm-3 control-label">{tmpl_var name='parent_domain_id_txt'}</label>
+            <div class="col-sm-9 position-relative">
+                <select name="parent_domain_id" id="parent_domain_id" class="form-control">
+                    {tmpl_var name='parent_domain_id'}
+                </select>
+                <span class="jail-symbol" title="{tmpl_var name='is_jailed_txt'}"><i class="fa fa-lock"></i></span>
             </div>
+    </tmpl_if>
+</div>
 
             <div class="form-group">
                 <label for="run_min" class="col-sm-3 control-label">{tmpl_var name='run_min_txt'}</label>
@@ -80,28 +85,43 @@
         </div></div>
 
         <script language="JavaScript" type="text/javascript">
-        // Select first existing domain "onLoad"
-        jQuery(document).ready(function() {
-            jQuery('#parent_domain_id').trigger('change');
-        });
-        // Reload cron placeholders if a different domain was selected
-        jQuery('#parent_domain_id').change(function() {
-            reloadCronPlaceholders();
-        });
-
-        function reloadCronPlaceholders() {
-            var parentDomainId = jQuery('#parent_domain_id').val()
-            jQuery.getJSON('sites/ajax_get_json.php'+ '?' + Math.round(new Date().getTime()), {web_id: parentDomainId, 'type': 'getcronplaceholders'}, function(data) {
-                //console.log(data);
-                $("#php_cli_binary").attr('data-original-title', data.php_cli_binary);
-                $('#docroot_client').attr('data-original-title', data.docroot_client);
-                // Update the data-original-title of the {DOMAIN} placeholder or load and display a hint to the user that no domain was selected yet. Should only happen if no web has been created or assigned by or to the user.
-                if(data.domain) {
-                    $('#domain').attr('data-original-title', data.domain);
-                } else {
-                    $('#domain').attr('data-original-title', "{tmpl_var name='domain_not_selected_placeholder_txt'}");
-                }
+            // Select first existing domain "onLoad"
+            jQuery(document).ready(function() {
+                jQuery('#parent_domain_id').trigger('change');
             });
-        }
+
+            // Reload cron placeholders if a different domain was selected
+            jQuery('#parent_domain_id').change(function() {
+                reloadCronPlaceholders();
+            });
+
+            function reloadCronPlaceholders() {
+                var parentDomainId = jQuery('#parent_domain_id').val();
+                jQuery.getJSON('sites/ajax_get_json.php' + '?' + Math.round(new Date().getTime()), {web_id: parentDomainId, 'type': 'getcronplaceholders'}, function(data) {
+                //console.log(data);
+                if (data) {
+                    $("#php_cli_binary").attr('data-original-title', data.php_cli_binary);
+                    $('#docroot_client').attr('data-original-title', data.docroot_client);
+                    if (data.domain) {
+                        $('#domain').attr('data-original-title', data.domain);
+                    } else {
+                        $('#domain').attr('data-original-title', "{tmpl_var name='domain_not_selected_placeholder_txt'}");
+                    }
+                    // Show or hide the jail symbol based on cron_type
+                    if (data.cron_type === 'chrooted') {
+                        if (!$('.jail-symbol').length) {
+                            $('#parent_domain_id').after('<span class="jail-symbol" title="{tmpl_var name='is_jailed_txt'}"><i class="fa fa-lock"></i></span>');
+                        }
+                    } else {
+                        $('.jail-symbol').remove();
+                    }
+                } else {
+                    console.error("Empty response received from server.");
+                }
+            }).fail(function(jqxhr, textStatus, error) {
+                console.error("Request Failed: " + textStatus + ", " + error);
+                console.log(jqxhr.responseText); // Log the response text
+            });
+            }
         </script>
 

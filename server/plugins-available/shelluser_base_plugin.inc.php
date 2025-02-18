@@ -146,11 +146,21 @@ class shelluser_base_plugin {
 				$command .= ' -s ? -u ? ?';
 				$app->system->exec_safe($command, $homedir, $data['new']['pgroup'], $data['new']['shell'], $uid, $data['new']['username']);
 
-				//* Create .bashrc.d directory
+				//* Create the .bashrc.d directory for ease of use and a more customisable bashrc environment
 				if(!is_dir($homedir.'/.bashrc.d')){
 					$app->file->mkdirs($homedir.'/.bashrc.d', '0750');
 					$app->system->chown($homedir.'/.bashrc.d', $data['new']['username']);
 					$app->system->chgrp($homedir.'/.bashrc.d', $data['new']['pgroup']);
+				}
+
+				//* Specified in FHS 3.0, https://refspecs.linuxfoundation.org/FHS_3.0/index.html
+				//* Supported by Systemd/XDG, provides binaries via user ~/.local/bin directory and PATH
+				if(!is_dir($homedir.'/.local/bin')){
+					$app->file->mkdirs($homedir.'/.local/bin', '0750');
+					$app->system->chown($homedir.'/.local', $data['new']['username'], false);
+					$app->system->chgrp($homedir.'/.local', $data['new']['pgroup'], false);
+					$app->system->chown($homedir.'/.local/bin', $data['new']['username'], false);
+					$app->system->chgrp($homedir.'/.local/bin', $data['new']['pgroup'], false);
 				}
 
 				$app->log("Executed command: ".$command, LOGLEVEL_DEBUG);
@@ -182,8 +192,7 @@ class shelluser_base_plugin {
 				//* Create .profile file
 				$app->system->touch($homedir.'/.profile');
 				$app->system->chmod($homedir.'/.profile', 0644);
-				$app->system->chown($homedir.'/.profile', $data['new']['username']);
-				$app->system->chgrp($homedir.'/.profile', $data['new']['pgroup']);
+
 				$profile_content = "if [ -f ~/.bashrc ]
 then
 	. ~/.bashrc
@@ -191,6 +200,8 @@ fi
 
 ";
 				$app->system->file_put_contents($homedir.'/.profile', $profile_content);
+				$app->system->chown($homedir.'/.profile', $data['new']['username']);
+				$app->system->chgrp($homedir.'/.profile', $data['new']['pgroup']);
 
 				//* Create .bashrc.d directory
 				if(!is_dir($homedir.'/.bashrc.d')){
@@ -332,19 +343,18 @@ fi
 					}
 
 					//* Create .profile file
-					if(!is_file($data['new']['dir']).'/.profile') {
-						$app->system->touch($homedir.'/.profile');
-						$app->system->chmod($homedir.'/.profile', 0644);
-						$app->system->chown($homedir.'/.profile', $data['new']['puser']);
-						$app->system->chgrp($homedir.'/.profile', $data['new']['pgroup']);
-						$profile_content = "if [ -f ~/.bashrc ]
+					$app->system->touch($homedir.'/.profile');
+					$app->system->chmod($homedir.'/.profile', 0644);
+					$profile_content = "if [ -f ~/.bashrc ]
 then
 	. ~/.bashrc
 fi
 
 ";
 						$app->system->file_put_contents($homedir.'/.profile', $profile_content);
-					}
+						$app->system->chown($homedir.'/.profile', $data['new']['puser']);
+						$app->system->chgrp($homedir.'/.profile', $data['new']['pgroup']);
+
 
 					//* Create .bashrc.d directory
 					if(!is_dir($homedir.'/.bashrc.d')){
@@ -602,7 +612,6 @@ fi
 		// Create .bashrc file
 		$app->load('tpl');
 
-
 		$tpl = new tpl();
 
 		// Predefine some template vars
@@ -610,22 +619,47 @@ fi
 		$tpl->setVar('use_php_path', false);
 		$tpl->setVar('use_php_alias', false);
 
-		if($app->system->get_os_type() == "debian" || $app->system->get_os_type() == "ubuntu") {
+		$os_type = $app->system->get_os_type();
+		if (isset($os_type['type'])) {
+			$used_os_type = $os_type['type'];
+		} else {
+			$used_os_type = 'unknown';
+		}
+
+		if (isset($os_type['version'])) {
+			$os_version = $os_type['version'];
+		} else {
+			$os_version = 'unknown';
+		}
+
+		if($used_os_type == "debian" || $used_os_type == "ubuntu") {
 			$tpl->newTemplate("bashrc_user_deb.master");
-		} elseif($app->system->get_os_type() == "redhat") {
+		} elseif($used_os_type == "redhat") {
 			$tpl->newTemplate("bashrc_user_redhat.master");
 		} else {
 			$tpl->newTemplate("bashrc_user_generic.master");
 		}
+
+		$user_home_dir = $this->data['new']['dir'] . '/home/' . $this->data['new']['username'];
+		$bashrc = $user_home_dir . '/.bashrc';
 
 		if(($this->web['server_php_id'] > 0) && !empty($this->web['php_cli_binary'])) {
 			$php_bin_dir = dirname($this->web['php_cli_binary']);
 
 			if(preg_match('/^(\/usr\/(s)?bin|\/(s)?bin)/', $php_bin_dir)) {
 				$tpl->setVar('use_php_path', false);
-				$tpl->setVar('use_php_alias', true);
-				$tpl->setVar('php_alias', $this->web['php_cli_binary']);
+
+				if(!is_dir($user_home_dir . '/.local/bin')) $app->system->mkdirpath($user_home_dir . '/.local/bin', 0750, $this->data['new']['username'], $this->data['new']['pgroup']);
+
+				if(is_link($user_home_dir . '/.local/bin' . '/php') || is_file($user_home_dir . '/.local/bin' . '/php')) {
+					unlink($user_home_dir . '/.local/bin' . '/php');
+					symlink($this->web['php_cli_binary'], $user_home_dir . '/.local/bin' . '/php');
+				} else {
+					symlink($this->web['php_cli_binary'], $user_home_dir . '/.local/bin' . '/php');
+				}
+
 			} else {
+				// We rely on $PATH in case that the binaries are located in a separate directory that doesn't match the regex above
 				$tpl->setVar('use_php_path', true);
 				$tpl->setVar('use_php_alias', false);
 				$tpl->setVar('php_bin_dir', $php_bin_dir);
@@ -635,7 +669,7 @@ fi
 			$app->log("The PHP cli binary is not set for the selected PHP version. Affected web: " . $this->web['domain'], LOGLEVEL_DEBUG);
 		}
 
-		$bashrc = $this->data['new']['dir'] . '/home/' . $this->data['new']['username'] . '/.bashrc';
+		//$bashrc = $this->data['new']['dir'] . '/home/' . $this->data['new']['username'] . '/.bashrc';
 
 		if(@is_file($bashrc) || @is_link($bashrc)) unlink($bashrc);
 

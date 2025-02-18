@@ -83,8 +83,10 @@ class shelluser_jailkit_plugin {
 		}
 
 
-
-		$web = $app->db->queryOneRecord("SELECT * FROM web_domain LEFT JOIN server_php ON web_domain.server_php_id = server_php.server_php_id WHERE `domain_id` = ?", $data["new"]["parent_domain_id"]);
+		$web = $app->db->queryOneRecord("SELECT web_domain.*, server_php.php_cli_binary, server_php.php_jk_section
+		FROM web_domain
+			LEFT JOIN server_php ON web_domain.server_php_id = server_php.server_php_id
+		WHERE web_domain.domain_id = ?", $data["new"]["parent_domain_id"]);
 
 		$this->web = $web;
 
@@ -119,14 +121,26 @@ class shelluser_jailkit_plugin {
 					if ($data['new']['chroot'] == "jailkit")
 					{
 
-
 						// load the server configuration options
 						$app->uses("getconf");
 						$this->data = $data;
 						$this->jailkit_config = $app->getconf->get_server_config($conf["server_id"], 'jailkit');
+
 						foreach (array('jailkit_chroot_app_sections', 'jailkit_chroot_app_programs') as $section) {
+							// Replace and don't inherit the server's Jailkit config
 							if (isset($web[$section]) && $web[$section] != '' ) {
 								$this->jailkit_config[$section] = $web[$section];
+							}
+							// Add selected PHP version to the jailkit chroot
+							if ($section == 'jailkit_chroot_app_sections') {
+								if (isset($web['php_jk_section']) && $web['php_jk_section'] != '' ) {
+									$this->jailkit_config['jailkit_chroot_app_sections'] = $this->jailkit_config['jailkit_chroot_app_sections'] . ' ' . $web['php_jk_section'];
+									$jk_temp_config = preg_split('/[\s,]+/', $this->jailkit_config['jailkit_chroot_app_sections']);
+
+									// Merge the arrays and remove duplicates
+									$this->jailkit_config[$section] = array_unique($jk_temp_config, SORT_REGULAR);
+									sort($this->jailkit_config[$section], SORT_STRING);
+								}
 							}
 						}
 
@@ -198,15 +212,16 @@ class shelluser_jailkit_plugin {
 		if($app->system->is_user($data['new']['puser'])) {
 
 
-			$web = $app->db->queryOneRecord("SELECT * FROM web_domain LEFT JOIN server_php ON web_domain.server_php_id = server_php.server_php_id WHERE `domain_id` = ?", $data["new"]["parent_domain_id"]);
+			$web = $app->db->queryOneRecord("SELECT web_domain.*, server_php.php_jk_section
+          	FROM web_domain
+          		LEFT JOIN server_php ON web_domain.server_php_id = server_php.server_php_id
+          	WHERE web_domain.domain_id = ?", $data["new"]["parent_domain_id"]);
 
 			$this->web = $web;
-			$username = $data['new']['username'];
 
 			// Get the UID of the parent user
 			$uid = intval($app->system->getuid($data['new']['puser']));
 			if($uid > $this->min_uid) {
-
 
 				if($app->system->is_user($data['new']['username'])) {
 
@@ -220,9 +235,22 @@ class shelluser_jailkit_plugin {
 						$app->uses("getconf");
 						$this->data = $data;
 						$this->jailkit_config = $app->getconf->get_server_config($conf["server_id"], 'jailkit');
+
 						foreach (array('jailkit_chroot_app_sections', 'jailkit_chroot_app_programs') as $section) {
+							// Replace and don't inherit the server's Jailkit config
 							if (isset($web[$section]) && $web[$section] != '' ) {
 								$this->jailkit_config[$section] = $web[$section];
+							}
+							// Add selected PHP version to the jailkit chroot
+							if ($section == 'jailkit_chroot_app_sections') {
+								if (isset($web['php_jk_section']) && $web['php_jk_section'] != '' ) {
+									$this->jailkit_config['jailkit_chroot_app_sections'] = $this->jailkit_config['jailkit_chroot_app_sections'] . ' ' . $web['php_jk_section'];
+									$jk_temp_config = preg_split('/[\s,]+/', $this->jailkit_config['jailkit_chroot_app_sections']);
+
+									// Merge the arrays and remove duplicates
+									$this->jailkit_config[$section] = array_unique($jk_temp_config, SORT_REGULAR);
+									sort($this->jailkit_config[$section], SORT_STRING);
+								}
 							}
 						}
 
@@ -287,6 +315,7 @@ class shelluser_jailkit_plugin {
 
 			$app->uses("getconf");
 			$this->jailkit_config = $app->getconf->get_server_config($conf["server_id"], 'jailkit');
+
 			foreach (array('jailkit_chroot_app_sections', 'jailkit_chroot_app_programs', 'jailkit_do_not_remove_paths') as $section) {
 				if (isset($web[$section]) && $web[$section] != '' ) {
 					$this->jailkit_config[$section] = $web[$section];
@@ -390,6 +419,7 @@ class shelluser_jailkit_plugin {
 			foreach ($records as $record) {
 				$options[] = 'skip='.$record['web_folder'];
 			}
+
 			$options['php_cli_binary'] = $web['php_cli_binary'];
 
 			$app->system->update_jailkit_chroot($this->data['new']['dir'], $sections, $programs, $options);
@@ -468,6 +498,8 @@ class shelluser_jailkit_plugin {
 		$app->system->chgrp($this->data['new']['dir'].$jailkit_chroot_puserhome, $this->data['new']['pgroup']);
 
 		// Create user .my.cnf file
+		// Necessary for MySQL client to connect to the DB server for Jailkit users
+		// TODO: If the web has only one DB assigned, which is also located on a remote DB server instead of localhost, then add client connection params here
 		$mycnf = $this->data['new']['dir'].$jailkit_chroot_userhome .  '/.my.cnf';
 		if(!file_exists($this->data['new']['dir'].$jailkit_chroot_userhome . '/.my.cnf')) {
 			$app->load('tpl');
@@ -703,9 +735,16 @@ class shelluser_jailkit_plugin {
 
 		$tpl = new tpl();
 
-		if($app->system->get_os_type() == "debian" || $app->system->get_os_type() == "ubuntu") {
+		$os_type = $app->system->get_os_type();
+		if (isset($os_type['type'])) {
+			$used_os_type = $os_type['type'];
+		} else {
+			$used_os_type = 'unknown';
+		}
+
+		if($used_os_type == "debian" || $used_os_type == "ubuntu") {
 			$tpl->newTemplate("bashrc_user_deb.master");
-		} elseif($app->system->get_os_type() == "redhat") {
+		} elseif($used_os_type == "redhat") {
 			$tpl->newTemplate("bashrc_user_redhat.master");
 		} else {
 			$tpl->newTemplate("bashrc_user_generic.master");
@@ -717,26 +756,20 @@ class shelluser_jailkit_plugin {
 		$tpl->setVar('home_dir', $this->_get_home_dir(""));
 
 		$tpl->setVar('use_php_path', false);
-		$tpl->setVar('use_php_alias', false);
-
 
 		if(($this->web['server_php_id'] > 0) && !empty($this->web['php_cli_binary'])) {
 			$php_bin_dir = dirname($this->web['php_cli_binary']);
 
 			if(preg_match('/^(\/usr\/(s)?bin|\/(s)?bin)/', $php_bin_dir)) {
 				$tpl->setVar('use_php_path', false);
-				$tpl->setVar('use_php_alias', true);
-				$tpl->setVar('php_alias', $this->web['php_cli_binary']);
 			} else {
 				$tpl->setVar('use_php_path', true);
-				$tpl->setVar('use_php_alias', false);
 				$tpl->setVar('php_bin_dir', $php_bin_dir);
 			}
 
 			if(!file_exists($this->web['document_root'] . '/' . $this->web['php_cli_binary'])) {
 				$app->log("The PHP cli binary " . $this->web['php_cli_binary'] . " is not available in the jail of the web " . $this->web['domain']  . " / SSH/SFTP user: " . $this->data['new']['username']  . ". Check your Jailkit setup!", LOGLEVEL_DEBUG);
 				$tpl->setVar('use_php_path', false);
-				$tpl->setVar('use_php_alias', false);
 
 				if(!empty($app->system->get_newest_php_bin($this->web['document_root'] . $php_bin_dir))) {
 					$fallback_php = $app->system->get_newest_php_bin($this->web['document_root'] . $php_bin_dir);
@@ -750,8 +783,9 @@ class shelluser_jailkit_plugin {
 						}
 					}
 				}
+
 			} else {
-				if($app->system->get_os_type() == "debian" || $app->system->get_os_type() == "ubuntu") {
+				if($used_os_type == "debian" || $used_os_type == "ubuntu") {
 					if(is_link($this->web['document_root'] . '/etc/alternatives/php') || is_file($this->web['document_root'] . '/etc/alternatives/php'))
 					{
 						unlink($this->web['document_root'] . '/etc/alternatives/php');
@@ -762,7 +796,6 @@ class shelluser_jailkit_plugin {
 				}
 			}
 		}
-
 		$bashrc = $this->web['document_root'] . '/home/' . $this->data['new']['username'] . '/.bashrc';
 
 		if(@is_file($bashrc) || @is_link($bashrc)) unlink($bashrc);

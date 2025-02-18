@@ -97,9 +97,6 @@ fi
 # Overwrite the PHP cli binaries by using $PATH:
 export PATH=<tmpl_var name='php_bin_dir'>:$PATH
 </tmpl_if>
-<tmpl_if name='use_php_alias'>
-alias php="<tmpl_var name='php_alias'>"
-</tmpl_if>
 </tmpl_if>
 
 # Alias definitions.
@@ -121,6 +118,13 @@ if ! shopt -oq posix; then
     . /etc/bash_completion
   fi
 fi
+
+# User specific environment
+if ! [[ "$PATH" =~ "$HOME/.local/bin:$HOME/bin:" ]]
+then
+    PATH="$HOME/.local/bin:$HOME/bin:$PATH"
+fi
+export PATH
 
 
 # Source custom bashrc files

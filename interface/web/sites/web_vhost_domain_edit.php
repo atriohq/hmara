@@ -266,6 +266,7 @@ class page_action extends tform_actions {
 					$php_select .= "<option value='" . $php_record['server_php_id'] . "' $selected>".$app->functions->htmlentities($php_record['name'])."</option>\r\n";
 				}
 			}
+
 			$app->tpl->setVar("server_php_id", $php_select);
 			unset($php_records);
 
@@ -409,6 +410,7 @@ class page_action extends tform_actions {
 					$php_select .= "<option value='" . $php_record['server_php_id'] . "' $selected>".$app->functions->htmlentities($php_record['name'])."</option>\r\n";
 				}
 			}
+
 			$app->tpl->setVar("server_php_id", $php_select);
 			unset($php_records);
 
@@ -587,6 +589,7 @@ class page_action extends tform_actions {
 					$php_select .= "<option value='" . $php_record['server_php_id'] . "' $selected>".$app->functions->htmlentities($php_record['name'])."</option>\r\n";
 				}
 			}
+
 			$app->tpl->setVar("server_php_id", $php_select);
 			unset($php_records);
 
@@ -680,10 +683,9 @@ class page_action extends tform_actions {
                     $app->tpl->setVar("document_root", $tmp["document_root"], true);
                     unset($tmp);
                 }
-				
 			} else {
                 $app->tpl->setVar('server_id_value', $parent_domain['server_id']);
-            } 
+            }
 		} else {
 			$app->tpl->setVar("edit_disabled", 0);
 			$app->tpl->setVar('fixed_folder', 'n');
