@@ -14,4 +14,5 @@ $wb['ttl_range_error'] = 'El tiempo mín. de TTL es 60 segundos.';
 $wb['ttl_txt'] = 'TTL';
 $wb['type_txt'] = 'tipo';
 $wb['zone_txt'] = 'Zona';
+$wb['data_error_not_found'] = 'Target hostname not found in the current zone. It should end in a . when it\'s external.';
 ?>

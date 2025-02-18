@@ -154,7 +154,7 @@ class page_action extends tform_actions {
 		//* Database username shall not be empty
 		if($this->dataRecord['database_user'] == '') $app->tform->errorMessage .= $app->tform->wordbook["database_user_error_empty"].'<br />';
 
-		if(strlen($dbuser_prefix . $this->dataRecord['database_user']) > 16) $app->tform->errorMessage .= str_replace('{user}', htmlentities($dbuser_prefix . $this->dataRecord['database_user'], ENT_QUOTES, 'UTF-8'), $app->tform->wordbook["database_user_error_len"]).'<br />';
+		if(strlen($dbuser_prefix . $this->dataRecord['database_user']) > 32) $app->tform->errorMessage .= str_replace('{user}', htmlentities($dbuser_prefix . $this->dataRecord['database_user'], ENT_QUOTES, 'UTF-8'), $app->tform->wordbook["database_user_error_len"]).'<br />';
 
 		//* Check database user against blacklist
 		$dbuser_blacklist = array($conf['db_user'], 'mysql', 'root');
@@ -164,8 +164,15 @@ class page_action extends tform_actions {
 
 		if ($app->tform->errorMessage == ''){
 			/* restrict the names if there is no error */
-			/* crop user and db names if they are too long -> mysql: user: 16 chars / db: 64 chars */
-			$this->dataRecord['database_user'] = substr($dbuser_prefix . $this->dataRecord['database_user'], 0, 16);
+			/* crop user and db names if they are too long -> mysql: user: 32 chars / db: 64 chars */
+			$this->dataRecord['database_user'] = substr($dbuser_prefix . $this->dataRecord['database_user'], 0, 32);
+		}
+
+		// always copy over the password to the SHA2 column
+		if($this->dataRecord['database_password']) {
+			$this->dataRecord['database_password_sha2'] = $this->dataRecord['database_password'];
+		} else {
+			$this->dataRecord['database_password_sha2'] = '';
 		}
 
 		/* prepare password for MongoDB */
@@ -184,9 +191,12 @@ class page_action extends tform_actions {
 
 		//* Database username shall not be empty
 		if($this->dataRecord['database_user'] == '') $app->tform->errorMessage .= $app->tform->wordbook["database_user_error_empty"].'<br />';
-		
+
 		//* Database password shall not be empty
 		if($this->dataRecord['database_password'] == '') $app->tform->errorMessage .= $app->tform->wordbook["database_password_error_empty"].'<br />';
+
+		// always copy over the password to the SHA2 column
+		$this->dataRecord['database_password_sha2'] = $this->dataRecord['database_password'];
 
 		//* Get the database name and database user prefix
 		$app->uses('getconf,tools_sites');
@@ -195,7 +205,7 @@ class page_action extends tform_actions {
 
 		$this->dataRecord['database_user_prefix'] = $dbuser_prefix;
 
-		if(strlen($dbuser_prefix . $this->dataRecord['database_user']) > 16) $app->tform->errorMessage .= str_replace('{user}', htmlentities($dbuser_prefix . $this->dataRecord['database_user'], ENT_QUOTES, 'UTF-8'), $app->tform->wordbook["database_user_error_len"]).'<br />';
+		if(strlen($dbuser_prefix . $this->dataRecord['database_user']) > 32) $app->tform->errorMessage .= str_replace('{user}', htmlentities($dbuser_prefix . $this->dataRecord['database_user'], ENT_QUOTES, 'UTF-8'), $app->tform->wordbook["database_user_error_len"]).'<br />';
 
 		//* Check database user against blacklist
 		$dbuser_blacklist = array($conf['db_user'], 'mysql', 'root');
@@ -204,9 +214,9 @@ class page_action extends tform_actions {
 		}
 
 		/* restrict the names */
-		/* crop user names if they are too long -> mysql: user: 16 chars / db: 64 chars */
+		/* crop user names if they are too long -> mysql: user: 32 chars / db: 64 chars */
 		if ($app->tform->errorMessage == ''){
-			$this->dataRecord['database_user'] = substr($dbuser_prefix . $this->dataRecord['database_user'], 0, 16);
+			$this->dataRecord['database_user'] = substr($dbuser_prefix . $this->dataRecord['database_user'], 0, 32);
 		}
 
 		$this->dataRecord['server_id'] = 0; // we need this on all servers

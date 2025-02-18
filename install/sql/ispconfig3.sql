@@ -1949,6 +1949,7 @@ CREATE TABLE IF NOT EXISTS `web_database_user` (
   `database_user` varchar(64) DEFAULT NULL,
   `database_user_prefix` varchar(50) NOT NULL default '',
   `database_password` varchar(64) DEFAULT NULL,
+  `database_password_sha2` varchar(70) DEFAULT NULL,
   `database_password_mongo` varchar(32) DEFAULT NULL,
   PRIMARY KEY (`database_user_id`)
 )  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;

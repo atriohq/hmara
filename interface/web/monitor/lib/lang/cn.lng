@@ -40,6 +40,7 @@ $wb['Mail-Log'] = '邮件日志';
 $wb['Mail warn-Log'] = '邮件警告日志';
 $wb['Mail err-Log'] = '邮件错误日志';
 $wb['System-Log'] = '系统日志';
+$wb['ISPConfig Log'] = 'ISPConfig Log';
 $wb['ISPC Cron-Log'] = 'ISPC Cron 日志';
 $wb['Freshclam-Log'] = 'Freshclam 日志';
 $wb['Clamav-Log'] = 'Clamav 日志';
