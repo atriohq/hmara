@@ -260,11 +260,12 @@ $form["tabs"]['php_cli'] = array (
 	'php_cli_binary' => array(
 		'datatype' => 'VARCHAR',
 		'formtype' => 'TEXT',
-		'filters'   => array(
-				0 => array( 'event' => 'SAVE',
-				'type' => 'STRIPTAGS'),
-				1 => array( 'event' => 'SAVE',
-				'type' => 'STRIPNL')
+		'validators' => array(
+			0 => array (
+				'type' => 'REGEX',
+				'regex' => '/^\/[a-zA-Z0-9\/\-\_\ ]*$/',
+				'errmsg'=> 'php_cli_binary_error_regex'
+			),
 		),
 		'default' => '',
 		'value' => '',

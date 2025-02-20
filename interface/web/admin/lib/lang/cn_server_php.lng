@@ -26,4 +26,5 @@ $wb['tooltip_php_cli_binary_txt'] = 'Path to the PHP CLI binary including the fi
 $wb['php_jk_section_txt'] = 'PHP Jailkit section';
 $wb['tooltip_php_jk_section_txt'] = 'Identifier of the PHP version in your jk_init.ini (without square brackets).';
 $wb['php_cli_jk_section_error_regex'] = 'Invalid Jaikit chroot section';
+$wb['php_cli_binary_error_regex'] = 'Invalid path to PHP cli binary';
 ?>

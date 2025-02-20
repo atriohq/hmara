@@ -2885,6 +2885,7 @@ class system{
 		}
 
 		if($options['jk_php_maintenance_check'] == 'yes') {
+			$alternatives_php = $home_dir . '/etc/alternatives/php';
 
 			if(!empty($options['php_cli_binary'])) {
 				$php_bin_dir = dirname($options['php_cli_binary']);
@@ -2895,18 +2896,18 @@ class system{
 					$fallback_php_bin = str_replace($home_dir, '', $fallback_php);
 
 					if(!empty($fallback_php) && file_exists($fallback_php_bin)) {
-						if(is_link($home_dir . '/etc/alternatives/php') || is_file($home_dir . '/etc/alternatives/php')) {
-							unlink($home_dir . '/etc/alternatives/php');
-							symlink($fallback_php_bin, $home_dir . '/etc/alternatives/php');
+						if(is_link($alternatives_php) || is_file($alternatives_php) || !file_exists($alternatives_php)) {
+							unlink($alternatives_php);
+							symlink($fallback_php_bin, $alternatives_php);
 							$app->log("update_jailkit_chroot: Found " . $fallback_php_bin . " as a fallback for alternatives/php in the jail of " . $options['domain'], LOGLEVEL_DEBUG);
 						}
 					}
 				} else {
 					if($used_os_type == "debian" || $$used_os_type == "ubuntu") {
 						$app->log("update_jailkit_chroot: setting alternatives/php to " . $options['php_cli_binary'], LOGLEVEL_DEBUG);
-						if(is_link($home_dir . '/etc/alternatives/php') || is_file($home_dir . '/etc/alternatives/php')) {
-							unlink($home_dir . '/etc/alternatives/php');
-							symlink($options['php_cli_binary'], $home_dir . '/etc/alternatives/php');
+						if(is_link($alternatives_php) || is_file($alternatives_php) || !file_exists($alternatives_php)) {
+							unlink($alternatives_php);
+							symlink($options['php_cli_binary'], $alternatives_php);
 						}
 					}
 				}

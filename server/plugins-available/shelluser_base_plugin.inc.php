@@ -617,7 +617,6 @@ fi
 		// Predefine some template vars
 		$tpl->setVar('jailkit_chroot', 'n');
 		$tpl->setVar('use_php_path', false);
-		$tpl->setVar('use_php_alias', false);
 
 		$os_type = $app->system->get_os_type();
 		if (isset($os_type['type'])) {
@@ -645,23 +644,23 @@ fi
 
 		if(($this->web['server_php_id'] > 0) && !empty($this->web['php_cli_binary'])) {
 			$php_bin_dir = dirname($this->web['php_cli_binary']);
+			$home_php = $user_home_dir . '/.local/bin' . '/php';
 
 			if(preg_match('/^(\/usr\/(s)?bin|\/(s)?bin)/', $php_bin_dir)) {
 				$tpl->setVar('use_php_path', false);
 
 				if(!is_dir($user_home_dir . '/.local/bin')) $app->system->mkdirpath($user_home_dir . '/.local/bin', 0750, $this->data['new']['username'], $this->data['new']['pgroup']);
 
-				if(is_link($user_home_dir . '/.local/bin' . '/php') || is_file($user_home_dir . '/.local/bin' . '/php')) {
-					unlink($user_home_dir . '/.local/bin' . '/php');
-					symlink($this->web['php_cli_binary'], $user_home_dir . '/.local/bin' . '/php');
+				if(is_link($home_php) || is_file($home_php) || !file_exists($home_php)) {
+					unlink($home_php);
+					symlink($this->web['php_cli_binary'], $home_php);
 				} else {
-					symlink($this->web['php_cli_binary'], $user_home_dir . '/.local/bin' . '/php');
+					symlink($this->web['php_cli_binary'], $home_php);
 				}
 
 			} else {
 				// We rely on $PATH in case that the binaries are located in a separate directory that doesn't match the regex above
 				$tpl->setVar('use_php_path', true);
-				$tpl->setVar('use_php_alias', false);
 				$tpl->setVar('php_bin_dir', $php_bin_dir);
 			}
 
