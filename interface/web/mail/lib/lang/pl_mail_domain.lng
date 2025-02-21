@@ -3,6 +3,7 @@ $wb['server_id_txt'] = 'Serwer';
 $wb['domain_txt'] = 'Domena';
 $wb['type_txt'] = 'Typ';
 $wb['active_txt'] = 'Aktywny';
+$wb['local_delivery_txt'] = 'Local delivery';
 $wb['domain_error_empty'] = 'Domena jest pusta.';
 $wb['domain_error_unique'] = 'Duplikat domeny.';
 $wb['domain_error_regex'] = 'Niepoprawna nazwa domeny.';
