@@ -165,7 +165,7 @@ class cron_jailkit_plugin {
 		//* get data from web
 		$parent_domain = $app->db->queryOneRecord("SELECT web_domain.*, server_php.php_jk_section
 		FROM web_domain
-		LEFT JOIN server_php ON web_domain.server_php_id = server_php.server_php_id
+			LEFT JOIN server_php ON web_domain.server_php_id = server_php.server_php_id
 		WHERE web_domain.domain_id = ?", $data["new"]["parent_domain_id"]);
 
 		if(!$parent_domain["domain_id"]) {

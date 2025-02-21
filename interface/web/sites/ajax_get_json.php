@@ -291,11 +291,11 @@ if ($type == 'getcronplaceholders') {
         $web_docroot_client .= '/web';
 
         $json = json_encode(array(
-            'php_cli_binary' => $php_cli_binary,
-            'docroot_client' => $web_docroot_client,
+			'php_cli_binary' => $php_cli_binary,
+			'docroot_client' => $web_docroot_client,
 			'cron_type' => $cron_type,
-            'domain' => $domain
-        ));
+			'domain' => $domain
+		));
     }
 }
 

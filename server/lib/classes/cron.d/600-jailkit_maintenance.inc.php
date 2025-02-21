@@ -37,8 +37,6 @@ class cronjob_jailkit_maintenance extends cronjob {
 	public function onRunJob() {
 		global $app, $conf;
 
-		$server_config = $app->getconf->get_server_config($conf['server_id'], 'server');
-
 		$jailkit_config = $app->getconf->get_server_config($conf['server_id'], 'jailkit');
 		if(isset($this->jailkit_config) && isset($this->jailkit_config['jailkit_hardlinks'])) {
 			if($this->jailkit_config['jailkit_hardlinks'] == 'yes') {
