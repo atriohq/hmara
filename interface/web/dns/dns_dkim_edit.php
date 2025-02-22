@@ -72,6 +72,15 @@ class page_action extends tform_actions {
 		parent::onShowNew();
 	}
 
+	function onShowEnd() {
+		global $app, $conf;
+
+		$app->tpl->setVar("selector", str_replace('._domainkey', '', $this->dataRecord['name']), true);
+		$app->tpl->setVar("public_key", str_replace('v=DKIM1; t=s; p=', '', $this->dataRecord['data']), true);
+
+		parent::onShowEnd();
+	}
+
 	function onSubmit() {
 		global $app, $conf;
 
