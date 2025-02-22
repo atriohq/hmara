@@ -70,23 +70,6 @@ class page_action extends tform_actions {
 		}
 
 		parent::onShowNew();
-
-        $soa = $app->db->queryOneRecord("SELECT * FROM dns_soa WHERE id = ? AND " . $app->tform->getAuthSQL('r'), $_GET['zone']);
-        $sql=$app->db->queryOneRecord("SELECT domain, dkim_public, dkim_selector, dkim FROM mail_domain WHERE domain = ? AND " . $app->tform->getAuthSQL('r'), substr_replace($soa['origin'],'',-1));
-		if(isset($sql['domain']) && $sql['domain'] != '') {
-			if($sql['dkim'] == 'y') {
-		        $public_key=str_replace(array('-----BEGIN PUBLIC KEY-----','-----END PUBLIC KEY-----',"\r","\n"),'',$sql['dkim_public']);
-				$app->tpl->setVar('public_key', $public_key, true);
-				$app->tpl->setVar('selector', $sql['dkim_selector'], true);
-			} else {
-			//TODO: show warning - use mail_domain for dkim and enabled dkim
-			}
-			$app->tpl->setVar('edit_disabled', 1);
-		} else {
-			$app->tpl->setVar('edit_disabled', 0);
-		}
-		$app->tpl->setVar('name', $soa['origin'], true);
-
 	}
 
 	function onSubmit() {
