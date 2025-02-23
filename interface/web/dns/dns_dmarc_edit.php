@@ -76,7 +76,7 @@ class page_action extends tform_actions {
 		$domain_name = '';
 		if (!empty($zone)) {
 			// Get domain-name for a new rr.
-			$sql = "SELECT zone FROM dns_soa WHERE id = ? AND " . $app->tform->getAuthSQL('r');
+			$sql = "SELECT origin FROM dns_soa WHERE id = ? AND " . $app->tform->getAuthSQL('r');
 			$rec = $app->db->queryOneRecord($sql, $zone);
 			$domain_name = rtrim($rec['origin'], '.');
 		}
@@ -126,9 +126,9 @@ class page_action extends tform_actions {
 				if (preg_match("/^ri=/", $part)) $dmarc_ri = str_replace('ri=', '', $part);
 			}
 			// Get domain-name for an existing rr.
-			$sql = "SELECT zone FROM dns_soa WHERE id = ? AND " . $app->tform->getAuthSQL('r');
-			$rec = $app->db->queryOneRecord($sql, $rec['zone']);
-			$domain_name = rtrim($rec['origin'], '.');
+			$sql = "SELECT origin FROM dns_soa WHERE id = ? AND " . $app->tform->getAuthSQL('r');
+			$rec2 = $app->db->queryOneRecord($sql, $rec['zone']);
+			$domain_name = rtrim($rec2['origin'], '.');
 		}
 		else {
 			// Default to active.
