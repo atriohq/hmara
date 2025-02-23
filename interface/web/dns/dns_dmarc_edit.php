@@ -73,10 +73,13 @@ class page_action extends tform_actions {
 		global $app, $conf;
 
 		$zone = $app->functions->intval($_GET['zone']);
-		// get domain-name
-		$sql = "SELECT * FROM dns_soa WHERE id = ? AND " . $app->tform->getAuthSQL('r');
-		$rec = $app->db->queryOneRecord($sql, $zone);
-		$domain_name = rtrim($rec['origin'], '.');
+		$domain_name = '';
+		if (!empty($zone)) {
+			// Get domain-name for a new rr.
+			$sql = "SELECT zone FROM dns_soa WHERE id = ? AND " . $app->tform->getAuthSQL('r');
+			$rec = $app->db->queryOneRecord($sql, $zone);
+			$domain_name = rtrim($rec['origin'], '.');
+		}
 
 		// set defaults
 		$dmarc_policy = 'none';
@@ -122,6 +125,10 @@ class page_action extends tform_actions {
 				if (preg_match("/^pct=/", $part)) $dmarc_pct = str_replace('pct=', '', $part);
 				if (preg_match("/^ri=/", $part)) $dmarc_ri = str_replace('ri=', '', $part);
 			}
+			// Get domain-name for an existing rr.
+			$sql = "SELECT zone FROM dns_soa WHERE id = ? AND " . $app->tform->getAuthSQL('r');
+			$rec = $app->db->queryOneRecord($sql, $rec['zone']);
+			$domain_name = rtrim($rec['origin'], '.');
 		}
 		else {
 			// Default to active.
