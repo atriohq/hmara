@@ -625,12 +625,6 @@ fi
 			$used_os_type = 'unknown';
 		}
 
-		if (isset($os_type['version'])) {
-			$os_version = $os_type['version'];
-		} else {
-			$os_version = 'unknown';
-		}
-
 		if($used_os_type == "debian" || $used_os_type == "ubuntu") {
 			$tpl->newTemplate("bashrc_user_deb.master");
 		} elseif($used_os_type == "redhat") {
