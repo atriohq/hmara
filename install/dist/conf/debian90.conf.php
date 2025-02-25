@@ -43,6 +43,7 @@ $conf['init_scripts'] = '/etc/init.d';
 $conf['runlevel'] = '/etc';
 $conf['shells'] = '/etc/shells';
 $conf['pam'] = '/etc/pam.d';
+$conf['default_php'] = "7.0";
 
 //* Services provided by this server, this selection will be overridden by the expert mode
 $conf['services']['mail'] = true;
@@ -65,14 +66,15 @@ $conf['mysql']['admin_user'] = 'root';
 $conf['mysql']['admin_password'] = '';
 $conf['mysql']['charset'] = 'utf8';
 $conf['mysql']['ispconfig_user'] = 'ispconfig';
-$conf['mysql']['ispconfig_password'] = md5(uniqid(rand()));
+$conf['mysql']['ispconfig_password'] = md5(random_bytes(20));
 $conf['mysql']['master_slave_setup'] = 'n';
 $conf['mysql']['master_host'] = '';
+$conf['mysql']['master_port'] = '3306';
 $conf['mysql']['master_database'] = 'dbispconfig';
 $conf['mysql']['master_admin_user'] = 'root';
 $conf['mysql']['master_admin_password'] = '';
 $conf['mysql']['master_ispconfig_user'] = '';
-$conf['mysql']['master_ispconfig_password'] = md5(uniqid(rand()));
+$conf['mysql']['master_ispconfig_password'] = md5(random_bytes(20));
 
 //* Apache
 $conf['apache']['installed'] = false; // will be detected automatically during installation
@@ -101,7 +103,7 @@ $conf['web']['apps_vhost_group'] = 'ispapps';
 //* Fastcgi
 $conf['fastcgi']['fastcgi_phpini_path'] = '/etc/php/7.0/cgi/';
 $conf['fastcgi']['fastcgi_starter_path'] = '/var/www/php-fcgi-scripts/[system_user]/';
-$conf['fastcgi']['fastcgi_bin'] = '/usr/bin/php-cgi';
+$conf['fastcgi']['fastcgi_bin'] = '/usr/bin/php-cgi7.0';
 
 //* Postfix
 $conf['postfix']['installed'] = false; // will be detected automatically during installation
@@ -235,5 +237,8 @@ $conf['cron']['wget'] = '/usr/bin/wget';
 $conf['xmpp']['installed'] = false;
 $conf['xmpp']['init_script'] = 'metronome';
 
+
+// AppArmor
+$conf['apparmor']['installed'] = false;
 
 ?>

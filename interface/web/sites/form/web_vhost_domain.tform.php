@@ -60,6 +60,7 @@ if(isset($_SESSION['s']['var']['vhostdomain_type'])) {
 $form["title"]    = $form_title;
 $form["description"]  = "";
 $form["name"]    = "web_vhost_domain";
+$form["record_name_field"] = "domain";
 $form["action"]   = "web_vhost_domain_edit.php";
 $form["db_table"]  = "web_domain";
 $form["db_table_idx"] = "domain_id";
@@ -367,12 +368,14 @@ if($vhostdomain_type == 'domain') {
 	);
 	$form['tabs']['domain']['fields']['web_folder'] = array (
 		'datatype' => 'VARCHAR',
-		'validators' => array (  0 => array ( 'type' => 'REGEX',
-				'regex' => '@^((?!(.*\.\.)|(.*\./)|(.*//))[^/][\w/_\.\-]{1,100})?$@',
-				'errmsg'=> 'web_folder_error_regex'),
+		'validators' => array (  0 => array ( 'type' => 'NOTEMPTY',
+						'errmsg'=> 'web_folder_error_empty'),
+					1 => array ( 'type' => 'REGEX',
+						'regex' => '@^((?!(.*\.\.)|(.*\./)|(.*//))[^/][\w/_\.\-]{1,100})?$@',
+						'errmsg'=> 'web_folder_error_regex'),
 		),
-		'filters'   => array( 0 => array( 	'event' => 'SAVE',
-											'type' => 'TRIM'),
+		'filters'   => array( 0 => array( 'event' => 'SAVE',
+						'type' => 'TRIM'),
 		),
 		'formtype' => 'TEXT',
 		'default' => '',
@@ -397,7 +400,7 @@ $form["tabs"]['redirect'] = array (
 			'datatype' => 'VARCHAR',
 			'formtype' => 'SELECT',
 			'default' => '',
-			'value'  => array('' => 'no_redirect_txt', 'no' => 'no_flag_txt', 'R' => 'R', 'L' => 'L', 'R,L' => 'R,L', 'R=301,L' => 'R=301,L', 'last' => 'last', 'break' => 'break', 'redirect' => 'redirect', 'permanent' => 'permanent', 'proxy' => 'proxy')
+			'value'  => array('' => 'no_redirect_txt', 'no' => 'no_flag_txt', 'R' => 'r_redirect_txt', 'L' => 'l_redirect_txt', 'R,L' => 'r_l_redirect_txt', 'R=301,L' => 'r_301_l_redirect_txt', 'last' => 'last', 'break' => 'break', 'redirect' => 'redirect', 'permanent' => 'permanent', 'proxy' => 'proxy')
 		),
 		'redirect_path' => array (
 			'datatype' => 'VARCHAR',
@@ -415,7 +418,7 @@ $form["tabs"]['redirect'] = array (
 			'datatype' => 'VARCHAR',
 			'formtype' => 'SELECT',
 			'default' => '',
-			'value'  => array('' => 'no_redirect_txt', 'non_www_to_www' => 'domain.tld => www.domain.tld', 'www_to_non_www' => 'www.domain.tld => domain.tld', '*_domain_tld_to_domain_tld' => '*.doman.tld => domain.tld', '*_domain_tld_to_www_domain_tld' => '*.domain.tld => www.domain.tld', '*_to_domain_tld' => '* => domain.tld', '*_to_www_domain_tld' => '* => www.domain.tld')
+			'value'  => array('' => 'no_redirect_txt', 'non_www_to_www' => 'domain.tld => www.domain.tld', 'www_to_non_www' => 'www.domain.tld => domain.tld', '*_domain_tld_to_domain_tld' => '*.domain.tld => domain.tld', '*_domain_tld_to_www_domain_tld' => '*.domain.tld => www.domain.tld', '*_to_domain_tld' => '* => domain.tld', '*_to_www_domain_tld' => '* => www.domain.tld')
 		),
 		'rewrite_rules' => array (
 			'datatype' => 'TEXT',
@@ -640,24 +643,50 @@ $form["tabs"]['stats'] = array (
 
 //* Backup
 if ($backup_available) {
+
+	$domain_server_id = null;
+	if(isset($_REQUEST["id"])) {
+		$domain_id = $app->functions->intval($_REQUEST["id"]);
+		if($domain_id) {
+			$domain_data = $app->db->queryOneRecord('SELECT `server_id` FROM `web_domain` WHERE `domain_id` = ?', $domain_id);
+			if($domain_data) {
+				$domain_server_id = $domain_data['server_id'];
+			}
+		}
+	}
+	if(!$domain_server_id) {
+		$domain_server_id = $conf['server_id'];
+	}
+
 	$missing_utils = array();
-	$compressors_list = array(
-		'gzip',
-		'gunzip',
-		'zip',
-		'unzip',
-		'pigz',
-		'tar',
-		'bzip2',
-		'bunzip2',
-		'xz',
-		'unxz',
-		'7z',
-		'rar',
-	);
-	foreach ($compressors_list as $compressor) {
-		if (!$app->system->is_installed($compressor)) {
-			array_push($missing_utils, $compressor);
+	if($domain_server_id != $conf['server_id']) {
+		$mon = $app->db->queryOneRecord('SELECT `data` FROM `monitor_data` WHERE `server_id` = ? AND `type` = ? ORDER BY `created` DESC', $domain_server_id, 'backup_utils');
+		if($mon) {
+			$missing_utils = unserialize($mon['data']);
+			if(!$missing_utils) {
+				$missing_utils = array();
+			} else {
+				$missing_utils = $missing_utils['missing_utils'];
+			}
+		}
+	} else {
+		$compressors_list = array(
+			'gzip',
+			'gunzip',
+			'zip',
+			'unzip',
+			'pigz',
+			'tar',
+			'bzip2',
+			'bunzip2',
+			'xz',
+			'unxz',
+			'7z',
+		);
+		foreach ($compressors_list as $compressor) {
+			if (!$app->system->is_installed($compressor)) {
+				array_push($missing_utils, $compressor);
+			}
 		}
 	}
 	$app->tpl->setVar("missing_utils", implode(", ",$missing_utils), true);
@@ -710,7 +739,6 @@ if ($backup_available) {
 					'tar_7z_lzma' => 'backup_format_tar_7z_lzma_txt',
 					'tar_7z_ppmd' => 'backup_format_tar_7z_ppmd_txt',
 					'tar_7z_bzip2' => 'backup_format_tar_7z_bzip2_txt',
-					'rar' => 'backup_format_rar_txt',
 				)
 			),
 			'backup_format_db' => array (
@@ -727,7 +755,6 @@ if ($backup_available) {
 					'7z_lzma' => 'backup_format_7z_lzma_txt',
 					'7z_ppmd' => 'backup_format_7z_ppmd_txt',
 					'7z_bzip2' => 'backup_format_7z_bzip2_txt',
-					'rar' => 'backup_format_rar_txt',
 				)
 			),
 			'backup_encrypt' => array (
@@ -927,6 +954,12 @@ if($_SESSION["s"]["user"]["typ"] == 'admin'
 				'width'  => '3',
 				'maxlength' => '6'
 			),
+			'disable_symlinknotowner' => array (
+				'datatype' => 'VARCHAR',
+				'formtype' => 'CHECKBOX',
+				'default' => 'n',
+				'value'  => array(0 => 'n', 1 => 'y')
+			),
 			'php_open_basedir' => array (
 				'datatype' => 'VARCHAR',
 				'formtype' => 'TEXT',
@@ -1041,7 +1074,37 @@ if($_SESSION["s"]["user"]["typ"] == 'admin'
 				'value' => '',
 				'width' => '4',
 				'maxlength' => '4'
-			)
+			),
+			'jailkit_chroot_app_sections' => array(
+				'datatype' => 'TEXT',
+				'formtype' => 'TEXT',
+				'default' => '',
+				'validators' => array(  0 => array ('type' => 'REGEX',
+								'regex' => '/^[a-zA-Z0-9\-\_\ ]*$/',
+								'errmsg'=> 'jailkit_chroot_app_sections_error_regex'),
+				),
+				'value' => '',
+				'width' => '40',
+				'maxlength' => '1000'
+			),
+			'jailkit_chroot_app_programs' => array(
+				'datatype' => 'TEXT',
+				'formtype' => 'TEXT',
+				'default' => '',
+				'validators' => array(  0 => array('type' => 'REGEX',
+								'regex' => '/^[a-zA-Z0-9\.\-\_\/\ ]*$/',
+								'errmsg'=> 'jailkit_chroot_app_programs_error_regex'),
+				),
+				'value' => '',
+				'width' => '40',
+				'maxlength' => '1000'
+			),
+			'delete_unused_jailkit' => array (
+				'datatype' => 'VARCHAR',
+				'formtype' => 'CHECKBOX',
+				'default' => 'n',
+				'value' => array(0 => 'n', 1 => 'y')
+			),
 			//#################################
 			// END Datatable fields
 			//#################################

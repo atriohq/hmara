@@ -41,11 +41,12 @@
 $form["title"]   = "Client";
 $form["description"]    = "";
 $form["name"]   = "client";
+$form["record_name_field"] = "username";
 $form["action"]  = "client_edit.php";
 $form["db_table"] = "client";
 $form["db_table_idx"] = "client_id";
 $form["db_history"] = "yes";
-$form["tab_default"] = "address";
+$form["tab_default"] = "info";
 $form["list_default"] = "client_list.php";
 $form["auth"]  = 'yes';
 
@@ -80,6 +81,12 @@ while ($file = @readdir($handle)) {
 	}
 }
 
+$form["tabs"]['info'] = array (
+	'title'  => "Info",
+	'width'  => 100,
+	'template'  => "templates/client_edit_info.htm",
+	'fields'  => array ()
+);
 $form["tabs"]['address'] = array (
 	'title'  => "Address",
 	'width'  => 100,
@@ -224,6 +231,9 @@ $form["tabs"]['address'] = array (
 		'language' => array (
 			'datatype' => 'VARCHAR',
 			'formtype' => 'SELECT',
+			'validators' => array ( 0 => array ( 'type' => 'NOTEMPTY',
+					'errmsg'=> 'language_error_empty'),
+			),
 			'default' => $conf["language"],
 			'value'  => $language_list,
 			'separator' => '',
@@ -318,7 +328,7 @@ $form["tabs"]['address'] = array (
 		'country' => array (
 			'datatype' => 'VARCHAR',
 			'formtype' => 'SELECT',
-			'default' => (isset($conf['language']) ? strtoupper($conf['language']) : ''),
+                       'default' => (isset($conf['default_country'])) ? strtoupper($conf['default_country']) : ((isset($conf['language'])) ? strtoupper($conf['language']) : ''),
 			'datasource' => array (  'type'          => 'SQL',
 				'querystring'   => 'SELECT iso,printable_name FROM country ORDER BY printable_name ASC',
 				'keyfield'      => 'iso',
@@ -413,7 +423,7 @@ $form["tabs"]['address'] = array (
 					1 => array( 'event' => 'SAVE',
 					'type' => 'STRIPNL')
 			),
-			'default' => 'http://',
+			'default' => 'https://',
 			'value'  => '',
 			'separator' => '',
 			'width'  => '30',
@@ -422,6 +432,7 @@ $form["tabs"]['address'] = array (
 			'cols'  => '',
 			'searchable' => 2
 		),
+		// Deprecated
 		'icq' => array (
 			'datatype' => 'VARCHAR',
 			'formtype' => 'TEXT',
@@ -840,6 +851,20 @@ $form["tabs"]['limits'] = array (
 			'rows'  => '',
 			'cols'  => ''
 		),
+		'limit_mail_wblist' => array (
+			'datatype' => 'INTEGER',
+			'formtype' => 'TEXT',
+			'validators' => array (  0 => array ( 'type' => 'ISINT',
+					'errmsg'=> 'limit_mail_wblist_error_notint'),
+			),
+			'default' => '-1',
+			'value'  => '',
+			'separator' => '',
+			'width'  => '10',
+			'maxlength' => '10',
+			'rows'  => '',
+			'cols'  => ''
+		),
 		'limit_mailfilter' => array (
 			'datatype' => 'INTEGER',
 			'formtype' => 'TEXT',
@@ -923,6 +948,20 @@ $form["tabs"]['limits'] = array (
 			'maxlength' => '10',
 			'rows'  => '',
 			'cols'  => ''
+		),
+		'limit_mail_backup' => array (
+			'datatype' => 'VARCHAR',
+			'formtype' => 'CHECKBOX',
+			'default' => 'y',
+			'valuelimit' => 'client:limit_mail_backup',
+			'value'  => array(0 => 'n', 1 => 'y')
+		),
+		'limit_relayhost' => array (
+			'datatype' => 'VARCHAR',
+			'formtype' => 'CHECKBOX',
+			'default' => 'n',
+			'valuelimit' => 'client:limit_relayhost',
+			'value'  => array(0 => 'n', 1 => 'y')
 		),
         'default_xmppserver' => array (
             'datatype' => 'INTEGER',

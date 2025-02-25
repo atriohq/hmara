@@ -37,6 +37,8 @@ class nginx_plugin {
 	var $action = '';
 	var $ssl_certificate_changed = false;
 	var $update_letsencrypt = false;
+	var $website = null;
+	var $jailkit_config = null;
 
 	//* This function is called during ispconfig installation to determine
 	//  if a symlink shall be created for this plugin.
@@ -88,35 +90,6 @@ class nginx_plugin {
 
 		$app->plugins->registerEvent('web_folder_update', $this->plugin_name, 'web_folder_update');
 		$app->plugins->registerEvent('web_folder_delete', $this->plugin_name, 'web_folder_delete');
-
-		$app->plugins->registerEvent('directive_snippets_update', $this->plugin_name, 'directive_snippets');
-	}
-
-	function directive_snippets($event_name, $data) {
-		global $app, $conf;
-
-		$snippet = $data['new'];
-
-		if($snippet['active'] == 'y' && $snippet['update_sites'] == 'y') {
-			if($snippet['type'] == 'php') {
-				$rlike = $snippet['directive_snippets_id'].'|,'.$snippet['directive_snippets_id'].'|'.$snippet['directive_snippets_id'].',';
-				$affected_snippets = $app->db->queryAllRecords('SELECT directive_snippets_id FROM directive_snippets WHERE required_php_snippets RLIKE(?) AND type = ?', $rlike, 'nginx');
-				if(is_array($affected_snippets) && !empty($affected_snippets)) {
-					foreach($affected_snippets as $snippet) $sql_in[] = $snippet['directive_snippets_id'];
-					$affected_sites = $app->db->queryAllRecords('SELECT domain_id FROM web_domain WHERE server_id = ? AND directive_snippets_id IN ?', $conf['server_id'], $sql_in);
-				}
-			}
-			if($snippet['type'] == 'nginx') $affected_sites = $app->db->queryAllRecords('SELECT domain_id FROM web_domain WHERE server_id = ? AND directive_snippets_id = ?', $conf['server_id'], $snippet['directive_snippets_id']);
-
-			if(is_array($affected_sites) && !empty($affected_sites)) {
-				foreach($affected_sites as $site) {
-					$website = $app->db->queryOneRecord('SELECT * FROM web_domain WHERE domain_id = ?', $site['domain_id']);
-					$new_data['old'] = $website;
-					$new_data['new'] = $website;
-					$this->update('web_domain_update', $new_data);
-				}
-			}
-		}
 	}
 
 	// Handle the creation of SSL certificates
@@ -128,7 +101,7 @@ class nginx_plugin {
 		// load the server configuration options
 		$app->uses('getconf');
 		$web_config = $app->getconf->get_server_config($conf['server_id'], 'web');
-		if ($web_config['CA_path']!='' && !file_exists($web_config['CA_path'].'/openssl.cnf'))
+		if (isset($web_config['CA_path']) && $web_config['CA_path'] != '' && !file_exists($web_config['CA_path'].'/openssl.cnf'))
 			$app->log("CA path error, file does not exist:".$web_config['CA_path'].'/openssl.cnf', LOGLEVEL_ERROR);
 
 		//* Only vhosts can have a ssl cert
@@ -139,7 +112,6 @@ class nginx_plugin {
 		$ssl_dir = $data['new']['document_root'].'/ssl';
 		$domain = ($data['new']['ssl_domain'] != '') ? $data['new']['ssl_domain'] : $data['new']['domain'];
 		$key_file = $ssl_dir.'/'.$domain.'.key';
-		$key_file2 = $ssl_dir.'/'.$domain.'.key.org';
 		$csr_file = $ssl_dir.'/'.$domain.'.csr';
 		$crt_file = $ssl_dir.'/'.$domain.'.crt';
 
@@ -153,24 +125,14 @@ class nginx_plugin {
 				$app->system->rename($key_file, $key_file.'.bak');
 				$app->system->chmod($key_file.'.bak', 0400);
 			}
-			if(file_exists($key_file2)){
-				$app->system->rename($key_file2, $key_file2.'.bak');
-				$app->system->chmod($key_file2.'.bak', 0400);
-			}
 			if(file_exists($csr_file)) $app->system->rename($csr_file, $csr_file.'.bak');
 			if(file_exists($crt_file)) $app->system->rename($crt_file, $crt_file.'.bak');
 
 			$rand_file = $ssl_dir.'/random_file';
-			$rand_data = md5(uniqid(microtime(), 1));
-			for($i=0; $i<1000; $i++) {
-				$rand_data .= md5(uniqid(microtime(), 1));
-				$rand_data .= md5(uniqid(microtime(), 1));
-				$rand_data .= md5(uniqid(microtime(), 1));
-				$rand_data .= md5(uniqid(microtime(), 1));
-			}
-			$app->system->file_put_contents($rand_file, $rand_data);
+			$app->system->exec_safe('dd if=/dev/urandom of=? bs=256 count=1', $rand_file);
 
-			$ssl_password = substr(md5(uniqid(microtime(), 1)), 0, 15);
+			$ssl_password = bin2hex(random_bytes(12));
+
 
 			$ssl_cnf = "        RANDFILE               = $rand_file
 
@@ -199,49 +161,42 @@ class nginx_plugin {
         subjectAltName         = @alt_names
 
         [alt_names]
-        DNS.1                  = .$domain";
+        DNS.1                  = $domain";
 
 			$ssl_cnf_file = $ssl_dir.'/openssl.conf';
 			$app->system->file_put_contents($ssl_cnf_file, $ssl_cnf);
 			$ssl_ext_file = $ssl_dir.'/v3.ext';
 			$app->system->file_put_contents($ssl_ext_file, $ext_cnf);
 
-			$rand_file = $rand_file;
-			$key_file2 = $key_file2;
-			$openssl_cmd_key_file2 = $key_file2;
-			if(substr($domain, 0, 2) == '*.' && strpos($key_file2, '/ssl/\*.') !== false) $key_file2 = str_replace('/ssl/\*.', '/ssl/*.', $key_file2); // wildcard certificate
-			$key_file = $key_file;
 			$openssl_cmd_key_file = $key_file;
 			if(substr($domain, 0, 2) == '*.' && strpos($key_file, '/ssl/\*.') !== false) $key_file = str_replace('/ssl/\*.', '/ssl/*.', $key_file); // wildcard certificate
 			$ssl_days = 3650;
-			$csr_file = $csr_file;
 			$openssl_cmd_csr_file = $csr_file;
 			if(substr($domain, 0, 2) == '*.' && strpos($csr_file, '/ssl/\*.') !== false) $csr_file = str_replace('/ssl/\*.', '/ssl/*.', $csr_file); // wildcard certificate
 			$config_file = $ssl_cnf_file;
-			$crt_file = $crt_file;
 			$openssl_cmd_crt_file = $crt_file;
 			if(substr($domain, 0, 2) == '*.' && strpos($crt_file, '/ssl/\*.') !== false) $crt_file = str_replace('/ssl/\*.', '/ssl/*.', $crt_file); // wildcard certificate
 
 			if(is_file($ssl_cnf_file) && !is_link($ssl_cnf_file)) {
-
-				$app->system->exec_safe("openssl genrsa -des3 -rand ? -passout pass:? -out ? 2048", $rand_file, $ssl_password, $openssl_cmd_key_file2);
-				$app->system->exec_safe("openssl req -new -sha256 -passin pass:? -passout pass:? -key ? -out ? -days ? -config ?", $ssl_password, $ssl_password, $openssl_cmd_key_file2, $openssl_cmd_csr_file, $ssl_days, $config_file);
-				$app->system->exec_safe("openssl rsa -passin pass:? -in ? -out ?", $ssl_password, $openssl_cmd_key_file2, $openssl_cmd_key_file);
+				$openssl_cmd = 'openssl req -nodes -newkey rsa:4096 -x509 -days ? -keyout ? -out ? -config ?';
+				$app->system->exec_safe($openssl_cmd, $ssl_days, $openssl_cmd_key_file, $openssl_cmd_crt_file, $config_file);
+				$app->system->exec_safe("openssl req -new -sha256 -key ? -out ? -days ? -config ?", $openssl_cmd_key_file, $openssl_cmd_csr_file, $ssl_days, $config_file);
 
 				if(file_exists($web_config['CA_path'].'/openssl.cnf'))
 				{
 					$app->system->exec_safe("openssl ca -batch -out ? -config ? -passin pass:? -in ? -extfile ?", $openssl_cmd_crt_file, $web_config['CA_path']."/openssl.cnf", $web_config['CA_pass'], $openssl_cmd_csr_file, $ssl_ext_file);
 					$app->log("Creating CA-signed SSL Cert for: $domain", LOGLEVEL_DEBUG);
-					if (filesize($crt_file)==0 || !file_exists($crt_file)) $app->log("CA-Certificate signing failed.  openssl ca -out $openssl_cmd_crt_file -config ".$web_config['CA_path']."/openssl.cnf -passin pass:".$web_config['CA_pass']." -in $openssl_cmd_csr_file -extfile $ssl_ext_file", LOGLEVEL_ERROR);
-				};
+					if(filesize($crt_file) == 0 || !file_exists($crt_file)) {
+						$app->log("CA-Certificate signing failed.  openssl ca -out $openssl_cmd_crt_file -config " . $web_config['CA_path'] . "/openssl.cnf -passin pass:" . $web_config['CA_pass'] . " -in $openssl_cmd_csr_file -extfile $ssl_ext_file", LOGLEVEL_ERROR);
+					}
+				}
 				if (@filesize($crt_file)==0 || !file_exists($crt_file)){
-					$app->system->exec_safe("openssl req -x509 -passin pass:? -passout pass:? -key ? -in ? -out ? -days ? -config ?", $ssl_password, $ssl_password, $openssl_cmd_key_file2, $openssl_cmd_csr_file, $openssl_cmd_crt_file, $ssl_days, $config_file);
+					$app->system->exec_safe($openssl_cmd, $ssl_days, $openssl_cmd_key_file, $openssl_cmd_crt_file, $config_file);
 					$app->log("Creating self-signed SSL Cert for: $domain", LOGLEVEL_DEBUG);
-				};
+				}
 
 			}
 
-			$app->system->chmod($key_file2, 0400);
 			$app->system->chmod($key_file, 0400);
 			@$app->system->unlink($config_file);
 			@$app->system->unlink($rand_file);
@@ -303,10 +258,7 @@ class nginx_plugin {
 				$app->system->copy($key_file, $key_file.'~');
 				$app->system->chmod($key_file.'~', 0400);
 			}
-			if(file_exists($key_file2)){
-				$app->system->copy($key_file2, $key_file2.'~');
-				$app->system->chmod($key_file2.'~', 0400);
-			}
+
 			if(file_exists($csr_file)) $app->system->copy($csr_file, $csr_file.'~');
 			if(file_exists($crt_file)) $app->system->copy($crt_file, $crt_file.'~');
 
@@ -406,7 +358,7 @@ class nginx_plugin {
 		$app->uses('getconf');
 		$web_config = $app->getconf->get_server_config($conf['server_id'], 'web');
 
-		//* Check if this is a chrooted setup
+		//* Check if nginx is using a chrooted setup
 		if($web_config['website_basedir'] != '' && @is_file($web_config['website_basedir'].'/etc/passwd')) {
 			$nginx_chrooted = true;
 			$app->log('Info: nginx is chrooted.', LOGLEVEL_DEBUG);
@@ -420,7 +372,7 @@ class nginx_plugin {
 		}
 		if($app->system->is_allowed_user($data['new']['system_user'], $app->system->is_user($data['new']['system_user']), true) == false
 			|| $app->system->is_allowed_group($data['new']['system_group'], $app->system->is_group($data['new']['system_group']), true) == false) {
-			$app->log('Websites cannot be owned by the root user or group. User: '.$data['new']['system_user'].' Group: '.$data['new']['system_group'], LOGLEVEL_WARN);
+			$app->log('Problem with website user or group.  Websites cannot be owned by root or an existing user/group. User: '.$data['new']['system_user'].' Group: '.$data['new']['system_group'], LOGLEVEL_WARN);
 			return 0;
 		}
 		if(trim($data['new']['domain']) == '') {
@@ -527,13 +479,16 @@ class nginx_plugin {
 					$tmp_symlink = str_replace('[website_domain]', $data['old']['domain'], $tmp_symlink);
 					// Remove trailing slash
 					if(substr($tmp_symlink, -1, 1) == '/') $tmp_symlink = substr($tmp_symlink, 0, -1);
-					// create the symlinks, if not exist
+					// remove the old symlinks if they exist
 					if(is_link($tmp_symlink)) {
 						$app->system->exec_safe('rm -f ?', $tmp_symlink);
 						$app->log('Removed symlink: rm -f '.$tmp_symlink, LOGLEVEL_DEBUG);
 					}
 				}
 			}
+
+			//* Remove protection of old folders
+			$app->system->web_folder_protection($data['old']['document_root'], false);
 
 			if($data["new"]["type"] != "vhostsubdomain" && $data["new"]["type"] != "vhostalias") {
 				//* Move the site data
@@ -557,9 +512,7 @@ class nginx_plugin {
 
 				//* Create new base directory, if it does not exist yet
 				if(!is_dir($new_dir)) $app->system->mkdirpath($new_dir);
-				$app->system->web_folder_protection($data['old']['document_root'], false);
 				$app->system->exec_safe('mv ? ?', $data['old']['document_root'], $new_dir);
-				//$app->system->rename($data['old']['document_root'],$new_dir);
 				$app->log('Moving site to new document root: mv '.$data['old']['document_root'].' '.$new_dir, LOGLEVEL_DEBUG);
 
 				// Handle the change in php_open_basedir
@@ -579,15 +532,6 @@ class nginx_plugin {
 			if($nginx_chrooted) $app->system->exec_safe('chroot ? ?', $web_config['website_basedir'], $command);
 
 			//* Change the log mount
-			/*
-			$fstab_line = '/var/log/ispconfig/httpd/'.$data['old']['domain'].' '.$data['old']['document_root'].'/'.$old_log_folder.'    none    bind';
-			$app->system->removeLine('/etc/fstab', $fstab_line);
-			$fstab_line = '/var/log/ispconfig/httpd/'.$data['old']['domain'].' '.$data['old']['document_root'].'/'.$old_log_folder.'    none    bind,nobootwait';
-			$app->system->removeLine('/etc/fstab', $fstab_line);
-			$fstab_line = '/var/log/ispconfig/httpd/'.$data['old']['domain'].' '.$data['old']['document_root'].'/'.$old_log_folder.'    none    bind,nobootwait';
-			$app->system->removeLine('/etc/fstab', $fstab_line);
-			*/
-
 			$fstab_line_old = '/var/log/ispconfig/httpd/'.$data['old']['domain'].' '.$data['old']['document_root'].'/'.$old_log_folder.'    none    bind';
 
 			if($web_config['network_filesystem'] == 'y') {
@@ -601,8 +545,6 @@ class nginx_plugin {
 			$app->system->exec_safe('mount --bind ? ?', '/var/log/ispconfig/httpd/'.$data['new']['domain'], $data['new']['document_root'].'/'.$log_folder);
 
 		}
-
-		//print_r($data);
 
 		// Check if the directories are there and create them if necessary.
 		$app->system->web_folder_protection($data['new']['document_root'], false);
@@ -619,6 +561,7 @@ class nginx_plugin {
 		if(!is_dir($data['new']['document_root'].'/ssl')) $app->system->mkdirpath($data['new']['document_root'].'/ssl');
 		if(!is_dir($data['new']['document_root'].'/cgi-bin')) $app->system->mkdirpath($data['new']['document_root'].'/cgi-bin');
 		if(!is_dir($data['new']['document_root'].'/tmp')) $app->system->mkdirpath($data['new']['document_root'].'/tmp');
+		if(!is_dir($data['new']['document_root'].'/backup')) $app->system->mkdirpath($data['new']['document_root'].'/backup', 0755, $username, $groupname);
 
 		if(!is_dir($data['new']['document_root'].'/.ssh')) {
 			$app->system->mkdirpath($data['new']['document_root'].'/.ssh');
@@ -635,6 +578,88 @@ class nginx_plugin {
 			$app->system->chgrp($data['new']['document_root'].'/private', $groupname);
 		}
 
+
+		// load jailkit server config
+		$jailkit_config = $app->getconf->get_server_config($conf['server_id'], 'jailkit');
+
+		// website overrides
+		if (isset($data['new']['jailkit_chroot_app_sections']) && $data['new']['jailkit_chroot_app_sections'] != '' ) {
+			$jailkit_config['jailkit_chroot_app_sections'] = $data['new']['jailkit_chroot_app_sections'];
+		}
+		if (isset($data['new']['jailkit_chroot_app_programs']) && $data['new']['jailkit_chroot_app_programs'] != '' ) {
+			$jailkit_config['jailkit_chroot_app_programs'] = $data['new']['jailkit_chroot_app_programs'];
+		}
+
+		$last_updated = preg_split('/[\s,]+/', $jailkit_config['jailkit_chroot_app_sections']
+						  .' '.$jailkit_config['jailkit_chroot_app_programs']
+						  .' '.$jailkit_config['jailkit_chroot_cron_programs']);
+		$last_updated = array_unique($last_updated, SORT_REGULAR);
+		sort($last_updated, SORT_STRING);
+		$update_hash = hash('md5', implode(' ', $last_updated));
+		$check_for_jailkit_updates=false;
+
+		$create_jail_conditions= ($data['old']['php_fpm_chroot'] != 'y' ||
+			! is_dir($data['new']['document_root'].'/etc/jailkit') ||
+			($data['old']['php'] != $data['new']['php'] && $data['new']['php'] != 'no'));
+
+		// Create jailkit chroot if needed and when enabling php_fpm_chroot
+		if($data['new']['php_fpm_chroot'] == 'y' && $create_jail_conditions && $data['new']['php'] != 'no') {
+			$website = $app->db->queryOneRecord('SELECT * FROM web_domain WHERE domain_id = ?', $data['new']['domain_id']);
+			$this->website = array_merge($website, $data['new'], array('new_jailkit_hash' => $update_hash));
+			$this->jailkit_config = $jailkit_config;
+			$this->_setup_jailkit_chroot();
+			$this->_add_jailkit_user();
+		// else delete if unused
+		} elseif (($data['new']['delete_unused_jailkit'] == 'y' && $data['new']['php_fpm_chroot'] != 'y') ||
+			($data['new']['delete_unused_jailkit'] == 'y' && $data['new']['php'] == 'no')) {
+			$check_for_jailkit_updates=false;
+			$this->_delete_jailkit_if_unused($data['new']['domain_id']);
+			if(is_dir($data['new']['document_root'].'/etc/jailkit')) {
+				$check_for_jailkit_updates=true;
+			}
+		// else update if needed
+		} elseif ($data['new']['delete_unused_jailkit'] != 'y') {
+			$check_for_jailkit_updates=true;
+		}
+
+		// If jail exists (and wasn't deleted), we may need to update it
+		if($check_for_jailkit_updates &&
+		   ( ($data['old']['jailkit_chroot_app_sections'] != $data['new']['jailkit_chroot_app_sections']) ||
+		     ($data['old']['jailkit_chroot_app_programs'] != $data['new']['jailkit_chroot_app_programs']) ) )
+		{
+
+			if (isset($jailkit_config['jailkit_hardlinks'])) {
+				if ($jailkit_config['jailkit_hardlinks'] == 'yes') {
+					$options = array('hardlink');
+				} elseif ($jailkit_config['jailkit_hardlinks'] == 'no') {
+					$options = array();
+				}
+			} else {
+				$options = array('allow_hardlink');
+			}
+
+			$options[] = 'force';
+
+			$sections = $jailkit_config['jailkit_chroot_app_sections'];
+			$programs = $jailkit_config['jailkit_chroot_app_programs'] . ' '
+				  . $jailkit_config['jailkit_chroot_cron_programs'];
+
+			$records = $app->db->queryAllRecords('SELECT web_folder FROM `web_domain` WHERE `parent_domain_id` = ? AND `document_root` = ? AND web_folder != \'\' AND web_folder IS NOT NULL AND `server_id` = ?', $data['new']['domain_id'], $data['new']['document_root'], $conf['server_id']);
+			foreach ($records as $record) {
+				$options[] = 'skip='.$record['web_folder'];
+			}
+
+			// don't update if last_jailkit_hash is the same
+			$tmp = $app->db->queryOneRecord('SELECT `last_jailkit_hash` FROM web_domain WHERE domain_id = ?', $data['new']['parent_domain_id']);
+			if ($update_hash != $tmp['last_jailkit_hash']) {
+				$app->system->update_jailkit_chroot($data['new']['document_root'], $sections, $programs, $options);
+
+				// this gets last_jailkit_update out of sync with master db, but that is ok,
+				// as it is only used as a timestamp to moderate the frequency of updating on the slaves
+				$app->db->query("UPDATE `web_domain` SET `last_jailkit_update` = NOW(), `last_jailkit_hash` = ? WHERE `document_root` = ?", $update_hash, $data['new']['document_root']);
+			}
+			unset($tmp);
+		}
 
 		// Remove the symlink for the site, if site is renamed
 		if($this->action == 'update' && $data['old']['domain'] != '' && $data['new']['domain'] != $data['old']['domain']) {
@@ -668,7 +693,7 @@ class nginx_plugin {
 
 		// Get the client ID
 		$client = $app->dbmaster->queryOneRecord('SELECT client_id FROM sys_group WHERE sys_group.groupid = ?', $data['new']['sys_groupid']);
-		$client_id = intval($client['client_id']);
+		$client_id = (is_array($client)) ? intval($client['client_id']) : 0;
 		unset($client);
 
 		// Remove old symlinks, if site is renamed
@@ -680,7 +705,7 @@ class nginx_plugin {
 					$tmp_symlink = str_replace('[website_domain]', $data['old']['domain'], $tmp_symlink);
 					// Remove trailing slash
 					if(substr($tmp_symlink, -1, 1) == '/') $tmp_symlink = substr($tmp_symlink, 0, -1);
-					// remove the symlinks, if not exist
+					// remove the old symlinks if they exist
 					if(is_link($tmp_symlink)) {
 						$app->system->exec_safe('rm -f ?', $tmp_symlink);
 						$app->log('Removed symlink: rm -f '.$tmp_symlink, LOGLEVEL_DEBUG);
@@ -741,10 +766,12 @@ class nginx_plugin {
 				$app->system->exec_safe('chmod -R a+r ?', $error_page_path);
 			}
 
-			//* Copy the web skeleton files only when there is no index.ph or index.html file yet
-			if(!file_exists($data['new']['document_root'].'/'.$web_folder.'/index.html') && !file_exists($data['new']['document_root'].'/'.$web_folder.'/index.php')) {
+			//* Copy the web skeleton files only when there is no index.php, standard_index.html or index.html file yet
+			if(!file_exists($data['new']['document_root'].'/'.$web_folder.'/index.html') && !file_exists($data['new']['document_root'].'/'.$web_folder.'/index.php') && !file_exists($data['new']['document_root'].'/'.$web_folder.'/standard_index.html')) {
 				if (file_exists($conf['rootpath'] . '/conf-custom/index/standard_index.html_'.substr($conf['language'], 0, 2))) {
-					if(!file_exists($data['new']['document_root'].'/' . $web_folder . '/index.html')) $app->system->exec_safe('cp ? ?', $conf['rootpath'] . '/conf-custom/index/standard_index.html_'.substr($conf['language'], 0, 2), $data['new']['document_root'].'/' . $web_folder . '/index.html');
+					if(!file_exists($data['new']['document_root'] . '/' . $web_folder . '/standard_index.html')) {
+						$app->system->exec_safe('cp ? ?', $conf['rootpath'] . '/conf-custom/index/standard_index.html_' . substr($conf['language'], 0, 2), $data['new']['document_root'] . '/' . $web_folder . '/standard_index.html');
+					}
 
 					if(is_file($conf['rootpath'] . '/conf-custom/index/favicon.ico')) {
 						if(!file_exists($data['new']['document_root'].'/' . $web_folder . '/favicon.ico')) $app->system->exec_safe('cp ? ?', $conf['rootpath'] . '/conf-custom/index/favicon.ico', $data['new']['document_root'].'/' . $web_folder . '/');
@@ -754,19 +781,23 @@ class nginx_plugin {
 					}
 				} else {
 					if (file_exists($conf['rootpath'] . '/conf-custom/index/standard_index.html')) {
-						if(!file_exists($data['new']['document_root'].'/' . $web_folder . '/index.html')) $app->system->exec_safe('cp ? ?', $conf['rootpath'] . '/conf-custom/index/standard_index.html', $data['new']['document_root'].'/' . $web_folder . '/index.html');
+						if(!file_exists($data['new']['document_root'].'/' . $web_folder . '/standard_index.html')) $app->system->exec_safe('cp ? ?', $conf['rootpath'] . '/conf-custom/index/standard_index.html', $data['new']['document_root'].'/' . $web_folder . '/standard_index.html');
 					} else {
-						if(!file_exists($data['new']['document_root'].'/' . $web_folder . '/index.html')) $app->system->exec_safe('cp ? ?', $conf['rootpath'] . '/conf/index/standard_index.html_'.substr($conf['language'], 0, 2), $data['new']['document_root'].'/' . $web_folder . '/index.html');
-						if(is_file($conf['rootpath'] . '/conf/index/favicon.ico')){
+						if(!file_exists($data['new']['document_root'].'/' . $web_folder . '/standard_index.html')) $app->system->exec_safe('cp ? ?', $conf['rootpath'] . '/conf/index/standard_index.html_'.substr($conf['language'], 0, 2), $data['new']['document_root'].'/' . $web_folder . '/standard_index.html');
+						if(is_file($conf['rootpath'] . '/conf/index/favicon.ico')) {
 							if(!file_exists($data['new']['document_root'].'/' . $web_folder . '/favicon.ico')) $app->system->exec_safe('cp ? ?', $conf['rootpath'] . '/conf/index/favicon.ico', $data['new']['document_root'].'/' . $web_folder . '/');
 						}
-						if(is_file($conf['rootpath'] . '/conf/index/robots.txt')){
+						if(is_file($conf['rootpath'] . '/conf/index/robots.txt')) {
 							if(!file_exists($data['new']['document_root'].'/' . $web_folder . '/robots.txt')) $app->system->exec_safe('cp ? ?', $conf['rootpath'] . '/conf/index/robots.txt', $data['new']['document_root'].'/' . $web_folder . '/');
 						}
 					}
 				}
 			}
-			$app->system->exec_safe('chmod -R a+r ?', $data['new']['document_root'].'/' . $web_folder . '/');
+			// Set the a+r mod to the web_folder.
+			// Skip this for types where the target vhost already exists if the web_folder is "web". In this case, everything is setup already from the vhost setup
+			if ( ( $data['new']['type'] != 'vhostalias' && $data['new']['type'] != 'vhostsubdomain' ) || $web_folder != 'web') {
+				$app->system->exec_safe('chmod -R a+r ?', $data['new']['document_root'].'/' . $web_folder . '/');
+			}
 
 			//** Copy the error documents on update when the error document checkbox has been activated and was deactivated before
 		} elseif ($this->action == 'update' && ($data['new']['type'] == 'vhost' || $data['new']['type'] == 'vhostsubdomain' || $data['new']['type'] == 'vhostalias') && $data['old']['errordocs'] == 0 && $data['new']['errordocs'] == 1) {
@@ -821,7 +852,10 @@ class nginx_plugin {
 
 		if($this->action == 'insert' || $data["new"]["system_user"] != $data["old"]["system_user"]) {
 			// Chown and chmod the directories below the document root
-			$app->system->exec_safe('chown -R ?:? ?', $username, $groupname, $data['new']['document_root'].'/' . $web_folder);
+			// Skip this for types where the target vhost already exists if the web_folder is "web". In this case, everything is setup already from the vhost setup
+			if ( ( $data['new']['type'] != 'vhostalias' && $data['new']['type'] != 'vhostsubdomain' ) || $web_folder != 'web') {
+				$app->system->exec_safe( 'chown -R ?:? ?', $username, $groupname, $data['new']['document_root'] . '/' . $web_folder );
+			}
 			// The document root itself has to be owned by root in normal level and by the web owner in security level 20
 			if($web_config['security_level'] == 20) {
 				$app->system->exec_safe('chown ?:? ?', $username, $groupname, $data['new']['document_root'].'/' . $web_folder);
@@ -1034,31 +1068,31 @@ class nginx_plugin {
 		}
 		if($data['new']['ip_address'] == '*' && $data['new']['ipv6_address'] == '') $tpl->setVar('ipv6_wildcard', 1);
 
+		$default_php_fpm = true;
+
 		if($data['new']['php'] == 'php-fpm' || $data['new']['php'] == 'hhvm'){
 			if($data['new']['server_php_id'] != 0){
-				$default_php_fpm = false;
 				$tmp_php = $app->db->queryOneRecord('SELECT * FROM server_php WHERE server_php_id = ?', $data['new']['server_php_id']);
 				if($tmp_php) {
+					$default_php_fpm = false;
 					$custom_php_fpm_ini_dir = $tmp_php['php_fpm_ini_dir'];
 					$custom_php_fpm_init_script = $tmp_php['php_fpm_init_script'];
 					$custom_php_fpm_pool_dir = $tmp_php['php_fpm_pool_dir'];
+					$custom_php_fpm_socket_dir = $tmp_php['php_fpm_socket_dir'];
 					if(substr($custom_php_fpm_ini_dir, -1) != '/') $custom_php_fpm_ini_dir .= '/';
 				}
-			} else {
-				$default_php_fpm = true;
 			}
 		} else {
 			if($data['old']['server_php_id'] != 0 && $data['old']['php'] != 'no'){
-				$default_php_fpm = false;
 				$tmp_php = $app->db->queryOneRecord('SELECT * FROM server_php WHERE server_php_id = ?', $data['old']['server_php_id']);
 				if($tmp_php) {
+					$default_php_fpm = false;
 					$custom_php_fpm_ini_dir = $tmp_php['php_fpm_ini_dir'];
 					$custom_php_fpm_init_script = $tmp_php['php_fpm_init_script'];
 					$custom_php_fpm_pool_dir = $tmp_php['php_fpm_pool_dir'];
+					$custom_php_fpm_socket_dir = $tmp_php['php_fpm_socket_dir'];
 					if(substr($custom_php_fpm_ini_dir, -1) != '/') $custom_php_fpm_ini_dir .= '/';
 				}
-			} else {
-				$default_php_fpm = true;
 			}
 		}
 
@@ -1070,7 +1104,12 @@ class nginx_plugin {
 		$pool_dir = trim($pool_dir);
 		if(substr($pool_dir, -1) != '/') $pool_dir .= '/';
 		$pool_name = 'web'.$data['new']['domain_id'];
-		$socket_dir = $web_config['php_fpm_socket_dir'];
+
+		if (!$default_php_fpm && !empty($custom_php_fpm_socket_dir)) {
+			$socket_dir = $custom_php_fpm_socket_dir;
+		} else {
+			$socket_dir = $web_config['php_fpm_socket_dir'];
+		}
 		if(substr($socket_dir, -1) != '/') $socket_dir .= '/';
 
 		if($data['new']['php_fpm_use_socket'] == 'y'){
@@ -1238,7 +1277,7 @@ class nginx_plugin {
 		}
 
 		// folder_directive_snippets
-		if(trim($data['new']['folder_directive_snippets']) != ''){
+		if(isset($data['new']['folder_directive_snippets']) && !is_null($data['new']['folder_directive_snippets']) && trim($data['new']['folder_directive_snippets']) != ''){
 			$data['new']['folder_directive_snippets'] = trim($data['new']['folder_directive_snippets']);
 			$data['new']['folder_directive_snippets'] = str_replace("\r\n", "\n", $data['new']['folder_directive_snippets']);
 			$data['new']['folder_directive_snippets'] = str_replace("\r", "\n", $data['new']['folder_directive_snippets']);
@@ -1283,6 +1322,7 @@ class nginx_plugin {
 			$ngx_conf_tpl->setVar('use_tcp', $use_tcp);
 			$ngx_conf_tpl->setVar('use_socket', $use_socket);
 			$ngx_conf_tpl->setVar('fpm_socket', $fpm_socket);
+
 			$ngx_conf_tpl->setVar($vhost_data);
 			$nginx_directives_new = $ngx_conf_tpl->grab();
 			if(is_file($ngx_conf_tpl_tmp_file)) unlink($ngx_conf_tpl_tmp_file);
@@ -1298,7 +1338,7 @@ class nginx_plugin {
 			$trans = array(
 				'{DOCROOT}' => $vhost_data['web_document_root_www'],
 				'{DOCROOT_CLIENT}' => $vhost_data['web_document_root'],
-        '{DOMAIN}' => $vhost_data['domain'],
+				'{DOMAIN}' => $vhost_data['domain'],
 				'{FASTCGIPASS}' => 'fastcgi_pass '.($data['new']['php_fpm_use_socket'] == 'y'? 'unix:'.$fpm_socket : '127.0.0.1:'.$vhost_data['fpm_port']).';'
 			);
 			foreach($nginx_directive_lines as $nginx_directive_line){
@@ -1312,7 +1352,6 @@ class nginx_plugin {
 		$tmp = $app->letsencrypt->get_website_certificate_paths($data);
 		$domain = $tmp['domain'];
 		$key_file = $tmp['key'];
-		$key_file2 = $tmp['key2'];
 		$csr_file = $tmp['csr'];
 		$crt_file = $tmp['crt'];
 		$bundle_file = $tmp['bundle'];
@@ -1434,7 +1473,7 @@ class nginx_plugin {
 						}
 					} else {
 						// external URL
-						$rewrite_exclude = '(.?)/';
+						$rewrite_exclude = '(?!/(\.well-known/acme-challenge))/';
 						if($data['new']['redirect_type'] == 'proxy'){
 							$vhost_data['use_proxy'] = 'y';
 							$rewrite_subdir = $tmp_redirect_path_parts['path'];
@@ -1486,7 +1525,7 @@ class nginx_plugin {
 						}
 					} else {
 						// external URL
-						$rewrite_exclude = '(.?)/';
+						$rewrite_exclude = '(?!/(\.well-known/acme-challenge))/';
 						if($data['new']['redirect_type'] == 'proxy'){
 							$vhost_data['use_proxy'] = 'y';
 							$rewrite_subdir = $tmp_redirect_path_parts['path'];
@@ -1536,7 +1575,7 @@ class nginx_plugin {
 						}
 					} else {
 						// external URL
-						$rewrite_exclude = '(.?)/';
+						$rewrite_exclude = '(?!/(\.well-known/acme-challenge))/';
 						if($data['new']['redirect_type'] == 'proxy'){
 							$vhost_data['use_proxy'] = 'y';
 							$rewrite_subdir = $tmp_redirect_path_parts['path'];
@@ -1561,27 +1600,46 @@ class nginx_plugin {
 		}
 
 		//proxy protocol settings
-		if($web_config['vhost_proxy_protocol_enabled'] == "y"){
-		    if((int)$web_config['vhost_proxy_protocol_https_port'] > 0) {
-			    $vhost_data['use_proxy_protocol'] = $data['new']['proxy_protocol'];
-			    $vhost_data['proxy_protocol_http'] = (int)$web_config['vhost_proxy_protocol_http_port'];
-			    $vhost_data['proxy_protocol_https'] = (int)$web_config['vhost_proxy_protocol_https_port'];
-		    } else {
-		        $vhost_data['use_proxy_protocol'] = "n";
-		    }
-		}else{
-			$vhost_data['use_proxy_protocol'] = "n";
-		}
+		$proxy_protocol_protocols = explode(',', $web_config['vhost_proxy_protocol_protocols']);
+		$proxy_protocol_ipv4 = in_array('ipv4', $proxy_protocol_protocols);
+		$proxy_protocol_ipv6 = in_array('ipv6', $proxy_protocol_protocols);
+		$proxy_protocol_site = $web_config['vhost_proxy_protocol_enabled'] == 'all';
+		$proxy_protocol_site |= $web_config['vhost_proxy_protocol_enabled'] == 'y' && $data['new']['proxy_protocol'] == 'y';
+		$vhost_data['proxy_protocol_http'] = isset($web_config['vhost_proxy_protocol_http_port']) ? (int)$web_config['vhost_proxy_protocol_http_port'] : 0;
+		$vhost_data['proxy_protocol_https'] = isset($web_config['vhost_proxy_protocol_https_port']) ? (int)$web_config['vhost_proxy_protocol_https_port'] : 0;
+		$vhost_data['use_proxy_protocol'] = ($proxy_protocol_site && $proxy_protocol_ipv4) ? 'y' : 'n';
+		$vhost_data['use_proxy_protocol_ipv6'] = ($proxy_protocol_site && $proxy_protocol_ipv6) ? 'y' : 'n';
 
 		// set logging variable
 		$vhost_data['logging'] = $web_config['logging'];
 
+		// Provide TLS 1.3 support if Nginx version is >= 1.13.0 and when it was linked against OpenSSL(>=1.1.1) at build time and when it was linked against OpenSSL(>=1.1.1) at runtime.
+		if($data['new']['ssl'] == 'y') {
+			$nginx_openssl_build_ver = $app->system->exec_safe('nginx -V 2>&1 | grep \'built with OpenSSL\' | sed \'s/.*built\([a-zA-Z ]*\)OpenSSL \([0-9.]*\).*/\2/\'');
+			$nginx_openssl_running_ver = $app->system->exec_safe('nginx -V 2>&1 | grep \'running with OpenSSL\' | sed \'s/.*running\([a-zA-Z ]*\)OpenSSL \([0-9.]*\).*/\2/\'');
+			if(version_compare($app->system->getnginxversion(true), '1.13.0', '>=')
+				&& version_compare($nginx_openssl_build_ver, '1.1.1', '>=')
+				&& (empty($nginx_openssl_running_ver) || version_compare($nginx_openssl_running_ver, '1.1.1', '>='))) {
+					$app->log('Enable TLS 1.3 for: '.$domain, LOGLEVEL_DEBUG);
+					$vhost_data['tls13_supported'] = "y";
+			}
+		}
+
+		// Nginx >= 1.25.1 uses a dedicated directive to enable HTTP/2 support
+		// This is a quirk for Nginx legacy versions (or simply Nginx < 1.25.1) and restores the required http2 parameter in the listen directive
+		if(version_compare($app->system->getnginxversion(true), '1.25.1', '<')) {
+			$vhost_data['http2_directive_compat_quirk'] = " http2";
+		}
+
 		$tpl->setVar($vhost_data);
+
+		$tpl->setVar('nginx_version', $app->system->getnginxversion());
+		$tpl->setVar('nginx_full_version', $app->system->getnginxversion(true));
 
 		$server_alias = array();
 
 		// get autoalias
-		$auto_alias = $web_config['website_autoalias'];
+		$auto_alias = (isset($web_config['website_autoalias']))?$web_config['website_autoalias']:'';
 		if($auto_alias != '') {
 			// get the client username
 			$client = $app->db->queryOneRecord("SELECT `username` FROM `client` WHERE `client_id` = ?", $client_id);
@@ -1922,7 +1980,7 @@ class nginx_plugin {
 
 		// create password file for stats directory
 		if(!is_file($data['new']['document_root'].'/' . $stats_web_folder . '/stats/.htpasswd_stats') || $data['new']['stats_password'] != $data['old']['stats_password']) {
-			if(trim($data['new']['stats_password']) != '') {
+			if(isset($data['new']['stats_password']) && !is_null($data['new']['stats_password']) && trim($data['new']['stats_password']) != '') {
 				$htp_file = 'admin:'.trim($data['new']['stats_password']);
 				$app->system->file_put_contents($data['new']['document_root'].'/' . $stats_web_folder . '/stats/.htpasswd_stats', $htp_file);
 				$app->system->chmod($data['new']['document_root'].'/' . $stats_web_folder . '/stats/.htpasswd_stats', 0755);
@@ -1935,25 +1993,25 @@ class nginx_plugin {
 			$this->awstats_update($data, $web_config);
 		}
 
-                //* Create GoAccess configuration
-                if($data['new']['stats_type'] == 'goaccess' && ($data['new']['type'] == 'vhost' || $data['new']['type'] == 'vhostsubdomain' || $data['new']['type'] == 'vhostalias')) {
-                        $this->goaccess_update($data, $web_config);
-                }
+		//* Create GoAccess configuration
+		if($data['new']['stats_type'] == 'goaccess' && ($data['new']['type'] == 'vhost' || $data['new']['type'] == 'vhostsubdomain' || $data['new']['type'] == 'vhostalias')) {
+			$this->goaccess_update($data, $web_config);
+		}
 
-                //* Remove the AWstats configuration file
+		//* Remove the AWstats configuration file
 		if($data['old']['stats_type'] == 'awstats' && $data['new']['stats_type'] != 'awstats') {
 			$this->awstats_delete($data, $web_config);
-                }
+		}
 
 		//* Remove the GoAccess configuration file
 		if($data['old']['stats_type'] == 'goaccess' && $data['new']['stats_type'] != 'goaccess') {
 			$this->goaccess_delete($data, $web_config);
 		}
 
-                //* Remove the Webalizer configuration file
+		//* Remove the Webalizer configuration file
 		if($data['old']['stats_type'] == 'webalizer' && $data['new']['stats_type'] != 'webalizer') {
 			$this->webalizer_delete($data, $web_config);
-                }
+		}
 
 		//* Remove Stats-Folder when Statistics set to none
 		if($data['new']['stats_type'] == '' && ($data['new']['type'] == 'vhost' || $data['new']['type'] == 'vhostsubdomain' || $data['new']['type'] == 'vhostalias')) {
@@ -2005,8 +2063,7 @@ class nginx_plugin {
 
 					$ssl_dir = $data['new']['document_root'].'/ssl';
 					$domain = $data['new']['ssl_domain'];
-					$key_file = $ssl_dir.'/'.$domain.'.key.org';
-					$key_file2 = $ssl_dir.'/'.$domain.'.key';
+					$key_file = $ssl_dir.'/'.$domain.'.key';
 					$csr_file = $ssl_dir.'/'.$domain.'.csr';
 					$crt_file = $ssl_dir.'/'.$domain.'.crt';
 					//$bundle_file = $ssl_dir.'/'.$domain.'.bundle';
@@ -2016,17 +2073,12 @@ class nginx_plugin {
 						$app->system->copy($key_file, $key_file.'.err');
 						$app->system->chmod($key_file.'.err', 0400);
 					}
-					if(is_file($key_file2)){
-						$app->system->copy($key_file2, $key_file2.'.err');
-						$app->system->chmod($key_file2.'.err', 0400);
-					}
 					if(is_file($csr_file)) $app->system->copy($csr_file, $csr_file.'.err');
 					if(is_file($crt_file)) $app->system->copy($crt_file, $crt_file.'.err');
 					//if(is_file($bundle_file)) $app->system->copy($bundle_file,$bundle_file.'.err');
 
 					//* Restore the ~ backup files
 					if(is_file($key_file.'~')) $app->system->copy($key_file.'~', $key_file);
-					if(is_file($key_file2.'~')) $app->system->copy($key_file2.'~', $key_file2);
 					if(is_file($crt_file.'~')) $app->system->copy($crt_file.'~', $crt_file);
 					if(is_file($csr_file.'~')) $app->system->copy($csr_file.'~', $csr_file);
 					//if(is_file($bundle_file.'~')) $app->system->copy($bundle_file.'~',$bundle_file);
@@ -2046,7 +2098,6 @@ class nginx_plugin {
 		$this->ssl_certificate_changed = false;
 
 		if(@is_file($key_file.'~')) $app->system->unlink($key_file.'~');
-		if(@is_file($key_file2.'~')) $app->system->unlink($key_file2.'~');
 		if(@is_file($crt_file.'~')) $app->system->unlink($crt_file.'~');
 		if(@is_file($csr_file.'~')) $app->system->unlink($csr_file.'~');
 		//if(@is_file($bundle_file.'~')) $app->system->unlink($bundle_file.'~');
@@ -2068,7 +2119,7 @@ class nginx_plugin {
 
 		if($data['old']['type'] == 'vhost' || $data['old']['type'] == 'vhostsubdomain' || $data['old']['type'] == 'vhostalias') $app->system->web_folder_protection($data['old']['document_root'], false);
 
-		//* Check if this is a chrooted setup
+		//* Check if nginx is using a chrooted setup
 		if($web_config['website_basedir'] != '' && @is_file($web_config['website_basedir'].'/etc/passwd')) {
 			$nginx_chrooted = true;
 		} else {
@@ -2357,7 +2408,7 @@ class nginx_plugin {
 						//* cleanup database
 						$sql = "DELETE FROM web_backup WHERE server_id = ? AND parent_domain_id = ? AND filename LIKE ?";
 						$app->db->query($sql, $conf['server_id'], $data_old['domain_id'], "web".$data_old['domain_id']."_%");
-						if($app->db->dbHost != $app->dbmaster->dbHost) $app->dbmaster->query($sql, $conf['server_id'], $data_old['domain_id'], "web".$data_old['domain_id']."_%");
+						if($app->running_on_slaveserver()) $app->dbmaster->query($sql, $conf['server_id'], $data_old['domain_id'], "web".$data_old['domain_id']."_%");
 
 						$app->log('Deleted the web backup files', LOGLEVEL_DEBUG);
 					}
@@ -2585,96 +2636,94 @@ class nginx_plugin {
 
 	//* Update the GoAccess configuration file
 	private function goaccess_update ($data, $web_config) {
-                global $app;
+		global $app;
 
-                $web_folder = $data['new']['web_folder'];
-                if($data['new']['type'] == 'vhost') $web_folder = 'web';
+		$web_folder = $data['new']['web_folder'];
+		if($data['new']['type'] == 'vhost') $web_folder = 'web';
 
-                $goaccess_conf_locs = array('/etc/goaccess.conf', '/etc/goaccess/goaccess.conf');
-                $count = 0;
+		$goaccess_conf_locs = array('/etc/goaccess.conf', '/etc/goaccess/goaccess.conf');
+		$count = 0;
 
-                foreach($goaccess_conf_locs as $goa_loc) {
-                        if(is_file($goa_loc) && (filesize($goa_loc) > 0)) {
-                                $goaccess_conf_main = $goa_loc;
-                                break;
-                        } else {
-                                $count++;
-                                if($count == 2) {
-                                        $app->log("No GoAccess base config found. Make sure that GoAccess is installed and that the goaccess.conf does exist in /etc or /etc/goaccess", LOGLEVEL_WARN);
-                                }
-                        }
-                }
+		foreach($goaccess_conf_locs as $goa_loc) {
+			if(is_file($goa_loc) && (filesize($goa_loc) > 0)) {
+				$goaccess_conf_main = $goa_loc;
+				break;
+			} else {
+				$count++;
+				if($count == 2) {
+					$app->log("No GoAccess base config found. Make sure that GoAccess is installed and that the goaccess.conf does exist in /etc or /etc/goaccess", LOGLEVEL_WARN);
+				}
+			}
+		}
 
-                if(!is_dir($data['new']['document_root'] . "/log/goaccess_db")) $app->system->mkdirpath($data['new']['document_root'] . "/log/goaccess_db");
+		if(!is_dir($data['new']['document_root'] . "/log/goaccess_db")) $app->system->mkdirpath($data['new']['document_root'] . "/log/goaccess_db");
 		$goaccess_conf = $data['new']['document_root'].'/log/goaccess.conf';
 
-                /*
-                In case that you use a different log format, you should use a custom goaccess.conf which you'll have to put into /usr/local/ispconfig/server/conf-custom/.
-                By default the originaly with GoAccess shipped goaccess.conf from /etc/ will be used along with the log-format value COMBINED.
-                */
+		/*
+		In case that you use a different log format, you should use a custom goaccess.conf which you'll have to put into /usr/local/ispconfig/server/conf-custom/.
+		By default the originaly with GoAccess shipped goaccess.conf from /etc/ will be used along with the log-format value COMBINED.
+		*/
 
-                if(file_exists("/usr/local/ispconfig/server/conf-custom/goaccess.conf.master")) {
-                        $app->system->copy("/usr/local/ispconfig/server/conf-custom/goaccess_index.php.master", $goaccess_conf);
+		if(file_exists("/usr/local/ispconfig/server/conf-custom/goaccess.conf.master")) {
+			$app->system->copy("/usr/local/ispconfig/server/conf-custom/goaccess_index.php.master", $goaccess_conf);
+		} elseif(!file_exists($goaccess_conf)) {
+			/*
+			By default the goaccess.conf should get copied by the webserver plugin but in case it wasn't, or it got deleted by accident we gonna copy it again to the destination dir.
+			Also there was no /usr/local/ispconfig/server/conf-custom/goaccess.conf.master, so we gonna use /etc/goaccess.conf as the base conf.
+			*/
+            $goaccess_conf_main = '/etc/goaccess.conf';
+            if(file_exists($goaccess_conf_main)) {
+			    $app->system->copy($goaccess_conf_main, $goaccess_conf);
+			    $content = $app->system->file_get_contents($goaccess_conf, true);
+			    $content = preg_replace('/^(#)?log-format COMBINED/m', "log-format COMBINED", $content);
+			    $app->system->file_put_contents($goaccess_conf, $content, true);
+			    unset($content);
+            }
+		}
 
-                } elseif(!file_exists($goaccess_conf)) {
+		if(file_exists($goaccess_conf)) {
+			$domain = $data['new']['domain'];
+			$content = $app->system->file_get_contents($goaccess_conf, true);
+			$content = preg_replace('/^(#)?html-report-title(.*)/m', "html-report-title $domain", $content);
+			$app->system->file_put_contents($goaccess_conf, $content, true);
+			unset($content);
+		}
 
-                        /*
-                         By default the goaccess.conf should get copied by the webserver plugin but in case it wasn't, or it got deleted by accident we gonna copy it again to the destination dir.
-                         Also there was no /usr/local/ispconfig/server/conf-custom/goaccess.conf.master, so we gonna use /etc/goaccess.conf as the base conf.
-                         */
+		if(is_file($goaccess_conf) && (filesize($goaccess_conf) > 0)) {
+			$app->log('Created GoAccess config file: '.$goaccess_conf, LOGLEVEL_DEBUG);
+		}
 
-                        $app->system->copy($goaccess_conf_main, $goaccess_conf);
-                        $content = $app->system->file_get_contents($goaccess_conf, true);
-                        $content = preg_replace('/^(#)?log-format COMBINED/m', "log-format COMBINED", $content);
-                        $app->system->file_put_contents($goaccess_conf, $content, true);
-                        unset($content);
-
-                }
-
-                if(file_exists($goaccess_conf)) {
-                        $domain = $data['new']['domain'];
-                        $content = $app->system->file_get_contents($goaccess_conf, true);
-                        $content = preg_replace('/^(#)?html-report-title(.*)/m', "html-report-title $domain", $content);
-                        $app->system->file_put_contents($goaccess_conf, $content, true);
-                        unset($content);
-
-                }
-
-                if(is_file($goaccess_conf) && (filesize($goaccess_conf) > 0)) {
-                        $app->log('Created GoAccess config file: '.$goaccess_conf, LOGLEVEL_DEBUG);
-                }
-
-                if(is_file($data['new']['document_root']."/" . $web_folder . "/stats/index.html")) $app->system->unlink($data['new']['document_root']."/" . $web_folder . "/stats/index.html");
-                if(file_exists("/usr/local/ispconfig/server/conf-custom/goaccess_index.php.master")) {
-                        $app->system->copy("/usr/local/ispconfig/server/conf-custom/goaccess_index.php.master", $data['new']['document_root']."/" . $web_folder . "/stats/index.php");
-                } else {
-                        $app->system->copy("/usr/local/ispconfig/server/conf/goaccess_index.php.master", $data['new']['document_root']."/" . $web_folder . "/stats/index.php");
+		if(is_file($data['new']['document_root']."/" . $web_folder . "/stats/index.html")) $app->system->unlink($data['new']['document_root']."/" . $web_folder . "/stats/index.html");
+		if(file_exists("/usr/local/ispconfig/server/conf-custom/goaccess_index.php.master")) {
+			$app->system->copy("/usr/local/ispconfig/server/conf-custom/goaccess_index.php.master", $data['new']['document_root']."/" . $web_folder . "/stats/index.php");
+		} else {
+			$app->system->copy("/usr/local/ispconfig/server/conf/goaccess_index.php.master", $data['new']['document_root']."/" . $web_folder . "/stats/index.php");
 		}
 	}
 
-        //* Delete the GoAccess configuration file
-        private function goaccess_delete ($data, $web_config) {
-                global $app;
+	//* Delete the GoAccess configuration file
+	private function goaccess_delete ($data, $web_config) {
+		global $app;
 
-                $goaccess_conf = $data['old']['document_root'] . "/log/goaccess.conf";
+		$goaccess_conf = $data['old']['document_root'] . "/log/goaccess.conf";
 
-                if ( @is_file($goaccess_conf) ) {
-                        $app->system->unlink($goaccess_conf);
-                        $app->log('Removed GoAccess config file: '.$goaccess_conf, LOGLEVEL_DEBUG);
-                }
-        }
+		if ( @is_file($goaccess_conf) ) {
+			$app->system->unlink($goaccess_conf);
+			$app->log('Removed GoAccess config file: '.$goaccess_conf, LOGLEVEL_DEBUG);
+			}
+	}
 
-        //* Delete the Webalizer configuration file
-        private function webalizer_delete ($data, $web_config) {
-                global $app;
+	//* Delete the Webalizer configuration file
+	private function webalizer_delete ($data, $web_config) {
+		global $app;
 
-                $webalizer_conf = $data['old']['document_root'] . "/log/webalizer.conf";
+		$webalizer_conf = $data['old']['document_root'] . "/log/webalizer.conf";
 
-                if ( @is_file($webalizer_conf) ) {
-                        $app->system->unlink($webalizer_conf);
-                        $app->log('Removed Webalizer config file: '.$webalizer_conf, LOGLEVEL_DEBUG);
-                }
-        }
+		if ( @is_file($webalizer_conf) ) {
+			$app->system->unlink($webalizer_conf);
+			$app->log('Removed Webalizer config file: '.$webalizer_conf, LOGLEVEL_DEBUG);
+		}
+	}
 
 	//* Update the awstats configuration file
 	private function awstats_update ($data, $web_config) {
@@ -2755,7 +2804,7 @@ class nginx_plugin {
 						foreach($required_php_snippets as $required_php_snippet){
 							$required_php_snippet = intval($required_php_snippet);
 							if($required_php_snippet > 0){
-								$php_snippet = $app->db->queryOneRecord("SELECT * FROM directive_snippets WHERE ".($snippet['master_directive_snippets_id'] > 0 ? 'master_' : '')."directive_snippets_id = ? AND type = 'php' AND active = 'y'", $required_php_snippet);
+								$php_snippet = $app->db->queryOneRecord("SELECT * FROM directive_snippets WHERE directive_snippets_id = ? AND type = 'php' AND active = 'y'", $required_php_snippet);
 								$php_snippet['snippet'] = trim($php_snippet['snippet']);
 								if($php_snippet['snippet'] != ''){
 									$custom_php_ini_settings .= "\n".$php_snippet['snippet'];
@@ -2811,39 +2860,37 @@ class nginx_plugin {
 	private function php_fpm_pool_update ($data, $web_config, $pool_dir, $pool_name, $socket_dir, $web_folder = null) {
 		global $app, $conf;
 		$pool_dir = trim($pool_dir);
-		$rh_releasefiles = array('/etc/centos-release', '/etc/redhat-release');
 
 		// HHVM => PHP-FPM-Fallback
+		$default_php_fpm = true;
+
 		if($data['new']['php'] == 'php-fpm' || $data['new']['php'] == 'hhvm'){
 			if($data['new']['server_php_id'] != 0){
-				$default_php_fpm = false;
 				$tmp_php = $app->db->queryOneRecord('SELECT * FROM server_php WHERE server_php_id = ?', $data['new']['server_php_id']);
 				if($tmp_php) {
+					$default_php_fpm = false;
 					$custom_php_fpm_ini_dir = $tmp_php['php_fpm_ini_dir'];
 					$custom_php_fpm_init_script = $tmp_php['php_fpm_init_script'];
 					$custom_php_fpm_pool_dir = $tmp_php['php_fpm_pool_dir'];
 					if(substr($custom_php_fpm_ini_dir, -1) != '/') $custom_php_fpm_ini_dir .= '/';
 				}
-			} else {
-				$default_php_fpm = true;
 			}
 		} else {
 			if($data['old']['server_php_id'] != 0 && $data['old']['php'] != 'no'){
-				$default_php_fpm = false;
 				$tmp_php = $app->db->queryOneRecord('SELECT * FROM server_php WHERE server_php_id = ?', $data['old']['server_php_id']);
 				if($tmp_php) {
+					$default_php_fpm = false;
 					$custom_php_fpm_ini_dir = $tmp_php['php_fpm_ini_dir'];
 					$custom_php_fpm_init_script = $tmp_php['php_fpm_init_script'];
 					$custom_php_fpm_pool_dir = $tmp_php['php_fpm_pool_dir'];
 					if(substr($custom_php_fpm_ini_dir, -1) != '/') $custom_php_fpm_ini_dir .= '/';
 				}
-			} else {
-				$default_php_fpm = true;
 			}
 		}
 
 		$app->uses("getconf");
 		$web_config = $app->getconf->get_server_config($conf["server_id"], 'web');
+		$php_fpm_reload_mode = ($web_config['php_fpm_reload_mode'] == 'reload')?'reload':'restart';
 
 		// HHVM => PHP-FPM-Fallback
 		if($data['new']['php'] != 'php-fpm' && $data['new']['php'] != 'hhvm'){
@@ -2853,9 +2900,9 @@ class nginx_plugin {
 			}
 			if($data['old']['php'] != 'no'){
 				if(!$default_php_fpm){
-					$app->services->restartService('php-fpm', 'reload:'.$custom_php_fpm_init_script);
+					$app->services->restartService('php-fpm', $php_fpm_reload_mode.':'.$custom_php_fpm_init_script);
 				} else {
-					$app->services->restartService('php-fpm', 'reload:'.$conf['init_scripts'].'/'.$web_config['php_fpm_init_script']);
+					$app->services->restartService('php-fpm', $php_fpm_reload_mode.':'.$conf['init_scripts'].'/'.$web_config['php_fpm_init_script']);
 				}
 			}
 			return;
@@ -2884,21 +2931,14 @@ class nginx_plugin {
 		$tpl->setVar('fpm_port', $web_config['php_fpm_start_port'] + $data['new']['domain_id'] - 1);
 		$tpl->setVar('fpm_user', $data['new']['system_user']);
 
-		//Red Hat workaround for group ownership of socket files
-		foreach($rh_releasefiles as $rh_file) {
-			if(file_exists($rh_file) && (filesize($rh_file) > 0)) {
-				$tmp = file_get_contents($rh_file);
-				if(preg_match('/[678]+\.[0-9]+/m', $tmp)) {
-					$tpl->setVar('fpm_group', $data['new']['system_group']);
-					$tpl->setVar('fpm_listen_group', $data['new']['system_group']);
-				}
-				unset($tmp);
-			} elseif(!file_exists($rh_file)) {
-				//OS seems to be not Red Hat'ish
-				$tpl->setVar('fpm_group', $data['new']['system_group']);
-				$tpl->setVar('fpm_listen_group', $web_config['group']);
-			}
-			break;
+		// RH workaround here
+		if($app->system->is_redhat_os() == true) {
+			$tpl->setVar('fpm_group', $data['new']['system_group']);
+			$tpl->setVar('fpm_listen_group', $data['new']['system_group']);
+		} else {
+			//OS seems to be not Red Hat'ish
+			$tpl->setVar('fpm_group', $data['new']['system_group']);
+			$tpl->setVar('fpm_listen_group', $web_config['group']);
 		}
 
 		$tpl->setVar('fpm_listen_user', $data['new']['system_user']);
@@ -2932,7 +2972,7 @@ class nginx_plugin {
 
 		// Custom php.ini settings
 		$final_php_ini_settings = array();
-		$custom_php_ini_settings = trim($data['new']['custom_php_ini']);
+		$custom_php_ini_settings = (isset($data['new']['custom_php_ini']) && !is_null($data['new']['custom_php_ini'])) ? trim($data['new']['custom_php_ini']) : '';
 
 		if(intval($data['new']['directive_snippets_id']) > 0){
 			$snippet = $app->db->queryOneRecord("SELECT * FROM directive_snippets WHERE directive_snippets_id = ? AND type = 'nginx' AND active = 'y' AND customer_viewable = 'y'", intval($data['new']['directive_snippets_id']));
@@ -2942,7 +2982,7 @@ class nginx_plugin {
 					foreach($required_php_snippets as $required_php_snippet){
 						$required_php_snippet = intval($required_php_snippet);
 						if($required_php_snippet > 0){
-							$php_snippet = $app->db->queryOneRecord("SELECT * FROM directive_snippets WHERE ".($snippet['master_directive_snippets_id'] > 0 ? 'master_' : '')."directive_snippets_id = ? AND type = 'php' AND active = 'y'", $required_php_snippet);
+							$php_snippet = $app->db->queryOneRecord("SELECT * FROM directive_snippets WHERE directive_snippets_id = ? AND type = 'php' AND active = 'y'", $required_php_snippet);
 							$php_snippet['snippet'] = trim($php_snippet['snippet']);
 							if($php_snippet['snippet'] != ''){
 								$custom_php_ini_settings .= "\n".$php_snippet['snippet'];
@@ -2954,6 +2994,7 @@ class nginx_plugin {
 		}
 
 		$custom_session_save_path = false;
+		$custom_sendmail_path = false;
 		if($custom_php_ini_settings != ''){
 			// Make sure we only have Unix linebreaks
 			$custom_php_ini_settings = str_replace("\r\n", "\n", $custom_php_ini_settings);
@@ -2971,6 +3012,7 @@ class nginx_plugin {
 					if($value != ''){
 						$key = trim($key);
 						if($key == 'session.save_path') $custom_session_save_path = true;
+						if($key == 'sendmail_path') $custom_sendmail_path = true;
 						switch (strtolower($value)) {
 						case '0':
 							// PHP-FPM might complain about invalid boolean value if you use 0
@@ -2993,6 +3035,7 @@ class nginx_plugin {
 		}
 
 		$tpl->setVar('custom_session_save_path', ($custom_session_save_path ? 'y' : 'n'));
+		$tpl->setVar('custom_sendmail_path', ($custom_sendmail_path ? 'y' : 'n'));
 
 		$tpl->setLoop('custom_php_ini_settings', $final_php_ini_settings);
 
@@ -3007,7 +3050,7 @@ class nginx_plugin {
 			if ( @is_file($default_pool_dir.$pool_name.'.conf') ) {
 				$app->system->unlink($default_pool_dir.$pool_name.'.conf');
 				$app->log('Removed PHP-FPM config file: '.$default_pool_dir.$pool_name.'.conf', LOGLEVEL_DEBUG);
-				$app->services->restartService('php-fpm', 'reload:'.$conf['init_scripts'].'/'.$web_config['php_fpm_init_script']);
+				$app->services->restartService('php-fpm', $php_fpm_reload_mode.':'.$conf['init_scripts'].'/'.$web_config['php_fpm_init_script']);
 			}
 		}
 		$php_versions = $app->db->queryAllRecords("SELECT * FROM server_php WHERE php_fpm_init_script != '' AND php_fpm_ini_dir != '' AND php_fpm_pool_dir != '' AND server_id = ?", $conf["server_id"]);
@@ -3019,7 +3062,7 @@ class nginx_plugin {
 					if ( @is_file($php_version['php_fpm_pool_dir'].$pool_name.'.conf') ) {
 						$app->system->unlink($php_version['php_fpm_pool_dir'].$pool_name.'.conf');
 						$app->log('Removed PHP-FPM config file: '.$php_version['php_fpm_pool_dir'].$pool_name.'.conf', LOGLEVEL_DEBUG);
-						$app->services->restartService('php-fpm', 'reload:'.$php_version['php_fpm_init_script']);
+						$app->services->restartService('php-fpm', $php_fpm_reload_mode.':'.$php_version['php_fpm_init_script']);
 					}
 				}
 			}
@@ -3027,9 +3070,9 @@ class nginx_plugin {
 		// Reload current PHP-FPM after all others
 		sleep(1);
 		if(!$default_php_fpm){
-			$app->services->restartService('php-fpm', 'reload:'.$custom_php_fpm_init_script);
+			$app->services->restartService('php-fpm', $php_fpm_reload_mode.':'.$custom_php_fpm_init_script);
 		} else {
-			$app->services->restartService('php-fpm', 'reload:'.$conf['init_scripts'].'/'.$web_config['php_fpm_init_script']);
+			$app->services->restartService('php-fpm', $php_fpm_reload_mode.':'.$conf['init_scripts'].'/'.$web_config['php_fpm_init_script']);
 		}
 	}
 
@@ -3037,17 +3080,17 @@ class nginx_plugin {
 	private function php_fpm_pool_delete ($data, $web_config) {
 		global $app, $conf;
 
+		$default_php_fpm = true;
+
 		if($data['old']['server_php_id'] != 0 && $data['old']['php'] != 'no'){
-			$default_php_fpm = false;
 			$tmp_php = $app->db->queryOneRecord('SELECT * FROM server_php WHERE server_php_id = ?', $data['old']['server_php_id']);
 			if($tmp_php) {
+				$default_php_fpm = false;
 				$custom_php_fpm_ini_dir = $tmp_php['php_fpm_ini_dir'];
 				$custom_php_fpm_init_script = $tmp_php['php_fpm_init_script'];
 				$custom_php_fpm_pool_dir = $tmp_php['php_fpm_pool_dir'];
 				if(substr($custom_php_fpm_ini_dir, -1) != '/') $custom_php_fpm_ini_dir .= '/';
 			}
-		} else {
-			$default_php_fpm = true;
 		}
 
 		if($default_php_fpm){
@@ -3072,7 +3115,7 @@ class nginx_plugin {
 			if ( @is_file($default_pool_dir.$pool_name.'.conf') ) {
 				$app->system->unlink($default_pool_dir.$pool_name.'.conf');
 				$app->log('Removed PHP-FPM config file: '.$default_pool_dir.$pool_name.'.conf', LOGLEVEL_DEBUG);
-				$app->services->restartService('php-fpm', 'reload:'.$conf['init_scripts'].'/'.$web_config['php_fpm_init_script']);
+				$app->services->restartService('php-fpm', $php_fpm_reload_mode.':'.$conf['init_scripts'].'/'.$web_config['php_fpm_init_script']);
 			}
 		}
 		$php_versions = $app->db->queryAllRecords("SELECT * FROM server_php WHERE php_fpm_init_script != '' AND php_fpm_ini_dir != '' AND php_fpm_pool_dir != '' AND server_id = ?", $data['old']['server_id']);
@@ -3084,7 +3127,7 @@ class nginx_plugin {
 					if ( @is_file($php_version['php_fpm_pool_dir'].$pool_name.'.conf') ) {
 						$app->system->unlink($php_version['php_fpm_pool_dir'].$pool_name.'.conf');
 						$app->log('Removed PHP-FPM config file: '.$php_version['php_fpm_pool_dir'].$pool_name.'.conf', LOGLEVEL_DEBUG);
-						$app->services->restartService('php-fpm', 'reload:'.$php_version['php_fpm_init_script']);
+						$app->services->restartService('php-fpm', $php_fpm_reload_mode.':'.$php_version['php_fpm_init_script']);
 					}
 				}
 			}
@@ -3093,9 +3136,9 @@ class nginx_plugin {
 		// Reload current PHP-FPM after all others
 		sleep(1);
 		if(!$default_php_fpm){
-			$app->services->restartService('php-fpm', 'reload:'.$custom_php_fpm_init_script);
+			$app->services->restartService('php-fpm', $php_fpm_reload_mode.':'.$custom_php_fpm_init_script);
 		} else {
-			$app->services->restartService('php-fpm', 'reload:'.$conf['init_scripts'].'/'.$web_config['php_fpm_init_script']);
+			$app->services->restartService('php-fpm', $php_fpm_reload_mode.':'.$conf['init_scripts'].'/'.$web_config['php_fpm_init_script']);
 		}
 	}
 
@@ -3398,6 +3441,166 @@ class nginx_plugin {
 			}
 		}
 		return $seo_redirects;
+	}
+
+	function _setup_jailkit_chroot()
+	{
+		global $app, $conf;
+
+		$app->uses('system');
+
+		if (isset($this->jailkit_config) && isset($this->jailkit_config['jailkit_hardlinks'])) {
+			if ($this->jailkit_config['jailkit_hardlinks'] == 'yes') {
+				$options = array('hardlink');
+			} elseif ($this->jailkit_config['jailkit_hardlinks'] == 'no') {
+				$options = array();
+			}
+		} else {
+			$options = array('allow_hardlink');
+		}
+
+		// should move return here if $this->website['new_jailkit_hash'] == $this->website['last_jailkit_hash'] ?
+
+		// check if the chroot environment is created yet if not create it with a list of program sections from the config
+		if (!is_dir($this->website['document_root'].'/etc/jailkit'))
+		{
+			$app->system->create_jailkit_chroot($this->website['document_root'], $this->jailkit_config['jailkit_chroot_app_sections'], $options);
+			$app->log("Added jailkit chroot", LOGLEVEL_DEBUG);
+
+			$this->_add_jailkit_programs($options);
+
+			$app->load('tpl');
+
+			$tpl = new tpl();
+			$tpl->newTemplate("bash.bashrc.master");
+
+			$tpl->setVar('jailkit_chroot', true);
+			$tpl->setVar('domain', $this->website['domain']);
+			$tpl->setVar('home_dir', $this->_get_home_dir(""));
+
+			$bashrc = $this->website['document_root'].'/etc/bash.bashrc';
+			if(@is_file($bashrc) || @is_link($bashrc)) unlink($bashrc);
+
+			file_put_contents($bashrc, $tpl->grab());
+			unset($tpl);
+
+			$app->log("Added bashrc script: ".$bashrc, LOGLEVEL_DEBUG);
+
+			$tpl = new tpl();
+			$tpl->newTemplate("motd.master");
+
+			$tpl->setVar('domain', $this->website['domain']);
+
+			$motd = $this->website['document_root'].'/var/run/motd';
+			if(@is_file($motd) || @is_link($motd)) unlink($motd);
+
+			$app->system->file_put_contents($motd, $tpl->grab());
+
+		} else {
+			// force update existing jails
+			$options[] = 'force';
+
+			$sections = $this->jailkit_config['jailkit_chroot_app_sections'];
+			$programs = $this->jailkit_config['jailkit_chroot_app_programs'] . ' '
+				  . $this->jailkit_config['jailkit_chroot_cron_programs'];
+
+			if ($this->website['new_jailkit_hash'] == $this->website['last_jailkit_hash']) {
+				return;
+			}
+
+			$records = $app->db->queryAllRecords('SELECT web_folder FROM `web_domain` WHERE `parent_domain_id` = ? AND `document_root` = ? AND web_folder != \'\' AND web_folder IS NOT NULL AND `server_id` = ?', $this->website['domain_id'], $this->website['document_root'], $conf['server_id']);
+			foreach ($records as $record) {
+				$options[] = 'skip='.$record['web_folder'];
+			}
+
+			$app->system->update_jailkit_chroot($this->website['document_root'], $sections, $programs, $options);
+		}
+
+		// this gets last_jailkit_update out of sync with master db, but that is ok,
+		// as it is only used as a timestamp to moderate the frequency of updating on the slaves
+		$app->db->query("UPDATE `web_domain` SET `last_jailkit_update` = NOW(), `last_jailkit_hash` = ? WHERE `document_root` = ?", $this->website['new_jailkit_hash'], $this->website['document_root']);
+	}
+
+	function _add_jailkit_programs($opts=array())
+	{
+		global $app;
+
+		$app->uses('system');
+
+		//copy over further programs and its libraries
+		$app->system->create_jailkit_programs($this->website['document_root'], $this->jailkit_config['jailkit_chroot_app_programs'], $opts);
+		$app->log("Added app programs to jailkit chroot", LOGLEVEL_DEBUG);
+
+		$app->system->create_jailkit_programs($this->website['document_root'], $this->jailkit_config['jailkit_chroot_cron_programs'], $opts);
+		$app->log("Added cron programs to jailkit chroot", LOGLEVEL_DEBUG);
+	}
+
+	function _get_home_dir($username)
+	{
+		return str_replace("[username]", $username, $this->jailkit_config['jailkit_chroot_home']);
+	}
+
+	function _add_jailkit_user()
+	{
+		global $app;
+
+		// add the user to the chroot
+		$jailkit_chroot_userhome = $this->_get_home_dir($this->website['system_user']);
+
+		if(!is_dir($this->website['document_root'].'/etc')) $app->system->mkdir($this->website['document_root'].'/etc', 0755, true);
+		if(!is_file($this->website['document_root'].'/etc/passwd')) $app->system->exec_safe('touch ?', $this->website['document_root'].'/etc/passwd');
+
+		// IMPORTANT!
+		// ALWAYS create the user. Even if the user was created before
+		// if we check if the user exists, then a update (no shell -> jailkit) will not work
+		// and the user has FULL ACCESS to the root of the server!
+		$app->system->create_jailkit_user($this->website['system_user'], $this->website['document_root'], $jailkit_chroot_userhome);
+
+		if(!is_dir($this->website['document_root'].$jailkit_chroot_userhome)) {
+			$app->system->mkdir($this->website['document_root'].$jailkit_chroot_userhome, 0750, true);
+			$app->system->chown($this->website['document_root'].$jailkit_chroot_userhome, $this->website['system_user']);
+			$app->system->chgrp($this->website['document_root'].$jailkit_chroot_userhome, $this->website['system_group']);
+		}
+		$app->log("Added created jailkit user home in : ".$this->website['document_root'].$jailkit_chroot_userhome, LOGLEVEL_DEBUG);
+	}
+
+	private function _delete_jailkit_if_unused($parent_domain_id) {
+		global $app, $conf;
+
+		// get jail directory
+		$parent_domain = $app->db->queryOneRecord("SELECT * FROM `web_domain` WHERE `domain_id` = ? OR `parent_domain_id` = ? AND `document_root` IS NOT NULL", $parent_domain_id, $parent_domain_id);
+		if (!is_dir($parent_domain['document_root'])) {
+			return;
+		}
+
+		// chroot is used by php-fpm
+		if (isset($parent_domain['php_fpm_chroot']) && $parent_domain['php_fpm_chroot'] == 'y' && $parent_domain['php'] != 'no') {
+			return;
+		}
+
+		// check for any shell_user using this jail
+		$inuse = $app->db->queryOneRecord('SELECT shell_user_id FROM `shell_user` WHERE `parent_domain_id` = ? AND `chroot` = ?', $parent_domain_id, 'jailkit');
+		if($inuse) {
+			return;
+		}
+
+		// check for any cron job using this jail
+		$inuse = $app->db->queryOneRecord('SELECT id FROM `cron` WHERE `parent_domain_id` = ? AND `type` = ?', $parent_domain_id, 'chrooted');
+		if($inuse) {
+			return;
+		}
+
+		$options = array();
+		$records = $app->db->queryAllRecords('SELECT web_folder FROM `web_domain` WHERE `parent_domain_id` = ? AND `document_root` = ? AND web_folder != \'\' AND web_folder IS NOT NULL AND `server_id` = ?', $parent_domain_id, $parent_domain['document_root'], $conf['server_id']);
+		foreach ($records as $record) {
+			$options[] = 'skip='.$record['web_folder'];
+		}
+
+		$app->system->delete_jailkit_chroot($parent_domain['document_root'], $options);
+
+		// this gets last_jailkit_update out of sync with master db, but that is ok,
+		// as it is only used as a timestamp to moderate the frequency of updating on the slaves
+		$app->db->query("UPDATE `web_domain` SET `last_jailkit_update` = NOW(), `last_jailkit_hash` = NULL WHERE `document_root` = ?", $parent_domain['document_root']);
 	}
 
 } // end class

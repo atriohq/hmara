@@ -34,7 +34,7 @@
  */
 
 $form["title"] = "server_config";
-$form["description"] = "";
+//$form["description"] = "";
 $form["name"] = "server_config";
 $form["action"] = "server_config_edit.php";
 $form["db_table"] = "server";
@@ -131,7 +131,7 @@ $form["tabs"]['server'] = array(
 			'validators' => array(	0 => array('type' => 'NOTEMPTY',
 												'errmsg' => 'hostname_error_empty'),
 									1 => array ('type' => 'REGEX',
-												'regex' => '/^[\w\.\-]{2,255}\.[a-zA-Z0-9\-]{2,63}$/',
+												'regex' => '/^[\w\.\-]{1,255}\.[a-zA-Z0-9\-]{2,63}$/',
 												'errmsg'=> 'hostname_error_regex'),
 			),
 			'value' => '',
@@ -207,7 +207,7 @@ $form["tabs"]['server'] = array(
 			'datatype' => 'VARCHAR',
 			'formtype' => 'SELECT',
 			'default' => 'userzip',
-			'value' => array('userzip' => 'backup_mode_userzip', 'rootgz' => 'backup_mode_rootgz'),
+			'value' => array('userzip' => 'backup_mode_userzip', 'rootgz' => 'backup_mode_rootgz', 'borg' => 'backup_mode_borg_txt'),
 			'width' => '40',
 			'maxlength' => '255'
 		),
@@ -481,8 +481,57 @@ $form["tabs"]['mail'] = array(
 			'value' => '',
 			'width' => '40',
 			'maxlength' => '255',
-			'filters'   => array( 0 => array( 'event' => 'SAVE',
-												'type' => 'TRIM'),
+			'filters'   => array(
+					0 => array( 'event' => 'SAVE',
+						'type' => 'TRIM'),
+			),
+		),
+		'rspamd_redis_servers' => array(
+			'datatype' => 'VARCHAR',
+			'formtype' => 'TEXT',
+			'default' => '127.0.0.1',
+			'value' => '',
+			'width' => '40',
+			'maxlength' => '255',
+			'filters'   => array(
+					0 => array( 'event' => 'SAVE',
+						'type' => 'TRIM'),
+			),
+		),
+		'rspamd_redis_password' => array(
+			'datatype' => 'VARCHAR',
+			'formtype' => 'TEXT',
+			'default' => '',
+			'value' => '',
+			'width' => '40',
+			'maxlength' => '255',
+			'filters'   => array(
+					0 => array( 'event' => 'SAVE',
+						'type' => 'TRIM'),
+			),
+		),
+		'rspamd_redis_bayes_servers' => array(
+			'datatype' => 'VARCHAR',
+			'formtype' => 'TEXT',
+			'default' => '127.0.0.1',
+			'value' => '',
+			'width' => '40',
+			'maxlength' => '255',
+			'filters'   => array(
+					0 => array( 'event' => 'SAVE',
+						'type' => 'TRIM'),
+			),
+		),
+		'rspamd_redis_bayes_password' => array(
+			'datatype' => 'VARCHAR',
+			'formtype' => 'TEXT',
+			'default' => '',
+			'value' => '',
+			'width' => '40',
+			'maxlength' => '255',
+			'filters'   => array(
+					0 => array( 'event' => 'SAVE',
+						'type' => 'TRIM'),
 			),
 		),
 		'rspamd_available' => array(
@@ -685,13 +734,45 @@ $form["tabs"]['mail'] = array(
 			'default' => 'y',
 			'value' => array(0 => 'n', 1 => 'y')
 		),
+		'mailbox_soft_delete' => array (
+			'datatype' => 'VARCHAR',
+			'formtype' => 'SELECT',
+			'default' => 'n',
+			'value' => array(
+				0 => 'soft_delete_directly_txt',
+				-1 => 'soft_delete_keep_indefinitely_txt',
+				1 => 'soft_delete_keep_1_txt',
+				7 => 'soft_delete_keep_7_txt',
+				30 => 'soft_delete_keep_30_txt',
+				90 => 'soft_delete_keep_90_txt',
+				365 => 'soft_delete_keep_365_txt',
+			)
+		),
 		'mailbox_quota_stats' => array (
 			'datatype' => 'VARCHAR',
 			'formtype' => 'CHECKBOX',
 			'default' => 'y',
 			'value' => array(0 => 'n', 1 => 'y')
 		),
+		'overquota_notify_threshold' => array(
+			'datatype' => 'INTEGER',
+			'formtype' => 'TEXT',
+			'default' => '90',
+			'validators' => array(
+				0 => array('type' => 'NOTEMPTY', 'errmsg' => 'overquota_notify_threshold_error'),
+				1 => array('type' => 'RANGE',	'range' => '0:100',	'errmsg' => 'overquota_notify_threshold_error'),
+			),
+			'value' => '',
+			'width' => '20',
+			'maxlength' => '3'
+		),
 		'overquota_notify_admin' => array(
+			'datatype' => 'VARCHAR',
+			'formtype' => 'CHECKBOX',
+			'default' => 'y',
+			'value' => array(0 => 'n', 1 => 'y')
+		),
+		'overquota_notify_reseller' => array(
 			'datatype' => 'VARCHAR',
 			'formtype' => 'CHECKBOX',
 			'default' => 'y',
@@ -716,6 +797,18 @@ $form["tabs"]['mail'] = array(
 			'formtype' => 'CHECKBOX',
 			'default' => 'n',
 			'value' => array(0 => 'n', 1 => 'y')
+		),
+		'rspamd_url' => array(
+			'datatype' => 'VARCHAR',
+			'formtype' => 'TEXT',
+			'default' => '',
+			'filters'   => array(
+				0 => array( 'event' => 'SAVE', 'type' => 'IDNTOASCII'),
+				1 => array( 'event' => 'SHOW', 'type' => 'IDNTOUTF8')
+			),
+			'value' => '',
+			'width' => '40',
+			'maxlength' => '255'
 		),
 		//#################################
 		// END Datatable fields
@@ -841,10 +934,24 @@ $form["tabs"]['web'] = array(
 		),
 		'vhost_proxy_protocol_enabled' => array (
 			'datatype' => 'VARCHAR',
-			'formtype' => 'CHECKBOX',
+			'formtype' => 'SELECT',
 			'default' => 'n',
-			'value' => array(0 => 'n',1 => 'y')
+			'value' => array(
+                'n' => 'Disabled',
+                'y' => 'Enabled (per site)',
+                'all' => 'Enabled (all sites)'
+            )
 		),
+        'vhost_proxy_protocol_protocols' => array(
+            'datatype' => 'VARCHAR',
+            'formtype' => 'SELECT',
+            'value' => array(
+                'ipv4' => 'IPv4',
+                'ipv6' => 'IPv6',
+                'ipv4,ipv6' => 'IPv4 + IPv6'
+            ),
+            'default' => 'ipv4'
+        ),
 		'vhost_proxy_protocol_http_port' => array(
 			'datatype' => 'VARCHAR',
 			'formtype' => 'TEXT',
@@ -1009,13 +1116,43 @@ $form["tabs"]['web'] = array(
 			'default' => 'y',
 			'value' => array(0 => 'n', 1 => 'y')
 		),
+		'overtraffic_notify_reseller' => array(
+			'datatype' => 'VARCHAR',
+			'formtype' => 'CHECKBOX',
+			'default' => 'y',
+			'value' => array(0 => 'n', 1 => 'y')
+		),
 		'overtraffic_notify_client' => array(
 			'datatype' => 'VARCHAR',
 			'formtype' => 'CHECKBOX',
 			'default' => 'y',
 			'value' => array(0 => 'n', 1 => 'y')
 		),
+		'overtraffic_disable_web' => array(
+			'datatype' => 'VARCHAR',
+			'formtype' => 'CHECKBOX',
+			'default' => 'y',
+			'value' => array(0 => 'n', 1 => 'y')
+		),
+		'overquota_notify_threshold' => array(
+			'datatype' => 'INTEGER',
+			'formtype' => 'TEXT',
+			'default' => '90',
+			'validators' => array(
+				0 => array('type' => 'NOTEMPTY', 'errmsg' => 'overquota_notify_threshold_error'),
+				1 => array('type' => 'RANGE',	'range' => '0:100',	'errmsg' => 'overquota_notify_threshold_error'),
+			),
+			'value' => '',
+			'width' => '20',
+			'maxlength' => '3'
+		),
 		'overquota_notify_admin' => array(
+			'datatype' => 'VARCHAR',
+			'formtype' => 'CHECKBOX',
+			'default' => 'y',
+			'value' => array(0 => 'n', 1 => 'y')
+		),
+		'overquota_notify_reseller' => array(
 			'datatype' => 'VARCHAR',
 			'formtype' => 'CHECKBOX',
 			'default' => 'y',
@@ -1027,7 +1164,25 @@ $form["tabs"]['web'] = array(
 			'default' => 'y',
 			'value' => array(0 => 'n', 1 => 'y')
 		),
+		'overquota_db_notify_threshold' => array(
+			'datatype' => 'INTEGER',
+			'formtype' => 'TEXT',
+			'default' => '90',
+			'validators' => array(
+				0 => array('type' => 'NOTEMPTY', 'errmsg' => 'overquota_notify_threshold_error'),
+				1 => array('type' => 'RANGE',	'range' => '0:100',	'errmsg' => 'overquota_notify_threshold_error'),
+			),
+			'value' => '',
+			'width' => '20',
+			'maxlength' => '3'
+		),
 		'overquota_db_notify_admin' => array(
+			'datatype' => 'VARCHAR',
+			'formtype' => 'CHECKBOX',
+			'default' => 'y',
+			'value' => array(0 => 'n', 1 => 'y')
+		),
+		'overquota_db_notify_reseller' => array(
 			'datatype' => 'VARCHAR',
 			'formtype' => 'CHECKBOX',
 			'default' => 'y',
@@ -1519,6 +1674,44 @@ $form["tabs"]['dns'] = array(
 			'width' => '40',
 			'maxlength' => '255'
 		),
+		'bind_keyfiles_dir' => array(
+			'datatype' => 'VARCHAR',
+			'formtype' => 'TEXT',
+			'default' => '',
+			'validators' => array(	0 => array('type' => 'NOTEMPTY',
+										'errmsg' => 'bind_keyfiles_dir_error_empty'),
+									1 => array ( 	'type' => 'REGEX',
+										'regex' => '/^\/[a-zA-Z0-9\.\-\_\/]{1,128}$/',
+										'errmsg'=> 'bind_keyfiles_dir_error_regex'),
+			),
+			'value' => '',
+			'width' => '40',
+			'maxlength' => '255'
+		),
+		'bind_zonefiles_masterprefix' => array(
+			'datatype' => 'VARCHAR',
+			'formtype' => 'TEXT',
+			'default' => '',
+			'validators' => array( 0 => array ( 	'type' => 'REGEX',
+										'regex' => '/^[a-zA-Z0-9\.\-\_\/]{0,128}$/',
+										'errmsg'=> 'bind_zonefiles_masterprefix_error_regex'),
+			),
+			'value' => '',
+			'width' => '40',
+			'maxlength' => '255'
+		),
+		'bind_zonefiles_slaveprefix' => array(
+			'datatype' => 'VARCHAR',
+			'formtype' => 'TEXT',
+			'default' => '',
+			'validators' => array( 0 => array ( 	'type' => 'REGEX',
+										'regex' => '/^[a-zA-Z0-9\.\-\_\/]{0,128}$/',
+										'errmsg'=> 'bind_zonefiles_slaveprefix_error_regex'),
+			),
+			'value' => '',
+			'width' => '40',
+			'maxlength' => '255'
+		),
 		'named_conf_path' => array(
 			'datatype' => 'VARCHAR',
 			'formtype' => 'TEXT',
@@ -1784,7 +1977,7 @@ $form["tabs"]['jailkit'] = array(
 			'validators' => array(	0 => array('type' => 'NOTEMPTY',
 										'errmsg' => 'jailkit_chroot_home_error_empty'),
 									1 => array ( 	'type' => 'REGEX',
-										'regex' => '/^\/[a-zA-Z0-9\.\-\_\/\[\]]{1,128}$/',
+										'regex' => '/^\/[a-zA-Z0-9\.\-\_\/\[\]]{1,}$/',
 										'errmsg'=> 'jailkit_chroot_home_error_regex'),
 			),
 			'value' => '',
@@ -1798,7 +1991,7 @@ $form["tabs"]['jailkit'] = array(
 			'validators' => array(	0 => array('type' => 'NOTEMPTY',
 										'errmsg' => 'jailkit_chroot_app_sections_error_empty'),
 									1 => array ( 	'type' => 'REGEX',
-										'regex' => '/^[a-zA-Z0-9\-\_\ ]{1,128}$/',
+										'regex' => '/^[a-zA-Z0-9\.\-\_\ ]{1,}$/',
 										'errmsg'=> 'jailkit_chroot_app_sections_error_regex'),
 			),
 			'value' => '',
@@ -1844,6 +2037,16 @@ $form["tabs"]['jailkit'] = array(
 			'value' => '',
 			'width' => '40',
 			'maxlength' => '1000'
+		),
+		'jailkit_hardlinks' => array(
+			'datatype' => 'VARCHAR',
+			'formtype' => 'SELECT',
+			'default' => 'allow',
+			'value' => array(
+				'allow' => 'jailkit_hardlinks_allow_txt',
+				'no' => 'jailkit_hardlinks_no_txt',
+				'yes' => 'jailkit_hardlinks_yes_txt',
+			)
 		),
 		//#################################
 		// END Datatable fields

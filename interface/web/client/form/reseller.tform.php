@@ -41,11 +41,12 @@
 $form["title"]    = "Reseller";
 $form["description"]  = "";
 $form["name"]    = "reseller";
+$form["record_name_field"] = "username";
 $form["action"]   = "reseller_edit.php";
 $form["db_table"]  = "client";
 $form["db_table_idx"] = "client_id";
 $form["db_history"]  = "yes";
-$form["tab_default"] = "address";
+$form["tab_default"] = "info";
 $form["list_default"] = "reseller_list.php";
 $form["auth"]   = 'yes';
 
@@ -80,6 +81,12 @@ while ($file = @readdir($handle)) {
 	}
 }
 
+$form["tabs"]['info'] = array(
+	'title'  => "Info",
+	'width'  => 100,
+	'template'  => "templates/reseller_edit_info.htm",
+	'fields'  => array()
+);
 $form["tabs"]['address'] = array (
 	'title'  => "Address",
 	'width'  => 100,
@@ -411,7 +418,7 @@ $form["tabs"]['address'] = array (
 					1 => array( 'event' => 'SAVE',
 					'type' => 'STRIPNL')
 			),
-			'default' => 'http://',
+			'default' => 'https://',
 			'value'  => '',
 			'separator' => '',
 			'width'  => '30',
@@ -838,6 +845,20 @@ $form["tabs"]['limits'] = array (
 			'rows'  => '',
 			'cols'  => ''
 		),
+		'limit_mail_wblist' => array (
+			'datatype' => 'INTEGER',
+			'formtype' => 'TEXT',
+			'validators' => array (  0 => array ( 'type' => 'ISINT',
+					'errmsg'=> 'limit_mail_wblist_error_notint'),
+			),
+			'default' => '-1',
+			'value'  => '',
+			'separator' => '',
+			'width'  => '10',
+			'maxlength' => '10',
+			'rows'  => '',
+			'cols'  => ''
+		),
 		'limit_mailfilter' => array (
 			'datatype' => 'INTEGER',
 			'formtype' => 'TEXT',
@@ -921,6 +942,18 @@ $form["tabs"]['limits'] = array (
 			'maxlength' => '10',
 			'rows'  => '',
 			'cols'  => ''
+		),
+		'limit_mail_backup' => array (
+			'datatype' => 'VARCHAR',
+			'formtype' => 'CHECKBOX',
+			'default' => 'y',
+			'value'  => array(0 => 'n', 1 => 'y')
+		),
+		'limit_relayhost' => array (
+			'datatype' => 'VARCHAR',
+			'formtype' => 'CHECKBOX',
+			'default' => 'n',
+			'value'  => array(0 => 'n', 1 => 'y')
 		),
         'default_xmppserver' => array (
             'datatype' => 'INTEGER',

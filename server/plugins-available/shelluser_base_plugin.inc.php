@@ -30,9 +30,11 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 class shelluser_base_plugin {
 
+	//* $plugin_name and $class_name have to be the same then the name of this class
 	var $plugin_name = 'shelluser_base_plugin';
 	var $class_name = 'shelluser_base_plugin';
 	var $min_uid = 499;
+	var $data = array();
 
 	//* This function is called during ispconfig installation to determine
 	//  if a symlink shall be created for this plugin.
@@ -66,7 +68,7 @@ class shelluser_base_plugin {
 
 	}
 
-
+	//* This function is called, when a shell user is inserted in the database
 	function insert($event_name, $data) {
 		global $app, $conf;
 
@@ -93,6 +95,14 @@ class shelluser_base_plugin {
 			|| !$app->system->is_allowed_user($data['new']['puser'], true, true)
 			|| !$app->system->is_allowed_group($data['new']['pgroup'], true, true)) {
 			$app->log('Shell user must not be root or in group root.',LOGLEVEL_WARN);
+			return false;
+		}
+
+		if(is_file($data['new']['dir']) || is_link($data['new']['dir'])) {
+			$app->log('Shell user dir must not be existing file or symlink.', LOGLEVEL_WARN);
+			return false;
+		} elseif(!$app->system->is_allowed_path($data['new']['dir'])) {
+			$app->log('Shell user dir is not an allowed path: ' . $data['new']['dir'], LOGLEVEL_WARN);
 			return false;
 		}
 
@@ -139,14 +149,12 @@ class shelluser_base_plugin {
 					}
 				}
 
-				$app->system->chown($data['new']['dir'],$data['new']['username'],false);
-				$app->system->chgrp($data['new']['dir'],$data['new']['pgroup'],false);
-
+				$app->system->chown($data['new']['dir'], 'root', false);
+				$app->system->chgrp($data['new']['dir'], 'root', false);
 
 				// call the ssh-rsa update function
 				$app->uses("getconf");
 				$this->data = $data;
-				$this->app = $app;
 				$this->_setup_ssh_rsa();
 
 				//* Create .bash_history file
@@ -160,6 +168,11 @@ class shelluser_base_plugin {
 				$app->system->chmod($homedir.'/.profile', 0644);
 				$app->system->chown($homedir.'/.profile', $data['new']['username']);
 				$app->system->chgrp($homedir.'/.profile', $data['new']['pgroup']);
+
+				// Create symlinks for conveniance, SFTP user should not land in an empty dir.
+				symlink('../../web', $homedir.'/web');
+				symlink('../../log', $homedir.'/log');
+				symlink('../../private', $homedir.'/private');
 
 				//* Disable shell user temporarily if we use jailkit
 				if($data['new']['chroot'] == 'jailkit') {
@@ -178,6 +191,7 @@ class shelluser_base_plugin {
 		}
 	}
 
+	//* This function is called, when a shell user is updated in the database
 	function update($event_name, $data) {
 		global $app, $conf;
 
@@ -208,6 +222,14 @@ class shelluser_base_plugin {
 			return false;
 		}
 
+		if(is_file($data['new']['dir']) || is_link($data['new']['dir'])) {
+			$app->log('Shell user dir must not be existing file or symlink.', LOGLEVEL_WARN);
+			return false;
+		} elseif(!$app->system->is_allowed_path($data['new']['dir'])) {
+			$app->log('Shell user dir is not an allowed path: ' . $data['new']['dir'], LOGLEVEL_WARN);
+			return false;
+		}
+
 		if($data['new']['active'] != 'y') $data['new']['shell'] = '/bin/false';
 
 		if($app->system->is_user($data['new']['puser'])) {
@@ -233,7 +255,6 @@ class shelluser_base_plugin {
 					$app->system->web_folder_protection($web['document_root'], false);
 
 					if($homedir != $homedir_old){
-						$app->system->web_folder_protection($web['document_root'], false);
 						// Rename dir, in case the new directory exists already.
 						if(is_dir($homedir)) {
 							$app->log("New Homedir exists, renaming it to ".$homedir.'_bak', LOGLEVEL_DEBUG);
@@ -245,10 +266,8 @@ class shelluser_base_plugin {
 						$app->file->mkdirs($homedir, '0750');
 						$app->system->chown($homedir,$data['new']['puser']);
 						$app->system->chgrp($homedir,$data['new']['pgroup']);
-						$app->system->web_folder_protection($web['document_root'], true);
 					} else {
 						if(!is_dir($homedir)){
-							$app->system->web_folder_protection($web['document_root'], false);
 							if(!is_dir($data['new']['dir'].'/home')){
 								$app->file->mkdirs($data['new']['dir'].'/home', '0755');
 								$app->system->chown($data['new']['dir'].'/home','root');
@@ -257,7 +276,6 @@ class shelluser_base_plugin {
 							$app->file->mkdirs($homedir, '0750');
 							$app->system->chown($homedir,$data['new']['puser']);
 							$app->system->chgrp($homedir,$data['new']['pgroup']);
-							$app->system->web_folder_protection($web['document_root'], true);
 						}
 					}
 					$app->system->usermod($data['old']['username'], 0, $app->system->getgid($data['new']['pgroup']), $homedir, $data['new']['shell'], $data['new']['password'], $data['new']['username']);
@@ -266,7 +284,6 @@ class shelluser_base_plugin {
 					// call the ssh-rsa update function
 					$app->uses("getconf");
 					$this->data = $data;
-					$this->app = $app;
 					$this->_setup_ssh_rsa();
 
 					//* Create .bash_history file
@@ -310,17 +327,24 @@ class shelluser_base_plugin {
 			return false;
 		}
 
+		if(is_file($data['old']['dir']) || is_link($data['old']['dir'])) {
+			$app->log('Shell user dir must not be existing file or symlink.', LOGLEVEL_WARN);
+			return false;
+		} elseif(!$app->system->is_allowed_path($data['old']['dir'])) {
+			$app->log('Shell user dir is not an allowed path: ' . $data['old']['dir'], LOGLEVEL_WARN);
+			return false;
+		}
+
 		if($app->system->is_user($data['old']['username'])) {
 			// Get the UID of the user
 			$userid = intval($app->system->getuid($data['old']['username']));
 			if($userid > $this->min_uid) {
-				$web = $app->db->queryOneRecord("SELECT * FROM web_domain WHERE domain_id = ".intval($data['old']['parent_domain_id']));
+				$web = $app->db->queryOneRecord("SELECT * FROM web_domain WHERE domain_id = ?", $data['old']['parent_domain_id']);
 
 				// check if we have to delete the dir
 				$check = $app->db->queryOneRecord('SELECT shell_user_id FROM `shell_user` WHERE `dir` = ?', $data['old']['dir']);
 				if(!$check && is_dir($data['old']['dir'])) {
 
-					$web = $app->db->queryOneRecord("SELECT * FROM web_domain WHERE domain_id = ?", $data['old']['parent_domain_id']);
 					$app->system->web_folder_protection($web['document_root'], false);
 
 					// delete dir
@@ -361,7 +385,7 @@ class shelluser_base_plugin {
 
 				// We delete only non jailkit users, jailkit users will be deleted by the jailkit plugin.
 				if ($data['old']['chroot'] != "jailkit") {
-					// if this web uses PHP-FPM, that PPH-FPM service must be stopped before we can delete this user
+					// if this web uses PHP-FPM, that PHP-FPM service must be stopped before we can delete this user
 					if($web['php'] == 'php-fpm'){
 						if($web['server_php_id'] != 0){
 							$default_php_fpm = false;
@@ -405,14 +429,14 @@ class shelluser_base_plugin {
 
 	private function _setup_ssh_rsa() {
 		global $app;
-		$this->app->log("ssh-rsa setup shelluser_base", LOGLEVEL_DEBUG);
+		$app->log("ssh-rsa setup shelluser_base", LOGLEVEL_DEBUG);
 		// Get the client ID, username, and the key
-		$domain_data = $this->app->db->queryOneRecord('SELECT sys_groupid FROM web_domain WHERE web_domain.domain_id = ?', $this->data['new']['parent_domain_id']);
-		$sys_group_data = $this->app->db->queryOneRecord('SELECT * FROM sys_group WHERE sys_group.groupid = ?', $domain_data['sys_groupid']);
-		$id = intval($sys_group_data['client_id']);
-		$username= $sys_group_data['name'];
-		$client_data = $this->app->db->queryOneRecord('SELECT * FROM client WHERE client.client_id = ?', $id);
-		$userkey = $client_data['ssh_rsa'];
+		$domain_data = $app->db->queryOneRecord('SELECT sys_groupid FROM web_domain WHERE web_domain.domain_id = ?', $this->data['new']['parent_domain_id']);
+		$sys_group_data = $app->db->queryOneRecord('SELECT * FROM sys_group WHERE sys_group.groupid = ?', $domain_data['sys_groupid']);
+		$id = (is_array($sys_group_data) && isset($sys_group_data['client_id']))?intval($sys_group_data['client_id']):0;
+		$username= (is_array($sys_group_data) && isset($sys_group_data['name']))?$sys_group_data['name']:'';
+		$client_data = $app->db->queryOneRecord('SELECT * FROM client WHERE client.client_id = ?', $id);
+		$userkey = (is_array($client_data) && isset($client_data['ssh_rsa']))?$client_data['ssh_rsa']:'';
 		unset($domain_data);
 		unset($client_data);
 
@@ -443,34 +467,42 @@ class shelluser_base_plugin {
 			//Generate ssh-rsa-keys
 			$app->uses('functions');
 			$app->functions->generate_ssh_key($id, $username);
-			$this->app->log("ssh-rsa keypair generated for ".$username, LOGLEVEL_DEBUG);
+			$app->log("ssh-rsa keypair generated for ".$username, LOGLEVEL_DEBUG);
 		};
 
 		if (!file_exists($sshkeys)){
 			// add root's key
 			$app->file->mkdirs($sshdir, '0700');
+
 			if(is_file('/root/.ssh/authorized_keys')) $app->system->file_put_contents($sshkeys, $app->system->file_get_contents('/root/.ssh/authorized_keys'));
 
 			// Remove duplicate keys
 			$existing_keys = @file($sshkeys, FILE_IGNORE_NEW_LINES);
-			$new_keys = explode("\n", $userkey);
-			$final_keys_arr = @array_merge($existing_keys, $new_keys);
+			$new_keys = (!is_null($userkey))?explode("\n", $userkey):array();
+			if(is_array($existing_keys)) {
+				$final_keys_arr = @array_merge($existing_keys, $new_keys);
+			} else {
+				$final_keys_arr = $new_keys;
+			}
 			$new_final_keys_arr = array();
 			if(is_array($final_keys_arr) && !empty($final_keys_arr)){
 				foreach($final_keys_arr as $key => $val){
 					$new_final_keys_arr[$key] = trim($val);
 				}
 			}
-			$final_keys = implode("\n", array_flip(array_flip($new_final_keys_arr)));
+			$final_keys = implode("\n", array_flip(array_flip($new_final_keys_arr))) . "\n";
 
 			// add the user's key
 			$app->system->file_put_contents($sshkeys, $final_keys);
 			$app->file->remove_blank_lines($sshkeys);
-			$this->app->log("ssh-rsa authorisation keyfile created in ".$sshkeys, LOGLEVEL_DEBUG);
+			$app->log("ssh-rsa authorisation keyfile created in ".$sshkeys, LOGLEVEL_DEBUG);
 		}
 
 		//* Get the keys
 		$existing_keys = file($sshkeys, FILE_IGNORE_NEW_LINES);
+		if(!$existing_keys) {
+			$existing_keys = array();
+		}
 		$new_keys = explode("\n", $sshrsa);
 		$old_keys = explode("\n", $this->data['old']['ssh_rsa']);
 
@@ -502,7 +534,7 @@ class shelluser_base_plugin {
 		// add the custom key
 		$app->system->file_put_contents($sshkeys, $final_keys);
 		$app->file->remove_blank_lines($sshkeys);
-		$this->app->log("ssh-rsa key updated in ".$sshkeys, LOGLEVEL_DEBUG);
+		$app->log("ssh-rsa key updated in ".$sshkeys, LOGLEVEL_DEBUG);
 
 		// set proper file permissions
 		$app->system->exec_safe("chown -R ?:? ?", $this->data['new']['puser'], $this->data['new']['pgroup'], $sshdir);

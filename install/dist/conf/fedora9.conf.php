@@ -66,6 +66,7 @@ $conf['mysql']['ispconfig_user'] = 'ispconfig';
 $conf['mysql']['ispconfig_password'] = md5(uniqid(rand()));
 $conf['mysql']['master_slave_setup'] = 'n';
 $conf['mysql']['master_host'] = '';
+$conf['mysql']['master_port'] = '3306';
 $conf['mysql']['master_database'] = 'dbispconfig';
 $conf['mysql']['master_admin_user'] = 'root';
 $conf['mysql']['master_admin_password'] = '';
@@ -154,7 +155,7 @@ $conf['rspamd']['init_script'] = 'rspamd';
 
 //* ClamAV
 $conf['clamav']['installed'] = false; // will be detected automatically during installation
-$conf['clamav']['init_script'] = 'clamd.amavisd';
+$conf['clamav']['init_script'] = 'clamd@amavisd';
 
 //* Pureftpd
 $conf['pureftpd']['installed'] = false; // will be detected automatically during installation
@@ -220,5 +221,8 @@ $conf['cron']['wget'] = '/usr/bin/wget';
 
 //* OpenVZ
 $conf['openvz']['installed'] = false;
+
+// AppArmor
+$conf['apparmor']['installed'] = false;
 
 ?>

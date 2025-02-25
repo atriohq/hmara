@@ -82,6 +82,7 @@ class mail_plugin {
 		//* get the config
 		$app->uses('getconf,system');
 		$mail_config = $app->getconf->get_server_config($conf['server_id'], 'mail');
+		$global_mail_config = $app->getconf->get_global_config('mail');
 
 		// convert to lower case - it could cause problems if some directory above has upper case name
 		//  $data['new']['maildir'] = strtolower($data['new']['maildir']);
@@ -195,63 +196,78 @@ class mail_plugin {
 			}
 		}
 
-		$global_config = $app->getconf->get_global_config('mail');
-		if($global_config['enable_welcome_mail'] == 'y') {
-			//* Send the welcome email message
-			$tmp = explode('@', $data["new"]["email"]);
-			$domain = $tmp[1];
-			unset($tmp);
-			$html = false;
-			if(file_exists($conf['rootpath'].'/conf-custom/mail/welcome_email_'.$domain.'.html')) {
-				$lines = file($conf['rootpath'].'/conf-custom/mail/welcome_email_'.$domain.'.html');
-				$html = true;
-			} elseif(file_exists($conf['rootpath'].'/conf-custom/mail/welcome_email_'.$conf['language'].'.html')) {
-				$lines = file($conf['rootpath'].'/conf-custom/mail/welcome_email_'.$conf['language'].'.html');
-				$html = true;
-			} elseif(file_exists($conf['rootpath'].'/conf-custom/mail/welcome_email_'.$domain.'.txt')) {
-				$lines = file($conf['rootpath'].'/conf-custom/mail/welcome_email_'.$domain.'.txt');
-			} elseif(file_exists($conf['rootpath'].'/conf-custom/mail/welcome_email_'.$conf['language'].'.txt')) {
-				$lines = file($conf['rootpath'].'/conf-custom/mail/welcome_email_'.$conf['language'].'.txt');
-			} elseif(file_exists($conf['rootpath'].'/conf-custom/mail/welcome_email_en.txt')) {
-				$lines = file($conf['rootpath'].'/conf-custom/mail/welcome_email_en.txt');
-			} elseif(file_exists($conf['rootpath'].'/conf/mail/welcome_email_'.$conf['language'].'.txt')) {
-				$lines = file($conf['rootpath'].'/conf/mail/welcome_email_'.$conf['language'].'.txt');
-			} else {
-				$lines = file($conf['rootpath'].'/conf/mail/welcome_email_en.txt');
-			}
-
-			//* Get from address
-			$parts = explode(':', trim($lines[0]));
-			unset($parts[0]);
-			$welcome_mail_from  = implode(':', $parts);
-			unset($lines[0]);
-
-			//* Get subject
-			$parts = explode(':', trim($lines[1]));
-			unset($parts[0]);
-			$welcome_mail_subject  = implode(':', $parts);
-			unset($lines[1]);
-
-			//* Get message
-			$welcome_mail_message = trim(implode($lines));
-			unset($tmp);
-
-			$mailHeaders      = "MIME-Version: 1.0" . "\n";
-			if($html) {
-				$mailHeaders     .= "Content-Type: text/html; charset=utf-8" . "\n";
-				$mailHeaders     .= "Content-Transfer-Encoding: quoted-printable" . "\n";
-			} else {
-				$mailHeaders     .= "Content-Type: text/plain; charset=utf-8" . "\n";
-				$mailHeaders     .= "Content-Transfer-Encoding: 8bit" . "\n";
-			}
-			$mailHeaders     .= "From: $welcome_mail_from" . "\n";
-			$mailHeaders     .= "Reply-To: $welcome_mail_from" . "\n";
-			$mailTarget       = $data["new"]["email"];
-			$mailSubject      = "=?utf-8?B?".base64_encode($welcome_mail_subject)."?=";
-
-			//* Send the welcome email only on the "master" mail server to avoid duplicate emails
-			if($conf['mirror_server_id'] == 0) mail($mailTarget, $mailSubject, $welcome_mail_message, $mailHeaders);
+		//* Send the welcome email message
+		$tmp = explode('@', $data["new"]["email"]);
+		$domain = $tmp[1];
+		unset($tmp);
+		$html = false;
+		if(file_exists($conf['rootpath'].'/conf-custom/mail/welcome_email_'.$domain.'.html')) {
+			$lines = file($conf['rootpath'].'/conf-custom/mail/welcome_email_'.$domain.'.html');
+			$html = true;
+		} elseif(file_exists($conf['rootpath'].'/conf-custom/mail/welcome_email_'.$conf['language'].'.html')) {
+			$lines = file($conf['rootpath'].'/conf-custom/mail/welcome_email_'.$conf['language'].'.html');
+			$html = true;
+		} elseif(file_exists($conf['rootpath'].'/conf-custom/mail/welcome_email_'.$domain.'.txt')) {
+			$lines = file($conf['rootpath'].'/conf-custom/mail/welcome_email_'.$domain.'.txt');
+		} elseif(file_exists($conf['rootpath'].'/conf-custom/mail/welcome_email_'.$conf['language'].'.txt')) {
+			$lines = file($conf['rootpath'].'/conf-custom/mail/welcome_email_'.$conf['language'].'.txt');
+		} elseif(file_exists($conf['rootpath'].'/conf-custom/mail/welcome_email_en.txt')) {
+			$lines = file($conf['rootpath'].'/conf-custom/mail/welcome_email_en.txt');
+		} elseif(file_exists($conf['rootpath'].'/conf/mail/welcome_email_'.$conf['language'].'.txt')) {
+			$lines = file($conf['rootpath'].'/conf/mail/welcome_email_'.$conf['language'].'.txt');
+		} else {
+			$lines = file($conf['rootpath'].'/conf/mail/welcome_email_en.txt');
 		}
+
+		$placeholders = array(
+			'{domain}' => "$domain",
+			'{email}' => $data["new"]["email"],
+			'{admin_mail}' => (isset($global_mail_config['admin_mail']) && $global_mail_config['admin_mail'] != '' ? $global_mail_config['admin_mail'] : 'root'),
+			'{admin_name}' => (isset($global_mail_config['admin_name']) && $global_mail_config['admin_name'] != '' ? $global_mail_config['admin_name'] : ''),
+		);
+
+		//* Get from address
+		$parts = explode(':', trim($lines[0]));
+		unset($parts[0]);
+		$welcome_mail_from  = implode(':', $parts);
+		unset($lines[0]);
+		$welcome_mail_from = strtr($welcome_mail_from, $placeholders);
+
+		//* Get subject
+		$parts = explode(':', trim($lines[1]));
+		unset($parts[0]);
+		$welcome_mail_subject  = implode(':', $parts);
+		unset($lines[1]);
+		$welcome_mail_subject = strtr($welcome_mail_subject, $placeholders);
+
+		//* Get message
+		$welcome_mail_message = trim(implode($lines));
+		$welcome_mail_message = strtr($welcome_mail_message, $placeholders);
+		unset($tmp);
+
+		$mailHeaders      = "MIME-Version: 1.0" . "\n";
+		if($html) {
+			$mailHeaders     .= "Content-Type: text/html; charset=utf-8" . "\n";
+			$mailHeaders     .= "Content-Transfer-Encoding: quoted-printable" . "\n";
+		} else {
+			$mailHeaders     .= "Content-Type: text/plain; charset=utf-8" . "\n";
+			$mailHeaders     .= "Content-Transfer-Encoding: 8bit" . "\n";
+		}
+		$mailHeaders     .= "From: $welcome_mail_from" . "\n";
+		$mailHeaders     .= "Reply-To: $welcome_mail_from" . "\n";
+		$mailTarget       = $data["new"]["email"];
+		$mailSubject      = "=?utf-8?B?".base64_encode($welcome_mail_subject)."?=";
+
+		$additionalParameters = '';
+		if (preg_match('/\b([A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,63})\b/i', $welcome_mail_from, $matches)) {
+			$additionalParameters = '-f '.$matches[1];
+		}
+
+		// Send the welcome email only on a "master" mail server to avoid duplicate emails, and only send them when welcome emails are enabled.
+		// (bypass the normal ispcmail class when creating mail accounts)
+		$global_config = $app->getconf->get_global_config('mail');
+		if($conf['mirror_server_id'] == 0 && $global_config['enable_welcome_mail'] == 'y') mail($mailTarget, $mailSubject, $welcome_mail_message, $mailHeaders, $additionalParameters);
+
 	}
 
 	function user_update($event_name, $data) {
@@ -348,7 +364,7 @@ class mail_plugin {
 				$app->log('Moved invalid maildir to corrupted Maildirs folder: '.$data['new']['maildir'], LOGLEVEL_WARN);
 			}
 
-			//* Create the maildir, if it doesn not exist, set permissions, set quota.
+			//* Create the maildir, if it does not exist, set permissions, set quota.
 			if(!empty($maildomain_path) && !is_dir($maildomain_path.'/new')) {
 				$app->system->maildirmake($maildomain_path, $user, '', $group);
 
@@ -402,8 +418,19 @@ class mail_plugin {
 		$maildir_path_deleted = false;
 		$old_maildir_path = $data['old']['maildir'];
 		if($old_maildir_path != $mail_config['homedir_path'] && strlen($old_maildir_path) > strlen($mail_config['homedir_path']) && !stristr($old_maildir_path, '//') && !stristr($old_maildir_path, '..') && !stristr($old_maildir_path, '*') && strlen($old_maildir_path) >= 10) {
-			$app->system->exec_safe('rm -rf ?', $old_maildir_path);
-			$app->log('Deleted the Maildir: '.$data['old']['maildir'], LOGLEVEL_DEBUG);
+			if ($mail_config['mailbox_soft_delete'] == 'y' && is_dir($old_maildir_path)) {
+				// Move it, adding a date based suffix. A cronjob should purge or archive.
+				$thrash_maildir_path = $old_maildir_path . '-deleted-' . date("YmdHis");
+				$app->system->exec_safe('mv ? ?', $old_maildir_path, $thrash_maildir_path);
+
+				// Update the dir's timestamp to make filtering on age easier in any cleanup cronjob.
+				$app->system->exec_safe('touch ?', $thrash_maildir_path);
+
+				$app->log('Renamed the Maildir: ' . $data['old']['maildir'] . ' to ' . $thrash_maildir_path, LOGLEVEL_DEBUG);
+			} else  {
+				$app->system->exec_safe('rm -rf ?', $old_maildir_path);
+				$app->log('Deleted the Maildir: '.$data['old']['maildir'], LOGLEVEL_DEBUG);
+			}
 			$maildir_path_deleted = true;
 		} else {
 			$app->log('Possible security violation when deleting the maildir: '.$data['old']['maildir'], LOGLEVEL_ERROR);
@@ -428,7 +455,7 @@ class mail_plugin {
 					//* cleanup database
 					$sql = "DELETE FROM mail_backup WHERE server_id = ? AND parent_domain_id = ? AND mailuser_id = ?";
 					$app->db->query($sql, $conf['server_id'], $domain_rec['domain_id'], $data['old']['mailuser_id']);
-					if($app->db->dbHost != $app->dbmaster->dbHost) $app->dbmaster->query($sql, $conf['server_id'], $domain_rec['domain_id'], $data['old']['mailuser_id']);
+					if($app->running_on_slaveserver()) $app->dbmaster->query($sql, $conf['server_id'], $domain_rec['domain_id'], $data['old']['mailuser_id']);
 
 					$app->log('Deleted the mail backups for: '.$data['old']['email'], LOGLEVEL_DEBUG);
 				}
@@ -446,8 +473,19 @@ class mail_plugin {
 		//* Delete maildomain path
 		$old_maildomain_path = $mail_config['homedir_path'].'/'.$data['old']['domain'];
 		if($old_maildomain_path != $mail_config['homedir_path'] && !stristr($old_maildomain_path, '//') && !stristr($old_maildomain_path, '..') && !stristr($old_maildomain_path, '*') && !stristr($old_maildomain_path, '&') && strlen($old_maildomain_path) >= 10  && !empty($data['old']['domain'])) {
-			$app->system->exec_safe('rm -rf ?', $old_maildomain_path);
-			$app->log('Deleted the mail domain directory: '.$old_maildomain_path, LOGLEVEL_DEBUG);
+			if ($mail_config['mailbox_soft_delete'] == 'y' && is_dir($old_maildomain_path)) {
+				// Move it, adding a date based suffix. A cronjob should purge or archive.
+				$thrash_maildomain_path = $old_maildomain_path . '-deleted-' . date("YmdHis");
+				$app->system->exec_safe('mv ? ?', $old_maildomain_path, $thrash_maildomain_path);
+
+				// Update the dir's timestamp to make filtering on age easier in any cleanup cronjob.
+				$app->system->exec_safe('touch ?', $thrash_maildomain_path);
+
+				$app->log('Renamed the mail domain directory: ' . $old_maildomain_path . ' to ' . $thrash_maildomain_path, LOGLEVEL_DEBUG);
+			} else  {
+				$app->system->exec_safe('rm -rf ?', $old_maildomain_path);
+				$app->log('Deleted the mail domain directory: '.$old_maildomain_path, LOGLEVEL_DEBUG);
+			}
 			$maildomain_path_deleted = true;
 		} else {
 			$app->log('Possible security violation when deleting the mail domain directory: '.$old_maildomain_path, LOGLEVEL_ERROR);
@@ -475,7 +513,7 @@ class mail_plugin {
 				//* cleanup database
 				$sql = "DELETE FROM mail_backup WHERE server_id = ? AND parent_domain_id = ?";
 				$app->db->query($sql, $conf['server_id'], $data['old']['domain_id']);
-				if($app->db->dbHost != $app->dbmaster->dbHost) $app->dbmaster->query($sql, $conf['server_id'], $domain_rec['domain_id']);
+				if($app->running_on_slaveserver()) $app->dbmaster->query($sql, $conf['server_id'], $domain_rec['domain_id']);
 
 				$app->log('Deleted the mail backup directory: '.$mail_backup_dir, LOGLEVEL_DEBUG);
 			}

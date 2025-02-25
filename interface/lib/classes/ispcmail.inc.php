@@ -169,7 +169,7 @@ class ispcmail {
 			$this->smtp_host = $value;
 			break;
 		case 'smtp_port':
-			if(intval($value) > 0) $this->smtp_port = $value;
+			if(intval($value) > 0) $this->smtp_port = intval($value);
 			break;
 		case 'smtp_user':
 			$this->smtp_user = $value;
@@ -585,7 +585,7 @@ class ispcmail {
 	 * @access private
 	 */
 	private function _smtp_login() {
-		$this->_smtp_conn = fsockopen(($this->smtp_crypt == 'ssl' ? 'tls://' : '') . $this->smtp_host, $this->smtp_port, $errno, $errstr, 30);
+		$this->_smtp_conn = fsockopen(($this->smtp_crypt == 'ssl' ? 'tls://' : '') . $this->smtp_host, (int)$this->smtp_port, $errno, $errstr, 30);
 		if(empty($this->_smtp_conn)) return false;
 		$response = fgets($this->_smtp_conn, 515);
 
@@ -612,6 +612,9 @@ class ispcmail {
 			if (stream_socket_enable_crypto($this->_smtp_conn, true, $crypto_method) != true) {
 				return false;
 			}
+
+			fputs($this->_smtp_conn, 'HELO ' . $this->smtp_helo . $this->_crlf);
+			$response = fgets($this->_smtp_conn, 515);
 		}
 
 		//AUTH LOGIN
@@ -820,12 +823,11 @@ class ispcmail {
 				$recipname = trim(str_replace('"', '', $recipname));
 
 				if($rec_string != '') $rec_string .= ', ';
-				if($recipname && !is_numeric($recipname)) $rec_string .= $recipname . '<' . $recip . '>';
+				if($recipname && !is_numeric($recipname)) $rec_string .= '"' . $recipname . '"<' . $recip . '>';
 				else $rec_string .= $recip;
 			}
 			$to = $this->_encodeHeader($rec_string, $this->mail_charset);
-			//$result = mail($to, $subject, $this->body, implode($this->_crlf, $headers));
-			$result = mail($to, $enc_subject, $this->body, implode($this->_crlf, $headers));
+			$result = mail($to, $enc_subject, $this->body, implode($this->_crlf, $headers), "-f $this->_mail_sender");
 		}
 
 		// Reset the subject in case mail is resent

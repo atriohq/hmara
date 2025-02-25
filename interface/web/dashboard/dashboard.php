@@ -160,10 +160,14 @@ $dashlet_list = array();
 $handle = @opendir(ISPC_WEB_PATH.'/dashboard/dashlets');
 while ($file = @readdir($handle)) {
 	if ($file != '.' && $file != '..' && !is_dir(ISPC_WEB_PATH.'/dashboard/dashlets/'.$file)) {
-		$dashlet_name = substr($file, 0, -4);
-		$dashlet_class = 'dashlet_'.$dashlet_name;
-		include_once ISPC_WEB_PATH.'/dashboard/dashlets/'.$file;
-		$dashlet_list[$dashlet_name] = new $dashlet_class;
+		$splitfilename = explode('.', $file);
+		$file_extension = pathinfo($file)['extension'];
+		if ($file_extension === 'php') { // only allow .php files 
+			$dashlet_name = substr($file, 0, -4);
+			$dashlet_class = 'dashlet_'.$dashlet_name;
+			include_once ISPC_WEB_PATH.'/dashboard/dashlets/'.$file;
+			$dashlet_list[$dashlet_name] = new $dashlet_class;
+		}
 	}
 }
 
@@ -210,12 +214,18 @@ if($app->auth->is_admin()) {
 	}
 }
 
+if ($app->auth->is_admin() || $app->auth->is_reseller()) {
+	$limit_to_client_id = null;
+}
+else {
+	$limit_to_client_id = $_SESSION['s']['user']['client_id'];
+}
 
 /* Fill the left column */
 $leftcol = array();
 foreach($leftcol_dashlets as $name) {
 	if(isset($dashlet_list[$name])) {
-		$leftcol[]['content'] = $dashlet_list[$name]->show();
+		$leftcol[]['content'] = $dashlet_list[$name]->show($limit_to_client_id);
 	}
 }
 $app->tpl->setloop('leftcol', $leftcol);
@@ -224,7 +234,7 @@ $app->tpl->setloop('leftcol', $leftcol);
 $rightcol = array();
 foreach($rightcol_dashlets as $name) {
 	if(isset($dashlet_list[$name])) {
-		$rightcol[]['content'] = $dashlet_list[$name]->show();
+		$rightcol[]['content'] = $dashlet_list[$name]->show($limit_to_client_id);
 	}
 }
 $app->tpl->setloop('rightcol', $rightcol);

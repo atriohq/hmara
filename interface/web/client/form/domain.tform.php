@@ -63,6 +63,7 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 $form["title"]    = "Domain";
 $form["description"]  = "";
 $form["name"]    = "domain";
+$form["record_name_field"] = "domain";
 $form["action"]   = "domain_edit.php";
 $form["db_table"]  = "domain";
 $form["db_table_idx"] = "domain_id";
@@ -100,13 +101,14 @@ $form["tabs"]['domain'] = array (
 				1 => array ( 'type' => 'UNIQUE',
 					'errmsg'=> 'domain_error_unique'),
 				2 => array ( 'type' => 'REGEX',
-					'regex' => '/^[\w\.\-]{2,255}\.[a-zA-Z0-9\-]{2,63}$/',
+					'regex' => '/^[\w\.\-]{1,255}\.[a-zA-Z0-9\-]{2,63}$/',
 					'errmsg'=> 'domain_error_regex'),
 			),
 			'default' => '',
 			'value'  => '',
 			'width'  => '30',
-			'maxlength' => '255'
+			'maxlength' => '255',
+			'searchable' => 1,
 		),
 		//#################################
 		// END Datatable fields

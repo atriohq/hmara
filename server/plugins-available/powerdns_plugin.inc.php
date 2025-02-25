@@ -449,7 +449,7 @@ class powerdns_plugin {
 
 	function notifySlave($data) {
 		global $app;
-		
+
 		$pdns_control = $this->find_pdns_control();
 		if ( $pdns_control != false ) {
 			$app->system->exec_safe($pdns_control . ' notify ?', rtrim($data["new"]["origin"],"."));
@@ -458,7 +458,7 @@ class powerdns_plugin {
 
 	function fetchFromMaster($data) {
 		global $app;
-		
+
 		$pdns_control = $this->find_pdns_control();
 		if ( $pdns_control != false ) {
 			$app->system->exec_safe($pdns_control . ' retrieve ?', rtrim($data["new"]["origin"],"."));
@@ -502,7 +502,7 @@ class powerdns_plugin {
 		}
 
 		// If DNSSEC is wanted, enable it
-		if ($data['new']['dnssec_wanted'] === 'Y' && $data['old']['dnssec_wanted'] === 'N') {
+		if ($data['new']['dnssec_wanted'] === 'Y' && (is_null($data['old']['dnssec_wanted']) || $data['old']['dnssec_wanted'] === 'N')) {
 			$this->soa_dnssec_create($data);
 		}
 	}
@@ -546,7 +546,7 @@ class powerdns_plugin {
 		$dnssec_info = array_merge($this->format_dnssec_pubkeys($pubkeys), array('', '== Raw log ============================'), $log);
 		$dnssec_info = implode("\r\n", $dnssec_info);
 
-		if ($app->dbmaster !== $app->db) {
+		if ($app->running_on_slaveserver()) {
 			$app->dbmaster->query('UPDATE dns_soa SET dnssec_info=?, dnssec_initialized=? WHERE id=?', $dnssec_info, 'Y', intval($data['new']['id']));
 		}
 		$app->db->query('UPDATE dns_soa SET dnssec_info=?, dnssec_initialized=? WHERE id=?', $dnssec_info, 'Y', intval($data['new']['id']));
@@ -649,7 +649,7 @@ class powerdns_plugin {
 		$log[] = sprintf("\r\n%s %s", date('c'), 'Running disable-dnssec command...');
 		exec($cmd_disable_dnssec, $log);
 
-		if ($app->dbmaster !== $app->db) {
+		if ($app->running_on_slaveserver()) {
 			$app->dbmaster->query('UPDATE dns_soa SET dnssec_initialized=? WHERE id=?', 'N', intval($data['new']['id']));
 		}
 		$app->db->query('UPDATE dns_soa SET dnssec_initialized=? WHERE id=?', 'N', intval($data['new']['id']));
@@ -680,7 +680,7 @@ class powerdns_plugin {
 		$dnssec_info = array_merge(array('== Raw log ============================'), $log);
 		$dnssec_info = implode("\r\n", $dnssec_info);
 
-		if ($app->dbmaster !== $app->db) {
+		if ($app->running_on_slaveserver()) {
 			$app->dbmaster->query('UPDATE dns_soa SET dnssec_info=?, dnssec_initialized=? WHERE id=?', $dnssec_info, 'N', intval($data['new']['id']));
 		}
 		$app->db->query('UPDATE dns_soa SET dnssec_info=?, dnssec_initialized=? WHERE id=?', $dnssec_info, 'N', intval($data['new']['id']));

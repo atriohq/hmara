@@ -41,6 +41,7 @@
 $form["title"]    = "FTP User";
 $form["description"]  = "";
 $form["name"]    = "ftp_user";
+$form["record_name_field"] = "username";
 $form["action"]   = "ftp_user_edit.php";
 $form["db_table"]  = "ftp_user";
 $form["db_table_idx"] = "ftp_user_id";
@@ -203,7 +204,7 @@ if($app->auth->is_admin()) {
 				'validators'    => array (  0 => array (    'type'  => 'NOTEMPTY',
 															'errmsg'=> 'directory_error_empty'),
 											1 => array ( 	'type' => 'REGEX',
-															'regex' => '/^\/[a-zA-Z0-9\ \.\-\_\/]{10,128}$/',
+															'regex' => '/^\/[a-zA-Z0-9\ \.\-\_\/]{7,128}$/',
 															'errmsg'=> 'directory_error_regex'),
 											2 => array (    'type'  => 'CUSTOM',
 														'class' => 'validate_ftpuser',

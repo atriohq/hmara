@@ -51,7 +51,8 @@ use strict;
 $sql_select_policy =
    'SELECT *,spamfilter_users.id'.
    ' FROM spamfilter_users LEFT JOIN spamfilter_policy ON spamfilter_users.policy_id=spamfilter_policy.id'.
-   ' WHERE spamfilter_users.email IN (%k) ORDER BY spamfilter_users.priority DESC';
+   ' WHERE spamfilter_users.email IN (%k) AND spamfilter_users.policy_id != 0'.
+   ' ORDER BY spamfilter_users.priority DESC';
 
 
 $sql_select_white_black_list = 'SELECT wb FROM spamfilter_wblist'.
@@ -103,6 +104,9 @@ $interface_policy{'10026'} = 'ORIGINATING';
 $policy_bank{'ORIGINATING'} = {
   originating => 1,
   smtpd_discard_ehlo_keywords => ['8BITMIME'],
+};
+$policy_bank{'MYNETS'} = {
+  originating => 1,
 };
 
 # IP-Addresses for internal networks => load policy MYNETS

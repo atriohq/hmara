@@ -54,6 +54,9 @@ if($type == 'globalsearch'){
 	// resellers
 	$result[] = _search('client', 'reseller', "AND limit_client != 0");
 
+	// client domains
+	$result[] = _search('client', 'domain');
+
 	// web sites
 	$result[] = _search('sites', 'web_vhost_domain', "AND type = 'vhost'");
 
@@ -109,7 +112,7 @@ if($type == 'globalsearch'){
 	$result[] = _search('mail', 'mail_get');
 
 	// dns zones
-	$result[] = _search('dns', 'dns_soa');
+	$result[] = _search('dns', 'dns_soa', '', 'next_tab=dns_records');
 
 	// secondary dns zones
 	$result[] = _search('dns', 'dns_slave');
@@ -194,8 +197,14 @@ function _search($module, $section, $additional_sql = '', $params = ''){
 		if(is_array($results) && !empty($results)){
 			$lng_file = '../'.$module.'/lib/lang/'.$_SESSION['s']['language'].'_'.$section.'.lng';
 			if(is_file($lng_file)) include $lng_file;
+
+			// Get the real result count, without LIMIT.
+			$sql_real_rows = "SELECT COUNT(*) as `c` FROM ?? WHERE ".$where_clause.$authsql.$order_clause;
+
+			$result_count = $app->db->queryOneRecord($sql_real_rows, $db_table);
+
 			$result_array['cheader'] = array('title' => $category_title,
-				'total' => count($results),
+				'total' => $result_count['c'],
 				'limit' => count($results)
 			);
 			foreach($results as $result){

@@ -54,6 +54,9 @@ class web_module {
 		'web_backup_insert',
 		'web_backup_update',
 		'web_backup_delete',
+		'server_php_insert',
+		'server_php_update',
+		'server_php_delete',
 		'aps_instance_insert',
 		'aps_instance_update',
 		'aps_instance_delete',
@@ -65,8 +68,7 @@ class web_module {
 		'aps_package_delete',
 		'aps_setting_insert',
 		'aps_setting_update',
-		'aps_setting_delete',
-		'directive_snippets_update'
+		'aps_setting_delete'
 	);
 
 	//* This function is called during ispconfig installation to determine
@@ -113,11 +115,11 @@ class web_module {
 		$app->modules->registerTableHook('web_folder', 'web_module', 'process');
 		$app->modules->registerTableHook('web_folder_user', 'web_module', 'process');
 		$app->modules->registerTableHook('web_backup', 'web_module', 'process');
+		$app->modules->registerTableHook('server_php', 'web_module', 'process');
 		$app->modules->registerTableHook('aps_instances', 'web_module', 'process');
 		$app->modules->registerTableHook('aps_instances_settings', 'web_module', 'process');
 		$app->modules->registerTableHook('aps_packages', 'web_module', 'process');
 		$app->modules->registerTableHook('aps_settings', 'web_module', 'process');
-		$app->modules->registerTableHook('directive_snippets', 'web_module', 'process');
 
 		// Register service
 		$app->services->registerService('httpd', 'web_module', 'restartHttpd');
@@ -169,6 +171,11 @@ class web_module {
 			if($action == 'u') $app->plugins->raiseEvent('web_backup_update', $data);
 			if($action == 'd') $app->plugins->raiseEvent('web_backup_delete', $data);
 			break;
+		case 'server_php':
+			if($action == 'i') $app->plugins->raiseEvent('server_php_insert', $data);
+			if($action == 'u') $app->plugins->raiseEvent('server_php_update', $data);
+			if($action == 'd') $app->plugins->raiseEvent('server_php_delete', $data);
+			break;
 		case 'aps_instances':
 			if($action == 'i') $app->plugins->raiseEvent('aps_instance_insert', $data);
 			if($action == 'u') $app->plugins->raiseEvent('aps_instance_update', $data);
@@ -188,11 +195,6 @@ class web_module {
 			if($action == 'i') $app->plugins->raiseEvent('aps_setting_insert', $data);
 			if($action == 'u') $app->plugins->raiseEvent('aps_setting_update', $data);
 			if($action == 'd') $app->plugins->raiseEvent('aps_setting_delete', $data);
-			break;
-		case 'directive_snippets':
-			if($action == 'i') $app->plugins->raiseEvent('directive_snippets_insert', $data);
-			if($action == 'u') $app->plugins->raiseEvent('directive_snippets_update', $data);
-			if($action == 'd') $app->plugins->raiseEvent('directive_snippets_delete', $data);
 			break;
 		} // end switch
 	} // end function
@@ -229,7 +231,7 @@ class web_module {
 		} else {
 			$cmd = $app->system->getinitcommand($daemon, 'reload');
 		}
-		
+
 		if($web_config['server_type'] == 'nginx'){
 			$app->log("Checking nginx configuration...", LOGLEVEL_DEBUG);
 			exec('nginx -t 2>&1', $retval['output'], $retval['retval']);
@@ -241,15 +243,20 @@ class web_module {
 			}
 		}
 		
-		exec($cmd.' 2>&1', $retval['output'], $retval['retval']);
+		$app->log("Restarting httpd: $cmd", LOGLEVEL_DEBUG);
 		
+		if($cmd != '') {
+			exec($cmd.' 2>&1', $retval['output'], $retval['retval']);
+		} else {
+			$app->log('We got no init command, restart or reload of service aborted.',LOGLEVEL_WARN);
+		}
+
 		// if restart failed despite successful syntax check => try again
 		if($web_config['server_type'] == 'nginx' && $retval['retval'] > 0){
 			sleep(2);
 			exec($cmd.' 2>&1', $retval['output'], $retval['retval']);
 		}
-		$app->log("Restarting httpd: $cmd", LOGLEVEL_DEBUG);
-		
+
 		// nginx: do a syntax check because on some distributions, the init script always returns 0 - even if the syntax is not ok (how stupid is that?)
 		//if($web_config['server_type'] == 'nginx' && $retval['retval'] == 0){
 			//exec('nginx -t 2>&1', $retval['output'], $retval['retval']);
@@ -272,7 +279,7 @@ class web_module {
 		} else {
 			$path_parts = pathinfo($init_script);
 			$initcommand = $app->system->getinitcommand($path_parts['basename'], $action, $path_parts['dirname']);
-			
+
 			if($action == 'reload' && $init_script == $conf['init_scripts'].'/'.$web_config['php_fpm_init_script']) {
 				// we have to do a workaround because of buggy ubuntu fpm reload handling
 				// @see: https://bugs.launchpad.net/ubuntu/+source/php5/+bug/1242376
@@ -289,7 +296,7 @@ class web_module {
 					}
                                         */
 					unset($tmp);
-				}	
+				}
 			}
 			/*
 			if($action == 'reload') {
@@ -305,10 +312,16 @@ class web_module {
 			}
                         */
 		}
-
-		$retval = array('output' => '', 'retval' => 0);
-		exec($initcommand.' 2>&1', $retval['output'], $retval['retval']);
+		
 		$app->log("Restarting php-fpm: $initcommand", LOGLEVEL_DEBUG);
+		
+		if($initcommand != '') {
+			$retval = array('output' => '', 'retval' => 0);
+			exec($initcommand.' 2>&1', $retval['output'], $retval['retval']);
+		} else {
+			$app->log('We got no init command, restart or reload of php-fpm service aborted.',LOGLEVEL_WARN);
+		}
+		
 		return $retval;
 	}
 

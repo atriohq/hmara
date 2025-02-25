@@ -86,7 +86,6 @@ var ISPConfig = {
 		if(ISPConfig.options.useComboBox == true) {
 			$('#sidebar').find("select:not(.chosen-select)").select2({
 				placeholder: '',
-				width: 'element',
 				selectOnBlur: true,
 				allowClear: true
 			});
@@ -100,7 +99,6 @@ var ISPConfig = {
 		if(ISPConfig.options.useComboBox == true) {
 			$('#pageContent').find("select:not(.chosen-select)").select2({
 				placeholder: '',
-				width: 'element',
 				selectOnBlur: true,
 				allowClear: true,
 				formatResult: function(o, cont, qry, escapeMarkup) {
@@ -114,7 +112,7 @@ var ISPConfig = {
 					else return escapeMarkup(o.text);
 				}
 			}).on('change', function(e) {
-				if ($("#pageForm .table #Filter").length > 0) {
+				if ($("#pageForm .table #Filter").length > 0 && ! $(this).hasClass("disableChangeEvent")) {
 					$("#pageForm .table #Filter").trigger('click');
 				}
 			});
@@ -139,6 +137,9 @@ var ISPConfig = {
 		});
 		$('[data-toggle="tooltip"]').tooltip({
 		});
+
+		$('input[autofocus]').focus();
+
 		// grab all password fields and set the readonly prop to prevent password managers to fill in new password
 		$('input[type="password"]').each(function() {
 			$(this).prop('readonly', true)
@@ -178,7 +179,7 @@ var ISPConfig = {
 						ISPConfig.onAfterContentLoad(target, $('#'+formname).serialize());
 						ISPConfig.pageFormChanged = false;
 					}
-					clearTimeout(dataLogTimer);
+					clearTimeout(ISPConfig.dataLogTimer);
 					ISPConfig.dataLogNotification();
 					ISPConfig.hideLoadIndicator();
 				},
@@ -222,7 +223,7 @@ var ISPConfig = {
 
 		var frame_id = 'ajaxUploader-iframe-' + Math.round(new Date().getTime() / 1000);
 		$('body').append('<iframe width="0" height="0" style="display:none;" name="'+frame_id+'" id="'+frame_id+'"/>');
-		$('#'+frame_id).load(function() {
+		$('#'+frame_id).on("load", function() {
 			var msg = handleResponse(this);
 			$('#errorMsg').remove();
 			$('#OKMsg').remove();
@@ -287,7 +288,7 @@ var ISPConfig = {
 					ISPConfig.onAfterContentLoad(pagename, (params ? params : null));
 					ISPConfig.pageFormChanged = false;
 				}
-				clearTimeout(dataLogTimer); // clear running dataLogTimer
+				clearTimeout(ISPConfig.dataLogTimer); // clear running dataLogTimer
 				ISPConfig.dataLogNotification();
 				ISPConfig.hideLoadIndicator();
 			},
@@ -516,12 +517,12 @@ var ISPConfig = {
 					$('.modal-body').html(dataLogItems.join(""));
 					$('.notification_text').text(data['count']);
 					$('.notification').css('display','');
-					dataLogTimer = setTimeout( function() { ISPConfig.dataLogNotification(); }, 2000 );
+					ISPConfig.dataLogTimer = setTimeout( function() { ISPConfig.dataLogNotification(); }, 2000 );
 				} else {
 					$('.notification').css('display','none');
 					$('.modal-body').html('');
 					$('#datalogModal').modal('hide');
-					dataLogTimer = setTimeout( function() { ISPConfig.dataLogNotification(); }, 5000 );
+					ISPConfig.dataLogTimer = setTimeout( function() { ISPConfig.dataLogNotification(); }, 5000 );
 				}
 			},
 			error: function() {
@@ -598,7 +599,7 @@ var ISPConfig = {
 
 $(document).on("change", function(event) {
 	var elName = event.target.localName;
-	if ($("#pageForm .table #Filter").length > 0 && elName == 'select') {
+	if ($("#pageForm .table #Filter").length > 0 && elName == 'select' && ! $(event.target).hasClass("disableChangeEvent") ) {
 		event.preventDefault();
 		$("#pageForm .table #Filter").trigger('click');
 	}
@@ -738,7 +739,7 @@ $(document).on("click", "[data-uncheck-fields] > input[type='checkbox']", functi
 	}
 });
 
-$(document).on('ready', function () {
+$(document).ready(function() {
 	$.fn.extend({
 		insertAtCaret: function(myValue){
 			return this.each(function(i) {
@@ -812,4 +813,53 @@ $(document).on('ready', function () {
 		}
 		return iCaretPos;
 	};
+
+	//copy to clipboard
+	$(document).on('click', '.copy-to-clipboard', function() {
+		var $copyElement = $(this).children();
+		var temp = $("<input>");
+		$("body").append(temp);
+		temp.val($copyElement.text()).select();
+		//execCommand is Deprecated - but there is no alternative (2023)
+		document.execCommand("copy");
+		temp.remove();
+	} );
+
+	//display copy-to-clipboard icon
+	let lastCopyToClipboardIcon;
+	$(document).on("mouseenter", '.copy-to-clipboard', function() {
+		$(lastCopyToClipboardIcon).removeClass("copy-to-clipboard-icon"); //Clean up old icons - sometimes mouse is too fast to trigger mouseleave
+		$(this).addClass("copy-to-clipboard-icon");
+		lastCopyToClipboardIcon = $(this);
+		//console.log("Mouseenter e-tooltip");
+	});
+
+	//hide copy-to-clipboard icon
+	$(document).on("mouseleave", '.copy-to-clipboard', function() {
+		$(this).removeClass("copy-to-clipboard-icon");
+		//console.log("Mouseleave e-tooltip");
+	});
+
 });
+
+
+function processEmailAddressInput(e) {
+    setTimeout(function () {
+        if (/@/.test(e.value)) {
+            var parts = e.value.split('@');
+            $('#email_domain').val(parts.pop());
+            $('#email_domain').trigger('change');
+            e.value = parts.pop();
+        }
+    }, 4);
+};
+
+function updateEmailDomain(e) {
+    if (/@/.test(e.value)) {
+        var parts = e.value.split('@');
+        $('#email_domain').val(parts.pop());
+        $('#email_domain').trigger('change');
+        e.value = parts.pop();
+    }
+};
+

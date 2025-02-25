@@ -12,6 +12,7 @@ $wb['name_error_empty'] = 'Le nom d’hôte est vide.';
 $wb['name_error_regex'] = 'Le format du nom d’hôte est invalide.';
 $wb['data_error_empty'] = 'Le nom d’hôte cible est vide.';
 $wb['data_error_regex'] = 'Le format du nom d’hôte cible invalide.';
-$wb['data_error_duplicate'] = 'Duplicate A, AAAA, CNAME, or DNAME record';
+$wb['data_error_duplicate'] = 'Duplicate A, AAAA, ALIAS, CNAME, or DNAME record';
 $wb['ttl_range_error'] = 'Min. TTL time is 60 seconds.';
+$wb['data_error_not_found'] = 'Target hostname not found in the current zone. It should end in a . when it\'s external.';
 ?>

@@ -86,6 +86,13 @@ class page_action extends tform_actions {
 		}
 		$app->tpl->setVar("email_domain", $domain_select);
 
+		$csrf_token = $app->auth->csrf_token_get('mail_forward_del');
+		$app->tpl->setVar('_csrf_id', $csrf_token['csrf_id']);
+		$app->tpl->setVar('_csrf_key', $csrf_token['csrf_key']);
+
+		$global_config = $app->getconf->get_global_config();
+		$app->tpl->setVar('show_delete_on_forms', $global_config['misc']['show_delete_on_forms']);
+
 		parent::onShowEnd();
 	}
 
@@ -119,6 +126,19 @@ class page_action extends tform_actions {
 
 		unset($this->dataRecord["email_local_part"]);
 		unset($this->dataRecord["email_domain"]);
+
+		if(trim($this->dataRecord['destination']) == '') {
+			$app->tform->errorMessage .= $app->tform->lng('destination_error_empty') . '<br />';
+		} else {
+			$targets = preg_split('/[,;\s]+/', trim($this->dataRecord['destination']));
+			foreach($targets as $target) {
+				if(!$target || filter_var($target, FILTER_VALIDATE_EMAIL) === false) {
+					$app->tform->errorMessage .= $app->tform->lng('destination_error_isemail') . '<br />';
+					break;
+				}
+			}
+			$this->dataRecord['destination'] = implode(', ', $targets);
+		}
 
 		//* Check if there is no active mailbox with this address
 		$tmp = $app->db->queryOneRecord("SELECT count(mailuser_id) as number FROM mail_user WHERE postfix = 'y' AND email = ?", $this->dataRecord["source"]);

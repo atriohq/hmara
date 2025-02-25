@@ -113,20 +113,20 @@ class remoting_client extends remoting {
 		}
 
 	}
-	
+
 	//* Get the contact details to send a email like email address, name, etc.
 	public function client_get_emailcontact($session_id, $client_id) {
 		global $app;
-		
+
 		if(!$this->checkPerm($session_id, 'client_get_emailcontact')) {
 			throw new SoapFault('permission_denied', 'You do not have the permissions to access this function.');
 			return false;
 		}
-		
+
 		$client_id = $app->functions->intval($client_id);
 
 		$rec = $app->db->queryOneRecord("SELECT company_name,contact_name,gender,email,language FROM client WHERE client_id = ?", $client_id);
-		
+
 		if(is_array($rec)) {
 			return $rec;
 		} else {
@@ -159,7 +159,7 @@ class remoting_client extends remoting {
 	public function client_add($session_id, $reseller_id, $params)
 	{
 		global $app;
-		
+
 		if (!$this->checkPerm($session_id, 'client_add'))
 		{
 			throw new SoapFault('permission_denied', 'You do not have the permissions to access this function.');
@@ -198,7 +198,7 @@ class remoting_client extends remoting {
 		$app->uses('remoting_lib');
 		$app->remoting_lib->loadFormDef('../client/form/' . (isset($params['limit_client']) && $params['limit_client'] != 0 ? 'reseller' : 'client') . '.tform.php');
 		$old_rec = $app->remoting_lib->getDataRecord($client_id);
-		
+
 		//* merge old record with params, so only new values have to be set in $params
 		$params = $app->functions->array_merge($old_rec,$params);
 
@@ -218,7 +218,7 @@ class remoting_client extends remoting {
 			}
 		}
 
-		// we need the previuos templates assigned here
+		// we need the previous templates assigned here
 		$this->oldTemplatesAssigned = $app->db->queryAllRecords('SELECT * FROM `client_template_assigned` WHERE `client_id` = ?', $client_id);
 		if(!is_array($this->oldTemplatesAssigned) || count($this->oldTemplatesAssigned) < 1) {
 			// check previous type of storing templates
@@ -243,6 +243,15 @@ class remoting_client extends remoting {
 		$affected_rows = $this->updateQuery('../client/form/' . (isset($params['limit_client']) && $params['limit_client'] != 0 ? 'reseller' : 'client') . '.tform.php', $reseller_id, $client_id, $params, 'client:' . ($reseller_id ? 'reseller' : 'client') . ':on_after_update');
 
 		$app->remoting_lib->ispconfig_sysuser_update($params, $client_id);
+
+		// if canceled
+        if ($params['canceled']) {
+        	$result = $app->functions->func_client_cancel($client_id, $params['canceled']);
+        }
+        // if locked
+        if ($params['locked']) {
+        	$result = $app->functions->func_client_lock($client_id, $params['locked']);
+		}
 
 		return $affected_rows;
 	}
@@ -388,6 +397,8 @@ class remoting_client extends remoting {
 			return false;
 		}
 
+		// DUPLICATE CODE IN interface/web/client/client_del.php
+
 		$client_id = $app->functions->intval($client_id);
 
 		if($client_id > 0) {
@@ -404,7 +415,7 @@ class remoting_client extends remoting {
 			$app->db->query("DELETE FROM sys_user WHERE client_id = ?", $client_id);
 
 			//* Delete all records (sub-clients, mail, web, etc....)  of this client.
-			$tables = 'cron,dns_rr,dns_soa,dns_slave,ftp_user,mail_access,mail_content_filter,mail_domain,mail_forwarding,mail_get,mail_user,mail_user_filter,shell_user,spamfilter_users,support_message,web_database,web_database_user,web_domain,web_traffic,domain,mail_mailinglist,client';
+			$tables = 'cron,dns_rr,dns_soa,dns_slave,ftp_user,mail_access,mail_content_filter,mail_forwarding,mail_get,mail_user,mail_user_filter,shell_user,spamfilter_users,mail_domain,support_message,web_database,web_database_user,web_domain,web_traffic,domain,mail_mailinglist,client,spamfilter_wblist';
 			$tables_array = explode(',', $tables);
 			$client_group_id = $app->functions->intval($client_group['groupid']);
 			if($client_group_id > 1) {
@@ -471,7 +482,7 @@ class remoting_client extends remoting {
 			return false;
 		}
 	}
-	
+
 	public function client_get_by_customer_no($session_id, $customer_no) {
 		global $app;
 		if(!$this->checkPerm($session_id, 'client_get_by_customer_no')) {
@@ -562,16 +573,16 @@ class remoting_client extends remoting {
 		$result = $app->db->queryAllRecords($sql);
 		return $result;
 	}
-	
+
 	public function client_login_get($session_id,$username,$password,$remote_ip = '') {
 		global $app;
-		
+
 		//* Check permissions
 		if(!$this->checkPerm($session_id, 'client_get')) {
 			throw new SoapFault('permission_denied', 'You do not have the permissions to access this function.');
 			return false;
 		}
-		
+
 		//* Check username and password
 		if(!preg_match("/^[\w\.\-\_\@]{1,128}$/", $username)) {
 			throw new SoapFault('user_regex_error', 'Username contains invalid characters.');
@@ -581,21 +592,21 @@ class remoting_client extends remoting {
 			throw new SoapFault('password_length_error', 'Invalid password length or no password provided.');
 			return false;
 		}
-		
+
 		//* Check failed logins
 		$sql = "SELECT * FROM `attempts_login` WHERE `ip`= ? AND  `login_time` > (NOW() - INTERVAL 1 MINUTE) LIMIT 1";
 		$alreadyfailed = $app->db->queryOneRecord($sql, $remote_ip);
-		
+
 		//* too many failedlogins
 		if($alreadyfailed['times'] > 5) {
 			throw new SoapFault('error_user_too_many_logins', 'Too many failed logins.');
 			return false;
 		}
-		
-		
+
+
 		//*Set variables
 		$returnval == false;
-		
+
 		if(strstr($username,'@')) {
 			// Check against client table
 			$sql = "SELECT * FROM client WHERE email = ?";
@@ -617,7 +628,7 @@ class remoting_client extends remoting {
 					}
 				}
 			}
-			
+
 			if(is_array($user)) {
 				$returnval = array(	'username' 	=> 	$user['username'],
 									'type'		=>	'user',
@@ -625,7 +636,7 @@ class remoting_client extends remoting {
 									'language'	=>	$user['language'],
 									'country'	=>	$user['country']);
 			}
-			
+
 		} else {
 			// Check against sys_user table
 			$sql = "SELECT * FROM sys_user WHERE username = ?";
@@ -647,7 +658,7 @@ class remoting_client extends remoting {
 					}
 				}
 			}
-			
+
 			if(is_array($user)) {
 				$returnval = array(	'username' 	=> 	$user['username'],
 									'type'		=>	$user['typ'],
@@ -658,7 +669,7 @@ class remoting_client extends remoting {
 				throw new SoapFault('login_failed', 'Login failed.');
 			}
 		}
-		
+
 		//* Log failed login attempts
 		if($user === false) {
 			if(!$alreadyfailed['times'] ) {
@@ -671,10 +682,10 @@ class remoting_client extends remoting {
 				$app->db->query($sql, $remote_ip);
 			}
 		}
-		
+
 		return $returnval;
 	}
-	
+
 	public function client_get_by_groupid($session_id, $group_id)
 	{
 		global $app;

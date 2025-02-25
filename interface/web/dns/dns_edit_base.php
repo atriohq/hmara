@@ -41,6 +41,10 @@ $app->load('tform_actions');
 class dns_page_action extends tform_actions {
 
 	protected function checkDuplicate() {
+                global $app;
+		// If a CNAME RR is present at a node, no other data should be present
+                $tmp = $app->db->queryOneRecord("SELECT count(dns_rr.id) as number FROM dns_rr LEFT JOIN dns_soa ON dns_rr.zone = dns_soa.id WHERE (type = 'CNAME' AND ( name = replace(?, concat('.', dns_soa.origin), '') or name = ? or name = concat(?,'.',dns_soa.origin) ) AND zone = ? and dns_rr.id != ?)", $this->dataRecord["name"], $this->dataRecord["name"], $this->dataRecord["name"], $this->dataRecord["zone"], $this->id);
+                if($tmp['number'] > 0) return true;
 		return false;
 	}
 
@@ -104,7 +108,7 @@ class dns_page_action extends tform_actions {
 			$client_group_id = intval($_SESSION["s"]["user"]["default_group"]);
 			$client = $app->db->queryOneRecord("SELECT limit_dns_record FROM sys_group, client WHERE sys_group.client_id = client.client_id and sys_group.groupid = ?", $client_group_id);
 
-			// Check if the user may add another mailbox.
+			// Check if the user may add another record.
 			if($this->id == 0 && $client["limit_dns_record"] >= 0) {
 				$tmp = $app->db->queryOneRecord("SELECT count(id) as number FROM dns_rr WHERE sys_groupid = ?", $client_group_id);
 				if($tmp["number"] >= $client["limit_dns_record"]) {
@@ -112,8 +116,24 @@ class dns_page_action extends tform_actions {
 				}
 			}
 		} // end if user is not admin
-		
+
+		// Replace @ to example.com.
+		if($this->dataRecord["name"] === '@') {
+			$this->dataRecord["name"] = $soa['origin'];
+		}
+
+		// Replace * to *.example.com.
+		if($this->dataRecord["name"] === '*') {
+			$this->dataRecord["name"] = '*.' . $soa['origin'];
+		}
+
 		if($this->checkDuplicate()) $app->tform->errorMessage .= $app->tform->lng("data_error_duplicate")."<br>";
+
+		// Remove accidental quotes around a record.
+		$matches = array();
+		if(preg_match('/^"(.*)"$/', $this->dataRecord["data"], $matches)) {
+			$this->dataRecord["data"] = $matches[1];
+		}
 
 		// Set the server ID of the rr record to the same server ID as the parent record.
 		$this->dataRecord["server_id"] = $soa["server_id"];

@@ -1,10 +1,13 @@
 <tmpl_if name="config_error_msg">
-<div style="background: #ffdfdf; border: 1px solid #df7d7d; border-width: 1px 0; margin: 1.5em 0 1.5em 0; padding: 7px;">
-                <p style="font-face:bold">{tmpl_var name='configuration_error_txt'}</p>
-				<div>
-				<div style="float:left;width:150px;">{tmpl_var name='config_error_tstamp'} :&nbsp;</div><div style="padding-left:150px;">{tmpl_var name='config_error_msg'}</div>
-				</div>
-</div>
+<div class="alert alert-danger">
+    <p>
+      <tmpl_var name="configuration_error_txt">
+        <div>
+          <div style="float:left;width:150px;">{tmpl_var name='config_error_tstamp'} :&nbsp;</div>
+          <div style="padding-left:150px;">{tmpl_var name='config_error_msg'}</div>
+        </div>
+    </p>
+  </div>
 </tmpl_if>
 
 
@@ -62,6 +65,9 @@
                         </select></div>
                     </div>
                 </tmpl_unless>
+            </tmpl_if>
+            <tmpl_if name="domain_option">
+                <input type="hidden" id="client_group_id" name="client_group_id" value="{tmpl_var name='client_group_id_value'}" />
             </tmpl_if>
             <div class="form-group">
                 <label for="ip_address" class="col-sm-3 control-label">{tmpl_var name='ip_address_txt'}</label>
@@ -272,7 +278,11 @@
 
         <input type="hidden" name="id" value="{tmpl_var name='id'}">
 
-        <div class="clear"><div class="right">
+        <div class="clear">
+          <tmpl_if name='id'><tmpl_if name='show_delete_on_forms' op="==" value="y">
+            <a class="btn btn-default formbutton-danger formbutton-narrow" href="javascript: ISPConfig.confirm_action('sites/web_vhost_domain_del.php?id={tmpl_var name='id'}&_csrf_id={tmpl_var name='_csrf_id'}&_csrf_key={tmpl_var name='_csrf_key'}&phpsessid={tmpl_var name='phpsessid'}','{tmpl_var name='delete_confirmation'}');"><span class="icon icon-delete"></span></a>
+          </tmpl_if></tmpl_if>
+          <div class="right">
             <button id="dom-edit-submit" class="btn btn-default formbutton-success" type="button" value="{tmpl_var name='btn_save_txt'}">{tmpl_var name='btn_save_txt'}</button>
             <button class="btn btn-default formbutton-default" type="button" value="{tmpl_var name='btn_cancel_txt'}" data-load-content="sites/web_vhost_domain_list.php">{tmpl_var name='btn_cancel_txt'}</button>
         </div></div>
@@ -417,18 +427,6 @@
 	function reloadDirectiveSnippets() {
         jQuery.getJSON('sites/ajax_get_json.php'+ '?' + Math.round(new Date().getTime()), {server_id : serverId, type : "getdirectivesnippet"}, function(data) {
             var options = '<option value="0">-</option>';
-			options += "<optgroup label=\"{tmpl_var name='select_master_directive_snippet_txt'}\">";
-			for (var i = 0, len = data['m_snippets'].length; i < len; i++) {
-				var isSelected = '';
-
-				 if ($('#directive_snippets_id').val() == i + 1) {
-					 isSelected = 'selected="selected"';
-				 }
-
-				 options += '<option ' + isSelected + ' value="' + data['m_snippets'][i]['directive_snippets_id'] + '">' + data['m_snippets'][i]['name'] + '</option>';
-			}
-			options += '</optgroup>';
-
 			options += "<optgroup label=\"{tmpl_var name='select_directive_snippet_txt'}\">";
 			for (var i = 0, len = data['snippets'].length; i < len; i++) {
 				var isSelected = '';
@@ -462,7 +460,9 @@
             //var options = '<option value="">Default</option>';
 			var options = '';
             var serverphpidselected = '';
-            $.each(data, function(key, val) {
+            $.each(data.phpversion, function(akey,aval) {
+                key=Object.getOwnPropertyNames(aval)[0];
+                val=aval[key];
 				<tmpl_if name="id">
                 if($('#server_php_id').val() == key){
                     serverphpidselected = ' selected="selected"';

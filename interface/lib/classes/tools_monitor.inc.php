@@ -490,7 +490,7 @@ class tools_monitor {
 			if ($data == '') {
 				$html .= '<p>'.
 					'fail2ban is not installed on this server.<br />' .
-					'See more (for debian) <a href="http://www.howtoforge.com/fail2ban_debian_etch" target="htf">here...</a>'.
+					'See more (for debian) <a href="https://www.howtoforge.com/fail2ban_debian_etch" target="htf">here...</a>'.
 					'</p>';
 			}
 			else {
@@ -568,7 +568,7 @@ class tools_monitor {
 
 		if(isset($record['data'])) {
 			$data = unserialize($record['data']);
-			$html = nl2br($data['output']);
+                       $html = '<pre>' . htmlspecialchars($data['output']) . '</pre>';
 		} else {
 			$html = '<p>'.$app->lng("no_data_mailq_txt").'</p>';
 		}

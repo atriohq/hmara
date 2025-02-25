@@ -170,9 +170,12 @@ class cronjob_goaccess extends cronjob {
 						}
 
 						$files = scandir($statsdir);
+						if (($key = array_search('index.php', $files)) !== false) {
+							unset($files[$key]);
+						}
 
 						foreach ($files as $file) {
-							if (substr($file, 0, 1) != "." && !is_dir("$statsdir"."/"."$file") && substr($file, 0, 1) != "w" && substr($file, 0, 1) != "i") $app->system->copy("$statsdir"."/"."$file", "$statsdirold"."$file");
+							if (substr($file, 0, 1) != "." && !is_dir("$statsdir"."/"."$file") && substr($file, 0, 1) != "w" && substr($file, 0, 1) != "i") $app->system->move("$statsdir"."/"."$file", "$statsdirold"."$file");
 						}
 					}
 
@@ -198,8 +201,11 @@ class cronjob_goaccess extends cronjob {
 							$cust_lang = 'en_UK.UTF-8';
 							break;
 						case 'br':
-							$cust_lang = 'pt_PT.UTF-8';
+							$cust_lang = 'pt_BR.UTF-8';
 							break;
+                                                case 'pt':
+                                                        $cust_lang = 'pt_BR.UTF-8';
+                                                        break;
 						case 'ca':
 							$cust_lang = 'en_US.UTF-8';
 							break;

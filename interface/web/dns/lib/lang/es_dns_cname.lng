@@ -1,6 +1,6 @@
 <?php
 $wb['active_txt'] = 'Habilitado';
-$wb['data_error_duplicate'] = 'Duplicate A, AAAA, CNAME, or DNAME record';
+$wb['data_error_duplicate'] = 'Duplicate A, AAAA, ALIAS, CNAME, or DNAME record';
 $wb['data_error_empty'] = 'El nombre del host de destino está vacío.';
 $wb['data_error_regex'] = 'El nombre del host de destino tiene un formato incorrecto.';
 $wb['data_txt'] = 'Nombre del host de destino';
@@ -14,4 +14,5 @@ $wb['ttl_range_error'] = 'El tiempo mín. de TTL es 60 segundos.';
 $wb['ttl_txt'] = 'TTL';
 $wb['type_txt'] = 'tipo';
 $wb['zone_txt'] = 'Zona';
+$wb['data_error_not_found'] = 'Target hostname not found in the current zone. It should end in a . when it\'s external.';
 ?>
