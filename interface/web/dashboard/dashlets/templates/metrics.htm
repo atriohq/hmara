@@ -1,0 +1,69 @@
+<!--<div class="{tmpl_var name='tablelayout'}">-->
+<div>
+    <div><h3>{tmpl_var name="label_chart_title"}</h3></div>
+    <div style="padding-bottom:10px;"><canvas height="30" id="loadchart" style="background-color: white;"></canvas></div>
+    <div style="padding-bottom:10px;"><canvas height="30" id="memchart" style="background-color: white;"></canvas></div>
+    <div style="padding-bottom:10px;"><canvas height="30" id="rxchart" style="background-color: white;"></canvas></div>
+    <div style="padding-bottom:10px;"><canvas height="30" id="txchart" style="background-color: white;"></canvas></div>
+</div>
+
+<script>
+    createChart('loadchart', '{tmpl_var name="loadchart_label"}', [{tmpl_var name='label'}], [{tmpl_var name='loadchart_data'}]);
+    createChart('memchart', '{tmpl_var name="memchart_label"}', [{tmpl_var name='label'}], [{tmpl_var name='memchart_data'}]);
+    createChart('rxchart', '{tmpl_var name="rxchart_label"}', [{tmpl_var name='label'}], [{tmpl_var name='rxchart_data'}]);
+    createChart('txchart', '{tmpl_var name="txchart_label"}', [{tmpl_var name='label'}], [{tmpl_var name='txchart_data'}]);
+    
+    function createChart(chartname, label, labels, data) {
+        var ctx = document.getElementById(chartname).getContext('2d');
+        var chart = new Chart(ctx, {
+            type: 'line', // Type of chart
+            data: {
+                labels: labels, // Empty array to remove labels
+                datasets: [{
+                    label: label, // Name of the dataset
+                    data: data, // Data points
+                    borderWidth: 1,
+                    tension: 0.4, // Tension for cubic interpolation
+                    cubicInterpolationMode: 'default', // Can be 'default' or 'monotone'
+                    borderColor: 'rgb(75, 192, 192)', // Color of the line
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)', // Color for filling the area below the line
+                    fill: true // Enable fill below the line
+                }]
+            },
+            options: {
+                scales: {
+                    x: {
+                        display: false, // Hide the x-axis
+                    },
+                    y: {
+                        beginAtZero: true // Start y-axis at zero
+                    }
+                },
+                plugins: {
+                    legend: {
+                        labels: {
+                            generateLabels: function(chart) {
+                                const data = chart.data;
+                                return data.datasets.map(function(dataset, i) {
+                                    return {
+                                        text: dataset.label,
+                                        fillStyle: 'white', // Set to empty string to hide the colored box
+                                        hidden: !chart.isDatasetVisible(i),
+                                        lineCap: dataset.borderCapStyle,
+                                        lineDash: dataset.borderDash,
+                                        lineDashOffset: dataset.borderDashOffset,
+                                        lineJoin: dataset.borderJoinStyle,
+                                        lineWidth: dataset.borderWidth,
+                                        strokeStyle: 'white',
+                                        pointStyle: 'white', // Set to empty string to hide the point style
+                                        datasetIndex: i
+                                    };
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }    
+</script>
