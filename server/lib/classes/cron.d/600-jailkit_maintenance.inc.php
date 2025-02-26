@@ -88,10 +88,15 @@ class cronjob_jailkit_maintenance extends cronjob {
 			}
 
 			$shelluser_list = $app->db->queryAllRecords("SELECT * FROM shell_user WHERE parent_domain_id = ? and chroot = 'jailkit' and active = 'y'", $rec['domain_id']);
-			$cronjob_list = $app->db->queryAllRecords("SELECT * FROM cron WHERE parent_domain_id = ? and type = 'chrooted' and active = 'y'", $rec['domain_id']);
 
-			if(is_array($cronjob_list) && !empty($cronjob_list) || is_array($shelluser_list) && !empty($shelluser_list)) {
+			if(is_array($shelluser_list) && !empty($shelluser_list)) {
 				$options['jk_php_maintenance_check'] = "yes";
+				$options['homedir_usernames'] = array();
+
+				foreach($shelluser_list as $shelluser) {
+					$options['homedir_usernames'][] = $shelluser['username'];
+				}
+
 			} else {
 				$options['jk_php_maintenance_check'] = "no";
 

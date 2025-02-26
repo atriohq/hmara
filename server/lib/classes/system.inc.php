@@ -2555,7 +2555,7 @@ class system{
 		} elseif(is_string($app_sections)) {
 			$app_sections = preg_split('/[\s,]+/', $app_sections);
 		}
-		if(! is_array($options)) {
+		if(!is_array($options)) {
 			$options = (is_string($options) ? preg_split('/[\s,]+/', $options) : array());
 		}
 
@@ -2588,7 +2588,14 @@ class system{
 
 		// Initialize the chroot into the specified directory with the specified applications
 		$cmd = 'jk_init' . $program_args;
+		$app->log("Executing command: $cmd", LOGLEVEL_DEBUG);
 		$this->exec_safe($cmd, $home_dir);
+
+		// Check for errors in the command execution
+		if ($this->last_exec_retcode() != 0) {
+			$app->log("Error executing jk_init command: " . implode("\n", $this->last_exec_out()), LOGLEVEL_ERROR);
+			return false;
+		}
 
 		// Create the tmp and /var/run directories
 		if(!is_dir($home_dir . '/tmp')) {
@@ -2694,6 +2701,8 @@ class system{
 		global $app;
 
 		$app->log("update_jailkit_chroot called for $home_dir with options ".print_r($options, true), LOGLEVEL_DEBUG);
+		$app->log("update_jailkit_chroot called for $home_dir with sections ".print_r($sections, true), LOGLEVEL_DEBUG);
+
 		$app->uses('ini_parser');
 
 		// Disallow operating on root directory
@@ -2738,7 +2747,7 @@ class system{
 				$jk_cp_args .= ' -f';
 				break;
 			default:
-				if (preg_match('@^skip[ =]/?(.+)$@', $opt, $matches) ) {
+				if (is_string($opt) && preg_match('@^skip[ =]/?(.+)$@', $opt, $matches) ) {
 					if (in_array($matches[1], $jailkit_directories)) {
 						$app->log("update_jailkit_chroot: skipping update of jailkit directory $home_dir/".$matches[1]
 							. "; if this is in use as a web folder, it is insecure and should be fixed.", LOGLEVEL_WARN);
@@ -2877,37 +2886,48 @@ class system{
 			$this->chmod($home_dir . '/var/tmp', 0770, true);
 		}
 
-		$os_type = $app->system->get_os_type();
-		if (isset($os_type['type'])) {
-			$used_os_type = $os_type['type'];
-		} else {
-			$used_os_type = 'unknown';
-		}
+		// If update_jailkit_chroot was called from cronjob 600-jailkit.inc.php, we need to check if the PHP cli binary is available in the jail
+		if(isset($options['jk_php_maintenance_check']) && $options['jk_php_maintenance_check'] == 'yes') {
+			$os_type = $app->system->get_os_type();
+			$used_os_type = isset($os_type['type']) ? $os_type['type'] : 'unknown';
 
-		if($options['jk_php_maintenance_check'] == 'yes') {
-			$alternatives_php = $home_dir . '/etc/alternatives/php';
+			if(is_array($options['homedir_usernames']) && !empty($options['homedir_usernames'])) {
+				foreach($options['homedir_usernames'] as $homedir_username) {
 
-			if(!empty($options['php_cli_binary'])) {
-				$php_bin_dir = dirname($options['php_cli_binary']);
-				if(!file_exists($home_dir . '/' . $options['php_cli_binary'])) {
-					$app->log("update_jailkit_chroot: The PHP cli binary " . $options['php_cli_binary'] . " is not available in the jail of the web " . $options['domain'], LOGLEVEL_DEBUG);
-
-					$fallback_php = $app->system->get_newest_php_bin($home_dir . $php_bin_dir);
-					$fallback_php_bin = str_replace($home_dir, '', $fallback_php);
-
-					if(!empty($fallback_php) && file_exists($fallback_php_bin)) {
-						if(is_link($alternatives_php) || is_file($alternatives_php) || !file_exists($alternatives_php)) {
-							unlink($alternatives_php);
-							symlink($fallback_php_bin, $alternatives_php);
-							$app->log("update_jailkit_chroot: Found " . $fallback_php_bin . " as a fallback for alternatives/php in the jail of " . $options['domain'], LOGLEVEL_DEBUG);
-						}
+					if($used_os_type == "debian" || $used_os_type == "ubuntu") {
+						$php_binary = $home_dir . '/etc/alternatives/php';
+					} elseif ($used_os_type == "redhat") {
+						$php_binary = $home_dir . '/home/' . $homedir_username . '/.local/bin/php';
+					} else {
+						$php_binary = $home_dir . '/home/' . $homedir_username . '/.local/bin/php';
 					}
-				} else {
-					if($used_os_type == "debian" || $$used_os_type == "ubuntu") {
-						$app->log("update_jailkit_chroot: setting alternatives/php to " . $options['php_cli_binary'], LOGLEVEL_DEBUG);
-						if(is_link($alternatives_php) || is_file($alternatives_php) || !file_exists($alternatives_php)) {
-							unlink($alternatives_php);
-							symlink($options['php_cli_binary'], $alternatives_php);
+
+					if(!empty($options['php_cli_binary'])) {
+						$php_bin_dir = dirname($options['php_cli_binary']);
+						if(!file_exists($home_dir . '/' . $options['php_cli_binary'])) {
+							$app->log("update_jailkit_chroot: The PHP cli binary " . $options['php_cli_binary'] . " is not available in the jail of the web " . $options['domain'], LOGLEVEL_DEBUG);
+
+							$fallback_php = $app->system->get_newest_php_bin($home_dir . $php_bin_dir);
+							$fallback_php_bin = str_replace($home_dir, '', $fallback_php);
+
+							if(!empty($fallback_php) && file_exists($fallback_php_bin)) {
+								if(is_link($php_binary) || is_file($php_binary) || !file_exists($php_binary)) {
+									unlink($php_binary);
+									symlink($fallback_php_bin, $php_binary);
+									$app->log("update_jailkit_chroot: Found " . $fallback_php_bin . " as a fallback for PHP in the jail of " . $options['domain'], LOGLEVEL_DEBUG);
+								}
+							}
+						} else {
+								$app->log("update_jailkit_chroot: setting PHP to " . $options['php_cli_binary'], LOGLEVEL_DEBUG);
+								if(is_link($php_binary) || is_file($php_binary) || !file_exists($php_binary)) {
+									unlink($php_binary);
+									symlink($options['php_cli_binary'], $php_binary);
+									if($used_os_type == "debian" || $$used_os_type == "ubuntu") {
+										if(file_exists($home_dir . '/home/' . $homedir_username . '/.local/bin/php')) {
+											unlink($home_dir . '/home/' . $homedir_username . '/.local/bin/php');
+										}
+									}
+								}
 						}
 					}
 				}
@@ -3096,8 +3116,7 @@ class system{
 			while(false !== ($entry = readdir($handle))) {
 			$full_path = $bin_directory . '/' . $entry;
 				// Check if the filename matches a pattern for commonly available PHP CLI binaries
-				// and ensure they are not symbolic links
-				if(preg_match('/^php(\d{1,2}\.?\d{1,2})?$/', $entry) && !is_link($full_path) && is_file($full_path)) {
+				if(preg_match('/^php(\d{1,2}\.?\d{1,2})?$/', $entry) && file_exists($full_path)) {
 					$php_binaries[] = $entry;
 				}
 			}

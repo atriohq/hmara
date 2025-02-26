@@ -212,7 +212,7 @@ class shelluser_jailkit_plugin {
 		if($app->system->is_user($data['new']['puser'])) {
 
 
-			$web = $app->db->queryOneRecord("SELECT web_domain.*, server_php.php_jk_section
+			$web = $app->db->queryOneRecord("SELECT web_domain.*, server_php.php_jk_section, server_php.php_cli_binary
           	FROM web_domain
           		LEFT JOIN server_php ON web_domain.server_php_id = server_php.server_php_id
           	WHERE web_domain.domain_id = ?", $data["new"]["parent_domain_id"]);
@@ -251,6 +251,7 @@ class shelluser_jailkit_plugin {
 									$this->jailkit_config[$section] = array_unique($jk_temp_config, SORT_REGULAR);
 									sort($this->jailkit_config[$section], SORT_STRING);
 								}
+
 							}
 						}
 
@@ -410,6 +411,7 @@ class shelluser_jailkit_plugin {
 			$sections = $this->jailkit_config['jailkit_chroot_app_sections'];
 			$programs = $this->jailkit_config['jailkit_chroot_app_programs'] . ' '
 				  . $this->jailkit_config['jailkit_chroot_cron_programs'];
+
 
 			if ($update_hash == $web['last_jailkit_hash']) {
 				return;
@@ -732,22 +734,20 @@ class shelluser_jailkit_plugin {
 
 		// Create .bashrc file
 		$app->load('tpl');
-
 		$tpl = new tpl();
 
 		$os_type = $app->system->get_os_type();
-		if (isset($os_type['type'])) {
-			$used_os_type = $os_type['type'];
-		} else {
-			$used_os_type = 'unknown';
-		}
+		$used_os_type = isset($os_type['type']) ? $os_type['type'] : 'unknown';
 
 		if($used_os_type == "debian" || $used_os_type == "ubuntu") {
 			$tpl->newTemplate("bashrc_user_deb.master");
-		} elseif($used_os_type == "redhat") {
+			$php_binary = $this->web['document_root'] . '/etc/alternatives/php';
+		} elseif ($used_os_type == "redhat") {
 			$tpl->newTemplate("bashrc_user_redhat.master");
+			$php_binary = $this->web['document_root'] . '/home/' . $this->data['new']['username'] . '/.local/bin/php';
 		} else {
 			$tpl->newTemplate("bashrc_user_generic.master");
+			$php_binary = $this->web['document_root'] . '/home/' . $this->data['new']['username'] . '/.local/bin/php';
 		}
 
 		// Predefine some template vars
@@ -755,51 +755,49 @@ class shelluser_jailkit_plugin {
 		$tpl->setVar('domain', $this->web['domain']);
 		$tpl->setVar('home_dir', $this->_get_home_dir(""));
 
-		$tpl->setVar('use_php_path', false);
+		$php_bin_dir = dirname($this->web['php_cli_binary']);
+		$php_binary_path = $this->web['document_root'] . '/' . $this->web['php_cli_binary'];
 
-		if(($this->web['server_php_id'] > 0) && !empty($this->web['php_cli_binary'])) {
-			$php_bin_dir = dirname($this->web['php_cli_binary']);
-			$alternatives_php = $this->web['document_root'] . '/etc/alternatives/php';
+		if(preg_match('/^(\/usr\/(s)?bin|\/(s)?bin)/', $php_bin_dir)) {
+			// Use symlink if PHP binary is in /usr/(s)?bin or /(s)?bin
+			$tpl->setVar('use_php_path', false);
 
-			if(preg_match('/^(\/usr\/(s)?bin|\/(s)?bin)/', $php_bin_dir)) {
-				$tpl->setVar('use_php_path', false);
-			} else {
-				$tpl->setVar('use_php_path', true);
-				$tpl->setVar('php_bin_dir', $php_bin_dir);
-			}
+			if(!file_exists($php_binary_path)) {
+				$app->log("The PHP cli binary " . $this->web['php_cli_binary'] . " is not available in the jail of the web " . $this->web['domain'] . " / SSH/SFTP user: " . $this->data['new']['username'] . ". Check your Jailkit setup!", LOGLEVEL_DEBUG);
 
-			if(!file_exists($this->web['document_root'] . '/' . $this->web['php_cli_binary'])) {
-				$app->log("The PHP cli binary " . $this->web['php_cli_binary'] . " is not available in the jail of the web " . $this->web['domain']  . " / SSH/SFTP user: " . $this->data['new']['username']  . ". Check your Jailkit setup!", LOGLEVEL_DEBUG);
-				$tpl->setVar('use_php_path', false);
-
-				if(!empty($app->system->get_newest_php_bin($this->web['document_root'] . $php_bin_dir))) {
-					$fallback_php = $app->system->get_newest_php_bin($this->web['document_root'] . $php_bin_dir);
+				$fallback_php = $app->system->get_newest_php_bin($this->web['document_root'] . $php_bin_dir);
+				if (!empty($fallback_php)) {
 					$fallback_php_bin = str_replace($this->web['document_root'], '', $fallback_php);
 
-					if(!empty($fallback_php) && file_exists($fallback_php_bin)) {
-						if(is_link($alternatives_php) || is_file($alternatives_php) || !file_exists($alternatives_php)) {
-							unlink($alternatives_php);
-							symlink($fallback_php_bin, $alternatives_php);
-							$app->log("Found " . $fallback_php_bin . " as a fallback for alternatives/php in the jail of ". $this->web['domain'], LOGLEVEL_DEBUG);
+					if(file_exists($fallback_php_bin)) {
+						if(is_link($php_binary) || is_file($php_binary) || !file_exists($php_binary)) {
+							unlink($php_binary);
 						}
+						symlink($fallback_php_bin, $php_binary);
+						$app->log("Found " . $fallback_php_bin . " as a fallback PHP binary in the jail of " . $this->web['domain'], LOGLEVEL_DEBUG);
 					}
 				}
-
 			} else {
-				if($used_os_type == "debian" || $used_os_type == "ubuntu") {
-					if(is_link($alternatives_php) || is_file($alternatives_php) || !file_exists($alternatives_php))
-					{
-						unlink($alternatives_php);
-						symlink($this->web['php_cli_binary'], $alternatives_php);
-					} else {
-						symlink($this->web['php_cli_binary'], $alternatives_php);
-					}
+				if(is_link($php_binary) || is_file($php_binary) || !file_exists($php_binary)) {
+					unlink($php_binary);
 				}
+				symlink($this->web['php_cli_binary'], $php_binary);
+			}
+		} else {
+			// Use .bashrc to extend $PATH if PHP binary is in a custom path
+			$tpl->setVar('use_php_path', true);
+			$tpl->setVar('php_bin_dir', $php_bin_dir);
+
+			if(file_exists($php_binary)) {
+				unlink($php_binary);
 			}
 		}
+
 		$bashrc = $this->web['document_root'] . '/home/' . $this->data['new']['username'] . '/.bashrc';
 
-		if(@is_file($bashrc) || @is_link($bashrc)) unlink($bashrc);
+		if (@is_file($bashrc) || @is_link($bashrc)) {
+			unlink($bashrc);
+		}
 		file_put_contents($bashrc, $tpl->grab());
 		$app->system->chown($bashrc, $this->data['new']['username']);
 		$app->system->chgrp($bashrc, $this->data['new']['pgroup']);
@@ -807,9 +805,7 @@ class shelluser_jailkit_plugin {
 		$app->log("Added bashrc script: " . $bashrc, LOGLEVEL_DEBUG);
 
 		unset($tpl);
-
 	}
-
 } // end class
 
 ?>

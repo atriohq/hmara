@@ -210,7 +210,9 @@ fi
 					$app->system->chgrp($homedir.'/.bashrc.d', $data['new']['pgroup']);
 				}
 
-				$this->_add_user_bashrc();
+				if($data['new']['chroot'] != 'jailkit') {
+					$this->_add_user_bashrc();
+				}
 
 				// Create symlinks for conveniance, SFTP user should not land in an empty dir.
 				if(!is_link($homedir.'/web')) symlink('../../web', $homedir.'/web');
@@ -363,8 +365,9 @@ fi
 						$app->system->chgrp($homedir.'/.bashrc.d', $data['new']['pgroup']);
 					}
 
-					$this->_add_user_bashrc();
-
+					if($data['new']['chroot'] != 'jailkit') {
+						$this->_add_user_bashrc();
+					}
 					//* Add webfolder protection again
 					$app->system->web_folder_protection($web['document_root'], true);
 				} else {
@@ -625,6 +628,12 @@ fi
 			$used_os_type = 'unknown';
 		}
 
+		if($this->data['new']['chroot'] == "jailkit") {
+			$is_jailed = true;
+		} else {
+			$is_jailed = false;
+		}
+
 		if($used_os_type == "debian" || $used_os_type == "ubuntu") {
 			$tpl->newTemplate("bashrc_user_deb.master");
 		} elseif($used_os_type == "redhat") {
@@ -639,17 +648,37 @@ fi
 		if(($this->web['server_php_id'] > 0) && !empty($this->web['php_cli_binary'])) {
 			$php_bin_dir = dirname($this->web['php_cli_binary']);
 			$home_php = $user_home_dir . '/.local/bin' . '/php';
+			if ($is_jailed === true) {
+				$real_php_bin_dir = $this->web['document_root'] . $php_bin_dir;
+			} else {
+				$real_php_bin_dir = $php_bin_dir;
+			}
 
 			if(preg_match('/^(\/usr\/(s)?bin|\/(s)?bin)/', $php_bin_dir)) {
 				$tpl->setVar('use_php_path', false);
 
 				if(!is_dir($user_home_dir . '/.local/bin')) $app->system->mkdirpath($user_home_dir . '/.local/bin', 0750, $this->data['new']['username'], $this->data['new']['pgroup']);
 
-				if(is_link($home_php) || is_file($home_php) || !file_exists($home_php)) {
-					unlink($home_php);
-					symlink($this->web['php_cli_binary'], $home_php);
-				} else {
-					symlink($this->web['php_cli_binary'], $home_php);
+				if(!empty($app->system->get_newest_php_bin($real_php_bin_dir))) {
+					$fallback_php = $app->system->get_newest_php_bin($real_php_bin_dir);
+					$fallback_php_bin = str_replace($this->web['document_root'], '', $fallback_php);
+
+					if(!empty($fallback_php) && file_exists($fallback_php_bin)) {
+						if(is_link($home_php) || is_file($home_php) || !file_exists($home_php)) {
+							unlink($home_php);
+							symlink($fallback_php_bin, $home_php);
+							//$app->log("Found " . $fallback_php_bin . " as a fallback for PHP in the jail of ". $this->web['domain'], LOGLEVEL_DEBUG);
+						}
+					} else {
+
+						if(is_link($home_php) || is_file($home_php) || !file_exists($home_php))
+						{
+							unlink($home_php);
+							symlink($this->web['php_cli_binary'], $home_php);
+						} else {
+							symlink($this->web['php_cli_binary'], $home_php);
+						}
+					}
 				}
 
 			} else {

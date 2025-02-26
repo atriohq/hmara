@@ -92,11 +92,9 @@ fi
 #alias la='ls -A'
 #alias l='ls -CF'
 
-<tmpl_if name='jailkit_chroot' op='==' value='n'>
 <tmpl_if name='use_php_path'>
 # Overwrite the PHP cli binaries by using $PATH:
 export PATH=<tmpl_var name='php_bin_dir'>:$PATH
-</tmpl_if>
 </tmpl_if>
 
 # Alias definitions.

@@ -83,6 +83,8 @@ class cron_jailkit_plugin {
 			LEFT JOIN server_php ON web_domain.server_php_id = server_php.server_php_id
 		WHERE web_domain.domain_id = ?", $data["new"]["parent_domain_id"]);
 
+		$this->parent_domain = $parent_domain;
+
 		if(!$parent_domain["domain_id"]) {
 			$app->log("Parent domain not found", LOGLEVEL_WARN);
 			return 0;
@@ -135,7 +137,7 @@ class cron_jailkit_plugin {
 
 				$this->_add_jailkit_user();
 
-				$this->_setup_php_jailkit();
+				//$this->_setup_php_jailkit();
 
 				$command .= 'usermod -U ? 2>/dev/null';
 				$app->system->exec_safe($command, $parent_domain["system_user"]);
@@ -168,6 +170,8 @@ class cron_jailkit_plugin {
 			LEFT JOIN server_php ON web_domain.server_php_id = server_php.server_php_id
 		WHERE web_domain.domain_id = ?", $data["new"]["parent_domain_id"]);
 
+		$this->parent_domain = $parent_domain;
+
 		if(!$parent_domain["domain_id"]) {
 			$app->log("Parent domain not found", LOGLEVEL_WARN);
 			return 0;
@@ -191,14 +195,14 @@ class cron_jailkit_plugin {
 				$app->uses("getconf");
 				$this->data = $data;
 				$this->jailkit_config = $app->getconf->get_server_config($conf["server_id"], 'jailkit');
-				foreach (array('jailkit_chroot_app_sections', 'jailkit_chroot_app_programs') as $section) {
+				foreach(array('jailkit_chroot_app_sections', 'jailkit_chroot_app_programs') as $section) {
 					// Replace and don't inherit the server's Jailkit config
-					if (isset($parent_domain[$section]) && $parent_domain[$section] != '' ) {
+					if(isset($parent_domain[$section]) && $parent_domain[$section] != '' ) {
 						$this->jailkit_config[$section] = $parent_domain[$section];
 					}
 					// Add selected PHP version to the jailkit chroot
-					if ($section == 'jailkit_chroot_app_sections') {
-						if (isset($parent_domain['php_jk_section']) && $parent_domain['php_jk_section'] != '' ) {
+					if($section == 'jailkit_chroot_app_sections') {
+						if(isset($parent_domain['php_jk_section']) && $parent_domain['php_jk_section'] != '' ) {
 							$this->jailkit_config['jailkit_chroot_app_sections'] = $this->jailkit_config['jailkit_chroot_app_sections'] . ' ' . $parent_domain['php_jk_section'];
 							$jk_temp_config = preg_split('/[\s,]+/', $this->jailkit_config['jailkit_chroot_app_sections']);
 
@@ -217,7 +221,7 @@ class cron_jailkit_plugin {
 
 				$this->_add_jailkit_user();
 
-				$this->_setup_php_jailkit();
+				//$this->_setup_php_jailkit();
 
 				$this->_update_website_security_level();
 
