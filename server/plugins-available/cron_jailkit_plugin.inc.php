@@ -137,9 +137,9 @@ class cron_jailkit_plugin {
 
 				$this->_add_jailkit_user();
 
-				//$this->_setup_php_jailkit();
+				$this->_setup_php_jailkit();
 
-				$command .= 'usermod -U ? 2>/dev/null';
+				$command = 'usermod -U ? 2>/dev/null';
 				$app->system->exec_safe($command, $parent_domain["system_user"]);
 
 				$this->_update_website_security_level();

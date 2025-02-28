@@ -111,7 +111,7 @@ $dist = get_distname();
 include_once "/usr/local/ispconfig/server/lib/config.inc.php";
 $conf_old = $conf;
 unset($conf);
-define('ISPC_LOG_FILE', $old_conf['ispconfig_log_dir'] . '/update.log');
+define('ISPC_LOG_FILE', $conf_old['ispconfig_log_dir'] . '/update.log');
 
 if($dist['id'] == '') die('Linux distribution or version not recognized.');
 
