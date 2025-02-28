@@ -2,6 +2,6 @@
 $wb['metrics_txt'] = 'Systeemmetriek';
 $wb['loadchart_label'] = 'Systeembelasting %';
 $wb['memchart_label'] = 'Geheugengebruik %';
-$wb['rxchart_label'] = 'Netwerk in/Bytes';
-$wb['txchart_label'] = 'Netwerk uit/Bytes';
+$wb['rxchart_label'] = 'Netwerk in/kB';
+$wb['txchart_label'] = 'Netwerk uit/kB';
 $wb['label_chart_title'] = 'Systeemmetriek';

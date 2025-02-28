@@ -1,0 +1,7 @@
+<?php
+$wb['metrics_txt'] = 'Rendszer metrikák';
+$wb['loadchart_label'] = 'Rendszerterhelés %';
+$wb['memchart_label'] = 'Memóriahasználat %';
+$wb['rxchart_label'] = 'Hálózat be/kB';
+$wb['txchart_label'] = 'Hálózat ki/kB';
+$wb['label_chart_title'] = 'Rendszer metrikák';

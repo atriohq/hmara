@@ -2,6 +2,6 @@
 $wb['metrics_txt'] = 'Metryki systemowe';
 $wb['loadchart_label'] = 'Obciążenie systemu %';
 $wb['memchart_label'] = 'Użycie pamięci %';
-$wb['rxchart_label'] = 'Sieć wejściowa/Bajty';
-$wb['txchart_label'] = 'Sieć wyjściowa/Bajty';
+$wb['rxchart_label'] = 'Sieć wejściowa/kB';
+$wb['txchart_label'] = 'Sieć wyjściowa/kB';
 $wb['label_chart_title'] = 'Metryki systemowe';

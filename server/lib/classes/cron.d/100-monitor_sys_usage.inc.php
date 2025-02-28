@@ -128,7 +128,10 @@ class cronjob_monitor_sys_usage extends cronjob {
         $data['mem'][] = $memory_usage_percent;
 
         // Get network bandwidth
-        $interface = 'eth0';
+        $interface = $this->getFirstExternalInterface();
+        if(empty($interface)) {
+            $interface = 'eth0';
+        }
         list($rx, $tx) = $this->get_network_bytes($interface);
 
         // Trim array size
@@ -136,11 +139,11 @@ class cronjob_monitor_sys_usage extends cronjob {
             array_shift($data['net']);
         }
 
-        // Calculate network bandwidth in bytes per second
+        // Calculate network bandwidth in kilobytes per second
         if(isset($data['rx']) && isset($data['tx'])) {
             $data['net'][] = [
-                'rx' => ($rx - $data['rx']) / $interval_seconds,
-                'tx' => ($tx - $data['tx']) / $interval_seconds
+                'rx' => ($rx - $data['rx']) / $interval_seconds / 1024,
+                'tx' => ($tx - $data['tx']) / $interval_seconds / 1024
             ];
 
         }
@@ -254,4 +257,26 @@ class cronjob_monitor_sys_usage extends cronjob {
         return [0, 0];
     }
 
+    private function getFirstExternalInterface() {
+        // Run the command to get the default route.
+        // The output will be something like:
+        // default via 192.168.1.1 dev eth0 proto static metric 100
+        exec("ip route | grep '^default'", $output, $returnVar);
+
+        // Check if the command executed successfully and output is available
+        if ($returnVar !== 0 || empty($output)) {
+            return null;  // or handle error as needed
+        }
+
+        // Split the output into parts.
+        $parts = preg_split('/\s+/', $output[0]);
+
+        // Look for the "dev" keyword, which precedes the interface name.
+        $index = array_search("dev", $parts);
+        if ($index !== false && isset($parts[$index + 1])) {
+            return $parts[$index + 1];
+        }
+
+        return null;
+    }
 }
