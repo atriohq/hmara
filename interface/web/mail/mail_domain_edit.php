@@ -756,7 +756,7 @@ class page_action extends tform_actions {
 			}
 		}
 
-		$new_rr['name'] = $dataRecord['dkim_selector'].'._domainkey.'.$dataRecord['domain'].'.';
+		$new_rr['name'] = $dataRecord['dkim_selector'].'._domainkey';
 		$new_rr['type'] = 'TXT';
 		$new_rr['data'] = 'v=DKIM1; t=s; p='.str_replace(array('-----BEGIN PUBLIC KEY-----','-----END PUBLIC KEY-----',"\r","\n"), '', $this->dataRecord['dkim_public']);
 		$new_rr['aux'] = 0;
