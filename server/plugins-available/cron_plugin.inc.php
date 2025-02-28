@@ -219,6 +219,12 @@ class cron_plugin {
 		$cmd_count = 0;
 		$chr_cmd_count = 0;
 
+		// Check if parentDomain array is empty
+		if(!is_array($this->parent_domain) || count($this->parent_domain) == 0) {
+			$app->log("Parent domain not found", LOGLEVEL_WARN);
+			return 0;
+		}
+
 		//* read all active cron jobs from database and write them to file
 		$cron_jobs = $app->db->queryAllRecords("SELECT c.`run_min`, c.`run_hour`, c.`run_mday`, c.`run_month`, c.`run_wday`, c.`command`, c.`type`, c.`log`, `web_domain`.`domain` as `domain` FROM `cron` as c INNER JOIN `web_domain` ON `web_domain`.`domain_id` = c.`parent_domain_id` WHERE c.`parent_domain_id` = ? AND c.`active` = 'y'", $this->parent_domain["domain_id"]);
 		if($cron_jobs && count($cron_jobs) > 0) {
@@ -240,15 +246,21 @@ class cron_plugin {
 					$log_wget_target = $log_root . '/cron_wget.log';
 				}
 
+				// Check if command contains invalid chars
+				if(strpos($job['command'], "\n") !== false || strpos($job['command'], "\r") !== false || strpos($job['command'], chr(0)) !== false) {
+					$app->log("Insecure Cron job SKIPPED: " . $job['command'], LOGLEVEL_WARN);
+					continue;
+				}
+
 				$cron_line .= "\t{$this->parent_domain['system_user']}"; //* running as user
 				if($job['type'] == 'url') {
-					$cron_line .= "\t{$cron_config['wget']} --no-check-certificate --user-agent='Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:47.0) Gecko/20100101 Firefox/47.0' -q -t 1 -T 7200 -O " . $log_wget_target . " " . escapeshellarg($job['command']) . " " . $log_target;
-				} else {
-					if(strpos($job['command'], "\n") !== false || strpos($job['command'], "\r") !== false || strpos($job['command'], chr(0)) !== false) {
+					// Check that command does not contain a backslash
+					if (strpos($job['command'], '\\') !== false) {
 						$app->log("Insecure Cron job SKIPPED: " . $job['command'], LOGLEVEL_WARN);
 						continue;
 					}
-
+					$cron_line .= "\t{$cron_config['wget']} --no-check-certificate --user-agent='Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:47.0) Gecko/20100101 Firefox/47.0' -q -t 1 -T 7200 -O " . $log_wget_target . " " . escapeshellarg($job['command']) . " " . $log_target;
+				} else {
 					$web_root = '';
 					if($job['type'] == 'chrooted') {
 						if(substr($job['command'], 0, strlen($this->parent_domain['document_root'])) == $this->parent_domain['document_root']) {
