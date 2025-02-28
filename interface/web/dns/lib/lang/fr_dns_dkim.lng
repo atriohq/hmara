@@ -10,4 +10,5 @@ $wb['selector_txt'] = 'Selecteur DKIM';
 $wb['dkim_disabled_txt'] = 'DKIM disabled for this mail-domain';
 $wb['data_error_empty'] = 'Public-Key missing';
 $wb['dkim_selector_empty_txt'] = 'DKIM-Selector is empty';
+$wb['btn_edit_as_txt_record_txt'] = 'Edit as TXT record';
 ?>

@@ -10,4 +10,5 @@ $wb['ttl_range_error'] = 'Мин. время <b>TTL</b> 60 секунд.';
 $wb['selector_txt'] = 'DKIM-селектор';
 $wb['data_error_empty'] = 'Public-Key missing';
 $wb['dkim_selector_empty_txt'] = 'DKIM-Selector is empty';
+$wb['btn_edit_as_txt_record_txt'] = 'Edit as TXT record';
 ?>

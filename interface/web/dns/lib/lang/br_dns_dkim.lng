@@ -11,3 +11,4 @@ $wb['selector_txt'] = 'Seletor DKIM';
 $wb['data_error_empty'] = 'Chave pública ausente.';
 $wb['dkim_selector_empty_txt'] = 'Seletor DKIM está vazio.';
 $wb['DNS DKIM'] = 'Registro DKIM';
+$wb['btn_edit_as_txt_record_txt'] = 'Editar registro TXT';

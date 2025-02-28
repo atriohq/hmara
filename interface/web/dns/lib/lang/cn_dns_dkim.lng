@@ -10,4 +10,5 @@ $wb['ttl_range_error'] = '最小 TTL 时间为 60 秒';
 $wb['selector_txt'] = 'DKIM 选择器';
 $wb['data_error_empty'] = '公钥缺失';
 $wb['dkim_selector_empty_txt'] = 'DKIM 选择器为空';
+$wb['btn_edit_as_txt_record_txt'] = '作为TXT记录编辑';
 ?>

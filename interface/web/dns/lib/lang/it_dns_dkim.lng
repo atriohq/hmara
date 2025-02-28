@@ -10,4 +10,5 @@ $wb['ttl_range_error'] = 'Minimo TTL è 60 secondi.';
 $wb['selector_txt'] = 'DKIM-Selettore';
 $wb['data_error_empty'] = 'Manca la chiave pubblica';
 $wb['dkim_selector_empty_txt'] = 'DKIM-Selettore è vuoto';
+$wb['btn_edit_as_txt_record_txt'] = 'Modifica come record TXT';
 ?>

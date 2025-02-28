@@ -10,4 +10,5 @@ $wb['ttl_range_error'] = 'En düşük TTL süresi 60 saniyedir.';
 $wb['selector_txt'] = 'DKIM Seçici';
 $wb['data_error_empty'] = 'Herkese açık anahtar eksik';
 $wb['dkim_selector_empty_txt'] = 'DKIM Seçici boş olamaz';
+$wb['btn_edit_as_txt_record_txt'] = 'Edit as TXT record';
 ?>
