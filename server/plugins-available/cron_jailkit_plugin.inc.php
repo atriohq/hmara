@@ -137,8 +137,6 @@ class cron_jailkit_plugin {
 
 				$this->_add_jailkit_user();
 
-				$this->_setup_php_jailkit();
-
 				$command = 'usermod -U ? 2>/dev/null';
 				$app->system->exec_safe($command, $parent_domain["system_user"]);
 
@@ -220,8 +218,6 @@ class cron_jailkit_plugin {
 				$this->_setup_jailkit_chroot();
 
 				$this->_add_jailkit_user();
-
-				//$this->_setup_php_jailkit();
 
 				$this->_update_website_security_level();
 
@@ -391,87 +387,6 @@ class cron_jailkit_plugin {
 			$app->system->web_folder_protection($web["document_root"], true);
 		}
 	}
-
-	function _setup_php_jailkit() {
-		global $app;
-
-		// Create .bashrc file
-		$app->load('tpl');
-
-		$tpl = new tpl();
-
-		$os_type = $app->system->get_os_type();
-		if (isset($os_type['type'])) {
-			$used_os_type = $os_type['type'];
-		} else {
-			$used_os_type = 'unknown';
-		}
-
-		if($used_os_type == "debian" || $used_os_type == "ubuntu") {
-			$tpl->newTemplate("bashrc_user_deb.master");
-		} elseif($used_os_type == "redhat") {
-			$tpl->newTemplate("bashrc_user_redhat.master");
-		} else {
-			$tpl->newTemplate("bashrc_user_generic.master");
-		}
-
-		// Predefine some template vars
-		$tpl->setVar('jailkit_chroot', 'y');
-		$tpl->setVar('domain', $this->parent_domain['domain']);
-		$tpl->setVar('home_dir', $this->_get_home_dir(""));
-		$tpl->setVar('use_php_path', false);
-
-
-		if(($this->parent_domain['server_php_id'] > 0) && !empty($this->parent_domain['php_cli_binary'])) {
-			$php_bin_dir = dirname($this->parent_domain['php_cli_binary']);
-			$alternatives_php = $this->parent_domain['document_root'] . '/etc/alternatives/php';
-
-			if(preg_match('/^(\/usr\/(s)?bin|\/(s)?bin)/', $php_bin_dir)) {
-				$tpl->setVar('use_php_path', false);
-			} else {
-				$tpl->setVar('use_php_path', true);
-				$tpl->setVar('php_bin_dir', $php_bin_dir);
-			}
-
-			if(!file_exists($this->parent_domain['document_root'] . '/' . $this->parent_domain['php_cli_binary'])) {
-				$app->log("The PHP cli binary " . $this->parent_domain['php_cli_binary'] . " is not available in the jail of the web " . $this->parent_domain['domain']  . " / cronjob_id: " . $this->data['new']['id']  . ". Check your Jailkit setup!", LOGLEVEL_DEBUG);
-				$tpl->setVar('use_php_path', false);
-
-				if(!empty($app->system->get_newest_php_bin($this->parent_domain['document_root'] . $php_bin_dir))) {
-					$fallback_php = $app->system->get_newest_php_bin($this->parent_domain['document_root'] . $php_bin_dir);
-					$fallback_php_bin = str_replace($this->parent_domain['document_root'], '', $fallback_php);
-
-					if(!empty($fallback_php) && file_exists($fallback_php_bin)) {
-						if(is_link($alternatives_php) || is_file($alternatives_php) || !file_exists($alternatives_php)) {
-							unlink($alternatives_php);
-							symlink($fallback_php_bin, $alternatives_php);
-							$app->log("Found " . $fallback_php_bin . " as a fallback for alternatives/php in the jail of ". $this->parent_domain['domain'], LOGLEVEL_DEBUG);
-						}
-					}
-				}
-			} else {
-				if($used_os_type == "debian" || $used_os_type == "ubuntu") {
-					if(is_link($alternatives_php) || is_file($alternatives_php) || !file_exists($alternatives_php))
-					{
-						unlink($alternatives_php);
-						symlink($this->parent_domain['php_cli_binary'], $alternatives_php);
-					} else {
-						symlink($this->parent_domain['php_cli_binary'], $alternatives_php);
-					}
-				}
-			}
-		}
-
-		$bashrc = $this->parent_domain['document_root'] . '/home/' .$this->parent_domain['system_user'] . '/.bashrc';
-
-		if(@is_file($bashrc) || @is_link($bashrc)) unlink($bashrc);
-		file_put_contents($bashrc, $tpl->grab());
-		$app->log("Added bashrc script: " . $bashrc, LOGLEVEL_DEBUG);
-
-		unset($tpl);
-
-	}
-
 
 	private function _delete_jailkit_if_unused($parent_domain_id) {
 		global $app, $conf;
