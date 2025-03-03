@@ -142,8 +142,8 @@ class cronjob_monitor_sys_usage extends cronjob {
         // Calculate network bandwidth in kilobytes per second
         if(isset($data['rx']) && isset($data['tx'])) {
             $data['net'][] = [
-                'rx' => ($rx - $data['rx']) / $interval_seconds / 1024,
-                'tx' => ($tx - $data['tx']) / $interval_seconds / 1024
+                'rx' => abs($rx - $data['rx']) / $interval_seconds / 1024,
+                'tx' => abs($tx - $data['tx']) / $interval_seconds / 1024
             ];
 
         }
