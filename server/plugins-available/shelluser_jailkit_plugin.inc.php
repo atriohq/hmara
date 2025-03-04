@@ -358,8 +358,6 @@ class shelluser_jailkit_plugin {
 	{
 		global $app, $conf;
 
-		$app->load('tpl');
-
 		if (isset($this->jailkit_config) && isset($this->jailkit_config['jailkit_hardlinks'])) {
 			if ($this->jailkit_config['jailkit_hardlinks'] == 'yes') {
 				$options = array('hardlink');
@@ -389,6 +387,9 @@ class shelluser_jailkit_plugin {
 		// check if the chroot environment is created yet if not create it with a list of program sections from the config
 		if (!is_dir($this->data['new']['dir'].'/etc/jailkit'))
 		{
+
+			$app->load('tpl');
+
 			$app->system->create_jailkit_chroot($this->data['new']['dir'], $this->jailkit_config['jailkit_chroot_app_sections'], $options);
 			$app->log("Added jailkit chroot", LOGLEVEL_DEBUG);
 

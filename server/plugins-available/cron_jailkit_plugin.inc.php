@@ -261,7 +261,6 @@ class cron_jailkit_plugin {
 	{
 		global $app, $conf;
 
-		$app->load('tpl');
 
 		if (isset($this->jailkit_config) && isset($this->jailkit_config['jailkit_hardlinks'])) {
 			if ($this->jailkit_config['jailkit_hardlinks'] == 'yes') {
@@ -285,6 +284,8 @@ class cron_jailkit_plugin {
 		// check if the chroot environment is created yet if not create it with a list of program sections from the config
 		if (!is_dir($this->parent_domain['document_root'].'/etc/jailkit'))
 		{
+
+			$app->load('tpl');
 
 			$app->system->create_jailkit_chroot($this->parent_domain['document_root'], $this->jailkit_config['jailkit_chroot_app_sections'], $options);
 			$app->log("Added jailkit chroot", LOGLEVEL_DEBUG);
