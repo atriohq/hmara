@@ -250,45 +250,46 @@ $form["tabs"]['php_fpm'] = array(
 	)
 );
 $form["tabs"]['php_cli'] = array (
-'title' => "PHP-CLI settings",
-'width' => 80,
-'template' => "templates/server_php_cli_edit.htm",
-'fields' => array(
-	//#################################
-	// Begin Datatable fields
-	//#################################
-	'php_cli_binary' => array(
-		'datatype' => 'VARCHAR',
-		'formtype' => 'TEXT',
-		'validators' => array(
-			0 => array (
-				'type' => 'REGEX',
-				'regex' => '/^\/[a-zA-Z0-9\/\-\_\ ]*$/',
-				'errmsg'=> 'php_cli_binary_error_regex'
+	'title' => "PHP-CLI settings",
+	'width' => 80,
+	'template' => "templates/server_php_cli_edit.htm",
+	'fields' => array(
+		//#################################
+		// Begin Datatable fields
+		//#################################
+		'php_cli_binary' => array(
+			'datatype' => 'VARCHAR',
+			'formtype' => 'TEXT',
+			'validators' => array(
+				0 => array (
+					'type' => 'REGEX',
+					'regex' => '/^\/[a-zA-Z0-9\/\-\_\s]*$/',
+					'errmsg'=> 'php_cli_binary_error_regex'
+				),
 			),
+			'default' => '',
+			'value' => '',
+			'width' => '40',
+			'maxlength' => '255'
 		),
-		'default' => '',
-		'value' => '',
-		'width' => '40',
-		'maxlength' => '255'
-	),
-	'php_jk_section' => array(
-		'datatype' => 'TEXT',
-		'formtype' => 'TEXT',
-		'default' => '',
-		'validators' => array(
-			0 => array (
-				'type' => 'REGEX',
-				'regex' => '/^[a-zA-Z0-9\-\_\ ]*$/',
-				'errmsg'=> 'php_cli_jk_section_error_regex'
+		'php_jk_section' => array(
+			'datatype' => 'VARCHAR',
+			'formtype' => 'TEXT',
+			'default' => '',
+			'validators' => array(
+				0 => array (
+					'type' => 'REGEX',
+					'regex' => '/^[a-zA-Z0-9\-\_]*$/',
+					'errmsg'=> 'php_cli_jk_section_error_regex'
+				),
 			),
+			'value' => '',
+			'width' => '40',
+			'maxlength' => '255'
 		),
-		'value' => '',
-		'width' => '40',
-		'maxlength' => '255'
-	),
-)
-);
+	)
+	);
+
 $form["tabs"]['php_sort'] = array (
 	'title' => "PHP Sort Priority",
 	'width' => 80,
