@@ -165,6 +165,12 @@ $form["tabs"]['domain'] = array (
 			'default' => 'y',
 			'value'  => array(0 => 'n', 1 => 'y')
 		),
+		'local_delivery' => array (
+			'datatype' => 'VARCHAR',
+			'formtype' => 'CHECKBOX',
+			'default' => 'y',
+			'value'  => array(0 => 'n', 1 => 'y')
+		),
 		//#################################
 		// END Datatable fields
 		//#################################

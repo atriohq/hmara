@@ -3,6 +3,7 @@ $wb['server_id_txt'] = 'Server';
 $wb['domain_txt'] = 'Doména';
 $wb['type_txt'] = 'Typ';
 $wb['active_txt'] = 'Aktivní';
+$wb['local_delivery_txt'] = 'Local delivery';
 $wb['domain_error_empty'] = 'Doména je prázdná.';
 $wb['domain_error_unique'] = 'E-mailová doména s tímto doménovým jménem na serveru již existuje.';
 $wb['domain_error_regex'] = 'Chybný název domény.';

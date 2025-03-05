@@ -3,6 +3,7 @@ $wb['server_id_txt'] = 'Server';
 $wb['domain_txt'] = 'Domain';
 $wb['type_txt'] = 'Τύπος';
 $wb['active_txt'] = 'Ενεργό';
+$wb['local_delivery_txt'] = 'Local delivery';
 $wb['domain_error_empty'] = 'Το Domain δεν έχει οριστεί.';
 $wb['domain_error_unique'] = 'Διπλό Domain.';
 $wb['domain_error_regex'] = 'Το όνομα domain δεν είναι έγκυρο.';

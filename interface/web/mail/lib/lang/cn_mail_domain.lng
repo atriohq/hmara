@@ -3,6 +3,7 @@ $wb['server_id_txt'] = '服务器';
 $wb['domain_txt'] = '域名';
 $wb['type_txt'] = '类型';
 $wb['active_txt'] = '启用';
+$wb['local_delivery_txt'] = 'Local delivery';
 $wb['dkim_txt'] = '启用 DKIM';
 $wb['dkim_private_txt'] = 'DKIM 私钥';
 $wb['dkim_public_txt'] = 'DKIM 公钥' . "\n" . '仅供参考';
