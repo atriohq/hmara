@@ -305,7 +305,7 @@ class cron_plugin {
 						$web_php_cli = $this->parent_domain['php_cli_binary'];
 					}
 
-					$web_docroot_client .= $web_folder;
+					$web_docroot_client .= $web_root;
 
 					$trans = array(
 						'[web_root]' => $web_docroot_client,
