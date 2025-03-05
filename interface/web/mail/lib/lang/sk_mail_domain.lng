@@ -3,6 +3,7 @@ $wb['server_id_txt'] = 'Server';
 $wb['domain_txt'] = 'Domény';
 $wb['type_txt'] = 'Typ';
 $wb['active_txt'] = 'Aktívne';
+$wb['local_delivery_txt'] = 'Local delivery';
 $wb['domain_error_empty'] = 'Doména je prázdna.';
 $wb['domain_error_unique'] = 'Duplicitná Doména.';
 $wb['domain_error_regex'] = 'Zlé doménové meno.';

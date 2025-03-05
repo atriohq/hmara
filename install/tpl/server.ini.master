@@ -21,6 +21,7 @@ backup_dir_is_mount=n
 backup_mode=rootgz
 backup_time=0:00
 backup_delete=n
+sysbackup_copies=3
 monit_url=
 monit_user=
 monit_password=
