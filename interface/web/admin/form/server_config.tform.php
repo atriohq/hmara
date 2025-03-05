@@ -321,6 +321,20 @@ $form["tabs"]['server'] = array(
 			'default' => 'y',
 			'value' => array(0 => 'n', 1 => 'y')
 		),
+		'sysbackup_copies' => array(
+			'datatype' => 'VARCHAR',
+			'formtype' => 'TEXT',
+			'default' => '3',
+			'validators' => array(	0 => array('type' => 'NOTEMPTY',
+										'errmsg' => 'sysbackup_copies_error_empty'),
+									1 => array ( 	'type' => 'REGEX',
+										'regex' => "/^[0-9]{1,3}$/",
+										'errmsg'=> 'sysbackup_copies_error_regex'),
+			),
+			'value' => '',
+			'width' => '40',
+			'maxlength' => '255'
+		),
 		'monit_url' => array(
 			'datatype' => 'VARCHAR',
 			'formtype' => 'TEXT',

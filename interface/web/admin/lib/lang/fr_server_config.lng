@@ -358,3 +358,7 @@ $wb['soft_delete_keep_7_txt'] = 'Purge after 7 days';
 $wb['soft_delete_keep_30_txt'] = 'Purge after 30 days';
 $wb['soft_delete_keep_90_txt'] = 'Purge after 90 days';
 $wb['soft_delete_keep_365_txt'] = 'Purge after 365 days';
+$wb['sysbackup_copies_txt'] = 'Nombre de sauvegardes système';
+$wb['sysbackup_copies_error_empty'] = 'Le nombre de sauvegardes système ne doit pas être vide';
+$wb['sysbackup_copies_error_regex'] = 'Le nombre de sauvegardes système doit être un nombre entre 1 et 3';
+$wb['sysbackup_copies_note_txt'] = '(0 = désactivé)';
