@@ -876,9 +876,9 @@ class nginx_plugin {
 			if(!is_dir($data['new']['document_root'].'/private')) $app->system->mkdir($data['new']['document_root'].'/private');
 
 			if($web_config['security_level'] == 20) {
-
+				$web_folder_permission = (isset($web_config['web_folder_permission']))?octdec($web_config['web_folder_permission']):0711;
 				$app->system->chmod($data['new']['document_root'], 0755);
-				$app->system->chmod($data['new']['document_root'].'/web', 0751);
+				$app->system->chmod($data['new']['document_root'].'/web', $web_folder_permission);
 				//$app->system->chmod($data['new']['document_root'].'/webdav',0710);
 				$app->system->chmod($data['new']['document_root'].'/private', 0710);
 				$app->system->chmod($data['new']['document_root'].'/ssl', 0755);
