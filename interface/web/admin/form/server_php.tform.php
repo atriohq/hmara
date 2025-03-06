@@ -263,7 +263,7 @@ $form["tabs"]['php_cli'] = array (
 			'validators' => array(
 				0 => array (
 					'type' => 'REGEX',
-					'regex' => '/^\/[a-zA-Z0-9\/\-\_\s]*$/',
+					'regex' => '/^\/[a-zA-Z0-9\/\-\_\.\s]*$/',
 					'errmsg'=> 'php_cli_binary_error_regex'
 				),
 			),
