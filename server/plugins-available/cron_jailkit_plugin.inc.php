@@ -119,6 +119,9 @@ class cron_jailkit_plugin {
 					// Add selected PHP version to the jailkit chroot
 					if ($section == 'jailkit_chroot_app_sections') {
 						if (isset($parent_domain['php_jk_section']) && $parent_domain['php_jk_section'] != '' ) {
+							if (is_array($this->jailkit_config['jailkit_chroot_app_sections'])) {
+								$this->jailkit_config['jailkit_chroot_app_sections'] = implode(' ', $this->jailkit_config['jailkit_chroot_app_sections']);
+							}
 							$this->jailkit_config['jailkit_chroot_app_sections'] = $this->jailkit_config['jailkit_chroot_app_sections'] . ' ' . $parent_domain['php_jk_section'];
 							$jk_temp_config = preg_split('/[\s,]+/', $this->jailkit_config['jailkit_chroot_app_sections']);
 
@@ -201,6 +204,9 @@ class cron_jailkit_plugin {
 					// Add selected PHP version to the jailkit chroot
 					if($section == 'jailkit_chroot_app_sections') {
 						if(isset($parent_domain['php_jk_section']) && $parent_domain['php_jk_section'] != '' ) {
+							if(is_array($this->jailkit_config['jailkit_chroot_app_sections'])) {
+								$this->jailkit_config['jailkit_chroot_app_sections'] = implode(' ', $this->jailkit_config['jailkit_chroot_app_sections']);
+							}
 							$this->jailkit_config['jailkit_chroot_app_sections'] = $this->jailkit_config['jailkit_chroot_app_sections'] . ' ' . $parent_domain['php_jk_section'];
 							$jk_temp_config = preg_split('/[\s,]+/', $this->jailkit_config['jailkit_chroot_app_sections']);
 

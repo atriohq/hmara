@@ -134,6 +134,10 @@ class shelluser_jailkit_plugin {
 							// Add selected PHP version to the jailkit chroot
 							if ($section == 'jailkit_chroot_app_sections') {
 								if (isset($web['php_jk_section']) && $web['php_jk_section'] != '' ) {
+									if(is_array($this->jailkit_config['jailkit_chroot_app_sections'])) {
+										$this->jailkit_config['jailkit_chroot_app_sections'] = implode(' ', $this->jailkit_config['jailkit_chroot_app_sections']);
+									}
+
 									$this->jailkit_config['jailkit_chroot_app_sections'] = $this->jailkit_config['jailkit_chroot_app_sections'] . ' ' . $web['php_jk_section'];
 									$jk_temp_config = preg_split('/[\s,]+/', $this->jailkit_config['jailkit_chroot_app_sections']);
 
@@ -241,9 +245,16 @@ class shelluser_jailkit_plugin {
 							if (isset($web[$section]) && $web[$section] != '' ) {
 								$this->jailkit_config[$section] = $web[$section];
 							}
+							if (is_array($this->jailkit_config['jailkit_chroot_app_sections'])) {
+								$this->jailkit_config['jailkit_chroot_app_sections'] = implode(' ', $this->jailkit_config['jailkit_chroot_app_sections']);
+							}
 							// Add selected PHP version to the jailkit chroot
 							if ($section == 'jailkit_chroot_app_sections') {
 								if (isset($web['php_jk_section']) && $web['php_jk_section'] != '' ) {
+									if (is_array($this->jailkit_config['jailkit_chroot_app_sections'])) {
+										$this->jailkit_config['jailkit_chroot_app_sections'] = implode(' ', $this->jailkit_config['jailkit_chroot_app_sections']);
+									}
+
 									$this->jailkit_config['jailkit_chroot_app_sections'] = $this->jailkit_config['jailkit_chroot_app_sections'] . ' ' . $web['php_jk_section'];
 									$jk_temp_config = preg_split('/[\s,]+/', $this->jailkit_config['jailkit_chroot_app_sections']);
 
@@ -251,7 +262,6 @@ class shelluser_jailkit_plugin {
 									$this->jailkit_config[$section] = array_unique($jk_temp_config, SORT_REGULAR);
 									sort($this->jailkit_config[$section], SORT_STRING);
 								}
-
 							}
 						}
 
