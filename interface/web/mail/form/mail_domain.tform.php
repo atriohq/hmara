@@ -87,10 +87,14 @@ $form["tabs"]['domain'] = array (
 			),
 			'validators' => array (  0 => array ( 'type' => 'NOTEMPTY',
 					'errmsg'=> 'domain_error_empty'),
-				1 => array ( 'type' => 'UNIQUE',
-					'errmsg'=> 'domain_error_unique'),
-				2 => array ( 'type' => 'ISDOMAIN',
+				1 => array ( 'type' => 'ISDOMAIN',
 					'errmsg'=> 'domain_error_regex'),
+				3 => array(
+					'type' => 'CUSTOM',
+					'class' => 'validate_mail_transport',
+					'function' => 'validate_isnot_mailtransport',
+					'errmsg'=> 'domain_is_transport',
+				),
 			),
 			'default' => '',
 			'value'  => '',
@@ -162,6 +166,12 @@ $form["tabs"]['domain'] = array (
 				'maxlength' => '255'
 		),
 		'active' => array (
+			'datatype' => 'VARCHAR',
+			'formtype' => 'CHECKBOX',
+			'default' => 'y',
+			'value'  => array(0 => 'n', 1 => 'y')
+		),
+		'local_delivery' => array (
 			'datatype' => 'VARCHAR',
 			'formtype' => 'CHECKBOX',
 			'default' => 'y',

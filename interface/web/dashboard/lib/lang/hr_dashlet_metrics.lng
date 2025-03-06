@@ -1,0 +1,7 @@
+<?php
+$wb['metrics_txt'] = 'Metrike sustava';
+$wb['loadchart_label'] = 'Opterećenje sustava %';
+$wb['memchart_label'] = 'Korištenje memorije %';
+$wb['rxchart_label'] = 'Mreža ulaz/kB';
+$wb['txchart_label'] = 'Mreža izlaz/kB';
+$wb['label_chart_title'] = 'Metrike sustava';

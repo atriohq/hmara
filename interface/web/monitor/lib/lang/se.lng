@@ -35,6 +35,7 @@ $wb['Mail-Log'] = 'Visa epostlogg';
 $wb['Mail warn-Log'] = 'Visa varningslogg epost';
 $wb['Mail err-Log'] = 'Visa felloggg epost';
 $wb['System-Log'] = 'Visa systemlogg';
+$wb['ISPConfig Log'] = 'ISPConfig Log';
 $wb['Freshclam-Log'] = 'Visa Freshclam-logg';
 $wb['Lets-Encrypt-log'] = 'Let\'s Encrypt log';
 $wb['Clamav-Log'] = 'Visa Clamav-logg';

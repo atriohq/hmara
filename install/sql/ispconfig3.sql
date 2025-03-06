@@ -896,6 +896,7 @@ CREATE TABLE `mail_domain` (
   `relay_user` varchar(255) NOT NULL DEFAULT '',
   `relay_pass` varchar(255) NOT NULL DEFAULT '',
   `active` enum('n','y') NOT NULL DEFAULT 'n',
+  `local_delivery` enum('n','y') NOT NULL DEFAULT 'y',
   PRIMARY KEY  (`domain_id`),
   KEY `server_id` (`server_id`,`domain`),
   KEY `domain_active` (`domain`,`active`)

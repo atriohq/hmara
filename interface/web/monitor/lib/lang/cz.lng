@@ -37,6 +37,7 @@ $wb['Mail-Log'] = 'Protokol pošty';
 $wb['Mail warn-Log'] = 'Pošta varovný protokol';
 $wb['Mail err-Log'] = 'Pošta chybový protokol';
 $wb['System-Log'] = 'Systémový protokol';
+$wb['ISPConfig Log'] = 'ISPConfig Log';
 $wb['ISPC Cron-Log'] = 'ISPC Cron protokol';
 $wb['Freshclam-Log'] = 'Freshclam protokol';
 $wb['Lets-Encrypt-log'] = 'Let\'s Encrypt log';

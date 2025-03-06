@@ -39,6 +39,7 @@ $wb['Mail-Log'] = 'Prikaži mail log';
 $wb['Mail warn-Log'] = 'Prikaži mail log (upozorenja)';
 $wb['Mail err-Log'] = 'Prikaži mail log (greške)';
 $wb['System-Log'] = 'Prikaži sistemski log';
+$wb['ISPConfig Log'] = 'ISPConfig Log';
 $wb['ISPC Cron-Log'] = 'Prikaži control panel cron log';
 $wb['Freshclam-Log'] = 'Prikaži freshclam log';
 $wb['Lets-Encrypt-log'] = 'Let\'s Encrypt log';

@@ -65,11 +65,38 @@ else {
 	$stateType = 'system';
 }
 
+// Get metrics data for charts
+$metrics_data = _getMetricsData();
+
 $app->tpl->setVar("state_data", $output);
 $app->tpl->setVar("state_type", $stateType);
 $app->tpl->setVar("list_head_txt", $title);
 $app->tpl->setVar("list_desc_txt", (isset($description) ? $description : ''));
 $app->tpl->setVar("monTransRefreshsq", $monTransRefreshsq);
+
+// Set metrics data for template
+if($metrics_data) {
+    $app->tpl->setVar('loadchart_data', $metrics_data['loadchart_data']);
+    $app->tpl->setVar('memchart_data', $metrics_data['memchart_data']);
+    $app->tpl->setVar('rxchart_data', $metrics_data['rxchart_data']);
+    $app->tpl->setVar('txchart_data', $metrics_data['txchart_data']);
+    $app->tpl->setVar('label', $metrics_data['label']);
+    
+    // Load language file for metrics
+    $wb = array();
+    $lng_file = '../dashboard/lib/lang/' . $_SESSION['s']['language'] . '_dashlet_metrics.lng';
+    if (is_file($lng_file)) {
+        include $lng_file;
+    } elseif (is_file('../dashboard/lib/lang/en_dashlet_metrics.lng')) {
+        include '../dashboard/lib/lang/en_dashlet_metrics.lng';
+    }
+    
+    $app->tpl->setVar('loadchart_label', $wb['loadchart_label']);
+    $app->tpl->setVar('memchart_label', $wb['memchart_label']);
+    $app->tpl->setVar('rxchart_label', $wb['rxchart_label']);
+    $app->tpl->setVar('txchart_label', $wb['txchart_label']);
+    $app->tpl->setVar('label_chart_title', $wb['label_chart_title']);
+}
 
 /*
  Creating the array with the refresh intervals
@@ -231,6 +258,7 @@ function _getServerState($serverId, $serverName) {
 
 	//$html_ve  = '<div class="systemmonitor-ve state-' . $serverState . '-ve os-' . $osData['name'] . '">';
 	//$html_ve  = '<div class="systemmonitor state-' . $serverState . ' os-' . $osData['name'] . '">';
+	$html_ve = '';
 	$html_server = '<div class="alert '.$alert_class.'" role="alert">';
 	if ($osData != null) {
 		$html_ve .= '<div class="icoDevice"><p class="status"></p></div>';
@@ -566,11 +594,11 @@ function _processDbState($type, $serverId, $serverState, $messages) {
 			break;
 		case 'warning':
 			$messages[$app->lng("monitor_serverstate_listwarning_txt")][] = $app->lng("monitor_serverstate_syslogwarning_txt") . ' ' .
-				"<a href='#' data-load-content='monitor/log_list.php'>[" . $app->lng("monitor_serverstate_more_txt") . "]</a>";
+				"<a href='#' data-load-content='monitor/log_list.php?search_loglevel=1'>[" . $app->lng("monitor_serverstate_more_txt") . "]</a>";
 			break;
 		case 'error':
 			$messages[$app->lng("monitor_serverstate_listerror_txt")][] = $app->lng("monitor_serverstate_syslogerror_txt") . ' ' .
-				"<a href='#' data-load-content='monitor/log_list.php'>[" . $app->lng("monitor_serverstate_more_txt") . "]</a>";
+				"<a href='#' data-load-content='monitor/log_list.php?search_loglevel=2'>[" . $app->lng("monitor_serverstate_more_txt") . "]</a>";
 			break;
 		default:
 			$messages[$app->lng("monitor_serverstate_listunknown_txt")][] = $app->lng("monitor_serverstate_syslogunknown_txt") . ' ' .
@@ -684,4 +712,46 @@ function _setState($oldState, $newState) {
 	}
 }
 
+/**
+ * Gets the metrics data for charts
+ * @return array|null Array of metrics data or null if no data available
+ */
+function _getMetricsData() {
+    global $app;
+    
+    // Get monitor data
+    $rec = $app->db->queryOneRecord("SELECT `data` FROM `monitor_data` WHERE `type` = 'sys_usage' AND `server_id` = ? ORDER BY `created` DESC LIMIT 0,1", $_SESSION['monitor']['server_id']);
+    if(!$rec) return null;
+    
+    $data = unserialize($rec['data']);
+    $result = array();
+    
+    if(isset($data['load']) && is_array($data['load'])) {
+        $result['loadchart_data'] = implode(', ', $data['load']);
+    }
+    
+    if(isset($data['mem']) && is_array($data['mem'])) {
+        $result['memchart_data'] = implode(', ', $data['mem']);
+    }
+    
+    if(isset($data['net']) && is_array($data['net'])) {
+        $rx = [];
+        $tx = [];
+        foreach($data['net'] as $val) {
+            $rx[] = $val['rx'];
+            $tx[] = $val['tx'];
+        }
+        $result['rxchart_data'] = implode(', ', $rx);
+        $result['txchart_data'] = implode(', ', $tx);
+    }
+    
+    if(isset($data['time']) && is_array($data['time'])) {
+        foreach($data['time'] as $key => $val) {
+            $data['time'][$key] = "'".$val."'";
+        }
+        $result['label'] = implode(', ', $data['time']);
+    }
+    
+    return $result;
+}
 ?>

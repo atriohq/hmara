@@ -28,6 +28,10 @@ includesections = uidbasics, logbasics
 comment = alias for jk_lsh
 includesections = jk_lsh
 
+[openssl]
+comment = Generic openssl files (excluded: /etc/ssl/private, /usr/lib/ssl/private)
+paths =  /bin/openssl, /etc/ssl/openssl.cnf, /etc/ssl/certs, /usr/lib/ssl/cert.pem, /usr/lib/ssl/certs, /usr/lib/ssl/misc, /usr/lib/ssl/openssl.cnf, /usr/share/ca-certificates
+
 [cvs]
 comment = Concurrent Versions System
 paths = cvs
@@ -246,6 +250,11 @@ includesections = php_common
 [php8_3]
 comment = php version 8.3
 paths = /usr/bin/php8.3, /usr/lib/php/8.3/, /usr/lib/php/20230831/, /usr/share/php/8.3/, /etc/php/8.3/cli/, /etc/php/8.3/mods-available/
+includesections = php_common
+
+[php8_4]
+comment = php version 8.4
+paths = /usr/bin/php8.4, /usr/lib/php/8.4/, /usr/lib/php/20240841/, /usr/share/php/8.4/, /etc/php/8.4/cli/, /etc/php/8.4/mods-available/
 includesections = php_common
 
 [imagemagick]

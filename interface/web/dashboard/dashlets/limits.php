@@ -9,7 +9,7 @@ class dashlet_limits
         $limits = array();
 
         /* Limits to be shown*/
-        
+
         $limits[] = array('field' => 'limit_mailquota',
             'db_table' => 'mail_user',
             'db_where' => 'quota > 0',  /* Count only posive value of quota, negative value -1 is unlimited */
@@ -75,7 +75,7 @@ class dashlet_limits
             'db_table' => 'web_domain',
             'db_where' => 'hd_quota > 0', /* Count only posive value of quota, negative value -1 is unlimited */
             'q_type' => 'hd_quota');
-            
+
         $limits[] = array('field' => 'limit_web_domain',
             'db_table' => 'web_domain',
             'db_where' => "type = 'vhost'");
@@ -112,7 +112,7 @@ class dashlet_limits
             'db_table' => 'web_database',
             'db_where' => 'database_quota > 0', /* Count only posive value of quota, negative value -1 is unlimited */
             'q_type' => 'database_quota');
-            
+
         $limits[] = array('field' => 'limit_database',
             'db_table' => 'web_database',
             'db_where' => "");
@@ -225,21 +225,5 @@ class dashlet_limits
             $quotaMB = $app->functions->intval($rec['number']);
       }
       return $quotaMB;
-    }
-
-    /**
-     * Lookup a client's group + all groups he is reselling.
-     *
-     * @return string Comma separated list of groupid's
-     */
-    function clientid_to_groups_list($client_id) {
-      global $app;
-
-      if ($client_id != null) {
-        // Get the clients groupid, and incase it's a reseller the groupid's of it's clients.
-        $group = $app->db->queryOneRecord("SELECT GROUP_CONCAT(groupid) AS groups FROM `sys_group` WHERE client_id IN (SELECT client_id FROM `client` WHERE client_id=? OR parent_client_id=?)", $client_id, $client_id);
-        return $group['groups'];
-      }
-      return null;
     }
 }

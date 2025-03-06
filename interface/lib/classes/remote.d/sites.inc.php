@@ -433,10 +433,10 @@ class remoting_sites extends remoting {
 		if($params['log_retention'] == '') $params['log_retention'] = 30;
 
 		//* Set a few defaults for nginx servers
-		if($params['pm_max_children'] == '') $params['pm_max_children'] = 1;
-		if($params['pm_start_servers'] == '') $params['pm_start_servers'] = 1;
+		if($params['pm_max_children'] == '') $params['pm_max_children'] = 10;
+		if($params['pm_start_servers'] == '') $params['pm_start_servers'] = 2;
 		if($params['pm_min_spare_servers'] == '') $params['pm_min_spare_servers'] = 1;
-		if($params['pm_max_spare_servers'] == '') $params['pm_max_spare_servers'] = 1;
+		if($params['pm_max_spare_servers'] == '') $params['pm_max_spare_servers'] = 5;
 
 		$domain_id = $this->insertQuery('../sites/form/web_vhost_domain.tform.php', $client_id, $params, 'sites:web_vhost_domain:on_after_insert');
 		if ($readonly === true)
@@ -455,10 +455,10 @@ class remoting_sites extends remoting {
 		if($params['log_retention'] == '') $params['log_retention'] = 30;
 
 		//* Set a few defaults for nginx servers
-		if($params['pm_max_children'] == '') $params['pm_max_children'] = 1;
-		if($params['pm_start_servers'] == '') $params['pm_start_servers'] = 1;
+		if($params['pm_max_children'] == '') $params['pm_max_children'] = 10;
+		if($params['pm_start_servers'] == '') $params['pm_start_servers'] = 2;
 		if($params['pm_min_spare_servers'] == '') $params['pm_min_spare_servers'] = 1;
-		if($params['pm_max_spare_servers'] == '') $params['pm_max_spare_servers'] = 1;
+		if($params['pm_max_spare_servers'] == '') $params['pm_max_spare_servers'] = 5;
 
 		$affected_rows = $this->updateQuery('../sites/form/web_vhost_domain.tform.php', $client_id, $primary_id, $params);
 		return $affected_rows;
@@ -507,10 +507,10 @@ class remoting_sites extends remoting {
 		if($params['log_retention'] == '') $params['log_retention'] = 30;
 
 		//* Set a few defaults for nginx servers
-		if($params['pm_max_children'] == '') $params['pm_max_children'] = 1;
-		if($params['pm_start_servers'] == '') $params['pm_start_servers'] = 1;
+		if($params['pm_max_children'] == '') $params['pm_max_children'] = 10;
+		if($params['pm_start_servers'] == '') $params['pm_start_servers'] = 2;
 		if($params['pm_min_spare_servers'] == '') $params['pm_min_spare_servers'] = 1;
-		if($params['pm_max_spare_servers'] == '') $params['pm_max_spare_servers'] = 1;
+		if($params['pm_max_spare_servers'] == '') $params['pm_max_spare_servers'] = 5;
 
 		$domain_id = $this->insertQuery('../sites/form/web_vhost_domain.tform.php', $client_id, $params, 'sites:web_vhost_aliasdomain:on_after_insert');
 		return $domain_id;
@@ -527,10 +527,10 @@ class remoting_sites extends remoting {
 		if($params['log_retention'] == '') $params['log_retention'] = 30;
 
 		//* Set a few defaults for nginx servers
-		if($params['pm_max_children'] == '') $params['pm_max_children'] = 1;
-		if($params['pm_start_servers'] == '') $params['pm_start_servers'] = 1;
+		if($params['pm_max_children'] == '') $params['pm_max_children'] = 10;
+		if($params['pm_start_servers'] == '') $params['pm_start_servers'] = 2;
 		if($params['pm_min_spare_servers'] == '') $params['pm_min_spare_servers'] = 1;
-		if($params['pm_max_spare_servers'] == '') $params['pm_max_spare_servers'] = 1;
+		if($params['pm_max_spare_servers'] == '') $params['pm_max_spare_servers'] = 5;
 
 		$affected_rows = $this->updateQuery('../sites/form/web_vhost_domain.tform.php', $client_id, $primary_id, $params, 'sites:web_vhost_aliasdomain:on_after_insert');
 		return $affected_rows;
@@ -579,10 +579,10 @@ class remoting_sites extends remoting {
 		if($params['log_retention'] == '') $params['log_retention'] = 30;
 
 		//* Set a few defaults for nginx servers
-		if($params['pm_max_children'] == '') $params['pm_max_children'] = 1;
-		if($params['pm_start_servers'] == '') $params['pm_start_servers'] = 1;
+		if($params['pm_max_children'] == '') $params['pm_max_children'] = 10;
+		if($params['pm_start_servers'] == '') $params['pm_start_servers'] = 2;
 		if($params['pm_min_spare_servers'] == '') $params['pm_min_spare_servers'] = 1;
-		if($params['pm_max_spare_servers'] == '') $params['pm_max_spare_servers'] = 1;
+		if($params['pm_max_spare_servers'] == '') $params['pm_max_spare_servers'] = 5;
 
 		$domain_id = $this->insertQuery('../sites/form/web_vhost_domain.tform.php', $client_id, $params, 'sites:web_vhost_subdomain:on_after_insert');
 		return $domain_id;
@@ -599,10 +599,10 @@ class remoting_sites extends remoting {
 		if($params['log_retention'] == '') $params['log_retention'] = 30;
 
 		//* Set a few defaults for nginx servers
-		if($params['pm_max_children'] == '') $params['pm_max_children'] = 1;
-		if($params['pm_start_servers'] == '') $params['pm_start_servers'] = 1;
+		if($params['pm_max_children'] == '') $params['pm_max_children'] = 10;
+		if($params['pm_start_servers'] == '') $params['pm_start_servers'] = 2;
 		if($params['pm_min_spare_servers'] == '') $params['pm_min_spare_servers'] = 1;
-		if($params['pm_max_spare_servers'] == '') $params['pm_max_spare_servers'] = 1;
+		if($params['pm_max_spare_servers'] == '') $params['pm_max_spare_servers'] = 5;
 
 		$affected_rows = $this->updateQuery('../sites/form/web_vhost_domain.tform.php', $client_id, $primary_id, $params, 'sites:web_vhost_subdomain:on_after_insert');
 		return $affected_rows;
