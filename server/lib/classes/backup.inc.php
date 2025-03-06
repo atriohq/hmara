@@ -1998,7 +1998,7 @@ class backup
                     if ($app->system->last_exec_retcode() == 1) {
                         $app->log('Backup of web files for domain ' . $web_domain['domain'] . ' using path ' . $web_path . ' mentined file changed while we backed it up.', LOGLEVEL_DEBUG);
                     }
-                    $success = $app->system->last_exec_retcode() == 0 || $app->system->last_exec_retcode() == 1;
+                    $success = ($app->system->last_exec_retcode() == 0 || $app->system->last_exec_retcode() == 1)?true:false;
             }
 
             if ($success) {
