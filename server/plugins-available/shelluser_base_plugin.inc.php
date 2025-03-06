@@ -146,23 +146,6 @@ class shelluser_base_plugin {
 				$command .= ' -s ? -u ? ?';
 				$app->system->exec_safe($command, $homedir, $data['new']['pgroup'], $data['new']['shell'], $uid, $data['new']['username']);
 
-				//* Create the .bashrc.d directory for ease of use and a more customisable bashrc environment
-				if(!is_dir($homedir.'/.bashrc.d')){
-					$app->file->mkdirs($homedir.'/.bashrc.d', '0750');
-					$app->system->chown($homedir.'/.bashrc.d', $data['new']['username']);
-					$app->system->chgrp($homedir.'/.bashrc.d', $data['new']['pgroup']);
-				}
-
-				//* Specified in FHS 3.0, https://refspecs.linuxfoundation.org/FHS_3.0/index.html
-				//* Supported by Systemd/XDG, provides binaries via user ~/.local/bin directory and PATH
-				if(!is_dir($homedir.'/.local/bin')){
-					$app->file->mkdirs($homedir.'/.local/bin', '0750');
-					$app->system->chown($homedir.'/.local', $data['new']['username'], false);
-					$app->system->chgrp($homedir.'/.local', $data['new']['pgroup'], false);
-					$app->system->chown($homedir.'/.local/bin', $data['new']['username'], false);
-					$app->system->chgrp($homedir.'/.local/bin', $data['new']['pgroup'], false);
-				}
-
 				$app->log("Executed command: ".$command, LOGLEVEL_DEBUG);
 				$app->log("Added shelluser: ".$data['new']['username'], LOGLEVEL_DEBUG);
 
@@ -203,11 +186,21 @@ fi
 				$app->system->chown($homedir.'/.profile', $data['new']['username']);
 				$app->system->chgrp($homedir.'/.profile', $data['new']['pgroup']);
 
-				//* Create .bashrc.d directory
+				//* Create the .bashrc.d directory for ease of use and a more customisable bashrc environment
 				if(!is_dir($homedir.'/.bashrc.d')){
 					$app->file->mkdirs($homedir.'/.bashrc.d', '0750');
 					$app->system->chown($homedir.'/.bashrc.d', $data['new']['username']);
 					$app->system->chgrp($homedir.'/.bashrc.d', $data['new']['pgroup']);
+				}
+
+				//* Specified in FHS 3.0, https://refspecs.linuxfoundation.org/FHS_3.0/index.html
+				//* Supported by Systemd/XDG, provides binaries via user ~/.local/bin directory and PATH
+				if(!is_dir($homedir.'/.local/bin')){
+					$app->file->mkdirs($homedir.'/.local/bin', '0750');
+					$app->system->chown($homedir.'/.local', $data['new']['username'], false);
+					$app->system->chgrp($homedir.'/.local', $data['new']['pgroup'], false);
+					$app->system->chown($homedir.'/.local/bin', $data['new']['username'], false);
+					$app->system->chgrp($homedir.'/.local/bin', $data['new']['pgroup'], false);
 				}
 
 				if($data['new']['chroot'] != 'jailkit') {
@@ -328,6 +321,7 @@ fi
 							$app->system->chgrp($homedir,$data['new']['pgroup']);
 						}
 					}
+
 					$app->system->usermod($data['old']['username'], 0, $app->system->getgid($data['new']['pgroup']), $homedir, $data['new']['shell'], $data['new']['password'], $data['new']['username']);
 					$app->log("Updated shelluser: ".$data['old']['username'], LOGLEVEL_DEBUG);
 
@@ -353,16 +347,26 @@ then
 fi
 
 ";
-						$app->system->file_put_contents($homedir.'/.profile', $profile_content);
-						$app->system->chown($homedir.'/.profile', $data['new']['puser']);
-						$app->system->chgrp($homedir.'/.profile', $data['new']['pgroup']);
+					$app->system->file_put_contents($homedir.'/.profile', $profile_content);
+					$app->system->chown($homedir.'/.profile', $data['new']['puser']);
+					$app->system->chgrp($homedir.'/.profile', $data['new']['pgroup']);
 
 
-					//* Create .bashrc.d directory
+					//* Create the .bashrc.d directory for ease of use and a more customisable bashrc environment
 					if(!is_dir($homedir.'/.bashrc.d')){
 						$app->file->mkdirs($homedir.'/.bashrc.d', '0750');
-						$app->system->chown($homedir.'/.bashrc.d', $data['new']['puser']);
+						$app->system->chown($homedir.'/.bashrc.d', $data['new']['username']);
 						$app->system->chgrp($homedir.'/.bashrc.d', $data['new']['pgroup']);
+					}
+
+					//* Specified in FHS 3.0, https://refspecs.linuxfoundation.org/FHS_3.0/index.html
+					//* Supported by Systemd/XDG, provides binaries via user ~/.local/bin directory and PATH
+					if(!is_dir($homedir.'/.local/bin')){
+						$app->file->mkdirs($homedir.'/.local/bin', '0750');
+						$app->system->chown($homedir.'/.local', $data['new']['username'], false);
+						$app->system->chgrp($homedir.'/.local', $data['new']['pgroup'], false);
+						$app->system->chown($homedir.'/.local/bin', $data['new']['username'], false);
+						$app->system->chgrp($homedir.'/.local/bin', $data['new']['pgroup'], false);
 					}
 
 					if($data['new']['chroot'] != 'jailkit') {
