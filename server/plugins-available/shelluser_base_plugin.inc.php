@@ -35,6 +35,8 @@ class shelluser_base_plugin {
 	var $class_name = 'shelluser_base_plugin';
 	var $min_uid = 499;
 	var $data = array();
+	var $web = array();
+
 
 	//* This function is called during ispconfig installation to determine
 	//  if a symlink shall be created for this plugin.
@@ -81,7 +83,12 @@ class shelluser_base_plugin {
 		}
 
 		//* Check if the resulting path is inside the docroot
-		$web = $app->db->queryOneRecord("SELECT * FROM web_domain WHERE domain_id = ?", $data['new']['parent_domain_id']);
+		$web = $app->db->queryOneRecord("SELECT * FROM web_domain
+			LEFT JOIN server_php ON web_domain.server_php_id = server_php.server_php_id
+			WHERE `domain_id` = ?", $data["new"]["parent_domain_id"]);
+
+		$this->web = $web;
+
 		if(substr($data['new']['dir'],0,strlen($web['document_root'])) != $web['document_root']) {
 			$app->log('Directory of the shell user is outside of website docroot.',LOGLEVEL_WARN);
 			return false;
@@ -134,9 +141,11 @@ class shelluser_base_plugin {
 					$app->system->chown($homedir,$data['new']['puser'],false);
 					$app->system->chgrp($homedir,$data['new']['pgroup'],false);
 				}
+
 				$command = 'useradd -d ? -g ? -o'; // non unique
 				$command .= ' -s ? -u ? ?';
 				$app->system->exec_safe($command, $homedir, $data['new']['pgroup'], $data['new']['shell'], $uid, $data['new']['username']);
+
 				$app->log("Executed command: ".$command, LOGLEVEL_DEBUG);
 				$app->log("Added shelluser: ".$data['new']['username'], LOGLEVEL_DEBUG);
 
@@ -166,13 +175,42 @@ class shelluser_base_plugin {
 				//* Create .profile file
 				$app->system->touch($homedir.'/.profile');
 				$app->system->chmod($homedir.'/.profile', 0644);
+
+				$profile_content = "if [ -f ~/.bashrc ]
+then
+	. ~/.bashrc
+fi
+
+";
+				$app->system->file_put_contents($homedir.'/.profile', $profile_content);
 				$app->system->chown($homedir.'/.profile', $data['new']['username']);
 				$app->system->chgrp($homedir.'/.profile', $data['new']['pgroup']);
 
+				//* Create the .bashrc.d directory for ease of use and a more customisable bashrc environment
+				if(!is_dir($homedir.'/.bashrc.d')){
+					$app->file->mkdirs($homedir.'/.bashrc.d', '0750');
+					$app->system->chown($homedir.'/.bashrc.d', $data['new']['username']);
+					$app->system->chgrp($homedir.'/.bashrc.d', $data['new']['pgroup']);
+				}
+
+				//* Specified in FHS 3.0, https://refspecs.linuxfoundation.org/FHS_3.0/index.html
+				//* Supported by Systemd/XDG, provides binaries via user ~/.local/bin directory and PATH
+				if(!is_dir($homedir.'/.local/bin')){
+					$app->file->mkdirs($homedir.'/.local/bin', '0750');
+					$app->system->chown($homedir.'/.local', $data['new']['username'], false);
+					$app->system->chgrp($homedir.'/.local', $data['new']['pgroup'], false);
+					$app->system->chown($homedir.'/.local/bin', $data['new']['username'], false);
+					$app->system->chgrp($homedir.'/.local/bin', $data['new']['pgroup'], false);
+				}
+
+				if($data['new']['chroot'] != 'jailkit') {
+					$this->_add_user_bashrc();
+				}
+
 				// Create symlinks for conveniance, SFTP user should not land in an empty dir.
-				symlink('../../web', $homedir.'/web');
-				symlink('../../log', $homedir.'/log');
-				symlink('../../private', $homedir.'/private');
+				if(!is_link($homedir.'/web')) symlink('../../web', $homedir.'/web');
+				if(!is_link($homedir.'/log')) symlink('../../log', $homedir.'/log');
+				if(!is_link($homedir.'/private')) symlink('../../private', $homedir.'/private');
 
 				//* Disable shell user temporarily if we use jailkit
 				if($data['new']['chroot'] == 'jailkit') {
@@ -204,7 +242,12 @@ class shelluser_base_plugin {
 		}
 
 		//* Check if the resulting path is inside the docroot
-		$web = $app->db->queryOneRecord("SELECT * FROM web_domain WHERE domain_id = ?", $data['new']['parent_domain_id']);
+		$web = $app->db->queryOneRecord("SELECT * FROM web_domain
+			LEFT JOIN server_php ON web_domain.server_php_id = server_php.server_php_id
+			WHERE `domain_id` = ?", $data["new"]["parent_domain_id"]);
+
+		$this->web = $web;
+
 		if(substr($data['new']['dir'],0,strlen($web['document_root'])) != $web['document_root']) {
 			$app->log('Directory of the shell user is outside of website docroot.',LOGLEVEL_WARN);
 			return false;
@@ -278,6 +321,7 @@ class shelluser_base_plugin {
 							$app->system->chgrp($homedir,$data['new']['pgroup']);
 						}
 					}
+
 					$app->system->usermod($data['old']['username'], 0, $app->system->getgid($data['new']['pgroup']), $homedir, $data['new']['shell'], $data['new']['password'], $data['new']['username']);
 					$app->log("Updated shelluser: ".$data['old']['username'], LOGLEVEL_DEBUG);
 
@@ -290,18 +334,44 @@ class shelluser_base_plugin {
 					if(!is_file($data['new']['dir']).'/.bash_history') {
 						$app->system->touch($homedir.'/.bash_history');
 						$app->system->chmod($homedir.'/.bash_history', 0750);
-						$app->system->chown($homedir.'/.bash_history', $data['new']['username']);
+						$app->system->chown($homedir.'/.bash_history', $data['new']['puser']);
 						$app->system->chgrp($homedir.'/.bash_history', $data['new']['pgroup']);
 					}
 
 					//* Create .profile file
-					if(!is_file($data['new']['dir']).'/.profile') {
-						$app->system->touch($homedir.'/.profile');
-						$app->system->chmod($homedir.'/.profile', 0644);
-						$app->system->chown($homedir.'/.profile', $data['new']['username']);
-						$app->system->chgrp($homedir.'/.profile', $data['new']['pgroup']);
+					$app->system->touch($homedir.'/.profile');
+					$app->system->chmod($homedir.'/.profile', 0644);
+					$profile_content = "if [ -f ~/.bashrc ]
+then
+	. ~/.bashrc
+fi
+
+";
+					$app->system->file_put_contents($homedir.'/.profile', $profile_content);
+					$app->system->chown($homedir.'/.profile', $data['new']['puser']);
+					$app->system->chgrp($homedir.'/.profile', $data['new']['pgroup']);
+
+
+					//* Create the .bashrc.d directory for ease of use and a more customisable bashrc environment
+					if(!is_dir($homedir.'/.bashrc.d')){
+						$app->file->mkdirs($homedir.'/.bashrc.d', '0750');
+						$app->system->chown($homedir.'/.bashrc.d', $data['new']['username']);
+						$app->system->chgrp($homedir.'/.bashrc.d', $data['new']['pgroup']);
 					}
 
+					//* Specified in FHS 3.0, https://refspecs.linuxfoundation.org/FHS_3.0/index.html
+					//* Supported by Systemd/XDG, provides binaries via user ~/.local/bin directory and PATH
+					if(!is_dir($homedir.'/.local/bin')){
+						$app->file->mkdirs($homedir.'/.local/bin', '0750');
+						$app->system->chown($homedir.'/.local', $data['new']['username'], false);
+						$app->system->chgrp($homedir.'/.local', $data['new']['pgroup'], false);
+						$app->system->chown($homedir.'/.local/bin', $data['new']['username'], false);
+						$app->system->chgrp($homedir.'/.local/bin', $data['new']['pgroup'], false);
+					}
+
+					if($data['new']['chroot'] != 'jailkit') {
+						$this->_add_user_bashrc();
+					}
 					//* Add webfolder protection again
 					$app->system->web_folder_protection($web['document_root'], true);
 				} else {
@@ -542,6 +612,100 @@ class shelluser_base_plugin {
 
 	}
 
+
+	function _add_user_bashrc() {
+		global $app;
+
+		// Create .bashrc file
+		$app->load('tpl');
+
+		$tpl = new tpl();
+
+		// Predefine some template vars
+		$tpl->setVar('jailkit_chroot', 'n');
+		$tpl->setVar('use_php_path', false);
+
+		$os_type = $app->system->get_os_type();
+		if (isset($os_type['type'])) {
+			$used_os_type = $os_type['type'];
+		} else {
+			$used_os_type = 'unknown';
+		}
+
+		if($this->data['new']['chroot'] == "jailkit") {
+			$is_jailed = true;
+		} else {
+			$is_jailed = false;
+		}
+
+		if($used_os_type == "debian" || $used_os_type == "ubuntu") {
+			$tpl->newTemplate("bashrc_user_deb.master");
+		} elseif($used_os_type == "redhat") {
+			$tpl->newTemplate("bashrc_user_redhat.master");
+		} else {
+			$tpl->newTemplate("bashrc_user_generic.master");
+		}
+
+		$user_home_dir = $this->data['new']['dir'] . '/home/' . $this->data['new']['username'];
+		$bashrc = $user_home_dir . '/.bashrc';
+
+		if(($this->web['server_php_id'] > 0) && !empty($this->web['php_cli_binary'])) {
+			$php_bin_dir = dirname($this->web['php_cli_binary']);
+			$home_php = $user_home_dir . '/.local/bin' . '/php';
+			if ($is_jailed === true) {
+				$real_php_bin_dir = $this->web['document_root'] . $php_bin_dir;
+			} else {
+				$real_php_bin_dir = $php_bin_dir;
+			}
+
+			if(preg_match('/^(\/usr\/(s)?bin|\/(s)?bin)/', $php_bin_dir)) {
+				$tpl->setVar('use_php_path', false);
+
+				if(!is_dir($user_home_dir . '/.local/bin')) $app->system->mkdirpath($user_home_dir . '/.local/bin', 0750, $this->data['new']['username'], $this->data['new']['pgroup']);
+
+				if(!empty($app->system->get_newest_php_bin($real_php_bin_dir))) {
+					$fallback_php = $app->system->get_newest_php_bin($real_php_bin_dir);
+					$fallback_php_bin = str_replace($this->web['document_root'], '', $fallback_php);
+
+					if(!empty($fallback_php) && file_exists($fallback_php_bin)) {
+						if(is_link($home_php) || is_file($home_php) || !file_exists($home_php)) {
+							unlink($home_php);
+							symlink($fallback_php_bin, $home_php);
+							//$app->log("Found " . $fallback_php_bin . " as a fallback for PHP in the jail of ". $this->web['domain'], LOGLEVEL_DEBUG);
+						}
+					} else {
+
+						if(is_link($home_php) || is_file($home_php) || !file_exists($home_php))
+						{
+							unlink($home_php);
+							symlink($this->web['php_cli_binary'], $home_php);
+						} else {
+							symlink($this->web['php_cli_binary'], $home_php);
+						}
+					}
+				}
+
+			} else {
+				// We rely on $PATH in case that the binaries are located in a separate directory that doesn't match the regex above
+				$tpl->setVar('use_php_path', true);
+				$tpl->setVar('php_bin_dir', $php_bin_dir);
+			}
+
+		} elseif(($this->web['server_php_id'] > 0) && empty($this->web['php_cli_binary'])) {
+			$app->log("The PHP cli binary is not set for the selected PHP version. Affected web: " . $this->web['domain'], LOGLEVEL_DEBUG);
+		}
+
+		//$bashrc = $this->data['new']['dir'] . '/home/' . $this->data['new']['username'] . '/.bashrc';
+
+		if(@is_file($bashrc) || @is_link($bashrc)) unlink($bashrc);
+
+		file_put_contents($bashrc, $tpl->grab());
+		$app->system->chown($bashrc, $this->data['new']['username']);
+		$app->system->chgrp($bashrc, $this->data['new']['pgroup']);
+		$app->log("Added bashrc script: " . $bashrc, LOGLEVEL_DEBUG);
+		unset($tpl);
+
+	}
 
 } // end class
 
