@@ -258,6 +258,9 @@ if ($type == 'getcronplaceholders') {
             	LEFT JOIN server_php sp ON wd.server_php_id = sp.server_php_id
             WHERE wd.domain_id = ?", $web_id);
 
+		// We exit here if we do not have a website with this ID
+		if(empty($web)) die();
+
         if (empty($web['php_cli_binary'])) {
             $php_cli_binary = "/usr/bin/php";
         } else {
