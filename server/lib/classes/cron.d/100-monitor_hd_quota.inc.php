@@ -231,6 +231,7 @@ class cronjob_monitor_hd_quota extends cronjob {
 			// Store in a 'space separated values' file. (Useful for debugging and possibly other scripting)
 			file_put_contents('/tmp/usage_disk.ssv', $graphite_lines);
 			shell_exec("cat /tmp/usage_disk.ssv | " . $conf['graphite_collector_command']);
+			unlink('/tmp/usage_disk.ssv');
 		}
 	}
 
