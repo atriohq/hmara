@@ -358,6 +358,7 @@ $wb['soft_delete_keep_7_txt'] = 'Purge after 7 days';
 $wb['soft_delete_keep_30_txt'] = 'Purge after 30 days';
 $wb['soft_delete_keep_90_txt'] = 'Purge after 90 days';
 $wb['soft_delete_keep_365_txt'] = 'Purge after 365 days';
+$wb['postgresql_database_txt'] = 'PostgreSQL Database';
 $wb['sysbackup_copies_txt'] = 'Numero di backup di sistema';
 $wb['sysbackup_copies_error_empty'] = 'Il numero di backup di sistema non deve essere vuoto';
 $wb['sysbackup_copies_error_regex'] = 'Il numero di backup di sistema deve essere un numero compreso tra 1 e 3';

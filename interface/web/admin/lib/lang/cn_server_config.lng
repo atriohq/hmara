@@ -353,6 +353,7 @@ $wb['soft_delete_keep_7_txt'] = 'Purge after 7 days';
 $wb['soft_delete_keep_30_txt'] = 'Purge after 30 days';
 $wb['soft_delete_keep_90_txt'] = 'Purge after 90 days';
 $wb['soft_delete_keep_365_txt'] = 'Purge after 365 days';
+$wb['postgresql_database_txt'] = 'PostgreSQL Database';
 $wb['sysbackup_copies_txt'] = 'Number of ISPConfig backups';
 $wb['sysbackup_copies_error_empty'] = 'Number of ISPConfig backups must not be empty';
 $wb['sysbackup_copies_error_regex'] = 'Number of ISPConfig backups must be a number between 1 and 3';

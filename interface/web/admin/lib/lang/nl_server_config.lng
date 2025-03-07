@@ -359,6 +359,7 @@ $wb['soft_delete_keep_7_txt'] = 'Purge after 7 days';
 $wb['soft_delete_keep_30_txt'] = 'Purge after 30 days';
 $wb['soft_delete_keep_90_txt'] = 'Purge after 90 days';
 $wb['soft_delete_keep_365_txt'] = 'Purge after 365 days';
+$wb['postgresql_database_txt'] = 'PostgreSQL Database';
 $wb['sysbackup_copies_txt'] = 'Aantal systeemback-ups';
 $wb['sysbackup_copies_error_empty'] = 'Aantal systeemback-ups mag niet leeg zijn';
 $wb['sysbackup_copies_error_regex'] = 'Aantal systeemback-ups moet een getal tussen 1 en 3 zijn';
