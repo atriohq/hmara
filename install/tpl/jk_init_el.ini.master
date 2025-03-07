@@ -1,8 +1,8 @@
 # jk_init.ini:  jailkit initialization config
 
-# Includes paths to handle Debian 10/9,
-# if other paths are needed please create an issue with the details:
-# https://git.ispconfig.org/ispconfig/ispconfig3/-/issues
+# Includes paths to handle Enterprise Linux systems like RHEL and its derivatives AlmaLinux, Rocky Linux et cetera
+# if other paths are needed please create an issue with the details or even a merge request at:
+# https://git.ispconfig.org/ispconfig/ispconfig3
 
 [uidbasics]
 comment = common files for all jails that need user/group information
@@ -17,6 +17,16 @@ comment = timezone information and log sockets
 paths = /etc/localtime
 need_logsocket = 1
 
+[enterpriselinuxbasics]
+comment = Various Enterprise Linux specific directories and programs
+paths = /usr/lib/locale, /usr/share/modulefiles, /usr/share/Modules, /usr/share/tcl*, /usr/bin/lesspipe.sh, /usr/libexec/grepconf.sh, /usr/bin/tclsh, /usr/bin/tty
+includesections = enterpriselinux_etc_env
+
+[enterpriselinux_etc_env]
+comment = Enterprise Linux /etc specific environment related files
+paths = /etc/profile, /etc/modulefiles, /etc/alternatives/modulecmd, /etc/DIR_COLORS*,  /etc/sysconfig/bash-prompt-default, /etc/profile.d/bash_completion.sh, /etc/profile.d/color*, /etc/profile.d/lang*, /etc/profile.d/less*, /etc/profile.d/sh.local, /etc/profile.d/vim*, /etc/profile.d/composer*, /etc/profile.d/conda*, /etc/profile.d/guestfish.sh, /etc/locale.conf, /etc/inputrc
+emptydirs = /etc/ssl, /etc/pki
+
 [jk_lsh]
 comment = Jailkit limited shell
 paths = /usr/sbin/jk_lsh, /etc/jailkit/jk_lsh.ini
@@ -27,10 +37,6 @@ includesections = uidbasics, logbasics
 [limitedshell]
 comment = alias for jk_lsh
 includesections = jk_lsh
-
-[openssl]
-comment = Generic openssl files (excluded: /etc/ssl/private, /usr/lib/ssl/private)
-paths =  /bin/openssl, /etc/ssl/openssl.cnf, /etc/ssl/certs, /usr/lib/ssl/cert.pem, /usr/lib/ssl/certs, /usr/lib/ssl/misc, /usr/lib/ssl/openssl.cnf, /usr/share/ca-certificates
 
 [cvs]
 comment = Concurrent Versions System
@@ -71,10 +77,10 @@ devices = /dev/null
 
 [basicshell]
 comment = bash based shell with several basic utilities
-paths = /bin/sh, bash, ls, cat, chmod, mkdir, cp, cpio, date, dd, echo, egrep, false, fgrep, grep, gunzip, gzip, ln, ls, mkdir, mktemp, more, mv, pwd, rm, rmdir, sed, sh, sleep, sync, tar, touch, true, uncompress, zcat, /etc/motd, /etc/issue, /etc/bash.bashrc, /etc/bashrc, /etc/profile, /usr/lib/locale/en_US.utf8, uname, expr, xargs, /etc/inputrc
+paths = /bin/sh, bash, ls, cat, chmod, mkdir, cp, cpio, date, dd, echo, egrep, false, fgrep, grep, gunzip, gzip, ln, ls, mkdir, mktemp, more, mv, pwd, rm, rmdir, sed, sh, sleep, sync, tar, touch, true, uncompress, zcat, /etc/motd, /etc/issue, /etc/bash.bashrc, /etc/bashrc, /etc/profile, /usr/lib/locale/en_US.utf8, uname, expr, xargs
 users = root
 groups = root
-includesections = uidbasics
+includesections = uidbasics, enterpriselinuxbasics
 
 [interactiveshell]
 comment = for ssh access to a full shell
@@ -130,7 +136,7 @@ includesections = netbasics, uidbasics
 
 [perl]
 comment = the perl interpreter and libraries
-paths = perl, /usr/lib/perl, /usr/lib/perl5, /usr/share/perl, /usr/share/perl5
+paths = perl, /usr/lib64/perl, /usr/lib64/perl5, /usr/share/perl, /usr/share/perl5
 
 [xauth]
 comment = getting X authentication to work
@@ -155,22 +161,17 @@ paths_w_setuid = /bin/ping
 #paths = /usr/bin/X11/xterm, /usr/share/terminfo, /etc/terminfo
 #devices = /dev/pts/0, /dev/pts/1, /dev/pts/2, /dev/pts/3, /dev/pts/4, /dev/ptyb4, /dev/ptya4, /dev/tty, /dev/tty0, /dev/tty4
 
-# coreutils from:
-# (echo -ne '\n[coreutils]\ncomment = non-sbin progs from coreutils\npaths = '; dpkg --listfiles coreutils | grep -E '^/bin/|/usr/bin/' | xargs -n1 -i@ echo -n "@, " | sed -e 's/, *$/\n/g' -e 's|/usr/bin/||g' -e 's|/bin/||g') >> /etc/jailkit/jk_init.ini
-
 [coreutils]
-comment = non-sbin progs from coreutils
-paths = cat, chgrp, chmod, chown, cp, date, dd, df, dir, echo, false, ln, ls, mkdir, mknod, mktemp, mv, pwd, readlink, rm, rmdir, sleep, stty, sync, touch, true, uname, vdir, [, arch, b2sum, base32, base64, basename, chcon, cksum, comm, csplit, cut, dircolors, dirname, du, env, expand, expr, factor, fmt, fold, groups, head, hostid, id, install, join, link, logname, md5sum, mkfifo, nice, nl, nohup, nproc, numfmt, od, paste, pathchk, pinky, pr, printenv, printf, ptx, realpath, runcon, seq, sha1sum, sha224sum, sha256sum, sha384sum, sha512sum, shred, shuf, sort, split, stat, stdbuf, sum, tac, tail, tee, test, timeout, tr, truncate, tsort, tty, unexpand, uniq, unlink, users, wc, who, whoami, yes, md5sum.textutils
+comment = Progs from coreutils
+paths = arch, b2sum, base32, base64, basename, cat, chcon, chgrp, chmod, chown, cksum, comm, cp, csplit, cut, date, dir, dircolors, dirname, du, echo, env, expand, expr, factor, false, fmt, fold, groups, head, hostid, id, install, join, link, ln, logname, ls, md5sum, mkdir, mkfifo, mknod, mktemp, mv, nice, nl, nohup, nproc, numfmt, od, paste, pathchk, pinky, pr, printenv, printf, ptx, pwd, readlink, realpath, rm, rmdir, runcon, seq, sha1sum, sha224sum, sha256sum, sha384sum, sha512sum, shred, shuf, sleep, sort, split, stat, stdbuf, stty, sum, tac, tail, tee, test, timeout, touch, tr, true, truncate, tsort, uname, unexpand, uniq, unlink, users, vdir, wc, who, whoami, yes
 
-[wp]
-comment = WordPress Command Line
-paths = wp, which, mysqlcheck, tput, unrar, /usr/local/bin/php
-includesections = php, mysql-client
+[webutils]
+comment = Collection of commonly used utils for webapps
+paths = /usr/bin/gm, /usr/bin/convert, /usr/bin/identify, /usr/bin/composite, /usr/bin/combine, /usr/bin/cwebp, /usr/bin/pdf*
 
-[mysql-client]
-comment = mysql client
-paths = mysql, mysqldump, mysqlshow, /usr/lib/libmysqlclient.so, /usr/lib/i386-linux-gnu/libmariadb.so.3, /usr/lib/i386-linux-gnu/mariadb19, /usr/lib/x86_64-linux-gnu/libmariadb.so.3, /usr/lib/x86_64-linux-gnu/mariadb19, /usr/lib/arm-linux-gnueabihf/libmariadb.so.3, /usr/lib/arm-linux-gnueabihf/mariadb19, /usr/lib/aarch64-linux-gnu/libmariadb.so.3, /usr/lib/aarch64-linux-gnu/mariadb19
-includesections = netbasics
+[mysqlutils]
+comment = MySQL client utils
+paths = mysql, mysqldump, mysqlshow
 
 [composer]
 comment = composer
@@ -185,78 +186,87 @@ paths = npm, npx, node, nodejs, semver, /usr/lib/nodejs, /usr/share/nodejs, /usr
 comment = /usr/bin/env for environment variables
 paths = env
 
-# Debian 10 default php version is 7.3 (Debian 9 is 7.0)
-# Todo: set default version in ISPConfig installer,
-# but install the php cli version matching the website
 [php]
 comment = default php version and libraries
 paths = /usr/bin/php
-includesections = php_common, php7_3
+includesections = php_common
 
 [php_common]
-comment = common php directories and libraries
+comment = Common PHP directories and libraries
 # notice:  potential information leak
 #  do not add all of /etc/php/ or any of the fpm directories
 #  or the php config (which includes custom php snippets) from *all*
 #  sites which use fpm will be copied to *every* jailkit
-paths = /usr/bin/php, /usr/lib/php/, /usr/share/php/, /usr/share/zoneinfo/
-includesections = env, logbasics, netbasics
+paths = /usr/bin/php, /usr/bin/phar, /usr/lib64/php/, /usr/share/php/, /usr/share/zoneinfo/
+includesections = env, logbasics, netbasics, mysqlutils, webutils, imagemagick
+
+[php5_4]
+comment = PHP 5.4
+paths = /opt/remi/php54/root/bin/php, /usr/bin/php54, /opt/remi/php54/root/bin/phar, /opt/remi/php54/root/usr/lib64/, /opt/remi/php54/root/usr/share/
+includesections = php_common
+
+[php5_5]
+comment = PHP 5.5
+paths = /opt/remi/php55/root/bin/php, /usr/bin/php55, /opt/remi/php55/root/bin/phar, /opt/remi/php55/root/usr/lib64/, /opt/remi/php55/root/usr/share/
+includesections = php_common
 
 [php5_6]
-comment = php version 5.6
-paths = /usr/bin/php5.6, /usr/lib/php/5.6/, /usr/lib/php/20131226/, /usr/share/php/5.6/, /etc/php/5.6/cli/, /etc/php/5.6/mods-available/
+comment = PHP 5.6
+paths = /opt/remi/php56/root/bin/php, /usr/bin/php56, /opt/remi/php56/root/bin/phar, /opt/remi/php56/root/usr/lib64/, /opt/remi/php56/root/usr/share/
 includesections = php_common
 
 [php7_0]
-comment = php version 7.0
-paths = /usr/bin/php7.0, /usr/lib/php/7.0/, /usr/lib/php/20151012/, /usr/share/php/7.0/, /etc/php/7.0/cli/, /etc/php/7.0/mods-available/
+comment = PHP 7.0
+paths = /opt/remi/php70/root/bin/php, /usr/bin/php70, /opt/remi/php70/root/bin/phar, /opt/remi/php70/root/usr/lib64/, /opt/remi/php70/root/usr/share/
 includesections = php_common
 
 [php7_1]
-comment = php version 7.1
-paths = /usr/bin/php7.1, /usr/lib/php/7.1/, /usr/lib/php/20160303/, /usr/share/php/7.1/, /etc/php/7.1/cli/, /etc/php/7.1/mods-available/
+comment = PHP 7.1
+paths = /opt/remi/php71/root/bin/php, /usr/bin/php71, /opt/remi/php71/root/bin/phar, /opt/remi/php71/root/usr/lib64/, /opt/remi/php71/root/usr/share/
 includesections = php_common
 
 [php7_2]
-comment = php version 7.2
-paths = /usr/bin/php7.2, /usr/lib/php/7.2/, /usr/lib/php/20170718/, /usr/share/php/7.2/, /etc/php/7.2/cli/, /etc/php/7.2/mods-available/
+comment = PHP 7.2
+paths = /opt/remi/php72/root/bin/php, /usr/bin/php72, /opt/remi/php72/root/bin/phar, /opt/remi/php72/root/usr/lib64/, /opt/remi/php72/root/usr/share/
 includesections = php_common
 
 [php7_3]
-comment = php version 7.3
-paths = /usr/bin/php7.3, /usr/lib/php/7.3/, /usr/lib/php/20180731/, /usr/share/php/7.3/, /etc/php/7.3/cli/, /etc/php/7.3/mods-available/
+comment = PHP 7.3
+paths = /opt/remi/php73/root/bin/php, /usr/bin/php73, /opt/remi/php73/root/bin/phar, /opt/remi/php73/root/usr/lib64/, /opt/remi/php73/root/usr/share/
 includesections = php_common
 
 [php7_4]
-comment = php version 7.4
-paths = /usr/bin/php7.4, /usr/lib/php/7.4/, /usr/lib/php/20190902/, /usr/share/php/7.4/, /etc/php/7.4/cli/, /etc/php/7.4/mods-available/
+comment = PHP 7.4
+paths = /opt/remi/php74/root/bin/php, /usr/bin/php74, /opt/remi/php74/root/bin/phar, /opt/remi/php74/root/usr/lib64/, /opt/remi/php74/root/usr/share/
 includesections = php_common
 
 [php8_0]
-comment = php version 8.0
-paths = /usr/bin/php8.0, /usr/lib/php/8.0/, /usr/lib/php/20200930/, /usr/share/php/8.0/, /etc/php/8.0/cli/, /etc/php/8.0/mods-available/
+comment = PHP 8.0
+paths = /opt/remi/php80/root/bin/php, /usr/bin/php80, /opt/remi/php80/root/bin/phar, /opt/remi/php80/root/usr/lib64/, /opt/remi/php80/root/usr/share/
 includesections = php_common
 
 [php8_1]
-comment = php version 8.1
-paths = /usr/bin/php8.1, /usr/lib/php/8.1/, /usr/lib/php/20210902/, /usr/share/php/8.1/, /etc/php/8.1/cli/, /etc/php/8.1/mods-available/
+comment = PHP 8.1
+paths = /opt/remi/php81/root/bin/php, /usr/bin/php81, /opt/remi/php81/root/bin/phar, /opt/remi/php81/root/usr/lib64/, /opt/remi/php81/root/usr/share/
 includesections = php_common
 
 [php8_2]
-comment = php version 8.2
-paths = /usr/bin/php8.2, /usr/lib/php/8.2/, /usr/lib/php/20220829/, /usr/share/php/8.2/, /etc/php/8.2/cli/, /etc/php/8.2/mods-available/
+comment = PHP 8.2
+paths = /opt/remi/php82/root/bin/php, /usr/bin/php82, /opt/remi/php82/root/bin/phar, /opt/remi/php82/root/usr/lib64/, /opt/remi/php82/root/usr/share/
 includesections = php_common
 
 [php8_3]
-comment = php version 8.3
-paths = /usr/bin/php8.3, /usr/lib/php/8.3/, /usr/lib/php/20230831/, /usr/share/php/8.3/, /etc/php/8.3/cli/, /etc/php/8.3/mods-available/
+comment = PHP 8.3
+paths = /opt/remi/php83/root/bin/php, /usr/bin/php83, /opt/remi/php83/root/bin/phar, /opt/remi/php83/root/usr/lib64/, /opt/remi/php83/root/usr/share/
 includesections = php_common
 
 [php8_4]
-comment = php version 8.4
-paths = /usr/bin/php8.4, /usr/lib/php/8.4/, /usr/lib/php/20240841/, /usr/share/php/8.4/, /etc/php/8.4/cli/, /etc/php/8.4/mods-available/
+comment = PHP 8.4
+paths = /opt/remi/php84/root/bin/php, /usr/bin/php84, /opt/remi/php84/root/bin/phar, /opt/remi/php84/root/usr/lib64/, /opt/remi/php84/root/usr/share/
 includesections = php_common
 
 [imagemagick]
 comment = ImageMagick needed for php-imagemagick extension
-paths = /usr/share/ImageMagick-*, /etc/ImageMagick-*, /usr/lib/*/ImageMagick-*
+paths = /usr/share/ImageMagick-*, /etc/ImageMagick-*, /usr/lib64/ImageMagick-*
+
+

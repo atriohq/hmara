@@ -1463,6 +1463,8 @@ CREATE TABLE `server_php` (
   `php_fpm_ini_dir` varchar(255) DEFAULT NULL,
   `php_fpm_pool_dir` varchar(255) DEFAULT NULL,
   `php_fpm_socket_dir` varchar(255) DEFAULT NULL,
+  `php_cli_binary` varchar(255) DEFAULT NULL,
+  `php_jk_section` varchar(255) DEFAULT NULL,
   `active` enum('n','y') NOT NULL DEFAULT 'y',
   `sortprio` int(20) NOT NULL DEFAULT 100,
   PRIMARY KEY (`server_php_id`)
