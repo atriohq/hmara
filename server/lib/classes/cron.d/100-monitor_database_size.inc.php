@@ -142,6 +142,12 @@ class cronjob_monitor_database_size extends cronjob {
 			$server_config = $app->getconf->get_server_config($conf['server_id'], 'server');
 			$hostname = preg_replace('/\./', '_', $server_config['hostname']);
 
+			// Only ssh and nc are allowed for now.
+			if (!preg_match('/^(ssh|nc) /', $conf['graphite_collector_command'])) {
+				$app->log("Invalid graphite_collector_command value", LOGLEVEL_ERROR);
+				return;
+			}
+
 			$graphite_lines = '';
 			$timestamp = time();
 			foreach ($databases as $i => $db) {
@@ -150,7 +156,7 @@ class cronjob_monitor_database_size extends cronjob {
 			}
 			// Store in a 'space separated values' file. (Useful for debugging and possibly other scripting)
 			file_put_contents('/tmp/usage_db.ssv', $graphite_lines);
-			shell_exec("cat /tmp/usage_db.ssv | " . $conf['graphite_collector_command']);
+			shell_exec("cat /tmp/usage_db.ssv | " . escapeshellcmd($conf['graphite_collector_command']));
 			unlink('/tmp/usage_db.ssv');
 		}
 	}
