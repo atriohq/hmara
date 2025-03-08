@@ -162,8 +162,9 @@ class cronjob_monitor_email_quota extends cronjob {
 	 *
 	 * Install:
 	 * Add to the server/lib/config.inc.local.php file: `$conf['graphite_collector_command'] = 'ssh collector@graphite.local dummy_netcat';`
+	 * Or `$conf['graphite_collector_command'] = 'nc -q0 127.0.0.1 2003';`
 	 *
-	 * On the graphite server create a user collector, with in the .ssh/authorized_keys: `command="nc -q0 127.0.0.1 2003" ssh-rsa ...` with the ssh public key of the root user on the mailserver.
+	 * On the remote graphite server create a user collector, with in the .ssh/authorized_keys: `command="nc -q0 127.0.0.1 2003" ssh-rsa ...` with the ssh public key of the root user on the mailserver.
 	 * The dummy_netcat is replaced by the actual nc command, assuring that no other commands can be executed via this key.
 	 *
 	 * A Grafana dashboard example can be found in docs/examples/grafana_mailuser_disk_usage.json
