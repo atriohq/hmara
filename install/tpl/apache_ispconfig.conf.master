@@ -153,8 +153,8 @@ Alias /awstats-icon "/usr/share/awstats/icon"
         Require all granted
     </Directory>
 
-    <Location /wws>
-       SetHandler "proxy:unix:/run/sympa/wwsympa.socket|fcgi://"
+    <Location /sympa>
+       SetHandler "proxy:unix:/run/sympa/wwsympa.socket|fcgi://localhost"
        Require all granted
     </Location>
 </IfModule>
