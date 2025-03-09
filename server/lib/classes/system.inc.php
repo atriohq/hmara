@@ -2161,7 +2161,7 @@ class system{
     }
 
 		if($full_init_script_path == '') {
-			$app->log('No init script for '.$servicename.', we quit here.',LOGLEVEL_WARN);
+			$app->log('No init script for: '.$servicename.' with action: '.$action.' and path: '.$init_script_directory.', we quit here.',LOGLEVEL_WARN);
 			return false;
 		}
 
