@@ -2161,13 +2161,13 @@ class system{
     }
 
 		if($full_init_script_path == '') {
-			$app->log('No init script, we quit here.',LOGLEVEL_WARN);
+			$app->log('No init script for '.$servicename.', we quit here.',LOGLEVEL_WARN);
 			return false;
 		}
 
 		//* Check init script
 		if(!is_file($full_init_script_path)) {
-			$app->log('Init script '.$full_init_script_path.' not found',LOGLEVEL_WARN);
+			$app->log('Init script '.$full_init_script_path.' for '.$servicename.' not found',LOGLEVEL_WARN);
 			return false;
 		}
 
