@@ -460,10 +460,14 @@ $form["tabs"]['mail'] = array (
 		'default_imap_prefix' => array(
 			'datatype' => 'VARCHAR',
 			'formtype' => 'TEXT',
+			'validators' => array ( 0 => array ( 'type' => 'REGEX',
+					'regex' => '/^[a-zA-Z0-9]{0,64}$/',
+					'errmsg'=> 'imap_prefix_error_regex'),
+			),
 			'default' => '',
 			'value' => '',
 			'width' => '20',
-			'maxlength' => '255'
+			'maxlength' => '64'
 		),
 		//#################################
 		// END Datatable fields
