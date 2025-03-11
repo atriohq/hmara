@@ -28,5 +28,5 @@ $wb['tooltip_php_jk_section_txt'] = 'Bezeichner der PHP-Version in der jk_init.i
 $wb['php_cli_jk_section_error_regex'] = 'Ungültige Jaikit chroot-Sektion';
 $wb['php_cli_binary_error_regex'] = 'Ungültiger Pfad zur PHP-CLI-Binary';
 $wb['php_cli_binary_empty'] = 'Das Feld PHP-CLI-Binary darf nicht leer sein.';
-§wb['php_cli_jk_section_empty'] = 'Das Feld PHP Jailkit-Sektion darf nicht leer sein.';
+$wb['php_cli_jk_section_empty'] = 'Das Feld PHP Jailkit-Sektion darf nicht leer sein.';
 ?>
