@@ -775,7 +775,7 @@ class installer_base extends stdClass {
 					$this->warning('Unable to set rights of user in master database: '.$value['db']."\n Query: ".$query."\n Error: ".$this->dbmaster->errorMessage);
 				}
 
-				$query = "GRANT SELECT, INSERT , DELETE ON ?? TO ?@?";
+				$query = "GRANT SELECT, INSERT, UPDATE, DELETE ON ?? TO ?@?";
 				if ($verbose){
 					echo $query ."\n";
 				}

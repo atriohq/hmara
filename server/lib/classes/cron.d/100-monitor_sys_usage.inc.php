@@ -60,13 +60,13 @@ class cronjob_monitor_sys_usage extends cronjob {
 
 		/* the id of the server as int */
 		$server_id = intval($conf['server_id']);
-		
+
 
         // Get record with existing data points
         $type = 'sys_usage';
         $max_data_points = 15;
-        $sql = "SELECT `data` FROM `monitor_data` WHERE `type` = ?";
-        $rec = $app->db->queryOneRecord($sql, $type);
+        $sql = "SELECT `data` FROM `monitor_data` WHERE `type` = ? AND `server_id` = ?";
+        $rec = $app->dbmaster->queryOneRecord($sql, $type, $server_id);
 
         if(!empty($rec)) {
             $data = unserialize($rec['data']);
@@ -81,7 +81,7 @@ class cronjob_monitor_sys_usage extends cronjob {
             $interval_seconds = 60;
         }
         $data['tstamp'] = time();
- 
+
         // Monitor load average in percent
         $load = $this->get_system_load();
 
@@ -101,7 +101,7 @@ class cronjob_monitor_sys_usage extends cronjob {
         }
 
         $data['load'][] = $load_percent;
-		
+
 		// Trim time array size
         if(isset($data['time']) && count($data['time']) >= $max_data_points) {
             array_shift($data['time']);
@@ -172,10 +172,10 @@ class cronjob_monitor_sys_usage extends cronjob {
                 ')';
             $app->dbmaster->query($sql);
         } else {
-            $sql = "UPDATE `monitor_data` SET `data` = ?, `created` = ? WHERE `type` = ?";
-            $app->dbmaster->query($sql,serialize($res['data']),time(),$type);
+            $sql = "UPDATE `monitor_data` SET `data` = ?, `created` = ? WHERE `type` = ? AND `server_id` = ?";
+            $app->dbmaster->query($sql,serialize($res['data']),time(),$type,$server_id);
         }
-        
+
 
         /* The new data is written, now we can delete the old one */
         $this->_tools->delOldRecords($type, $res['server_id']);
@@ -206,7 +206,7 @@ class cronjob_monitor_sys_usage extends cronjob {
         }
         return $load;
     }
-        
+
     /**
      * get_cpu_cores
      *
@@ -216,13 +216,13 @@ class cronjob_monitor_sys_usage extends cronjob {
     private function get_cpu_cores() : int {
         return (int) shell_exec("nproc");
     }
-        
+
     /**
      * get_memory_info
      *
      * @return array
      */
-    
+
     private function get_memory_info() : array {
         $data = file_get_contents("/proc/meminfo");
         $meminfo = [];
@@ -236,7 +236,7 @@ class cronjob_monitor_sys_usage extends cronjob {
         }
         return $meminfo;
     }
-    
+
     /**
      * get_network_bytes
      *
