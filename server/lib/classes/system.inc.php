@@ -2923,9 +2923,11 @@ class system{
 									unlink($php_binary);
 									symlink($options['php_cli_binary'], $php_binary);
 									if($used_os_type == "debian" || $$used_os_type == "ubuntu") {
-										if(file_exists($home_dir . '/home/' . $homedir_username . '/.local/bin/php')) {
+										if(file_exists($home_dir . '/home/' . $homedir_username . '/.local/bin/php') && !file_exists($home_dir . '/home/' . $homedir_username . '/.local/bin/.lock_homephp')) {
 											unlink($home_dir . '/home/' . $homedir_username . '/.local/bin/php');
-										}
+										}/* else {
+											$app->log("Lock file .lock_homephp for PHP exists in " . $home_dir . '/home/' . $homedir_username . '/.local/bin/.lock_homephp', LOGLEVEL_DEBUG);
+										}*/
 									}
 								}
 						}

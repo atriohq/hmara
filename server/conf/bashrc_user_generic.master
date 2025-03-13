@@ -13,11 +13,6 @@ fi
 export HOSTNAME=<tmpl_var name='domain'>
 </tmpl_if>
 
-<tmpl_if name='use_php_path'>
-# Overwrite the PHP cli binaries by using $PATH:
-export PATH=<tmpl_var name='php_bin_dir'>:$PATH
-</tmpl_if>
-
 # User specific environment
 if ! [[ "$PATH" =~ "$HOME/.local/bin:$HOME/bin:" ]]
 then
