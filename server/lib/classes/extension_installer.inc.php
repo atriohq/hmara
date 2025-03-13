@@ -5,6 +5,7 @@ class extension_installer {
 	private $extension_basedir = '/usr/local/ispconfig/extensions';
 	private $ispconfig_dir = '/usr/local/ispconfig';
 	private $download_url = 'https://repo.ispconfig.com/packages/';
+	private $repo_list_url = 'https://repo.ispconfig.com/api/v1/list/';
 
 	public $errors = [];
 
@@ -17,6 +18,9 @@ class extension_installer {
 	}
 	public function getDownloadUrl() {
 		return $this->download_url;
+	}
+	public function getRepoListUrl() {
+		return $this->repo_list_url;
 	}
 
 	// get errors
@@ -69,6 +73,8 @@ class extension_installer {
 			foreach($files as $file) {
 				// Skip comment lines
 				if(substr(trim($file),0,1) == '#') continue;
+				// skip empty lines
+				if(empty(trim($file))) continue;
 
 				// parse line
 				list($action,$source,$target) = explode(':',trim($file));
@@ -206,6 +212,8 @@ class extension_installer {
 			foreach($files as $file) {
 				// Skip comment lines
 				if(substr(trim($file),0,1) == '#') continue;
+				// skip empty lines
+				if(empty(trim($file))) continue;
 
 				// parse line
 				list($action,$source,$target) = explode(':',$file);
@@ -219,8 +227,8 @@ class extension_installer {
 
 				// Check target
 				if(empty($target) || empty($action) || $target == '/' || $target == '.' || $target == '..') {
-					$app->log('Invalid file list: '.$file_list_path, LOGLEVEL_WARN);
-					$this->errors[] = 'Invalid file list: '.$file_list_path;
+					$app->log('Invalid target: '.$target, LOGLEVEL_WARN);
+					$this->errors[] = 'Invalid target: '.$target;
 					return false;
 				}
 
@@ -229,15 +237,15 @@ class extension_installer {
 
 				// check if empty after realpath
 				if(empty($target)) {
-					$app->log('Invalid file list: '.$file_list_path, LOGLEVEL_WARN);
-					$this->errors[] = 'Invalid file list: '.$file_list_path;
+					$app->log('Invalid target after realpath: '.$target, LOGLEVEL_WARN);
+					$this->errors[] = 'Invalid target after realpath: '.$target;
 					return false;
 				}
 
 				// check if target is within /usr/local/ispconfig and exists
-				if((!is_file($target) && !is_dir($target)) || !str_starts_with($target, $this->ispconfig_dir)) {
-					$app->log('Invalid file list: '.$file_list_path, LOGLEVEL_WARN);
-					$this->errors[] = 'Invalid file list: '.$file_list_path;
+				if(!str_starts_with($target, $this->ispconfig_dir)) {
+					$app->log('Target not within /usr/local/ispconfig: '.$target, LOGLEVEL_WARN);
+					$this->errors[] = 'Target not within /usr/local/ispconfig: '.$target;
 					return false;
 				}
 
@@ -283,6 +291,38 @@ class extension_installer {
 		if(!preg_match('/^[a-zA-Z0-9_]{1,64}$/',$name)) {
 			$app->log('Invalid extension name: '.$name, LOGLEVEL_WARN);
 			$this->errors[] = 'Invalid extension name: '.$name;
+			return false;
+		}
+
+		// check if extension exists in repository
+		$response = file_get_contents($this->getRepoListUrl());
+		$repo_extensions = json_decode($response, true);
+
+		if(empty($repo_extensions)) {
+			$app->log('No extensions available in repository', LOGLEVEL_WARN);
+			$this->errors[] = 'No extensions available in repository';
+			return false;
+		}
+
+		// Check if the extension exists in the repository
+		$extension_found = false;
+		foreach($repo_extensions as $extension) {
+			if($extension['name'] == $name) {
+				if($version) {
+					if($extension['version'] != $version) {
+						$app->log('Extension version not found in repository', LOGLEVEL_WARN);
+						$this->errors[] = 'Extension version not found in repository';
+						return false;
+					}
+				}
+				$extension_found = true;
+				break;
+			}
+		}
+
+		if(!$extension_found) {
+			$app->log('Extension not found in repository', LOGLEVEL_WARN);
+			$this->errors[] = 'Extension not found in repository';
 			return false;
 		}
 
@@ -514,11 +554,19 @@ class extension_installer {
 				} else {
 					$version = 'Unknown';
 				}
+
+				// check license
+				if(file_exists($extension_directory.'/license')) {
+					$license = file_get_contents($extension_directory.'/license');
+				} else {
+					$license = '';
+				}
 				
 				$extensions[] = [
 					'name' => basename($extension_directory),
 					'active' => $active,
-					'version' => $version
+					'version' => $version,
+					'license' => $license
 				];
             }
         }

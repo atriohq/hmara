@@ -97,6 +97,11 @@ class extension_cli extends cli {
         // Get extension name
         $extension_name = $arg[0];
 
+        // Load extension installer
+        $app->log('Installing extension '.$extension_name, LOGLEVEL_DEBUG);
+        $app->uses('extension_installer');
+        $app->load('extension_installer_base');
+
         if(isset($arg[1])) {
             $version = $arg[1];
         } else {
@@ -108,6 +113,41 @@ class extension_cli extends cli {
             die();
         }
 
+        // check if extension exists in repository
+		$response = file_get_contents($app->extension_installer->getRepoListUrl());
+		$repo_extensions = json_decode($response, true);
+
+		if(empty($repo_extensions)) {
+			$this->swriteln();
+            $this->swriteln('Error: No extensions available in repository.');
+            $this->swriteln();
+            die();
+		}
+
+		// Check if the extension exists in the repository
+		$extension_found = false;
+		foreach($repo_extensions as $extension) {
+			if($extension['name'] == $extension_name) {
+				if($version) {
+					if($extension['version'] != $version) {
+						$this->swriteln();
+						$this->swriteln('Error: Extension version not found in repository.');
+						$this->swriteln();
+						die();
+					}
+				}
+				$extension_found = true;
+				break;
+			}
+		}
+
+		if(!$extension_found) {
+			$this->swriteln();
+			$this->swriteln('Error: Extension not found in repository.');
+			$this->swriteln();
+			die();
+		}
+
         // check version
         if(!empty($version) && !preg_match('/^[0-9\.]{1,10}$/',$version)) {
             $this->swriteln();
@@ -115,11 +155,6 @@ class extension_cli extends cli {
             $this->swriteln();
             die();
         }
-
-        // Load extension installer
-        $app->log('Installing extension '.$extension_name, LOGLEVEL_DEBUG);
-        $app->uses('extension_installer');
-        $app->load('extension_installer_base');
 
         // download extension if not already downloaded
         if(!is_dir($app->extension_installer->getExtensionBasedir().'/'.$extension_name)) {
@@ -493,6 +528,16 @@ class extension_cli extends cli {
         $this->swriteln("Time: " . date('Y-m-d H:i:s'));
         $this->swriteln();
 
+        // Get available extensions form repo API server in json format
+        $url = 'https://repo.ispconfig.com/api/v1/list/';
+        $response = file_get_contents($url);
+        $available_extensions = json_decode($response, true);
+
+        if(empty($available_extensions)) {
+            $this->swriteln('No extensions available.');
+            return;
+        }
+
         // Define ANSI color codes
         $ansi_reset = "\033[0m";
         $bold = "\033[1m";
@@ -518,7 +563,14 @@ class extension_cli extends cli {
             }
             
             $status = $extension['active'] ? $green . 'Active' . $ansi_reset : $red . 'Inactive' . $ansi_reset;
-            $description = isset($extension['description']) ? $extension['description'] : 'No description available';
+
+            // get description from available extensions
+            foreach($available_extensions as $available_extension) {
+                if($available_extension['name'] == $name) {
+                    $title = $available_extension['title'];
+                    break;
+                }
+            }
             
             // Output each row with fixed column positions
             $this->swrite($bold . $name . $ansi_reset);
@@ -534,7 +586,7 @@ class extension_cli extends cli {
             $status_text = $extension['active'] ? 'Active' : 'Inactive';
             $this->swrite(str_repeat(' ', max(0, 12 - strlen($status_text))));
             
-            $this->swriteln($description);
+            $this->swriteln($title);
         }
         
         // Display a footer with helpful information
@@ -549,8 +601,11 @@ class extension_cli extends cli {
 
         $app->log('Listing available extensions', LOGLEVEL_DEBUG);
 
+        $app->uses('extension_installer');
+        $app->load('extension_installer_base');
+
         // Get available extensions form repo API server in json format
-        $url = 'https://repo.ispconfig.com/api/v1/list/';
+        $url = $app->extension_installer->getRepoListUrl();
         $response = file_get_contents($url);
         $extensions = json_decode($response, true);
 
@@ -596,7 +651,7 @@ class extension_cli extends cli {
                 $license = substr($license, 0, 7) . '...';
             }
             
-            $description = isset($extension['description']) ? $extension['description'] : 'No description available';
+            $title = isset($extension['title']) ? $extension['title'] : 'No title available';
             
             // Output each row with fixed column positions
             $this->swrite($bold . $name . $ansi_reset);
@@ -611,7 +666,7 @@ class extension_cli extends cli {
             // Add padding after license
             $this->swrite(str_repeat(' ', max(0, 12 - strlen($license))));
             
-            $this->swriteln($description);
+            $this->swriteln($title);
         }
         
         // Display a footer with helpful information
