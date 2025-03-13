@@ -3637,6 +3637,10 @@ class installer_base extends stdClass {
 		$command = 'chown -R ispconfig:ispconfig '.$install_dir.'/interface';
 		caselog($command.' &> /dev/null', __FILE__, __LINE__, "EXECUTED: $command", "Failed to execute the command $command");
 
+		//* chown the extensions directory to the ispconfig user and group
+		$command = 'chown ispconfig:ispconfig '.$install_dir.'/extensions';
+		caselog($command.' &> /dev/null', __FILE__, __LINE__, "EXECUTED: $command", "Failed to execute the command $command");
+
 		//* Chmod the files and directories in the acme dir
 		$command = 'chmod -R 755 '.$install_dir.'/interface/acme';
 		caselog($command.' &> /dev/null', __FILE__, __LINE__, "EXECUTED: $command", "Failed to execute the command $command");
