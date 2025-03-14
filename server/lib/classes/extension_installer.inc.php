@@ -20,6 +20,11 @@ class extension_installer {
 		return $this->download_url;
 	}
 	public function getRepoListUrl() {
+		if(file_exists($this->extension_basedir.'/devkey')) {
+			$devkey = trim(file_get_contents($this->extension_basedir.'/devkey'));
+			return $this->repo_list_url.'?devkey='.urlencode($devkey);
+		}
+		
 		return $this->repo_list_url;
 	}
 
@@ -28,18 +33,75 @@ class extension_installer {
 		return $this->errors;
 	}
 
+	// add Error message
+	public function addError($error) {
+		$this->errors[] = $error;
+	}
+
 	/**
-	 * Summary of enable_extension
+     * Check if the extension name is valid
+     * @param string $extension_name
+     * @return bool
+     */
+    public function checkExtensionName($extension_name, $version = null) {
+        global $app;
+        
+        // Check empty extension name
+        if(empty($extension_name)) {
+            $this->addError('Extension name may not be empty.');
+            return false;
+        }
+
+        // Check for invalid chars
+        if(!preg_match('/^[a-zA-Z0-9_]{1,64}$/',$extension_name)) {
+            $this->addError('Extension name contains invalid characters.');
+            return false;
+        }
+
+        // check if extension exists in repository
+		$response = file_get_contents($this->getRepoListUrl());
+		$repo_extensions = json_decode($response, true);
+
+		if(empty($repo_extensions)) {
+			$this->addError('No extensions available in repository.');
+            return false;
+		}
+
+		// Check if the extension exists in the repository
+		$extension_found = false;
+		foreach($repo_extensions as $extension) {
+			if($extension['name'] == $extension_name) {
+				if($version) {
+					if($extension['version'] != $version) {
+						$this->addError('Extension version not found in repository.');
+						return false;
+					}
+				}
+				$extension_found = true;
+				break;
+			}
+		}
+
+		if(!$extension_found) {
+			$this->addError('Extension not found in repository.');
+			return false;
+		}
+
+        return true;
+    }
+
+	/**
+	 * Summary of enable_files
 	 * @param mixed $name
 	 * @return bool
 	 */
-	public function enable_extension($name) {
+	public function enable_files($name) {
 		global $app, $conf;
 
 		// check name validity
 		if(!preg_match('/^[a-zA-Z0-9_]{1,64}$/',$name)) {
 			$app->log('Invalid extension name: '.$name, LOGLEVEL_WARN);
-			$this->errors[] = 'Invalid extension name: '.$name;
+			$this->addError('Invalid extension name: '.$name);
 			return false;
 		}
 
@@ -48,14 +110,14 @@ class extension_installer {
 		// check name against regex
 		if(!preg_match('/^[a-zA-Z0-9_]+$/', $name)) {
 			$app->log('Enabling extension'.$name.'failed. Invalid name.',LOGLEVEL_WARN);
-			$this->errors[] = 'Enabling extension'.$name.'failed. Invalid name.';
+			$this->addError('Enabling extension'.$name.'failed. Invalid name.');
 			return false;
 		}
 
 		// Check if the extension has already been downloaded
 		if(!is_dir($ext_dir)) {
 			$app->log('Enabling extension'.$name.'failed. No such directory.',LOGLEVEL_WARN);
-			$this->errors[] = 'Enabling extension'.$name.'failed. No such directory.';
+			$this->addError('Enabling extension'.$name.'failed. No such directory.');
 			return false;
 		}
 
@@ -63,7 +125,7 @@ class extension_installer {
 		$file_list_path = $ext_dir.'/install/file.list';
 		if(!file_exists($file_list_path)) {
 			$app->log('The extension '.$name.' has no file list.',LOGLEVEL_WARN);
-			$this->errors[] = 'The extension '.$name.' has no file list.';
+			$this->addError('The extension '.$name.' has no file list.');
 			return false;
 		}
 
@@ -83,14 +145,14 @@ class extension_installer {
 				// Check action, must be c or s or d
 				if($action != 'c' && $action != 's' && $action != 'd') {
 					$app->log('Invalid file list action: '.$action, LOGLEVEL_WARN);
-					$this->errors[] = 'Invalid file list action: '.$action;
+					$this->addError('Invalid file list action: '.$action);
 					return false;
 				}
 
 				// Check source
 				if(empty($source) || empty($action) || $source == '/' || $source == '.' || $source == '..') {
 					$app->log('Invalid file list: '.$file_list_path, LOGLEVEL_WARN);
-					$this->errors[] = 'Invalid file list: '.$file_list_path;
+					$this->addError('Invalid file list: '.$file_list_path);
 					return false;
 				}
 				// source file must be within /usr/local/ispconfig/extensions, check with realpath
@@ -99,14 +161,14 @@ class extension_installer {
 				// check if empty after realpath
 				if(empty($source)) {
 					$app->log('Invalid file list: '.$file_list_path, LOGLEVEL_WARN);
-					$this->errors[] = 'Invalid file list: '.$file_list_path;
+					$this->addError('Invalid file list: '.$file_list_path);
 					return false;
 				}
 
 				// Check target
 				if(empty($target) || empty($action) || $target == '/' || $target == '.' || strpos($target, '..') !== false) {
 					$app->log('Invalid file list: '.$file_list_path, LOGLEVEL_WARN);
-					$this->errors[] = 'Invalid file list: '.$file_list_path;
+					$this->addError('Invalid file list: '.$file_list_path);
 					return false;
 				}
 				
@@ -175,11 +237,11 @@ class extension_installer {
 	}
 
 	/**
-	 * Summary of disable_extension
+	 * Summary of disable_files
 	 * @param mixed $name
 	 * @return void
 	 */
-	public function disable_extension($name) {
+	public function disable_files($name) {
 		global $app, $conf;
 
 		// check name validity
@@ -194,7 +256,7 @@ class extension_installer {
 		// Check if the extension has already been downloaded
 		if(!is_dir($ext_dir)) {
 			$app->log('Disabling extension'.$name.'failed. No such directory.',LOGLEVEL_WARN);
-			$this->errors[] = 'No such directory: '.$ext_dir;
+			$this->addError('No such directory: '.$ext_dir);
 			return false;
 		}
 
@@ -202,7 +264,7 @@ class extension_installer {
 		$file_list_path = $ext_dir.'/install/file.list';
 		if(!file_exists($file_list_path)) {
 			$app->log('The extension '.$name.' has no file list.',LOGLEVEL_WARN);
-			$this->errors[] = 'No file list: '.$file_list_path;
+			$this->addError('No file list: '.$file_list_path);
 			return false;
 		}
 
@@ -221,14 +283,14 @@ class extension_installer {
 				// Check action, must be c or s or d
 				if($action != 'c' && $action != 's' && $action != 'd') {
 					$app->log('Invalid file list action: '.$action, LOGLEVEL_WARN);
-					$this->errors[] = 'Invalid file list action: '.$action;
+					$this->addError('Invalid file list action: '.$action);
 					return false;
 				}
 
 				// Check target
 				if(empty($target) || empty($action) || $target == '/' || $target == '.' || $target == '..') {
 					$app->log('Invalid target: '.$target, LOGLEVEL_WARN);
-					$this->errors[] = 'Invalid target: '.$target;
+					$this->addError('Invalid target: '.$target);
 					return false;
 				}
 
@@ -238,14 +300,14 @@ class extension_installer {
 				// check if empty after realpath
 				if(empty($target)) {
 					$app->log('Invalid target after realpath: '.$target, LOGLEVEL_WARN);
-					$this->errors[] = 'Invalid target after realpath: '.$target;
+					$this->addError('Invalid target after realpath: '.$target);
 					return false;
 				}
 
 				// check if target is within /usr/local/ispconfig and exists
 				if(!str_starts_with($target, $this->ispconfig_dir)) {
 					$app->log('Target not within /usr/local/ispconfig: '.$target, LOGLEVEL_WARN);
-					$this->errors[] = 'Target not within /usr/local/ispconfig: '.$target;
+					$this->addError('Target not within /usr/local/ispconfig: '.$target);
 					return false;
 				}
 
@@ -290,7 +352,7 @@ class extension_installer {
 		// check name validity
 		if(!preg_match('/^[a-zA-Z0-9_]{1,64}$/',$name)) {
 			$app->log('Invalid extension name: '.$name, LOGLEVEL_WARN);
-			$this->errors[] = 'Invalid extension name: '.$name;
+			$this->addError('Invalid extension name: '.$name);
 			return false;
 		}
 
@@ -300,7 +362,7 @@ class extension_installer {
 
 		if(empty($repo_extensions)) {
 			$app->log('No extensions available in repository', LOGLEVEL_WARN);
-			$this->errors[] = 'No extensions available in repository';
+			$this->addError('No extensions available in repository');
 			return false;
 		}
 
@@ -311,7 +373,7 @@ class extension_installer {
 				if($version) {
 					if($extension['version'] != $version) {
 						$app->log('Extension version not found in repository', LOGLEVEL_WARN);
-						$this->errors[] = 'Extension version not found in repository';
+						$this->addError('Extension version not found in repository');
 						return false;
 					}
 				}
@@ -322,7 +384,7 @@ class extension_installer {
 
 		if(!$extension_found) {
 			$app->log('Extension not found in repository', LOGLEVEL_WARN);
-			$this->errors[] = 'Extension not found in repository';
+			$this->addError('Extension not found in repository');
 			return false;
 		}
 
@@ -366,7 +428,7 @@ class extension_installer {
 		if($result === false) {
 			$error = curl_error($curl);
 			$app->log('cURL error when downloading extension '.$name.': '.$error, LOGLEVEL_WARN);
-			$this->errors[] = 'Failed to download extension: '.$name.' - '.$error;
+			$this->addError('Failed to download extension: '.$name.' - '.$error);
 			fclose($fp);
 			curl_close($curl);
 			return false;
@@ -380,7 +442,7 @@ class extension_installer {
 		// Check if the file was downloaded successfully
 		if($http_code != 200 || !file_exists($package_file) || filesize($package_file) == 0) {
 			$app->log('Failed to download extension '.$name.'. HTTP status: '.$http_code, LOGLEVEL_WARN);
-			$this->errors[] = 'Failed to download extension: '.$name.'. HTTP status: '.$http_code;
+			$this->addError('Failed to download extension: '.$name.'. HTTP status: '.$http_code);
 			// Remove empty file if it exists
 			if(file_exists($package_file)) unlink($package_file);
 			return false;
@@ -466,7 +528,7 @@ class extension_installer {
 				$app->system->exec_safe('rm -rf ?', $temp_dir);
 			} else {
 				$app->log('Failed to extract extension '.$name, LOGLEVEL_WARN);
-				$this->errors[] = 'Failed to extract extension: '.$name;
+				$this->addError('Failed to extract extension: '.$name);
 				return false;
 			}
 			unlink($package_file);
@@ -490,7 +552,7 @@ class extension_installer {
 		// check name validity
 		if(!preg_match('/^[a-zA-Z0-9_]{1,64}$/',$name)) {
 			$app->log('Invalid extension name: '.$name, LOGLEVEL_WARN);
-			$this->errors[] = 'Invalid extension name: '.$name;
+			$this->addError('Invalid extension name: '.$name);
 			return false;
 		}
 
@@ -499,7 +561,7 @@ class extension_installer {
 		// Check if the extension has already been downloaded
 		if(!is_dir($ext_dir)) {
 			$app->log('Loading install.sql for extension'.$name.'failed. No such directory.',LOGLEVEL_WARN);
-			$this->errors[] = 'No such directory: '.$ext_dir;
+			$this->addError('No such directory: '.$ext_dir);
 			return false;
 		}
 
@@ -517,7 +579,7 @@ class extension_installer {
 		// check if execcommand was successful
 		if($return_var != 0) {
 			$app->log('Failed to load install.sql for extension '.$name, LOGLEVEL_WARN);
-			$this->errors[] = 'Failed to load install.sql: '.$install_sql_path;
+			$this->addError('Failed to load install.sql: '.$install_sql_path);
 			return false;
 		}
 		
@@ -600,9 +662,199 @@ class extension_installer {
     }
 
 	/**
-	 * Summary of applyOwnerAndPermissions
-	 * @param mixed $source
-	 * @param mixed $target
+	 * Install an extension
+	 * @param string $name
+	 * @param string $version
+	 * @return bool
+	 */
+
+	 public function install_extension($name, $version = null) {
+		global $app;
+
+		// download extension if not already downloaded
+        if(!is_dir($this->extension_basedir.'/'.$name)) {
+            if(!$this->download_extension($name,$version)) {
+                $this->addError('Failed to download extension '.$name);
+                return false;
+            }
+        }
+
+		// check if installer.php exists
+        if(!file_exists($this->extension_basedir.'/'.$name.'/install/installer.php')) {
+            $this->addError('Extension installer class not found.');
+            return false;
+        }
+        
+        // Include extension class from install directory
+        require_once($this->extension_basedir.'/'.$name.'/install/installer.php');
+        $classname = $name.'_installer';
+        $installer = new $classname();
+
+        if(!is_object($installer)) {
+            $this->addError('Extension installer class not found or not an instance of installer.');
+            return false;
+        }
+
+        // Install extension
+        $installer->install($name);
+
+        // Load install.sql
+        $this->load_install_sql($name);
+
+        // enable extension
+        $installer->enable($name);
+
+		return true;
+	}
+
+	public function update_extension($name, $version = null) {
+		global $app;
+
+		// download extension
+        if(!$this->download_extension($name,$version,true)) {
+            if(empty($version)) {
+                $this->errors[] = 'Error: Failed to download extension '.$name;
+            } else {
+                $this->errors[] = 'Error: Failed to download extension '.$name.' version '.$version;
+            }
+            return false;
+        }
+
+        // check if installer.php exists
+        if(!file_exists($this->extension_basedir.'/'.$name.'/install/installer.php')) {
+            $this->addError('Extension installer class not found.');
+            return false;
+        }
+        
+        // Include extension class from install directory
+        require_once($this->extension_basedir.'/'.$name.'/install/installer.php');
+        $classname = $name.'_installer';
+        $installer = new $classname();
+
+        if(!is_object($installer)) {
+            $this->addError('Extension installer class not found or not an instance of installer.');
+            return false;
+        }
+
+        // Update extension
+        $installer->update($name);
+
+        // enable extension
+        $installer->enable($name);
+		
+		return true;
+	}
+
+	/**
+	 * Uninstall an extension
+	 * @param string $name
+	 * @return bool
+	 */
+	public function uninstall_extension($name) {
+		global $app;
+
+		// check if extension is installed
+		if(!is_dir($this->extension_basedir.'/'.$name)) {
+			$this->addError('Extension - '.$name.' - is not installed.');
+			return false;
+		}
+
+		// check if installer.php exists
+		if(!file_exists($this->extension_basedir.'/'.$name.'/install/installer.php')) {
+			$this->addError('Extension installer class not found.');
+			return false;
+		}
+
+		// include extension class from install directory
+		require_once($this->extension_basedir.'/'.$name.'/install/installer.php');
+		$classname = $name.'_installer';
+		$installer = new $classname();
+
+		if(!is_object($installer)) {
+			$this->addError('Extension installer class not found or not an instance of installer.');
+			return false;
+		}
+
+		// disable extension
+		$installer->disable($name);
+
+		// Uninstall extension
+		$installer->uninstall($name);
+
+		// Remove extension directory
+        if(!empty($this->extension_basedir.'/'.$name) && is_dir($this->extension_basedir.'/'.$name)) {
+            exec('rm -rf '.escapeshellarg($this->extension_basedir.'/'.$name));
+        }
+
+		return true;
+	}
+
+	public function enable_extension($name) {
+		global $app;
+
+		// check if extension is installed
+		if(!is_dir($this->extension_basedir.'/'.$name)) {
+			$this->addError('Extension - '.$name.' - is not installed.');
+			return false;
+		}
+
+		// check if installer.php exists
+		if(!file_exists($this->extension_basedir.'/'.$name.'/install/installer.php')) {
+			$this->addError('Extension installer class not found.');
+			return false;
+		}
+
+		// include extension class from install directory
+		require_once($this->extension_basedir.'/'.$name.'/install/installer.php');
+		$classname = $name.'_installer';
+		$installer = new $classname();
+
+		if(!is_object($installer)) {
+			$this->addError('Extension installer class not found or not an instance of installer.');
+			return false;
+		}
+
+		// enable extension
+		$installer->enable($name);
+
+		return true;
+	}
+
+	public function disable_extension($name) {
+		global $app;
+
+		// check if extension is installed
+		if(!is_dir($this->extension_basedir.'/'.$name)) {
+			$this->addError('Extension - '.$name.' - is not installed.');
+			return false;
+		}
+
+		// check if installer.php exists
+		if(!file_exists($this->extension_basedir.'/'.$name.'/install/installer.php')) {
+			$this->addError('Extension installer class not found.');
+			return false;
+		}
+
+		// include extension class from install directory
+		require_once($this->extension_basedir.'/'.$name.'/install/installer.php');
+		$classname = $name.'_installer';
+		$installer = new $classname();
+
+		if(!is_object($installer)) {
+			$this->addError('Extension installer class not found or not an instance of installer.');
+			return false;
+		}
+
+		// disable extension
+		$installer->disable($name);
+
+		return true;
+	}
+
+	/**
+	 * Apply owner and permissions to a file or directory
+	 * @param string $source
+	 * @param string $target
 	 * @throws \Exception
 	 * @return bool
 	 */

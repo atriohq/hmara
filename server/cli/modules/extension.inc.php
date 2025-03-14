@@ -48,31 +48,6 @@ class extension_cli extends cli {
         $this->addCmdOpt($cmd_opt);
     }
 
-    /**
-     * Check if the extension name is valid
-     * @param string $extension_name
-     * @return bool
-     */
-    private function checkExtensionName($extension_name) {
-        // Check empty extension name
-        if(empty($extension_name)) {
-            $this->swriteln();
-            $this->swriteln('Error: Extension name may not be empty.');
-            $this->swriteln();
-            return false;
-        }
-
-        // Check for invalid chars
-        if(!preg_match('/^[a-zA-Z0-9_]{1,64}$/',$extension_name)) {
-            $this->swriteln();
-            $this->swriteln('Error: Extension name contains invalid characters.');
-            $this->swriteln();
-            return false;
-        }
-
-        return true;
-    }
-
     public function showHelp($arg) {
         global $conf;
 
@@ -99,6 +74,7 @@ class extension_cli extends cli {
 
         // Load extension installer
         $app->log('Installing extension '.$extension_name, LOGLEVEL_DEBUG);
+
         $app->uses('extension_installer');
         $app->load('extension_installer_base');
 
@@ -109,44 +85,17 @@ class extension_cli extends cli {
         }
 
         // Check if extension name is valid
-        if (!$this->checkExtensionName($extension_name)) {
-            die();
+        if (!$app->extension_installer->checkExtensionName($extension_name, $version)) {
+            // Show errors
+            if(!empty($app->extension_installer->getErrors())) {
+                $this->swriteln();
+                foreach($app->extension_installer->getErrors() as $error) {
+                    $this->swriteln($error);
+                }
+                $this->swriteln();
+                die();
+            }
         }
-
-        // check if extension exists in repository
-		$response = file_get_contents($app->extension_installer->getRepoListUrl());
-		$repo_extensions = json_decode($response, true);
-
-		if(empty($repo_extensions)) {
-			$this->swriteln();
-            $this->swriteln('Error: No extensions available in repository.');
-            $this->swriteln();
-            die();
-		}
-
-		// Check if the extension exists in the repository
-		$extension_found = false;
-		foreach($repo_extensions as $extension) {
-			if($extension['name'] == $extension_name) {
-				if($version) {
-					if($extension['version'] != $version) {
-						$this->swriteln();
-						$this->swriteln('Error: Extension version not found in repository.');
-						$this->swriteln();
-						die();
-					}
-				}
-				$extension_found = true;
-				break;
-			}
-		}
-
-		if(!$extension_found) {
-			$this->swriteln();
-			$this->swriteln('Error: Extension not found in repository.');
-			$this->swriteln();
-			die();
-		}
 
         // check version
         if(!empty($version) && !preg_match('/^[0-9\.]{1,10}$/',$version)) {
@@ -156,55 +105,8 @@ class extension_cli extends cli {
             die();
         }
 
-        // download extension if not already downloaded
-        if(!is_dir($app->extension_installer->getExtensionBasedir().'/'.$extension_name)) {
-            if(!$app->extension_installer->download_extension($extension_name,$version)) {
-                $this->swriteln();
-                if(empty($version)) {
-                    $this->swriteln('Error: Failed to download extension '.$extension_name);
-                } else {
-                    $this->swriteln('Error: Failed to download extension '.$extension_name.' version '.$version);
-                }
-                // Show errors
-                if(!empty($app->extension_installer->getErrors())) {
-                    foreach($app->extension_installer->getErrors() as $error) {
-                        $this->swriteln($error);
-                    }
-                }
-                $this->swriteln();
-                die();
-            }
-        }
-
-        
-        // check if installer.php exists
-        if(!file_exists($app->extension_installer->getExtensionBasedir().'/'.$extension_name.'/install/installer.php')) {
-            $this->swriteln();
-            $this->swriteln('Error: Extension installer class not found.');
-            $this->swriteln();
-            die();
-        }
-        
-        // Include extension class from install directory
-        require_once($app->extension_installer->getExtensionBasedir().'/'.$extension_name.'/install/installer.php');
-        $classname = $extension_name.'_installer';
-        $installer = new $classname();
-
-        if(!is_object($installer)) {
-            $this->swriteln();
-            $this->swriteln('Error: Extension installer class not found or not an instance of installer.');
-            $this->swriteln();
-            die();
-        }
-
         // Install extension
-        $installer->install($extension_name);
-
-        // Load install.sql
-        $app->extension_installer->load_install_sql($extension_name);
-
-        // enable extension
-        $installer->enable($extension_name);
+        $app->extension_installer->install_extension($extension_name, $version);
 
         // Show errors
         if(!empty($app->extension_installer->getErrors())) {
@@ -237,9 +139,22 @@ class extension_cli extends cli {
             $version = null;
         }
 
+        // Load extension installer
+        $app->log('Updating extension '.$extension_name, LOGLEVEL_DEBUG);
+        $app->uses('extension_installer');
+        $app->load('extension_installer_base');
+
         // Check if extension name is valid
-        if (!$this->checkExtensionName($extension_name)) {
-            die();
+        if (!$app->extension_installer->checkExtensionName($extension_name, $version)) {
+            // Show errors
+            if(!empty($app->extension_installer->getErrors())) {
+                $this->swriteln();
+                foreach($app->extension_installer->getErrors() as $error) {
+                    $this->swriteln($error);
+                }
+                $this->swriteln();
+                die();
+            }
         }
 
         // check version
@@ -250,54 +165,8 @@ class extension_cli extends cli {
             die();
         }
 
-        // Load extension installer
-        $app->log('Updating extension '.$extension_name, LOGLEVEL_DEBUG);
-        $app->uses('extension_installer');
-        $app->load('extension_installer_base');
-
-        // download extension
-        if(!$app->extension_installer->download_extension($extension_name,$version,true)) {
-            $this->swriteln();
-            if(empty($version)) {
-                $this->swriteln('Error: Failed to download extension '.$extension_name);
-            } else {
-                $this->swriteln('Error: Failed to download extension '.$extension_name.' version '.$version);
-            }
-            // Show errors
-            if(!empty($app->extension_installer->getErrors())) {
-                foreach($app->extension_installer->getErrors() as $error) {
-                    $this->swriteln($error);
-                }
-            }
-            $this->swriteln();
-            die();
-        }
-
-        // check if installer.php exists
-        if(!file_exists($app->extension_installer->getExtensionBasedir().'/'.$extension_name.'/install/installer.php')) {
-            $this->swriteln();
-            $this->swriteln('Error: Extension installer class not found.');
-            $this->swriteln();
-            die();
-        }
-        
-        // Include extension class from install directory
-        require_once($app->extension_installer->getExtensionBasedir().'/'.$extension_name.'/install/installer.php');
-        $classname = $extension_name.'_installer';
-        $installer = new $classname();
-
-        if(!is_object($installer)) {
-            $this->swriteln();
-            $this->swriteln('Error: Extension installer class not found or not an instance of installer.');
-            $this->swriteln();
-            die();
-        }
-
         // Update extension
-        $installer->update($extension_name);
-
-        // enable extension
-        $installer->enable($extension_name);
+        $app->extension_installer->update_extension($extension_name, $version);
 
         // Show errors
         if(!empty($app->extension_installer->getErrors())) {
@@ -324,49 +193,26 @@ class extension_cli extends cli {
         // Get extension name
         $extension_name = $arg[0];
 
-        // Check if extension name is valid
-        if (!$this->checkExtensionName($extension_name)) {
-            die();
-        }
-
         // Load extension installer
         $app->log('Uninstalling extension '.$extension_name, LOGLEVEL_DEBUG);
         $app->uses('extension_installer');
         $app->load('extension_installer_base');
 
-        // check if extension is installed
-        if(!is_dir($app->extension_installer->getExtensionBasedir().'/'.$extension_name)) {
-            $this->swriteln();
-            $this->swriteln('Error: Extension - '.$extension_name.' - is not installed.');
-            $this->swriteln();
-            die();
+        // Check if extension name is valid
+        if (!$app->extension_installer->checkExtensionName($extension_name)) {
+            // Show errors
+            if(!empty($app->extension_installer->getErrors())) {
+                $this->swriteln();
+                foreach($app->extension_installer->getErrors() as $error) {
+                    $this->swriteln($error);
+                }
+                $this->swriteln();
+                die();
+            }
         }
-
-        // check if installer.php exists
-        if(!file_exists($app->extension_installer->getExtensionBasedir().'/'.$extension_name.'/install/installer.php')) {
-            $this->swriteln();
-            $this->swriteln('Error: Extension installer class not found.');
-            $this->swriteln();
-            die();
-        }
-
-        // include extension class from install directory
-        require_once($app->extension_installer->getExtensionBasedir().'/'.$extension_name.'/install/installer.php');
-        $classname = $extension_name.'_installer';
-        $installer = new $classname();
-
-        if(!is_object($installer)) {
-            $this->swriteln();
-            $this->swriteln('Error: Extension installer class not found or not an instance of installer.');
-            $this->swriteln();
-            die();
-        }
-
-        // disable extension
-        $installer->disable($extension_name);
 
         // Uninstall extension
-        $installer->uninstall($extension_name);
+        $app->extension_installer->uninstall_extension($extension_name);
 
         // Show errors
         if(!empty($app->extension_installer->getErrors())) {
@@ -376,11 +222,6 @@ class extension_cli extends cli {
             }
             $this->swriteln();
             die();
-        }
-
-        // Remove extension directory
-        if(!empty($app->extension_installer->getExtensionBasedir().'/'.$extension_name) && is_dir($app->extension_installer->getExtensionBasedir().'/'.$extension_name)) {
-            exec('rm -rf '.escapeshellarg($app->extension_installer->getExtensionBasedir().'/'.$extension_name));
         }
 
         // scan extensions
@@ -398,38 +239,26 @@ class extension_cli extends cli {
         // Get extension name
         $extension_name = $arg[0];
 
-        // Check if extension name is valid
-        if (!$this->checkExtensionName($extension_name)) {
-            die();
-        }
-
         // Load extension installer
         $app->log('Enabling extension '.$extension_name, LOGLEVEL_DEBUG);
         $app->uses('extension_installer');
         $app->load('extension_installer_base');
 
-        // check if installer.php exists
-        if(!file_exists($app->extension_installer->getExtensionBasedir().'/'.$extension_name.'/install/installer.php')) {
-            $this->swriteln();
-            $this->swriteln('Error: Extension installer class not found.');
-            $this->swriteln();
-            die();
-        }
-
-        // include extension class from install directory
-        require_once($app->extension_installer->getExtensionBasedir().'/'.$extension_name.'/install/installer.php');
-        $classname = $extension_name.'_installer';
-        $installer = new $classname();
-
-        if(!is_object($installer)) {
-            $this->swriteln();
-            $this->swriteln('Error: Extension installer class not found or not an instance of installer.');
-            $this->swriteln();
-            die();
+        // Check if extension name is valid
+        if (!$app->extension_installer->checkExtensionName($extension_name)) {
+            // Show errors
+            if(!empty($app->extension_installer->getErrors())) {
+                $this->swriteln();
+                foreach($app->extension_installer->getErrors() as $error) {
+                    $this->swriteln($error);
+                }
+                $this->swriteln();
+                die();
+            }
         }
 
         // Enable extension
-        $installer->enable($extension_name);
+        $app->extension_installer->enable_extension($extension_name);
 
         // Show errors
         if(!empty($app->extension_installer->getErrors())) {
@@ -456,38 +285,26 @@ class extension_cli extends cli {
         // Get extension name
         $extension_name = $arg[0];
 
-        // Check if extension name is valid
-        if (!$this->checkExtensionName($extension_name)) {
-            die('Invalid extension name: '.$extension_name);
-        }
-
         // Load extension installer
         $app->log('Disabling extension '.$extension_name, LOGLEVEL_DEBUG);
         $app->uses('extension_installer');
         $app->load('extension_installer_base');
 
-        // check if installer.php exists
-        if(!file_exists($app->extension_installer->getExtensionBasedir().'/'.$extension_name.'/install/installer.php')) {
-            $this->swriteln();
-            $this->swriteln('Error: Extension installer class not found.');
-            $this->swriteln();
-            die();
-        }
-
-        // include extension class from install directory
-        require_once($app->extension_installer->getExtensionBasedir().'/'.$extension_name.'/install/installer.php');
-        $classname = $extension_name.'_installer';
-        $installer = new $classname();
-
-        if(!is_object($installer)) {
-            $this->swriteln();
-            $this->swriteln('Error: Extension installer class not found or not an instance of installer.');
-            $this->swriteln();
-            die();
+        // Check if extension name is valid
+        if (!$app->extension_installer->checkExtensionName($extension_name)) {
+            // Show errors
+            if(!empty($app->extension_installer->getErrors())) {
+                $this->swriteln();
+                foreach($app->extension_installer->getErrors() as $error) {
+                    $this->swriteln($error);
+                }
+                $this->swriteln();
+                die();
+            }
         }
 
         // Disable extension
-        $installer->disable($extension_name);
+        $app->extension_installer->disable_extension($extension_name);
 
         // Show errors
         if(!empty($app->extension_installer->getErrors())) {
@@ -584,7 +401,7 @@ class extension_cli extends cli {
             $this->swrite($status);
             // Add padding after status (accounting for ANSI codes)
             $status_text = $extension['active'] ? 'Active' : 'Inactive';
-            $this->swrite(str_repeat(' ', max(0, 12 - strlen($status_text))));
+            $this->swrite(str_repeat(' ', max(0, 13 - strlen($status_text))));
             
             $this->swriteln($title);
         }
@@ -664,7 +481,7 @@ class extension_cli extends cli {
             
             $this->swrite($license);
             // Add padding after license
-            $this->swrite(str_repeat(' ', max(0, 12 - strlen($license))));
+            $this->swrite(str_repeat(' ', max(0, 13 - strlen($license))));
             
             $this->swriteln($title);
         }
