@@ -125,16 +125,7 @@ class cronjob_monitor_database_size extends cronjob {
 	}
 
 	/**
-	 * Export data to Graphite
-	 *
-	 * Install:
-	 * Add to the server/lib/config.inc.local.php file: `$conf['graphite_collector_command'] = 'ssh collector@graphite.local dummy_netcat';`
-	 * Or `$conf['graphite_collector_command'] = 'nc -q0 127.0.0.1 2003';`
-	 *
-	 * On the remote graphite server create a user collector, with in the .ssh/authorized_keys: `command="nc -q0 127.0.0.1 2003" ssh-rsa ...` with the ssh public key of the root user on the databaseserver.
-	 * The dummy_netcat is replaced by the actual nc command, assuring that no other commands can be executed via this key.
-	 *
-	 * A Grafana dashboard example can be found in docs/examples/grafana_database_disk_usage.json
+	 * Prepare data for Graphite.
 	 */
 	private function export_metrics($data) {
 		global $app, $conf;
@@ -143,22 +134,13 @@ class cronjob_monitor_database_size extends cronjob {
 			$server_config = $app->getconf->get_server_config($conf['server_id'], 'server');
 			$hostname = preg_replace('/\./', '_', $server_config['hostname']);
 
-			// Only ssh and nc are allowed for now.
-			if (!preg_match('/^(ssh|nc) /', $conf['graphite_collector_command'])) {
-				$app->log("Invalid graphite_collector_command value", LOGLEVEL_ERROR);
-				return;
-			}
-
-			$graphite_lines = '';
+			$metrics = array();
 			$timestamp = time();
 			foreach ($databases as $i => $db) {
 				$database_name = preg_replace('/\./', '_', $db['database_name']);
-				$graphite_lines .= "ispconfig.$hostname.monitor_data.database_quota.$database_name " . $data[$i]['size'] . " $timestamp" . PHP_EOL;
+				$metrics["ispconfig.$hostname.monitor_data.database_quota.$database_nam"] = array('value' => $data[$i]['size'], 'timestamp' => $timestamp);
 			}
-			// Store in a 'space separated values' file. (Useful for debugging and possibly other scripting)
-			file_put_contents('/tmp/usage_db.ssv', $graphite_lines);
-			shell_exec("cat /tmp/usage_db.ssv | " . escapeshellcmd($conf['graphite_collector_command']));
-			unlink('/tmp/usage_db.ssv');
+			return $this->_tools->deliver_exported_metrics($metrics);
 		}
 	}
 

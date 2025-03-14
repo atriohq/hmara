@@ -926,6 +926,37 @@ class monitor_tools {
 		return true;
 	}
 
+	/**
+	 * Forward metrics to graphite
+	 *
+	 * Install:
+	 * Add to the server/lib/config.inc.local.php file: `$conf['graphite_collector_command'] = 'ssh collector@graphite.local dummy_netcat';`
+	 * Or `$conf['graphite_collector_command'] = 'nc -q0 127.0.0.1 2003';`
+	 *
+	 * On the remote graphite server create a user collector, with in the .ssh/authorized_keys: `command="nc -q0 127.0.0.1 2003" ssh-rsa ...` with the ssh public key of the root user on the webserver.
+	 * The dummy_netcat is replaced by the actual nc command, assuring that no other commands can be executed via this key.
+	 *
+	 * A Grafana dashboard example can be found in docs/examples/grafana_sites_disk_usage.json
+	 */
+	public function deliver_exported_metrics($metrics) {
+		global $app, $conf;
+
+		// Only ssh and nc are allowed for now.
+		if (!preg_match('/^(ssh|nc) /', $conf['graphite_collector_command'])) {
+			$app->log("Invalid graphite_collector_command value", LOGLEVEL_ERROR);
+			return;
+		}
+
+		$graphite_lines = '';
+		foreach($metrics as $key => $data) {
+			$graphite_lines .= "$key $data[value] $data[timestamp]" . PHP_EOL;
+		}
+
+		// Store in a 'space separated values' file. (Useful for debugging and possibly other scripting)
+		file_put_contents('/tmp/usage.ssv', $graphite_lines);
+		shell_exec("cat /tmp/usage.ssv | " . escapeshellcmd($conf['graphite_collector_command']));
+		unlink('/tmp/usage.ssv');
+	}
 }
 
 ?>
