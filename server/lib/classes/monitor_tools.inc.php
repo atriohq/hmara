@@ -947,15 +947,25 @@ class monitor_tools {
 			return;
 		}
 
-		$graphite_lines = '';
-		foreach($metrics as $key => $data) {
-			$graphite_lines .= "$key $data[value] $data[timestamp]" . PHP_EOL;
-		}
+		$descriptorspec = array(
+			0 => array("pipe", "r"),  // stdin is a pipe that the child will read from
+		);
 
-		// Store in a 'space separated values' file. (Useful for debugging and possibly other scripting)
-		file_put_contents('/tmp/usage.ssv', $graphite_lines);
-		shell_exec("cat /tmp/usage.ssv | " . escapeshellcmd($conf['graphite_collector_command']));
-		unlink('/tmp/usage.ssv');
+		$pipes = array();
+		$return_value = 0;
+		$process = proc_open(escapeshellcmd($conf['graphite_collector_command']), $descriptorspec, $pipes);
+
+		if (is_resource($process)) {
+			foreach($metrics as $key => $data) {
+				fwrite($pipes[0], "$key $data[value] $data[timestamp]" . PHP_EOL);
+			}
+
+			fclose($pipes[0]);
+			$return_value = proc_close($process);
+
+			echo "command returned $return_value\n";
+		}
+		return ($return_value == 0);
 	}
 }
 
