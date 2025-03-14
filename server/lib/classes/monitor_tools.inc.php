@@ -930,8 +930,8 @@ class monitor_tools {
 	 * Forward metrics to graphite
 	 *
 	 * Install:
-	 * Add to the server/lib/config.inc.local.php file: `$conf['graphite_collector_command'] = 'ssh collector@graphite.local dummy_netcat';`
-	 * Or `$conf['graphite_collector_command'] = 'nc -q0 127.0.0.1 2003';`
+	 * Add to the server/lib/config.inc.local.php file: `$conf['graphite_collector_ssh_remote_host'] = 'collector@graphite.local'; `$conf['graphite_collector_ssh_remote_command'] = 'dummy_netcat';`
+	 * Or `$conf['graphite_collector_nc_host'] = '127.0.0.1';` and `$conf['graphite_collector_nc_port'] = 2003;`
 	 *
 	 * On the remote graphite server create a user collector, with in the .ssh/authorized_keys: `command="nc -q0 127.0.0.1 2003" ssh-rsa ...` with the ssh public key of the root user on the webserver.
 	 * The dummy_netcat is replaced by the actual nc command, assuring that no other commands can be executed via this key.
@@ -942,8 +942,11 @@ class monitor_tools {
 		global $app, $conf;
 
 		// Only ssh and nc are allowed for now.
-		if (!preg_match('/^(ssh|nc) /', $conf['graphite_collector_command'])) {
-			$app->log("Invalid graphite_collector_command value", LOGLEVEL_ERROR);
+		if (!empty($conf['graphite_collector_ssh_remote_command']) && !empty($conf['graphite_collector_ssh_remote_host'])) {
+			$graphite_collector_command = 'ssh ' . escapeshellarg($conf['graphite_collector_ssh_remote_host']) . ' ' . escapeshellarg($conf['graphite_collector_ssh_remote_command']);
+		} elseif (!empty($conf['graphite_collector_nc_host']) && !empty($conf['graphite_collector_nc_port'])) {
+			$graphite_collector_command = 'nc -q0 ' . escapeshellarg($conf['graphite_collector_nc_host']) . ' ' . escapeshellarg($conf['graphite_collector_nc_port']);
+		} else {
 			return;
 		}
 
