@@ -19,10 +19,11 @@ if [ -n "$LOGNAME" ]; then
 		cd $HOME
 	fi
 fi
+</tmpl_if>
 
 ## Change machine hostname to site domain ##
 export HOSTNAME=<tmpl_var name='domain'>
-</tmpl_if>
+export PS1='\u@<tmpl_var name='domain'> \w\$ '
 
 # User specific environment
 if ! [[ "$PATH" =~ "$HOME/.local/bin:$HOME/bin:" ]]
