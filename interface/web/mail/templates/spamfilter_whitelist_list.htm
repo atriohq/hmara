@@ -36,7 +36,7 @@
                 </thead>
                 <tbody>
                     <tmpl_loop name="records">
-                        <tr>
+                        <tr <tmpl_if name="warn_inactive"> class="danger" </tmpl_if> >
                             <td><a href="#" data-load-content="mail/spamfilter_whitelist_edit.php?id={tmpl_var name='id'}">{tmpl_var name="active"}</a></td>
                             <td><a href="#" data-load-content="mail/spamfilter_whitelist_edit.php?id={tmpl_var name='id'}">{tmpl_var name="server_id"}</a></td>
                             <td><a href="#" data-load-content="mail/spamfilter_whitelist_edit.php?id={tmpl_var name='id'}">{tmpl_var name="priority"}</a></td>
