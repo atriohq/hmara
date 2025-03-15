@@ -76,7 +76,7 @@ class page_action extends tform_actions {
 		global $app, $conf;
 
 		$soa = $app->db->queryOneRecord("SELECT origin FROM dns_soa WHERE id = ? AND " . $app->tform->getAuthSQL('r'), $this->dataRecord['zone']);
-		$app->tpl->setVar("selector", str_replace(array('._domainkey', '.' . $soa['origin']), array('', ''), $this->dataRecord['name']), true);
+		$app->tpl->setVar("selector", $this->dataRecord['name'], true);
 		$app->tpl->setVar("public_key", str_replace('v=DKIM1; t=s; p=', '', $this->dataRecord['data']), true);
 
 		parent::onShowEnd();
@@ -110,7 +110,11 @@ class page_action extends tform_actions {
 		// add dkim-settings to the public-key in the txt-record
 		if (!empty($this->dataRecord['data'])) {
 			$this->dataRecord['data']='v=DKIM1; t=s; p='.$this->dataRecord['data'];
-			$this->dataRecord['name']=$this->dataRecord['selector'].'._domainkey';
+			$this->dataRecord['name'] = $this->dataRecord['selector'];
+			if (!preg_match('/\._domainkey/', $this->dataRecord['selector'])) {
+				$this->dataRecord['name'] .= '._domainkey';
+			}
+
 //			$this->dataRecord['ttl']=60;
 		}
 		// Update the serial number  and timestamp of the RR record
