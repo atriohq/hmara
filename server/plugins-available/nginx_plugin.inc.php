@@ -388,14 +388,14 @@ class nginx_plugin {
 			if($data['new']['web_folder'] != ''){
 				if(substr($data['new']['web_folder'],0,1) == '/') $data['new']['web_folder'] = substr($data['new']['web_folder'],1);
 				if(substr($data['new']['web_folder'],-1) == '/') $data['new']['web_folder'] = substr($data['new']['web_folder'],0,-1);
+				$web_folder .= '/'.$data['new']['web_folder'];
 			}
-			$web_folder .= '/'.$data['new']['web_folder'];
 
 			if($data['old']['web_folder'] != ''){
 				if(substr($data['old']['web_folder'],0,1) == '/') $data['old']['web_folder'] = substr($data['old']['web_folder'],1);
 				if(substr($data['old']['web_folder'],-1) == '/') $data['old']['web_folder'] = substr($data['old']['web_folder'],0,-1);
+				$old_web_folder .= '/'.$data['old']['web_folder'];
 			}
-			$old_web_folder .= '/'.$data['old']['web_folder'];
 		}
 		if($data['new']['type'] == 'vhostsubdomain' || $data['new']['type'] == 'vhostalias') {
 			// new one
@@ -562,6 +562,7 @@ class nginx_plugin {
 		if(!is_dir($data['new']['document_root'].'/cgi-bin')) $app->system->mkdirpath($data['new']['document_root'].'/cgi-bin');
 		if(!is_dir($data['new']['document_root'].'/tmp')) $app->system->mkdirpath($data['new']['document_root'].'/tmp');
 		if(!is_dir($data['new']['document_root'].'/backup')) $app->system->mkdirpath($data['new']['document_root'].'/backup', 0755, $username, $groupname);
+		if(!is_dir($data['new']['document_root'].'/.composer')) $app->system->mkdirpath($data['new']['document_root'].'/.composer', 0750, $username, $groupname);
 
 		if(!is_dir($data['new']['document_root'].'/.ssh')) {
 			$app->system->mkdirpath($data['new']['document_root'].'/.ssh');
@@ -876,13 +877,13 @@ class nginx_plugin {
 			if(!is_dir($data['new']['document_root'].'/private')) $app->system->mkdir($data['new']['document_root'].'/private');
 
 			if($web_config['security_level'] == 20) {
-
+				$web_folder_permission = (isset($web_config['web_folder_permission']))?octdec($web_config['web_folder_permission']):0711;
 				$app->system->chmod($data['new']['document_root'], 0755);
-				$app->system->chmod($data['new']['document_root'].'/web', 0751);
+				$app->system->chmod($data['new']['document_root'].'/web', $web_folder_permission);
 				//$app->system->chmod($data['new']['document_root'].'/webdav',0710);
 				$app->system->chmod($data['new']['document_root'].'/private', 0710);
 				$app->system->chmod($data['new']['document_root'].'/ssl', 0755);
-				if($web_folder != 'web') $app->system->chmod($data['new']['document_root'].'/'.$web_folder, 0751);
+				if($web_folder != 'web') $app->system->chmod($data['new']['document_root'].'/'.$web_folder, $web_folder_permission);
 
 				// make tmp directory writable for nginx and the website users
 				$app->system->chmod($data['new']['document_root'].'/tmp', 0770);
@@ -1418,7 +1419,7 @@ class nginx_plugin {
 		$rewrite_rules = array();
 		$local_rewrite_rules = array();
 		if($data['new']['redirect_type'] != '' && $data['new']['redirect_path'] != '') {
-			if(substr($data['new']['redirect_path'], -1) != '/') $data['new']['redirect_path'] .= '/';
+			//if(substr($data['new']['redirect_path'], -1) != '/') $data['new']['redirect_path'] .= '/';
 			if(substr($data['new']['redirect_path'], 0, 8) == '[scheme]'){
 				if($data['new']['redirect_type'] != 'proxy'){
 					$data['new']['redirect_path'] = '$scheme'.substr($data['new']['redirect_path'], 8);
@@ -1580,7 +1581,7 @@ class nginx_plugin {
 							$vhost_data['use_proxy'] = 'y';
 							$rewrite_subdir = $tmp_redirect_path_parts['path'];
 							if(substr($rewrite_subdir, 0, 1) == '/') $rewrite_subdir = substr($rewrite_subdir, 1);
-							if(substr($rewrite_subdir, -1) != '/') $rewrite_subdir .= '/';
+							//if(substr($rewrite_subdir, -1) != '/') $rewrite_subdir .= '/';
 							if($rewrite_subdir == '/') $rewrite_subdir = '';
 						}
 					}
@@ -2183,16 +2184,24 @@ class nginx_plugin {
 			} else {
 				$app->system->exec_safe('umount ? 2>/dev/null', $data['old']['document_root'].'/'.$log_folder);
 			}
+		}
 
-			// remove letsencrypt if it exists (renew will always fail otherwise)
-
-			$old_domain = $data['old']['domain'];
-			if(substr($old_domain, 0, 2) === '*.') {
-				// wildcard domain not yet supported by letsencrypt!
-				$old_domain = substr($old_domain, 2);
+		// remove (and maybe revoke) Let's Encrypt certificate (renew will always fail otherwise)
+		if(!empty($web_config['le_delete_on_site_remove']) && $web_config['le_delete_on_site_remove'] == 'y'
+			&& !empty($data['old']['document_root'])
+			&& $data['old']['ssl_letsencrypt'] == 'y' && $data['old']['ssl'] == 'y') {
+			$app->uses('letsencrypt');
+			$paths = $app->letsencrypt->get_website_certificate_paths(['new' => $data['old']]);
+			$info = $app->letsencrypt->extract_x509($paths['crt']);
+			if($info) {
+				$certificates = $app->letsencrypt->get_certificate_list();
+				foreach($certificates as $certificate) {
+					if($certificate['serial_number'] == $info['serial_number']) {
+						$app->letsencrypt->remove_certificate($certificate);
+						break;
+					}
+				}
 			}
-			$le_conf_file = '/etc/letsencrypt/renewal/' . $old_domain . '.conf';
-			@rename('/etc/letsencrypt/renewal/' . $old_domain . '.conf', '/etc/letsencrypt/renewal/' . $old_domain . '.conf~backup');
 		}
 
 		//* remove mountpoint from fstab

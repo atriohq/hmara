@@ -21,7 +21,7 @@ $wb['password_strength_txt'] = 'Стойкость пароля';
 $wb['remote_ips_txt'] = 'IP-адреса для удалённого доступа (разделяются запятой оставьте поле пустым для <i>любого</i>)';
 $wb['database_remote_error_ips'] = 'Минимум один введенный адрес неверен.';
 $wb['database_name_error_len'] = 'Имя базы данных - {db} - cлишком длинное. Максимальная длина имени базы данных включая префикс - 64 символа';
-$wb['database_user_error_len'] = 'Логин для базы данных - {user} - cлишком длинный. Максимальная длина логина - 16 символов';
+$wb['database_user_error_len'] = 'Логин для базы данных - {user} - cлишком длинный. Максимальная длина логина - 32 символов';
 $wb['parent_domain_id_txt'] = 'Сайт';
 $wb['database_site_error_empty'] = 'Выберите сайт, к которому принадлежит база данных.';
 $wb['select_site_txt'] = '- Выбор сайта -';
@@ -52,4 +52,5 @@ $wb['daily_backup_txt'] = 'Ежедневно';
 $wb['weekly_backup_txt'] = 'Еженедельно';
 $wb['monthly_backup_txt'] = 'Ежемесячно';
 $wb['backup_interval_txt'] = 'Интервал резервного копирования';
-?>
+$wb['error_db_user_in_use_txt'] = 'The database user is already in use. Please select a different user.';
+$wb['error_db_ro_user_in_use_txt'] = 'The readonly database user is already in use. Please select a different user.';

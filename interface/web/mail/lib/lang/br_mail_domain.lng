@@ -3,6 +3,7 @@ $wb['server_id_txt'] = 'Servidor';
 $wb['domain_txt'] = 'Domínio';
 $wb['type_txt'] = 'Tipo';
 $wb['active_txt'] = 'Ativo';
+$wb['local_delivery_txt'] = 'Local delivery';
 $wb['dkim_txt'] = 'Habilitar DKIM';
 $wb['dkim_private_txt'] = 'Chave privada DKIM';
 $wb['dkim_public_txt'] = 'Chave pública DKIM apenas para informação';

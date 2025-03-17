@@ -20,4 +20,13 @@ $wb['php_name_in_use_error'] = 'O nome não pode ser modificado.';
 $wb['PHP Sort Priority'] = 'Priority';
 $wb['sortprio_txt'] = 'Priority';
 $wb['sortprio_long_txt'] = 'Priority of PHP version in the PHP version select box<br>Default PHP has prio 0 if enabled<br>Lower value is higher priority';
+$wb['PHP-CLI settings'] = 'PHP-CLI settings';
+$wb['php_cli_binary_txt'] = 'Path to the PHP CLI binary';
+$wb['tooltip_php_cli_binary_txt'] = 'Path to the PHP CLI binary including the filename';
+$wb['php_jk_section_txt'] = 'PHP Jailkit section';
+$wb['tooltip_php_jk_section_txt'] = 'Identifier of the PHP version in your jk_init.ini (without square brackets).';
+$wb['php_cli_jk_section_error_regex'] = 'Invalid Jaikit chroot section';
+$wb['php_cli_binary_error_regex'] = 'Invalid path to PHP cli binary';
+$wb['php_cli_binary_empty'] = 'PHP CLI binary field must not be empty';
+$wb['php_cli_jk_section_empty'] = 'PHP Jailkit section field must not be empty';
 ?>

@@ -3,6 +3,7 @@ $wb['server_id_txt'] = 'Server';
 $wb['domain_txt'] = 'Domein';
 $wb['type_txt'] = 'Type';
 $wb['active_txt'] = 'Actief';
+$wb['local_delivery_txt'] = 'Local delivery';
 $wb['domain_error_empty'] = 'Domein is niet ingvuld.';
 $wb['domain_error_unique'] = 'Duplicaat domein.';
 $wb['domain_error_regex'] = 'Ongeldige domeinnaam.';

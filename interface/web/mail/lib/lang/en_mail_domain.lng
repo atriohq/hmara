@@ -3,6 +3,7 @@ $wb['server_id_txt'] = 'Server';
 $wb['domain_txt'] = 'Domain';
 $wb['type_txt'] = 'Type';
 $wb['active_txt'] = 'Active';
+$wb['local_delivery_txt'] = 'Local delivery';
 $wb['dkim_txt'] = 'enable DKIM';
 $wb['dkim_private_txt'] = 'DKIM Private-key';
 $wb['dkim_public_txt'] = 'DKIM Public-key\nfor information only';
@@ -27,3 +28,5 @@ $wb['relayhost_password_txt'] = 'Relayhost Password';
 $wb['dkim_enabled_dns_not_found_txt'] = 'DKIM enabled, record not found in DNS yet.';
 $wb['dkim_enabled_resolving_ok_txt'] = 'DKIM enabled, DNS resolving OK.';
 $wb['dkim_enabled_mismatched_record_txt'] = 'DKIM enabled, mismatched record.';
+$wb['domain_is_transport'] = 'The Domain is already set as E-Mail Transport.';
+

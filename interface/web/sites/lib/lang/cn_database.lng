@@ -27,7 +27,7 @@ $wb['database_name_change_txt'] = '无法更改数据库名称。';
 $wb['database_user_missing_txt'] = '请为此数据库选择一个数据库用户。';
 $wb['database_charset_change_txt'] = '无法更改数据库字符集。';
 $wb['database_name_error_len'] = '数据库名称 - {db} - 过长。最大数据库名称长度（包括前缀）为 64 个字符。';
-$wb['database_user_error_len'] = '数据库用户名 - {user} - 过长。最大数据库用户名长度（包括前缀）为 16 个字符。';
+$wb['database_user_error_len'] = '数据库用户名 - {user} - 过长。最大数据库用户名长度（包括前缀）为 32 个字符。';
 $wb['parent_domain_id_txt'] = '网站';
 $wb['database_site_error_empty'] = '请选择数据库所属的网站。';
 $wb['select_site_txt'] = '- 选择网站 -';
@@ -52,4 +52,5 @@ $wb['daily_backup_txt'] = '每日';
 $wb['weekly_backup_txt'] = '每周';
 $wb['monthly_backup_txt'] = '每月';
 $wb['backup_interval_txt'] = '备份间隔';
-?>
+$wb['error_db_user_in_use_txt'] = 'The database user is already in use. Please select a different user.';
+$wb['error_db_ro_user_in_use_txt'] = 'The readonly database user is already in use. Please select a different user.';

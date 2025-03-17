@@ -1,0 +1,7 @@
+<?php
+$wb['metrics_txt'] = 'Системные метрики';
+$wb['loadchart_label'] = 'Загрузка системы %';
+$wb['memchart_label'] = 'Использование памяти %';
+$wb['rxchart_label'] = 'Сеть входящая/kB';
+$wb['txchart_label'] = 'Сеть исходящая/kB';
+$wb['label_chart_title'] = 'Системные метрики';

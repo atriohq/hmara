@@ -3,6 +3,7 @@ $wb['server_id_txt'] = 'Server';
 $wb['domain_txt'] = 'Domeniu';
 $wb['type_txt'] = 'Tip';
 $wb['active_txt'] = 'Active';
+$wb['local_delivery_txt'] = 'Local delivery';
 $wb['domain_error_empty'] = 'Domeniu necompletat';
 $wb['domain_error_unique'] = 'Domeniu duplicat';
 $wb['domain_error_regex'] = 'Nume de domeniu invalid';

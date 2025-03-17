@@ -1,5 +1,6 @@
 <?php
 $wb['active_txt'] = 'Habilitado';
+$wb['local_delivery_txt'] = 'Local delivery';
 $wb['client_txt'] = 'Cliente';
 $wb['dkim_dns_txt'] = 'Registro DNS';
 $wb['dkim_generate_txt'] = 'Generar clave privada DKIM';

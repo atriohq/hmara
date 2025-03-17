@@ -36,6 +36,8 @@ class cronjob_mailbox_stats_hourly extends cronjob {
 	protected $mail_boxes = array();
 	protected $mail_rewrites = array();
 
+	private $_tools = null;
+
 	/* this function is optional if it contains no custom code */
 	public function onPrepare() {
 		global $app;
@@ -61,7 +63,7 @@ class cronjob_mailbox_stats_hourly extends cronjob {
 
 		$sql = "SELECT mailuser_id FROM mail_user WHERE server_id = ?";
 		$records = $app->db->queryAllRecords($sql, $conf['server_id']);
-    if(count($records) > 0) {
+		if(count($records) > 0) {
 			$this->update_last_mail_login();
 		}
 
@@ -92,9 +94,9 @@ class cronjob_mailbox_stats_hourly extends cronjob {
 		$line = strtok($log_lines, PHP_EOL);
 		while ($line !== FALSE) {
 			$matches = [];
-			// Match pop3/imap logings, or alternately smtp logins.
+			// Match pop3/imap logins, or alternately smtp logins.
 			if (preg_match('/(.*) (imap|pop3)-login: Login: user=\<([\w\.@-]+)\>/', $line, $matches) || preg_match('/(.*) sasl_method=PLAIN, sasl_username=([\w\.@-]+)/', $line, $matches)) {
-				$user = $matches[3] ?? $matches[2];
+				$user = isset($matches[3]) ? $matches[3] : $matches[2];
 				$updatedUsers[] = $user;
 			}
 

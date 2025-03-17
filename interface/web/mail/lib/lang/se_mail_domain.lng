@@ -3,6 +3,7 @@ $wb['server_id_txt'] = 'Server';
 $wb['domain_txt'] = 'Domän';
 $wb['type_txt'] = 'Typ';
 $wb['active_txt'] = 'Aktiv';
+$wb['local_delivery_txt'] = 'Local delivery';
 $wb['domain_error_empty'] = 'Domänfältet är tomt.';
 $wb['domain_error_unique'] = 'Domänen finns redan.';
 $wb['domain_error_regex'] = 'Ogiltigt domännamn.';

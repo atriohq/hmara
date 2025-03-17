@@ -81,6 +81,11 @@
                     {tmpl_var name='backup_delete'}
                 </div>
             </div>
+            <div class="form-group">
+                <label for="sysbackup_copies" class="col-sm-3 control-label">{tmpl_var name='sysbackup_copies_txt'}</label>
+                <div class="col-sm-3"><input type="text" name="sysbackup_copies" id="sysbackup_copies" value="{tmpl_var name='sysbackup_copies'}" class="form-control" /></div>
+                <div class="col-sm-6">{tmpl_var name='sysbackup_copies_note_txt'}</div>
+            </div>
 			<div class="form-group">
                 <label for="log_retention" class="col-sm-3 control-label">{tmpl_var name='log_retention_txt'}</label>
                 <div class="col-sm-9"><input type="text" name="log_retention" id="log_retention" value="{tmpl_var name='log_retention'}" class="form-control" /></div>

@@ -103,6 +103,14 @@ class page_action extends tform_actions {
 		$app->tpl->setVar('contact_name', $tmp['contact_name']);
 		$app->tpl->setVar('email', $tmp['email']);
 
+		$app->uses('getconf,system');
+		$web_config = $app->getconf->get_global_config('sites');
+		if($web_config['postgresql_database'] == 'y') {
+			$app->tpl->setVar('show_postgresql', true);
+		} else {
+			$app->tpl->setVar('show_postgresql', false);
+		}
+
 		parent::onShowEdit();
 	}
 
@@ -468,13 +476,13 @@ class page_action extends tform_actions {
 		}
 
 		// lock and cancel
-        if(!isset($this->dataRecord['locked'])) $this->dataRecord['locked'] = 'n';
+        if(!isset($this->dataRecord['locked']) && isset($this->dataRecord['username'])) $this->dataRecord['locked'] = 'n';
         if(isset($conf['demo_mode']) && $conf['demo_mode'] != true && $this->dataRecord["locked"] != $this->oldDataRecord['locked'])
 		{
 			$lock = $app->functions->func_client_lock($this->id,$this->dataRecord["locked"]);
         }
 
-		if(!isset($this->dataRecord['canceled'])) $this->dataRecord['canceled'] = 'n';
+		if(!isset($this->dataRecord['canceled']) && isset($this->dataRecord['username'])) $this->dataRecord['canceled'] = 'n';
 		if(isset($conf['demo_mode']) && $conf['demo_mode'] != true && $this->dataRecord["canceled"] != $this->oldDataRecord['canceled']) {
 			$cancel = $app->functions->func_client_cancel($this->id,$this->dataRecord["canceled"]);
 		}

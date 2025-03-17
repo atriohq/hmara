@@ -3,6 +3,7 @@ $wb['server_id_txt'] = 'サーバー';
 $wb['domain_txt'] = 'ドメイン';
 $wb['type_txt'] = 'Type';
 $wb['active_txt'] = '有効';
+$wb['local_delivery_txt'] = 'Local delivery';
 $wb['domain_error_empty'] = 'ドメインを指定してください';
 $wb['domain_error_unique'] = 'ドメインが重複しています。';
 $wb['domain_error_regex'] = '不正なドメイン名です。';

@@ -3,6 +3,7 @@ $wb['server_id_txt'] = 'Сервер';
 $wb['domain_txt'] = 'Домен';
 $wb['type_txt'] = 'Тип';
 $wb['active_txt'] = 'Активно';
+$wb['local_delivery_txt'] = 'Local delivery';
 $wb['domain_error_empty'] = 'Домен пустой.';
 $wb['domain_error_unique'] = 'Имя должно быть уникальным.';
 $wb['domain_error_regex'] = 'Некорректное имя домена.';

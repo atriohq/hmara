@@ -21,7 +21,7 @@ $wb['limit_database_txt'] = 'Έχετε φτάσει το μέγιστο πλή�
 $wb['database_name_change_txt'] = 'Το όνομα της βάσης δεδομένων δεν μπορεί να αλλαχθεί';
 $wb['database_charset_change_txt'] = 'Η κωδικοποίηση χαρακτήρων δεν μπορεί να αλλάξει';
 $wb['database_name_error_len'] = 'Το όνομα της βάσης δεδομένων  - {db} - είναι πολύ μεγάλο. Το συνολικό μέγιστο μέγεθος δεν μπορεί να ξεπερνά τους 64 χαρακτήρες.';
-$wb['database_user_error_len'] = 'Το όνομα χρήστη της βάσης δεδομένων - {user}- είναι πολύ μεγάλο. Το συνολικό μέγιστο μέγεθος δεν μπορεί να ξεπερνά τους 16 χαρακτήρες.';
+$wb['database_user_error_len'] = 'Το όνομα χρήστη της βάσης δεδομένων - {user}- είναι πολύ μεγάλο. Το συνολικό μέγιστο μέγεθος δεν μπορεί να ξεπερνά τους 32 χαρακτήρες.';
 $wb['parent_domain_id_txt'] = 'Site';
 $wb['database_site_error_empty'] = 'Select the site to which the database belongs.';
 $wb['select_site_txt'] = '- Select Site -';
@@ -52,4 +52,5 @@ $wb['daily_backup_txt'] = 'Daily';
 $wb['weekly_backup_txt'] = 'Weekly';
 $wb['monthly_backup_txt'] = 'Monthly';
 $wb['backup_interval_txt'] = 'Backup interval';
-?>
+$wb['error_db_user_in_use_txt'] = 'The database user is already in use. Please select a different user.';
+$wb['error_db_ro_user_in_use_txt'] = 'The readonly database user is already in use. Please select a different user.';

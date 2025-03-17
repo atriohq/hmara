@@ -3,6 +3,7 @@ $wb['server_id_txt'] = 'Server';
 $wb['domain_txt'] = 'Domæne';
 $wb['type_txt'] = 'Type';
 $wb['active_txt'] = 'Aktiv';
+$wb['local_delivery_txt'] = 'Local delivery';
 $wb['domain_error_empty'] = 'Domæne er tomt.';
 $wb['domain_error_unique'] = 'Dupliker Domæne.';
 $wb['domain_error_regex'] = 'Ugyldigt domæne navn.';

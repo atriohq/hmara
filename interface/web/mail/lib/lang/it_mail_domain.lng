@@ -3,6 +3,7 @@ $wb['server_id_txt'] = 'Server';
 $wb['domain_txt'] = 'Dominio';
 $wb['type_txt'] = 'Tipo';
 $wb['active_txt'] = 'Attivo';
+$wb['local_delivery_txt'] = 'Local delivery';
 $wb['domain_error_empty'] = 'Dominio vuoto.';
 $wb['domain_error_unique'] = 'Dominio duplicato.';
 $wb['domain_error_regex'] = 'Nome dominio non valido.';

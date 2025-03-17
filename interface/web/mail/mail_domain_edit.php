@@ -309,6 +309,12 @@ class page_action extends tform_actions {
 			}
 		}
 
+		// Check uniqueness per server.
+		$tmp = $app->db->queryOneRecord("SELECT domain_id FROM mail_domain WHERE domain = ? AND server_id = ? AND domain_id != ?", $this->dataRecord['domain'], $this->dataRecord['server_id'], $this->id);
+		if (!empty($tmp)) {
+			$app->tform->errorMessage .= $app->tform->lng("domain_error_unique")."<br />";
+		}
+
 		if($_SESSION["s"]["user"]["typ"] != 'admin') {
 			// Get the limits of the client
 			$client_group_id = $app->functions->intval($_SESSION["s"]["user"]["default_group"]);

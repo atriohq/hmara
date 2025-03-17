@@ -233,6 +233,7 @@ CREATE TABLE `client` (
   `default_dbserver` int(11) NOT NULL DEFAULT '1',
   `dns_servers` text,
   `limit_database` int(11) NOT NULL DEFAULT '-1',
+  `limit_database_postgresql` int(11) NOT NULL default '-1',
   `limit_database_user` int(11) NOT NULL DEFAULT '-1',
   `limit_database_quota` int(11) NOT NULL default '-1',
   `limit_cron` int(11) NOT NULL DEFAULT '0',
@@ -363,6 +364,7 @@ CREATE TABLE `client_template` (
   `limit_dns_record` int(11) NOT NULL default '-1',
   `db_servers` text,
   `limit_database` int(11) NOT NULL default '-1',
+  `limit_database_postgresql` int(11) NOT NULL default '-1',
   `limit_database_user` int(11) NOT NULL DEFAULT '-1',
   `limit_database_quota` int(11) NOT NULL default '-1',
   `limit_cron` int(11) NOT NULL default '0',
@@ -894,6 +896,7 @@ CREATE TABLE `mail_domain` (
   `relay_user` varchar(255) NOT NULL DEFAULT '',
   `relay_pass` varchar(255) NOT NULL DEFAULT '',
   `active` enum('n','y') NOT NULL DEFAULT 'n',
+  `local_delivery` enum('n','y') NOT NULL DEFAULT 'y',
   PRIMARY KEY  (`domain_id`),
   KEY `server_id` (`server_id`,`domain`),
   KEY `domain_active` (`domain`,`active`)
@@ -1462,6 +1465,8 @@ CREATE TABLE `server_php` (
   `php_fpm_ini_dir` varchar(255) DEFAULT NULL,
   `php_fpm_pool_dir` varchar(255) DEFAULT NULL,
   `php_fpm_socket_dir` varchar(255) DEFAULT NULL,
+  `php_cli_binary` varchar(255) DEFAULT NULL,
+  `php_jk_section` varchar(255) DEFAULT NULL,
   `active` enum('n','y') NOT NULL DEFAULT 'y',
   `sortprio` int(20) NOT NULL DEFAULT 100,
   PRIMARY KEY (`server_php_id`)
@@ -1947,7 +1952,9 @@ CREATE TABLE IF NOT EXISTS `web_database_user` (
   `database_user` varchar(64) DEFAULT NULL,
   `database_user_prefix` varchar(50) NOT NULL default '',
   `database_password` varchar(64) DEFAULT NULL,
+  `database_password_sha2` varchar(70) DEFAULT NULL,
   `database_password_mongo` varchar(32) DEFAULT NULL,
+  `database_password_postgres` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`database_user_id`)
 )  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 

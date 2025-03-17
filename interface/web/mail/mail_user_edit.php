@@ -157,10 +157,14 @@ class page_action extends tform_actions {
 			$app->uses('quota_lib');
 			$clientid = $app->db->queryOneRecord('SELECT `client_id` FROM `sys_group` WHERE `groupid` = ?', $this->dataRecord['sys_groupid']);
 			$monitor_data = $app->quota_lib->get_mailquota_data($clientid, FALSE, $this->dataRecord['email']);
-			if ($this->dataRecord['quota'] != 0) {
-				$app->tpl->setVar("used_percentage", round($monitor_data['used'] * 100 / $this->dataRecord['quota']));
-			}
-			$app->tpl->setVar('used', $app->functions->formatBytes($monitor_data['used'], 0));
+            if(!empty($monitor_data) && is_array($monitor_data)) {
+                if ($this->dataRecord['quota'] != 0 && isset($monitor_data['used'])) {
+                    $app->tpl->setVar("used_percentage", round($monitor_data['used'] * 100 / $this->dataRecord['quota']));
+                }
+                if(isset($monitor_data['used'])) {
+                    $app->tpl->setVar('used', $app->functions->formatBytes($monitor_data['used'], 0));
+                }
+            }
 
 			# Get addresses for this account.
 			$addresses = $app->db->queryAllRecords("SELECT source, type FROM mail_forwarding WHERE destination = ? AND ".$app->tform->getAuthSQL('r'), $email);
@@ -340,14 +344,15 @@ class page_action extends tform_actions {
 
 
 		// Set the fields for dovecot
-		$disableimap = ($this->dataRecord["disableimap"])?'y':'n';
-		$disablepop3 = ($this->dataRecord["disablepop3"])?'y':'n';
-		$disablesmtp = ($this->dataRecord["disablesmtp"])?'y':'n';
-		$disabledeliver = ($this->dataRecord["disabledeliver"])?'y':'n';
+		if(isset($this->dataRecord["email"])) {
+			$disableimap = ($this->dataRecord["disableimap"]) ? 'y' : 'n';
+			$disablepop3 = ($this->dataRecord["disablepop3"]) ? 'y' : 'n';
+			$disablesmtp = ($this->dataRecord["disablesmtp"]) ? 'y' : 'n';
+			$disabledeliver = ($this->dataRecord["disabledeliver"]) ? 'y' : 'n';
 
-		$app->db->query($sql, $disableimap, $disableimap, $disablepop3, $disablesmtp, $disabledeliver, $disabledeliver, $this->id);
-		$sql = "UPDATE mail_user SET disableimap = ?, disablesieve = ?, disablepop3 = ?, disablesmtp = ?, disabledeliver = ?, disablelda = ?, disablelmtp = ? WHERE mailuser_id = ?";
-		$app->db->query($sql, $disableimap, $disableimap, $disablepop3, $disablesmtp, $disabledeliver, $disabledeliver, $disabledeliver, $this->id);
+			$sql = "UPDATE mail_user SET disableimap = ?, disablesieve = ?, disablepop3 = ?, disablesmtp = ?, disabledeliver = ?, disablelda = ?, disablelmtp = ? WHERE mailuser_id = ?";
+			$app->db->query($sql, $disableimap, $disableimap, $disablepop3, $disablesmtp, $disabledeliver, $disabledeliver, $disabledeliver, $this->id);
+		}
 	}
 
 	function onAfterUpdate() {
@@ -360,13 +365,15 @@ class page_action extends tform_actions {
 		}
 
 		// Set the fields for dovecot
-		$disableimap = (isset($this->dataRecord["disableimap"]) && $this->dataRecord["disableimap"])?'y':'n';
-		$disablepop3 = (isset($this->dataRecord["disablepop3"]) && $this->dataRecord["disablepop3"])?'y':'n';
-		$disablesmtp = (isset($this->dataRecord["disablesmtp"]) && $this->dataRecord["disablesmtp"])?'y':'n';
-		$disabledeliver = (isset($this->dataRecord["disabledeliver"]) && $this->dataRecord["disabledeliver"])?'y':'n';
+		if(isset($this->dataRecord["email"])) {
+			$disableimap = (isset($this->dataRecord["disableimap"]) && $this->dataRecord["disableimap"]) ? 'y' : 'n';
+			$disablepop3 = (isset($this->dataRecord["disablepop3"]) && $this->dataRecord["disablepop3"]) ? 'y' : 'n';
+			$disablesmtp = (isset($this->dataRecord["disablesmtp"]) && $this->dataRecord["disablesmtp"]) ? 'y' : 'n';
+			$disabledeliver = (isset($this->dataRecord["disabledeliver"]) && $this->dataRecord["disabledeliver"]) ? 'y' : 'n';
 
-		$sql = "UPDATE mail_user SET disableimap = ?, disablesieve = ?, `disablesieve-filter` = ?, disablepop3 = ?, disablesmtp = ?, disabledeliver = ?, disablelda = ?, disablelmtp = ? WHERE mailuser_id = ?";
-		$app->db->query($sql, $disableimap, $disableimap, $disableimap, $disablepop3, $disablesmtp, $disabledeliver, $disabledeliver, $disabledeliver, $this->id);
+			$sql = "UPDATE mail_user SET disableimap = ?, disablesieve = ?, `disablesieve-filter` = ?, disablepop3 = ?, disablesmtp = ?, disabledeliver = ?, disablelda = ?, disablelmtp = ? WHERE mailuser_id = ?";
+			$app->db->query($sql, $disableimap, $disableimap, $disableimap, $disablepop3, $disablesmtp, $disabledeliver, $disabledeliver, $disabledeliver, $this->id);
+		}
 
 		// Spamfilter policy
 		$policy_id = $app->functions->intval($this->dataRecord["policy"]);

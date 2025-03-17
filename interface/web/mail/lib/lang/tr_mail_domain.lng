@@ -3,6 +3,7 @@ $wb['server_id_txt'] = 'Sunucu';
 $wb['domain_txt'] = 'Etki Alanı';
 $wb['type_txt'] = 'Tür';
 $wb['active_txt'] = 'Etkin';
+$wb['local_delivery_txt'] = 'Local delivery';
 $wb['domain_error_empty'] = 'Etki alanı boş olamaz.';
 $wb['domain_error_unique'] = 'Bu etki alanı zaten var.';
 $wb['domain_error_regex'] = 'Etki alanı geçersiz.';

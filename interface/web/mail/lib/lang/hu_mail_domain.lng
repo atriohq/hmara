@@ -3,6 +3,7 @@ $wb['server_id_txt'] = 'Szerver';
 $wb['domain_txt'] = 'Domain';
 $wb['type_txt'] = 'Típus';
 $wb['active_txt'] = 'Aktív';
+$wb['local_delivery_txt'] = 'Local delivery';
 $wb['domain_error_empty'] = 'Domain üres';
 $wb['domain_error_unique'] = 'Már létező domain';
 $wb['domain_error_regex'] = 'Nem valós Domain név';

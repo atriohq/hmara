@@ -21,7 +21,7 @@ $wb['limit_database_txt'] = 'Jumlah maks databases telah tercapai.';
 $wb['database_name_change_txt'] = 'Nama database tidak dapat diubah';
 $wb['database_charset_change_txt'] = 'Database charset tidak dapat diubah';
 $wb['database_name_error_len'] = 'Nama database - {db} - terlalu panjang. Panjang nama database maks termasuk prefiks adalah 64 karakter.';
-$wb['database_user_error_len'] = 'Nama pengguna database - {user}- terlalu panjang. Panjang nama pengguna database maks termasuk prefiks adalah 16 karakter.';
+$wb['database_user_error_len'] = 'Nama pengguna database - {user}- terlalu panjang. Panjang nama pengguna database maks termasuk prefiks adalah 32 karakter.';
 $wb['parent_domain_id_txt'] = 'Site';
 $wb['database_site_error_empty'] = 'Select the site to which the database belongs.';
 $wb['select_site_txt'] = '- Select Site -';
@@ -52,4 +52,5 @@ $wb['daily_backup_txt'] = 'Daily';
 $wb['weekly_backup_txt'] = 'Weekly';
 $wb['monthly_backup_txt'] = 'Monthly';
 $wb['backup_interval_txt'] = 'Backup interval';
-?>
+$wb['error_db_user_in_use_txt'] = 'The database user is already in use. Please select a different user.';
+$wb['error_db_ro_user_in_use_txt'] = 'The readonly database user is already in use. Please select a different user.';
