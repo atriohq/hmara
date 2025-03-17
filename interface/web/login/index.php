@@ -142,8 +142,7 @@ function process_login_request(app $app, &$error, $conf, $module)
 			//* Do 2FA authentication
 			if(isset($user['otp_type']) && $user['otp_type'] != 'none') {
 
-				if (empty($conf['otp_whitelist']) || !in_array($_SERVER['REMOTE_ADDR'], $conf['otp_whitelist']))  {
-
+				if (empty($conf['otp_whitelist']) || !is_ip_in_list($_SERVER['REMOTE_ADDR'], $conf['otp_whitelist']))  {
 					//* Save session in pending state and destroy original session
 					$_SESSION['s_pending'] = $_SESSION['s'];
 					unset($_SESSION['s']);
@@ -200,7 +199,18 @@ function is_admin_ip_whitelisted($ip, $conf)
 
 	$file_lines = file($conf['admin_ip_whitelist_file']);
 
-	$matches = array_filter($file_lines, function($v) use ($ip) {
+	return is_ip_in_list($ip, $file_lines);
+}
+
+/**
+ * Checks if the given IP address matches a list of IP's and CIDR's.
+ * @param string $ip
+ * @param array $whitelist
+ * @return bool
+ */
+function is_ip_in_list($ip, $whitelist)
+{
+	$matches = array_filter($whitelist, function($v) use ($ip) {
 		$line = trim($v);
 
 		// exclude empty lines and comments
