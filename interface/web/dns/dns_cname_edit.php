@@ -48,7 +48,7 @@ class page_action extends dns_page_action {
 	protected function checkDuplicate() {
 		global $app;
 		//* Check for duplicates where IP and hostname are the same
-		$tmp = $app->db->queryOneRecord("SELECT count(id) as number FROM dns_rr WHERE (type = 'A' AND name = ? AND zone = ? and id != ?) OR (type = 'AAAA' AND name = ? AND zone = ? and id != ?) OR (type = 'CNAME' AND name = ? AND zone = ? and id != ?) OR (type = 'DNAME' AND name = ? AND zone = ? and id != ?) OR (type = 'ALIAS' AND name = ? AND zone = ? and id != ?)", $this->dataRecord["name"], $this->dataRecord["zone"], $this->id, $this->dataRecord["name"], $this->dataRecord["zone"], $this->id, $this->dataRecord["name"], $this->dataRecord["zone"], $this->id, $this->dataRecord["name"], $this->dataRecord["zone"], $this->id, $this->dataRecord["name"], $this->dataRecord["zone"], $this->id);
+		$tmp = $app->db->queryOneRecord("SELECT count(dns_rr.id) as number FROM dns_rr LEFT JOIN dns_soa ON dns_rr.zone = dns_soa.id WHERE (( name = replace(?, concat('.', dns_soa.origin), '') or name = ? or name = concat(?,'.', dns_soa.origin)) and dns_rr.zone = ? and dns_rr.id != ?)", $this->dataRecord["name"], $this->dataRecord["name"], $this->dataRecord["name"], $this->dataRecord["zone"], $this->id);
 		if($tmp['number'] > 0) return true;
 		return false;
 	}
@@ -60,6 +60,20 @@ class page_action extends dns_page_action {
 		// Replace @ to example.com. in data field
 		if($this->dataRecord["data"] === '@') {
 			$this->dataRecord["data"] = $soa['origin'];
+		}
+
+		// The target name should either end in a . or exist in the current zone.
+		if (!empty($this->dataRecord["data"]) && substr($this->dataRecord["data"], -1) != '.') {
+			$tmp = $app->db->queryOneRecord("SELECT dns_rr.id
+				FROM dns_rr
+					LEFT JOIN dns_soa ON dns_rr.zone = dns_soa.id
+				WHERE (name = ?
+					OR name = CONCAT(?, '.', dns_soa.origin)) AND dns_rr.zone = ?",
+				$this->dataRecord["data"], $this->dataRecord["data"], $this->dataRecord["zone"]);
+
+			if (empty($tmp)) {
+				$app->tform->errorMessage .= $app->tform->wordbook['data_error_not_found'] . '<br/>';
+			}
 		}
 		parent::onSubmit();
 	}

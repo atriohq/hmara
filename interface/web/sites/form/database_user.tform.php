@@ -117,6 +117,24 @@ $form["tabs"]['database_user'] = array (
 			'width'  => '30',
 			'maxlength' => '255'
 		),
+		'database_password_sha2' => array (
+			'datatype' => 'VARCHAR',
+			'formtype' => 'PASSWORD',
+			'encryption' => 'MYSQLSHA2',
+			'default' => '',
+			'value'  => '',
+			'width'  => '30',
+			'maxlength' => '255'
+		),
+		'database_password_postgres' => array (
+			'datatype' => 'VARCHAR',
+			'formtype' => 'PASSWORD',
+			'encryption' => 'POSTGRESHA256',
+			'default' => '',
+			'value'  => '',
+			'width'  => '30',
+			'maxlength' => '255'
+		),
 		'database_password_mongo' => array (
 			'datatype' => 'VARCHAR',
 			'formtype' => 'PASSWORD',

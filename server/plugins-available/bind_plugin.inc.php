@@ -171,7 +171,8 @@ class bind_plugin {
 		file_put_contents($dns_config['bind_zonefiles_dir'].'/'.$filespre.$domain, $zonefile);
 
 		//* Sign the zone and set it valid for max. 16 days
-		$app->system->exec_safe('cd ?; dnssec-signzone -A -e +1382400 -3 $(head -c 1000 /dev/random | sha1sum | cut -b 1-16) -N increment -o ? -K ? -t ?', $dns_config['bind_keyfiles_dir'], $domain, $dns_config['bind_keyfiles_dir'], $dns_config['bind_zonefiles_dir'].'/'.$filespre.$domain);
+		// $app->system->exec_safe('cd ?; dnssec-signzone -A -e +1382400 -3 $(head -c 1000 /dev/random | sha1sum | cut -b 1-16) -N increment -o ? -K ? -t ?', $dns_config['bind_keyfiles_dir'], $domain, $dns_config['bind_keyfiles_dir'], $dns_config['bind_zonefiles_dir'].'/'.$filespre.$domain);
+        $app->system->exec_safe('cd ?; dnssec-signzone -A -e +1382400 -3 - -N increment -o ? -K ? -t ?', $dns_config['bind_keyfiles_dir'], $domain, $dns_config['bind_keyfiles_dir'], $dns_config['bind_zonefiles_dir'].'/'.$filespre.$domain);
 
 		//* Write Data back ino DB
 		$dnssecdata = "DS-Records:\n".file_get_contents($dns_config['bind_keyfiles_dir'].'/dsset-'.$domain.'.');
@@ -226,7 +227,7 @@ class bind_plugin {
 		$this->soa_dnssec_sign($data);
 	}
 
-	function soa_dnssec_delete(&$data) {
+	function soa_dnssec_delete(&$data, $sql_update = true) {
 		global $app, $conf;
 
 		//* Load libraries
@@ -235,17 +236,35 @@ class bind_plugin {
 		//* load the server configuration options
 		$dns_config = $app->getconf->get_server_config($conf["server_id"], 'dns');
 
+        if(isset($data['new']['origin'])) {
 		$domain = substr($data['new']['origin'], 0, strlen($data['new']['origin'])-1);
+        } elseif (isset($data['old']['origin'])) {
+            $domain = substr($data['old']['origin'], 0, strlen($data['old']['origin'])-1);
+        } else {
+            //* We have no domain
+            $app->log('DNSSEC Delete: Unable to find domain', LOGLEVEL_WARN);
+            return;
+        }
 
+        //* Delete key files
 		$key_files = glob($dns_config['bind_keyfiles_dir'].'/K'.$domain.'.+*');
 		foreach($key_files as $file) {
 			unlink($file);
 		}
-		unlink($dns_config['bind_zonefiles_dir'].'/'.$dns_config['bind_zonefiles_masterprefix'].$domain.'.signed');
-		unlink($dns_config['bind_keyfiles_dir'].'/dsset-'.$domain.'.');
 
-		if ($app->running_on_slaveserver()) $app->dbmaster->query('UPDATE dns_soa SET dnssec_info=\'\', dnssec_initialized=\'N\' WHERE id=?', intval($data['new']['id']));
-		$app->db->query('UPDATE dns_soa SET dnssec_info=\'\', dnssec_initialized=\'N\' WHERE id=?', intval($data['new']['id']));
+        //* Delete signed zone file
+        $signed_zone_file = $dns_config['bind_zonefiles_dir'].'/'.$dns_config['bind_zonefiles_masterprefix'].$domain.'.signed';
+		if(file_exists($signed_zone_file)) unlink($signed_zone_file);
+
+        //* Delete dsset file
+        $dsset_file = $dns_config['bind_keyfiles_dir'].'/dsset-'.$domain.'.';
+		if(file_exists($dsset_file)) unlink($dsset_file);
+
+        //* Update DNSSEC info in database
+        if($sql_update) {
+		    if ($app->running_on_slaveserver()) $app->dbmaster->query('UPDATE dns_soa SET dnssec_info=\'\', dnssec_initialized=\'N\' WHERE id=?', intval($data['new']['id']));
+		    $app->db->query('UPDATE dns_soa SET dnssec_info=\'\', dnssec_initialized=\'N\' WHERE id=?', intval($data['new']['id']));
+        }
 	}
 
 	function soa_insert($event_name, $data) {
@@ -420,6 +439,9 @@ class bind_plugin {
 		//* rebuild the named.conf file
 		$this->write_named_conf($data, $dns_config);
 
+        //* Delete DNSSEC files
+        $this->soa_dnssec_delete($data,false);
+
 		//* Delete the domain file
 		$zone_file_name = $dns_config['bind_zonefiles_dir'].'/' . $dns_config['bind_zonefiles_masterprefix'] . str_replace("/", "_", substr($data['old']['origin'], 0, -1));
 		if(is_file($zone_file_name)) unlink($zone_file_name);
@@ -528,7 +550,7 @@ class bind_plugin {
 		global $app, $conf;
 
 		//* Get the data of the soa and call soa_update
-               //* In a singel server setup the record in dns_soa will already be gone ... so this will give an empty array.
+		//* In a single server setup the record in dns_soa will already be gone ... so this will give an empty array.
 		$tmp = $app->db->queryOneRecord("SELECT * FROM dns_soa WHERE id = ?", $data['old']['zone']);
 		$data["new"] = $tmp;
 		$data["old"] = $tmp;

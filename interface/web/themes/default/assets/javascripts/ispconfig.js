@@ -825,6 +825,11 @@ $(document).ready(function() {
 		temp.remove();
 	} );
 
+	//Prevent fireing event "click" to parent .copy-to-clipboard element #6726
+	$(document).on('click', '.copy-to-clipboard > a', function() {
+		return false;
+	} );
+
 	//display copy-to-clipboard icon
 	let lastCopyToClipboardIcon;
 	$(document).on("mouseenter", '.copy-to-clipboard', function() {
@@ -841,3 +846,25 @@ $(document).ready(function() {
 	});
 
 });
+
+
+function processEmailAddressInput(e) {
+    setTimeout(function () {
+        if (/@/.test(e.value)) {
+            var parts = e.value.split('@');
+            $('#email_domain').val(parts.pop());
+            $('#email_domain').trigger('change');
+            e.value = parts.pop();
+        }
+    }, 4);
+};
+
+function updateEmailDomain(e) {
+    if (/@/.test(e.value)) {
+        var parts = e.value.split('@');
+        $('#email_domain').val(parts.pop());
+        $('#email_domain').trigger('change');
+        e.value = parts.pop();
+    }
+};
+

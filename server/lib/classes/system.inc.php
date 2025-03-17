@@ -925,13 +925,18 @@ class system{
 	}
 
 	function unlink($filename) {
-		if(file_exists($filename) || is_link($filename)) {
+		if(!empty($filename) && file_exists($filename) || is_link($filename)) {
 			return unlink($filename);
 		}
 	}
 
 	function copy($file1, $file2) {
-		return copy($file1, $file2);
+        if(!empty($file1) && !empty($file2)) {
+            return copy($file1, $file2);
+        } else {
+            return false;
+        }
+
 	}
 
 	function move($file1, $file2) {
@@ -942,6 +947,7 @@ class system{
         }
 
 	function rmdir($path, $recursive=false) {
+        global $app;
 		// Disallow operating on root directory
 		if(realpath($path) == '/') {
 			$app->log("rmdir: afraid I might delete root: $path", LOGLEVEL_WARN);
@@ -1117,7 +1123,7 @@ class system{
 	function check_free_space($path, $limit = 0, &$free_space = 0) {
 		$path = rtrim($path, '/');
 
-		/**
+		/*
 		* Make sure that we have only existing directories in the path.
 
 		* Given a file name instead of a directory, the behaviour of the disk_free_space
@@ -1125,7 +1131,7 @@ class system{
         */
 		while(!is_dir($path) && $path != '/') $path = realpath(dirname($path));
 
-		$free_space = disk_free_space($out);
+		$free_space = disk_free_space($path);
 
 		if (!$free_space) {
 			$free_space = 0;
@@ -2064,7 +2070,7 @@ class system{
 
 	function _getinitcommand($servicename, $action, $init_script_directory = '', $check_service) {
 		global $conf, $app;
-		
+
 		// upstart
 		/* removed upstart support - deprecated
 		if(is_executable('/sbin/initctl')){
@@ -2072,7 +2078,7 @@ class system{
 			if(intval($retval['retval']) == 0) return 'service '.$servicename.' '.$action;
 		}
 		*/
-		
+
 		if(!in_array($action,array('start','stop','restart','reload','force-reload'))) {
 			$app->log('Invalid init command action '.$action,LOGLEVEL_WARN);
 			return false;
@@ -2081,10 +2087,10 @@ class system{
 		//* systemd (now default in all supported OS)
 		if(is_executable('/bin/systemd') || is_executable('/usr/bin/systemctl')){
 			$app->log('Trying to use Systemd to restart service',LOGLEVEL_DEBUG);
-			
+
 			//* Test service name via regex
 			if(preg_match('/[a-zA-Z0-9\.\-\_]/',$servicename)) {
-			
+
 				//* Test if systemd service is enabled
 				if ($check_service) {
 					$this->exec_safe("systemctl is-enabled ? 2>&1", $servicename);
@@ -2092,7 +2098,7 @@ class system{
 				} else {
 					$app->log('Systemd service '.$servicename.' not found or not enabled.',LOGLEVEL_DEBUG);
 				}
-			
+
 				//* Return service command
 				if ($ret_val == 0 || !$check_service) {
 					return 'systemctl '.$action.' '.$servicename.'.service';
@@ -2108,69 +2114,69 @@ class system{
 
 		//* sysvinit fallback
 		$app->log('Using init script to restart service',LOGLEVEL_DEBUG);
-		
+
 		//* Get init script directory
 		if($init_script_directory == '') $init_script_directory = $conf['init_scripts'];
 		if(substr($init_script_directory, -1) === '/') $init_script_directory = substr($init_script_directory, 0, -1);
 		$init_script_directory = realpath($init_script_directory);
-		
+
 		//* Check init script dir
 		if(!is_dir($init_script_directory)) {
 			$app->log('Init script directory '.$init_script_directory.' not found',LOGLEVEL_WARN);
 			return false;
 		}
-		
+
 		//* Forbidden init script paths
 		if(substr($init_script_directory,0,4) == '/var' || substr($init_script_directory,0,4) == '/tmp') {
 			$app->log('Do not put init scripts in /var or /tmp folder.',LOGLEVEL_WARN);
 			return false;
 		}
-		
+
 		//* Check init script dir owner
 		if(fileowner($init_script_directory) !== 0) {
 			$app->log('Init script directory '.$init_script_directory.' not owned by root user',LOGLEVEL_WARN);
 			return false;
 		}
-		
+
 		$full_init_script_path = realpath($init_script_directory.'/'.$servicename);
-    
+
     //** Gentoo, keep symlink as init script, but do some checks
-    if(file_exists('/etc/gentoo-release')) {  
+    if(file_exists('/etc/gentoo-release')) {
       //* check if init script is symlink
-      if(is_link($init_script_directory.'/'.$servicename)) {                 
+      if(is_link($init_script_directory.'/'.$servicename)) {
         //* Check init script owner (realpath, symlink is checked later)
       	if(fileowner($full_init_script_path) !== 0) {
       		$app->log('Init script '.$full_init_script_path.' not owned by root user',LOGLEVEL_WARN);
       		return false;
         }
-        
+
         //* full path is symlink
         $full_init_script_path_symlink = $init_script_directory.'/'.$servicename;
-        
+
         //* check if realpath matches symlink
         if(strpos($full_init_script_path_symlink,$full_init_script_path) == 0) {
           $full_init_script_path = $full_init_script_path_symlink;
         }
       }
     }
-		
+
 		if($full_init_script_path == '') {
-			$app->log('No init script, we quit here.',LOGLEVEL_WARN);
+			$app->log('No init script for: '.$servicename.' with action: '.$action.' and path: '.$init_script_directory.', we quit here.',LOGLEVEL_WARN);
 			return false;
 		}
-		
+
 		//* Check init script
 		if(!is_file($full_init_script_path)) {
-			$app->log('Init script '.$full_init_script_path.' not found',LOGLEVEL_WARN);
+			$app->log('Init script '.$full_init_script_path.' for '.$servicename.' not found',LOGLEVEL_WARN);
 			return false;
 		}
-		
+
 		//* Check init script owner
 		if(fileowner($full_init_script_path) !== 0) {
 			$app->log('Init script '.$full_init_script_path.' not owned by root user',LOGLEVEL_WARN);
 			return false;
 		}
-		
+
 		if($check_service && is_executable($full_init_script_path)) {
 			return $full_init_script_path.' '.$action;
 		}
@@ -2190,26 +2196,25 @@ class system{
 		}
 	}
 
-        function getopensslversion($get_minor = false) {
-                global $app;
-                if($this->is_installed('openssl')) $cmd = 'openssl version';
-                else {
+	function getopensslversion($get_minor = false) {
+		global $app;
+		if($this->is_installed('openssl')) $cmd = 'openssl version';
+		else {
 			$app->log("Could not check OpenSSL version, openssl not found.", LOGLEVEL_DEBUG);
-                        return '1.0.1';
-                }
+			return '1.0.1';
+		}
 
 		exec($cmd, $output, $return_var);
-                if($return_var != 0 || !$output[0]) {
+		if($return_var != 0 || !$output[0]) {
 			$app->log("Could not check OpenSSL version, openssl did not return any data.", LOGLEVEL_WARN);
-                        return '1.0.1';
-                }
-                if(preg_match('/OpenSSL\s*(\d+)(\.(\d+)(\.(\d+))*)?(\D|$)/i', $output[0], $matches)) {
+			return '1.0.1';
+		}
+		if(preg_match('/OpenSSL\s*(\d+)(\.(\d+)(\.(\d+))*)?(\D|$)/i', $output[0], $matches)) {
 			return $matches[1] . (isset($matches[3]) ? '.' . $matches[3] : '') . (isset($matches[5]) && $get_minor == true ? '.' . $matches[5] : '');
-                } else {
+		} else {
 			$app->log("Could not check OpenSSL version, did not find version string in openssl output.", LOGLEVEL_WARN);
 			return '1.0.1';
-                }
-
+		}
 	}
 
 	function getnginxversion($get_minor = false) {
@@ -2217,23 +2222,23 @@ class system{
 
 		if($this->is_installed('nginx')) $cmd = 'nginx -v 2>&1';
 		else {
-                        $app->log("Could not check Nginx version, nginx not found.", LOGLEVEL_DEBUG);
-                        return false;
-                }
+			$app->log("Could not check Nginx version, nginx not found.", LOGLEVEL_DEBUG);
+			return false;
+		}
 
 		exec($cmd, $output, $return_var);
 
 		if($return_var != 0 || !$output[0]) {
-                        $app->log("Could not check Nginx version, nginx did not return any data.", LOGLEVEL_WARN);
-                        return false;
+			$app->log("Could not check Nginx version, nginx did not return any data.", LOGLEVEL_WARN);
+			return false;
 		}
 
 		if(preg_match('/nginx version: nginx\/\s*(\d+)(\.(\d+)(\.(\d+))*)?(\D|$)/i', $output[0], $matches)) {
 			return $matches[1] . (isset($matches[3]) ? '.' . $matches[3] : '') . (isset($matches[5]) && $get_minor == true ? '.' . $matches[5] : '');
-                } else {
-                        $app->log("Could not check Nginx version, did not find version string in nginx output.", LOGLEVEL_WARN);
-                        return false;
-                }
+		} else {
+			$app->log("Could not check Nginx version, did not find version string in nginx output.", LOGLEVEL_WARN);
+			return false;
+		}
 	}
 
 	function getapacheversion($get_minor = false) {
@@ -2358,6 +2363,69 @@ class system{
 		}
 	}
 
+	public function get_os_type() {
+		global $app;
+
+		$dist = "undetected";
+		$version = "unknown";
+		$full_version = "unknown";
+
+		if (file_exists('/etc/redhat-release') && (filesize('/etc/redhat-release') > 0)) {
+			$dist = "redhat";
+			if (file_exists('/etc/os-release')) {
+				$os_release = file_get_contents('/etc/os-release');
+				if (preg_match('/VERSION_ID="([^"]+)"/', $os_release, $matches)) {
+					$version = $matches[1];
+				}
+			}
+			$full_version = trim(file_get_contents('/etc/redhat-release'));
+		} elseif (file_exists('/etc/debian_version') && (filesize('/etc/debian_version') > 0)) {
+			$dist = "debian";
+			if (file_exists('/etc/os-release')) {
+				$os_release = file_get_contents('/etc/os-release');
+				if (preg_match('/VERSION_ID="([^"]+)"/', $os_release, $matches)) {
+					$version = $matches[1];
+				}
+			}
+			$full_version = trim(file_get_contents('/etc/debian_version'));
+		} elseif (strstr(trim(file_get_contents('/etc/issue')), 'Ubuntu') || (is_file('/etc/os-release') && stristr(file_get_contents('/etc/os-release'), 'Ubuntu'))) {
+			$dist = "ubuntu";
+			if (file_exists('/etc/os-release')) {
+				$os_release = file_get_contents('/etc/os-release');
+				if (preg_match('/VERSION="([^"]+)"/', $os_release, $matches)) {
+					$full_version = $matches[1];
+				}
+				if (preg_match('/VERSION_ID="([^"]+)"/', $os_release, $matches)) {
+					$version = $matches[1];
+				}
+			}
+		} elseif (file_exists('/etc/SuSE-release') && (filesize('/etc/SuSE-release') > 0)) {
+			$dist = "suse";
+			if (file_exists('/etc/os-release')) {
+				$os_release = file_get_contents('/etc/os-release');
+				if (preg_match('/VERSION_ID="([^"]+)"/', $os_release, $matches)) {
+					$version = $matches[1];
+				}
+			}
+			$full_version = trim(file_get_contents('/etc/SuSE-release'));
+		} elseif (file_exists('/etc/gentoo-release') && (filesize('/etc/gentoo-release') > 0)) {
+			$dist = "gentoo";
+			if (file_exists('/etc/os-release')) {
+				$os_release = file_get_contents('/etc/os-release');
+				if (preg_match('/VERSION_ID="([^"]+)"/', $os_release, $matches)) {
+					$version = $matches[1];
+				}
+			}
+			$full_version = trim(file_get_contents('/etc/gentoo-release'));
+		}
+
+		return [
+			'type' => $dist,
+			'version' => $version,
+			'full_version' => $full_version
+		];
+	}
+
 	public function is_allowed_path($path) {
 		global $app;
 
@@ -2470,7 +2538,7 @@ class system{
 
 	public function create_jailkit_chroot($home_dir, $app_sections = array(), $options = array()) {
 		global $app;
-$app->log("create_jailkit_chroot: called for home_dir $home_dir with options: " . print_r($options, true), LOGLEVEL_DEBUG);
+		$app->log("create_jailkit_chroot: called for home_dir $home_dir with options: " . print_r($options, true), LOGLEVEL_DEBUG);
 
 		// Disallow operating on root directory
 		if(realpath($home_dir) == '/') {
@@ -2487,7 +2555,7 @@ $app->log("create_jailkit_chroot: called for home_dir $home_dir with options: " 
 		} elseif(is_string($app_sections)) {
 			$app_sections = preg_split('/[\s,]+/', $app_sections);
 		}
-		if(! is_array($options)) {
+		if(!is_array($options)) {
 			$options = (is_string($options) ? preg_split('/[\s,]+/', $options) : array());
 		}
 
@@ -2520,7 +2588,14 @@ $app->log("create_jailkit_chroot: called for home_dir $home_dir with options: " 
 
 		// Initialize the chroot into the specified directory with the specified applications
 		$cmd = 'jk_init' . $program_args;
+		$app->log("Executing command: $cmd", LOGLEVEL_DEBUG);
 		$this->exec_safe($cmd, $home_dir);
+
+		// Check for errors in the command execution
+		if ($this->last_exec_retcode() != 0) {
+			$app->log("Error executing jk_init command: " . implode("\n", $this->last_exec_out()), LOGLEVEL_ERROR);
+			return false;
+		}
 
 		// Create the tmp and /var/run directories
 		if(!is_dir($home_dir . '/tmp')) {
@@ -2547,7 +2622,7 @@ $app->log("create_jailkit_chroot: called for home_dir $home_dir with options: " 
 
 	public function create_jailkit_programs($home_dir, $programs = array(), $options = array()) {
 		global $app;
-$app->log("create_jailkit_programs: called for home_dir $home_dir with options: " . print_r($options, true), LOGLEVEL_DEBUG);
+		$app->log("create_jailkit_programs: called for home_dir $home_dir with options: " . print_r($options, true), LOGLEVEL_DEBUG);
 
 		// Disallow operating on root directory
 		if(realpath($home_dir) == '/') {
@@ -2625,7 +2700,9 @@ $app->log("create_jailkit_programs: called for home_dir $home_dir with options: 
 	public function update_jailkit_chroot($home_dir, $sections = array(), $programs = array(), $options = array()) {
 		global $app;
 
-$app->log("update_jailkit_chroot called for $home_dir with options ".print_r($options, true), LOGLEVEL_DEBUG);
+		$app->log("update_jailkit_chroot called for $home_dir with options ".print_r($options, true), LOGLEVEL_DEBUG);
+		$app->log("update_jailkit_chroot called for $home_dir with sections ".print_r($sections, true), LOGLEVEL_DEBUG);
+
 		$app->uses('ini_parser');
 
 		// Disallow operating on root directory
@@ -2670,7 +2747,7 @@ $app->log("update_jailkit_chroot called for $home_dir with options ".print_r($op
 				$jk_cp_args .= ' -f';
 				break;
 			default:
-				if (preg_match('@^skip[ =]/?(.+)$@', $opt, $matches) ) {
+				if (is_string($opt) && preg_match('@^skip[ =]/?(.+)$@', $opt, $matches) ) {
 					if (in_array($matches[1], $jailkit_directories)) {
 						$app->log("update_jailkit_chroot: skipping update of jailkit directory $home_dir/".$matches[1]
 							. "; if this is in use as a web folder, it is insecure and should be fixed.", LOGLEVEL_WARN);
@@ -2708,7 +2785,7 @@ $app->log("update_jailkit_chroot called for $home_dir with options ".print_r($op
 
 			// save list of hardlinked files
 			if (!(in_array('hardlink', $opts) || in_array('allow_hardlink', $options))) {
-$app->log("update_jailkit_chroot: searching for hardlinks in $jail_dir", LOGLEVEL_DEBUG);
+				$app->log("update_jailkit_chroot: searching for hardlinks in $jail_dir", LOGLEVEL_DEBUG);
                                 $find_multiple_links = function ( $path ) use ( &$find_multiple_links ) {
 					$found = array();
 					if (is_dir($path) && !is_link($path)) {
@@ -2735,8 +2812,9 @@ $app->log("update_jailkit_chroot: searching for hardlinks in $jail_dir", LOGLEVE
 
 				// remove broken symlinks a second time after hardlink cleanup
 				$this->remove_broken_symlinks($jail_dir, true);
+			} else {
+				$app->log("update_jailkit_chroot: NOT searching for hardlinks in $jail_dir, options: ".print_r($options, true), LOGLEVEL_DEBUG);
 			}
-else { $app->log("update_jailkit_chroot: NOT searching for hardlinks in $jail_dir, options: ".print_r($options, true), LOGLEVEL_DEBUG); }
 		}
 
 		foreach ($multiple_links as $file) {
@@ -2746,7 +2824,7 @@ else { $app->log("update_jailkit_chroot: NOT searching for hardlinks in $jail_di
 
 		$cmd = 'jk_update --jail=?' . $jk_update_args . $skips;
 		$this->exec_safe($cmd, $home_dir);
-$app->log('jk_update returned: '.print_r($this->_last_exec_out, true), LOGLEVEL_DEBUG);
+		$app->log('jk_update returned: '.print_r($this->_last_exec_out, true), LOGLEVEL_DEBUG);
 		# handle jk_update output
 		foreach ($this->_last_exec_out as $line) {
 			# jk_update sample output:
@@ -2764,10 +2842,10 @@ $app->log('jk_update returned: '.print_r($this->_last_exec_out, true), LOGLEVEL_
 			if (preg_match('@^(?:[^ ]+ ){6}(?:.+)('.preg_quote($home_dir, '@').'.+)@', $line, $matches)) {
 				# remove deprecated files that jk_update failed to remove
 				if (is_file($matches[1]) || is_link($matches[1])) {
-$app->log("update_jailkit_chroot: removing deprecated file which jk_update failed to remove:  ".$matches[1], LOGLEVEL_DEBUG);
+					$app->log("update_jailkit_chroot: removing deprecated file which jk_update failed to remove:  ".$matches[1], LOGLEVEL_DEBUG);
 					unlink($matches[1]);
 				} elseif (is_dir($matches[1]) && !is_link($matches[1])) {
-$app->log("update_jailkit_chroot: removing deprecated directory which jk_update failed to remove:  ".$matches[1], LOGLEVEL_DEBUG);
+					$app->log("update_jailkit_chroot: removing deprecated directory which jk_update failed to remove:  ".$matches[1], LOGLEVEL_DEBUG);
 					$this->rmdir($matches[1], true);
 				} else {
 					# unhandled error
@@ -2808,11 +2886,55 @@ $app->log("update_jailkit_chroot: removing deprecated directory which jk_update 
 			$this->chmod($home_dir . '/var/tmp', 0770, true);
 		}
 
-		// TODO: Set /usr/bin/php symlink to php version of the website.
-		//
-		// Currently server_php does not have a field for the cli path;
-		// we can guess/determing according to OS-specific conventions or add that field.
-		// Then symlink /usr/bin/php (or correct OS-specific path) to that location.
+		// If update_jailkit_chroot was called from cronjob 600-jailkit.inc.php, we need to check if the PHP cli binary is available in the jail
+		if(isset($options['jk_php_maintenance_check']) && $options['jk_php_maintenance_check'] == 'yes') {
+			$os_type = $app->system->get_os_type();
+			$used_os_type = isset($os_type['type']) ? $os_type['type'] : 'unknown';
+
+			if(is_array($options['homedir_usernames']) && !empty($options['homedir_usernames'])) {
+				foreach($options['homedir_usernames'] as $homedir_username) {
+
+					if($used_os_type == "debian" || $used_os_type == "ubuntu") {
+						$php_binary = $home_dir . '/etc/alternatives/php';
+					} elseif ($used_os_type == "redhat") {
+						$php_binary = $home_dir . '/home/' . $homedir_username . '/.local/bin/php';
+					} else {
+						$php_binary = $home_dir . '/home/' . $homedir_username . '/.local/bin/php';
+					}
+
+					if(!empty($options['php_cli_binary'])) {
+						$php_bin_dir = dirname($options['php_cli_binary']);
+						if(!file_exists($home_dir . '/' . $options['php_cli_binary'])) {
+							$app->log("update_jailkit_chroot: The PHP cli binary " . $options['php_cli_binary'] . " is not available in the jail of the web " . $options['domain'], LOGLEVEL_DEBUG);
+
+							$fallback_php = $app->system->get_newest_php_bin($home_dir . $php_bin_dir);
+							$fallback_php_bin = str_replace($home_dir, '', $fallback_php);
+
+							if(!empty($fallback_php) && file_exists($fallback_php_bin)) {
+								if(is_link($php_binary) || is_file($php_binary) || !file_exists($php_binary)) {
+									unlink($php_binary);
+									symlink($fallback_php_bin, $php_binary);
+									$app->log("update_jailkit_chroot: Found " . $fallback_php_bin . " as a fallback for PHP in the jail of " . $options['domain'], LOGLEVEL_DEBUG);
+								}
+							}
+						} else {
+								$app->log("update_jailkit_chroot: setting PHP to " . $options['php_cli_binary'], LOGLEVEL_DEBUG);
+								if(is_link($php_binary) || is_file($php_binary) || !file_exists($php_binary)) {
+									unlink($php_binary);
+									symlink($options['php_cli_binary'], $php_binary);
+									if($used_os_type == "debian" || $$used_os_type == "ubuntu") {
+										if(file_exists($home_dir . '/home/' . $homedir_username . '/.local/bin/php') && !file_exists($home_dir . '/home/' . $homedir_username . '/.local/bin/.lock_homephp')) {
+											unlink($home_dir . '/home/' . $homedir_username . '/.local/bin/php');
+										}/* else {
+											$app->log("Lock file .lock_homephp for PHP exists in " . $home_dir . '/home/' . $homedir_username . '/.local/bin/.lock_homephp', LOGLEVEL_DEBUG);
+										}*/
+									}
+								}
+						}
+					}
+				}
+			}
+		}
 
 		// search for any hardlinked files which are now missing
 		if (!(in_array('hardlink', $opts) || in_array('allow_hardlink', $options))) {
@@ -2860,7 +2982,7 @@ $app->log("update_jailkit_chroot: removing deprecated directory which jk_update 
 	public function delete_jailkit_chroot($home_dir, $options = array()) {
 		global $app;
 
-$app->log("delete_jailkit_chroot called for $home_dir with options ".print_r($options, true), LOGLEVEL_DEBUG);
+		$app->log("delete_jailkit_chroot called for $home_dir with options ".print_r($options, true), LOGLEVEL_DEBUG);
 		$app->uses('ini_parser');
 
 		// Disallow operating on root directory
@@ -2983,4 +3105,34 @@ $app->log("delete_jailkit_chroot called for $home_dir with options ".print_r($op
 			return false;
 		}
 	}
+
+	public function get_newest_php_bin($bin_directory) {
+
+		if(empty($bin_directory)) {
+			$bin_directory = '/usr/bin';
+		}
+
+		$php_binaries = [];
+
+		if($handle = opendir($bin_directory)) {
+			while(false !== ($entry = readdir($handle))) {
+			$full_path = $bin_directory . '/' . $entry;
+				// Check if the filename matches a pattern for commonly available PHP CLI binaries
+				if(preg_match('/^php(\d{1,2}\.?\d{1,2})?$/', $entry) && file_exists($full_path)) {
+					$php_binaries[] = $entry;
+				}
+			}
+			closedir($handle);
+		}
+		// Find and return the newest/highest version PHP binary
+		$newest_php_bin = null;
+		foreach($php_binaries as $php_bin) {
+			if($newest_php_bin === null || version_compare($php_bin, $newest_php_bin) > 0) {
+				$newest_php_bin = $php_bin;
+			}
+		}
+
+		return $newest_php_bin ? $bin_directory . '/' . $newest_php_bin : null;
+	}
+
 }

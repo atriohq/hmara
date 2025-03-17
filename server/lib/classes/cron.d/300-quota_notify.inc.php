@@ -33,6 +33,8 @@ class cronjob_quota_notify extends cronjob {
 	// job schedule
 	protected $_schedule = '0 0 * * *';
 
+	private $_tools = null;
+
 	/* this function is optional if it contains no custom code */
 	public function onPrepare() {
 		global $app;

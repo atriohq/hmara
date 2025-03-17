@@ -1,5 +1,6 @@
 <?php
 $wb['active_txt'] = 'Habilitado';
+$wb['local_delivery_txt'] = 'Local delivery';
 $wb['client_txt'] = 'Cliente';
 $wb['dkim_dns_txt'] = 'Registro DNS';
 $wb['dkim_generate_txt'] = 'Generar clave privada DKIM';
@@ -23,3 +24,4 @@ $wb['type_txt'] = 'Tipo';
 $wb['relayhost_txt'] = 'Relayhost';
 $wb['relayhost_user_txt'] = 'Relayhost User';
 $wb['relayhost_password_txt'] = 'Relayhost Password';
+$wb['dkim_auto_dns_txt'] = 'Managed zone, dns updated automatically';

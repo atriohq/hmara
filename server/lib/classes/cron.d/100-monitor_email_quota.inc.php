@@ -82,7 +82,7 @@ class cronjob_monitor_email_quota extends cronjob {
 			$dovecotQuotaUsage = array();
 			if (isset($mail_config['pop3_imap_daemon']) && $mail_config ['pop3_imap_daemon'] = 'dovecot') {
 				exec("doveadm quota get -A 2>&1", $res, $retval);
-				if ($retval = 64) {
+				if ($retval == 0) {
 					foreach ($res as $v) {
 						$s = preg_split('/\s+/', $v);
 						if ($s[2] == 'STORAGE') {

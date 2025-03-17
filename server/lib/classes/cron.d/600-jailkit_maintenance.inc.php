@@ -37,26 +37,24 @@ class cronjob_jailkit_maintenance extends cronjob {
 	public function onRunJob() {
 		global $app, $conf;
 
-		$server_config = $app->getconf->get_server_config($conf['server_id'], 'server');
-
 		$jailkit_config = $app->getconf->get_server_config($conf['server_id'], 'jailkit');
-		if (isset($this->jailkit_config) && isset($this->jailkit_config['jailkit_hardlinks'])) {
-			if ($this->jailkit_config['jailkit_hardlinks'] == 'yes') {
-				$options = array('hardlink');
-			} elseif ($this->jailkit_config['jailkit_hardlinks'] == 'no') {
-				$options = array();
+		if(isset($this->jailkit_config) && isset($this->jailkit_config['jailkit_hardlinks'])) {
+			if($this->jailkit_config['jailkit_hardlinks'] == 'yes') {
+				$global_options = array('hardlink');
+			} elseif($this->jailkit_config['jailkit_hardlinks'] == 'no') {
+				$global_options = array();
 			}
 		} else {
-			$options = array('allow_hardlink');
+			$global_options = array('allow_hardlink');
 		}
 
 		// force all jails to update every 2 weeks
-		if (! is_file('/usr/local/ispconfig/server/temp/jailkit_force_update.ts')) {
+		if(!is_file('/usr/local/ispconfig/server/temp/jailkit_force_update.ts')) {
 			if(!@is_dir('/usr/local/ispconfig/server/temp')) {
 				$app->system->mkdirpath('/usr/local/ispconfig/server/temp');
 			}
 			$app->system->touch('/usr/local/ispconfig/server/temp/jailkit_force_update.ts');
-		} elseif ( time() - filemtime('/usr/local/ispconfig/server/temp/jailkit_force_update.ts') > 60 * 60 * 24 * 14 ) {
+		} elseif(time() - filemtime('/usr/local/ispconfig/server/temp/jailkit_force_update.ts') > 60 * 60 * 24 * 14) {
 			$update_hash = 'force_update'.time();
 			$app->db->query("UPDATE web_domain SET last_jailkit_hash = ? WHERE type = 'vhost' AND server_id = ?", $update_hash, $conf['server_id']);
 			$app->system->touch('/usr/local/ispconfig/server/temp/jailkit_force_update.ts');
@@ -65,7 +63,12 @@ class cronjob_jailkit_maintenance extends cronjob {
 		// limit the number of jails we update at one time according to time of day
 		$num_jails_to_update = (date('H') < 6) ? 25 : 3;
 
-		$sql = "SELECT domain_id, domain, document_root, system_user, system_group, php_fpm_chroot, jailkit_chroot_app_sections, jailkit_chroot_app_programs, delete_unused_jailkit, last_jailkit_hash FROM web_domain WHERE type = 'vhost' AND (last_jailkit_update IS NULL OR last_jailkit_update < (NOW() - INTERVAL 24 HOUR)) AND server_id = ? ORDER by last_jailkit_update LIMIT ?";
+		$sql = "SELECT domain_id, domain, document_root, system_user, system_group, php_fpm_chroot, jailkit_chroot_app_sections, jailkit_chroot_app_programs, delete_unused_jailkit, last_jailkit_hash, `php_cli_binary`, server_php.php_jk_section
+					FROM web_domain
+						LEFT JOIN server_php ON web_domain.server_php_id = server_php.server_php_id
+					WHERE type = 'vhost' AND (last_jailkit_update IS NULL OR last_jailkit_update < (NOW() - INTERVAL 24 HOUR)) AND web_domain.server_id = ?
+					ORDER by last_jailkit_update
+					LIMIT ?";
 		$records = $app->db->queryAllRecords($sql, $conf['server_id'], $num_jails_to_update);
 
 		foreach($records as $rec) {
@@ -73,6 +76,32 @@ class cronjob_jailkit_maintenance extends cronjob {
 				$app->db->query("UPDATE `web_domain` SET `last_jailkit_update` = NOW() WHERE `document_root` = ?", $rec['document_root']);
 				continue;
 			}
+
+			$options = $global_options;
+
+			$options['domain'] = $rec['domain'];
+
+			if(empty($rec['php_cli_binary'])) {
+				$options['php_cli_binary'] = "/usr/bin/php";
+			} else {
+				$options['php_cli_binary'] = $rec['php_cli_binary'];
+			}
+
+			$shelluser_list = $app->db->queryAllRecords("SELECT * FROM shell_user WHERE parent_domain_id = ? and chroot = 'jailkit' and active = 'y'", $rec['domain_id']);
+
+			if(is_array($shelluser_list) && !empty($shelluser_list)) {
+				$options['jk_php_maintenance_check'] = "yes";
+				$options['homedir_usernames'] = array();
+
+				foreach($shelluser_list as $shelluser) {
+					$options['homedir_usernames'][] = $shelluser['username'];
+				}
+
+			} else {
+				$options['jk_php_maintenance_check'] = "no";
+
+			}
+
 
 			//$app->log('Beginning jailkit maintenance for domain '.$rec['domain'].' at '.$rec['document_root'], LOGLEVEL_DEBUG);
 			print 'Beginning jailkit maintenance for domain '.$rec['domain'].' at '.$rec['document_root']."\n";
@@ -93,6 +122,7 @@ class cronjob_jailkit_maintenance extends cronjob {
 
 			if ($shell_user_inuse || $cron_inuse || $rec['php_fpm_chroot'] == 'y' || $rec['delete_unused_jailkit'] != 'y') {
 				$sections = $jailkit_config['jailkit_chroot_app_sections'];
+
 				if (isset($rec['jailkit_chroot_app_sections']) && $rec['jailkit_chroot_app_sections'] != '') {
 					$sections = $rec['jailkit_chroot_app_sections'];
 				}
@@ -100,14 +130,19 @@ class cronjob_jailkit_maintenance extends cronjob {
 				if (isset($rec['jailkit_chroot_app_programs']) && $rec['jailkit_chroot_app_programs'] != '') {
 					$programs = $rec['jailkit_chroot_app_programs'];
 				}
+
 				$programs .= ' '.$jailkit_config['jailkit_chroot_cron_programs'];
+
+				if (isset($rec['php_jk_section']) && $rec['php_jk_section'] != '') {
+					$sections .= ' '.$rec['php_jk_section'];
+				}
 
 				$last_updated = preg_split('/[\s,]+/', $sections.' '.$programs);
 				$last_updated = array_unique($last_updated, SORT_REGULAR);
 				sort($last_updated, SORT_STRING);
 				$update_hash = hash('md5', implode(' ', $last_updated));
 
-				if (substr($rec['last_jailkit_hash'], 0, strlen('force_update')) === 'force_update') {
+				if (isset($rec['last_jailkit_hash']) && substr($rec['last_jailkit_hash'], 0, strlen('force_update')) === 'force_update') {
 					$options[] = 'force';
 				} elseif (is_file( $rec['document_root']."/bin/bash" )) {
 					# test that /bin/bash functions in the jail

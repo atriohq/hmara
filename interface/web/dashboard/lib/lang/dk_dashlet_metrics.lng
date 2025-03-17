@@ -1,0 +1,7 @@
+<?php
+$wb['metrics_txt'] = 'Systemmetrikker';
+$wb['loadchart_label'] = 'Systembelastning %';
+$wb['memchart_label'] = 'Hukommelsesforbrug %';
+$wb['rxchart_label'] = 'Netværk ind/kB';
+$wb['txchart_label'] = 'Netværk ud/kB';
+$wb['label_chart_title'] = 'Systemmetrikker';

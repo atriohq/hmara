@@ -16,7 +16,7 @@ $items[] = array( 'title'  => "Overview",
 	'link' => 'monitor/show_sys_state.php?state=system',
 	'html_id' => 'system');
 
-$items[] = array( 'title'  => "System-Log",
+$items[] = array( 'title'  => "ISPConfig Log",
 	'target'  => 'content',
 	'link' => 'monitor/log_list.php',
 	'html_id' => 'system_log');
@@ -186,7 +186,7 @@ $items[] = array( 'title'  => "Freshclam-Log",
 	'link' => 'monitor/show_log.php?log=log_freshclam',
 	'html_id' => 'log_freshclam');
 
-$items[] = array( 'title'  => "Let's Encrypt log",
+$items[] = array( 'title'  => "Lets-Encrypt-log",
 	'target'  => 'content',
 	'link' => 'monitor/show_log.php?log=log_letsencrypt',
 	'html_id' => 'log_letsencrypt');

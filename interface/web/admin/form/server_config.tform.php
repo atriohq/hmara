@@ -321,6 +321,20 @@ $form["tabs"]['server'] = array(
 			'default' => 'y',
 			'value' => array(0 => 'n', 1 => 'y')
 		),
+		'sysbackup_copies' => array(
+			'datatype' => 'VARCHAR',
+			'formtype' => 'TEXT',
+			'default' => '3',
+			'validators' => array(	0 => array('type' => 'NOTEMPTY',
+										'errmsg' => 'sysbackup_copies_error_empty'),
+									1 => array ( 	'type' => 'REGEX',
+										'regex' => "/^[0-9]{1,3}$/",
+										'errmsg'=> 'sysbackup_copies_error_regex'),
+			),
+			'value' => '',
+			'width' => '40',
+			'maxlength' => '255'
+		),
 		'monit_url' => array(
 			'datatype' => 'VARCHAR',
 			'formtype' => 'TEXT',
@@ -560,15 +574,6 @@ $form["tabs"]['mail'] = array(
 			'default' => '2048',
 			'value' => array('1024' => 'weak (1024)', '2048' => 'normal (2048)', '4096' => 'strong (4096)')
 		),
-        'relayhost_password' => array(
-            'datatype' => 'VARCHAR',
-            'formtype' => 'TEXT',
-            'default' => '',
-            'value' => '',
-            'width' => '40',
-            'maxlength' => '255'
-        ),
-
 		'pop3_imap_daemon' => array(
 			'datatype' => 'VARCHAR',
 			'formtype' => 'SELECT',
@@ -1096,6 +1101,16 @@ $form["tabs"]['web'] = array(
 			'formtype' => 'CHECKBOX',
 			'default' => 'n',
 			'value' => array(0 => 'n', 1 => 'y')
+		),
+		'web_folder_permission' => array(
+			'datatype' => 'VARCHAR',
+			'formtype' => 'SELECT',
+			'default' => '0710',
+			'maxlength' => '4',
+			'value' => array('0710' => '0710', '0711' => '0711', '0750' => '0750', '0751' => '0751'),
+			'validators' => array(	0 => array ('type' => 'REGEX',
+										'regex' => '/^0[0-7]{3}$/',
+										'errmsg'=> 'incorrect_permissions_regex')),
 		),
 		'web_folder_protection' => array(
 			'datatype' => 'VARCHAR',
@@ -1640,6 +1655,49 @@ $form["tabs"]['web'] = array(
 			'value' => array('reload' => 'Reload', 'restart' => 'Restart'),
 			'width' => '40',
 			'maxlength' => '255'
+		),
+		'le_signature_type' => array(
+			'datatype' => 'VARCHAR',
+			'formtype' => 'SELECT',
+			'default' => 'ECDSA',
+			'value' => array('RSA' => 'RSA (RSA encryption with SHA-256)', 'ECDSA' => 'ECDSA (Elliptic Curve Digital Signature Algorithm)')
+		),
+		'le_delete_on_site_remove' => array(
+			'datatype' => 'VARCHAR',
+			'formtype' => 'CHECKBOX',
+			'default' => 'y',
+			'value' => array(0 => 'n', 1 => 'y')
+		),
+		'le_auto_cleanup' => array(
+			'datatype' => 'VARCHAR',
+			'formtype' => 'CHECKBOX',
+			'default' => 'y',
+			'value' => array(0 => 'n', 1 => 'y')
+		),
+		'le_auto_cleanup_denylist' => array(
+			'validators' => array(
+				array (
+					'type' => 'CUSTOM',
+					'class' => 'validate_domain',
+					'function' => 'domain_glob_list',
+					'allowempty' => 'y',
+					'exceptions' => array('[server_name]'),
+					'allow_exception_as_substring' => 'n',
+					'errmsg'=> 'le_auto_cleanup_denylist_error_custom'
+				),
+			),
+			'datatype' => 'VARCHAR',
+			'formtype' => 'TEXT',
+			'default' => '[server_name]',
+			'value' => '',
+			'width' => '40',
+			'maxlength' => '255'
+		),
+		'le_revoke_before_delete' => array(
+			'datatype' => 'VARCHAR',
+			'formtype' => 'CHECKBOX',
+			'default' => 'y',
+			'value' => array(0 => 'n', 1 => 'y')
 		),
 		//#################################
 		// END Datatable fields

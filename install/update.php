@@ -88,7 +88,6 @@ $cur_dir = getcwd();
 if(realpath(dirname(__FILE__)) != $cur_dir) die("Please run installation/update from _inside_ the install directory!\n");
 
 //** Install logfile
-define('ISPC_LOG_FILE', '/var/log/ispconfig_install.log');
 define('ISPC_INSTALL_ROOT', realpath(dirname(__FILE__).'/../'));
 
 //** Include the templating lib
@@ -112,6 +111,7 @@ $dist = get_distname();
 include_once "/usr/local/ispconfig/server/lib/config.inc.php";
 $conf_old = $conf;
 unset($conf);
+define('ISPC_LOG_FILE', $conf_old['ispconfig_log_dir'] . '/update.log');
 
 if($dist['id'] == '') die('Linux distribution or version not recognized.');
 
@@ -554,7 +554,7 @@ if($reconfigure_services_answer == 'yes' || $reconfigure_services_answer == 'sel
   }
 
 	if($conf['services']['firewall'] && $inst->reconfigure_app('Firewall', $reconfigure_services_answer)) {
-		if($conf['ufw']['installed'] == true) {
+		if(isset($conf['ufw']['installed']) && $conf['ufw']['installed'] == true) {
 			//* Configure Ubuntu Firewall
 			$conf['services']['firewall'] = true;
 			swriteln('Configuring Ubuntu Firewall');
@@ -691,7 +691,7 @@ if($reconfigure_services_answer == 'yes') {
 	}
 
 	if($conf['services']['firewall']) {
-		if($conf['ufw']['installed'] == true && isset($conf['ufw']['init_script']) && $conf['ufw']['init_script'] != '' && is_executable($conf['init_scripts'].'/'.$conf['ufw']['init_script']))     system($conf['init_scripts'].'/'.$conf['ufw']['init_script'].' restart &> /dev/null');
+		if(isset($conf['ufw']['installed']) && $conf['ufw']['installed'] == true && isset($conf['ufw']['init_script']) && $conf['ufw']['init_script'] != '' && is_executable($conf['init_scripts'].'/'.$conf['ufw']['init_script']))     system($conf['init_scripts'].'/'.$conf['ufw']['init_script'].' restart &> /dev/null');
 	}
 }
 
