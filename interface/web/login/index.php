@@ -142,25 +142,29 @@ function process_login_request(app $app, &$error, $conf, $module)
 			//* Do 2FA authentication
 			if(isset($user['otp_type']) && $user['otp_type'] != 'none') {
 
-				//* Save session in pending state and destroy original session
-				$_SESSION['s_pending'] = $_SESSION['s'];
-				unset($_SESSION['s']);
+				if (empty($conf['otp_whitelist']) || !in_array($_SERVER['REMOTE_ADDR'], $conf['otp_whitelist']))  {
 
-				//* Create OTP session
-				$_SESSION['otp']['session_attempts'] = 0;
-				$_SESSION['otp']['type'] = $user['otp_type'];
-				$_SESSION['otp']['data'] = $user['otp_data'];
-				//$_SESSION['otp']['recovery_debug'] = $user['otp_recovery']; // For DEBUG only.
+					//* Save session in pending state and destroy original session
+					$_SESSION['s_pending'] = $_SESSION['s'];
+					unset($_SESSION['s']);
 
-				//* Redirect to otp script
-				header('Location: otp.php');
-				die();
-			} else {
-				$app->plugin->raiseEvent('login', $username);
-				$app->auth_log('Successful login for user \''. $username .'\' ' . $msg . ' from '. $_SERVER['REMOTE_ADDR'] .' at '. date('Y-m-d H:i:s') . ' with session ID ' .session_id());
-				header('Location: ../index.php');
-				die();
+					//* Create OTP session
+					$_SESSION['otp']['session_attempts'] = 0;
+					$_SESSION['otp']['type'] = $user['otp_type'];
+					$_SESSION['otp']['data'] = $user['otp_data'];
+					//$_SESSION['otp']['recovery_debug'] = $user['otp_recovery']; // For DEBUG only.
+
+					//* Redirect to otp script
+					header('Location: otp.php');
+					die();
+				} else {
+					// OK, IP is whitelisted
+				}
 			}
+			$app->plugin->raiseEvent('login', $username);
+			$app->auth_log('Successful login for user \''. $username .'\' ' . $msg . ' from '. $_SERVER['REMOTE_ADDR'] .' at '. date('Y-m-d H:i:s') . ' with session ID ' .session_id());
+			header('Location: ../index.php');
+			die();
 		}
 	} else {
 		if (!$alreadyfailed['times']) {
@@ -487,6 +491,7 @@ $app->tpl->setVar('session_timeout', $server_config_array['session_timeout']);
 $app->tpl->setVar('session_allow_endless', $server_config_array['session_allow_endless']);
 //$app->tpl->setInclude('content_tpl', 'login/templates/index.htm');
 $app->tpl->setVar('current_theme', isset($_SESSION['s']['theme']) ? $_SESSION['s']['theme'] : 'default', true);
+$app->tpl->setVar('remote_address', $_SERVER['REMOTE_ADDR']);
 //die(isset($_SESSION['s']['theme']) ? $_SESSION['s']['theme'] : 'default');
 
 // Logo
