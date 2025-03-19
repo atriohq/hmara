@@ -40,6 +40,9 @@ $tform_def_file = "form/user_settings.tform.php";
 
 require_once '../../lib/config.inc.php';
 require_once '../../lib/app.inc.php';
+require_once '../../lib/classes/simpleAuthenticator.php';
+use SebastianDevs\SimpleAuthenticator;
+
 
 //* Check permissions for module
 $app->auth->check_module_permissions('tools');
@@ -91,6 +94,31 @@ class page_action extends tform_actions {
 		$_SESSION['s']['user']['language'] = $language;
 		$_SESSION['s']['language'] = $language;
 	}
+
+function onSubmit() {
+		global $app, $conf;
+
+		if ($this->dataRecord['otp_type'] == 'totp' && !empty($this->dataRecord['totp_secret'])) {
+			$code_length = 6;
+			$auth = new SimpleAuthenticator($code_length, 'SHA1');
+
+			if($auth->verifyCode($this->dataRecord['totp_secret'], $this->dataRecord['totp_verification_code'], 2)) {
+				$sys_user = $app->db->queryOneRecord('SELECT otp_data FROM sys_user WHERE userid = ?', $_SESSION['s']['user']['userid']);
+				$data = json_decode($sys_user['otp_data'], TRUE);
+
+				$app->db->query("UPDATE sys_user SET otp_data=? WHERE userid = ?", json_encode($data), $_SESSION['s']['user']['userid']);
+				$data['totp_secret'] = $this->dataRecord['totp_secret'];
+				//$this->dataRecord['otp_data'] = json_encode($data);
+			}
+			else {
+				//$this->dataRecord['totp_secret'] = ''; // ???
+				$app->tform->errorMessage = 'totp_verification_code_incorrect'; $app->tform->lng('totp_verification_code_incorrect');
+			}
+		} 
+# Store totp secret in otp_data column
+
+parent::onSubmit();
+}
 
 	function onAfterUpdate() {
 		global $app;

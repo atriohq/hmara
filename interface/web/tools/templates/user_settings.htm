@@ -29,9 +29,17 @@
 <div class="form-group">
   <label for="2fa" class="col-sm-3 control-label">{tmpl_var name='otp_auth_txt'}</label>
   <div class="col-sm-9">
-    <select name="otp_type" id="otp_type" class="form-control">
+    <select name="otp_type" id="otp_type" class="form-control" OnChange="updateOtpPage();">
       {tmpl_var name='otp_type'}
     </select>
+	<button class="btn btn-default formbutton-success" type="button" value="FOO" OnClick="resetTotpSecret()">Reset TOTP secret</button>
+	<div id="totp-form" style="display: none;">
+	  <input type="hidden" id="totp_secret" name="totp_secret" value="">
+	  <div id="qr_placeHolder"></div>
+	  <div id="url_placeHolder"></div>
+	  <label for="totp_verification_code">Load the QR code in an authenticator app and enter a verification code to Save it: </label>
+      <input type="text" name="totp_verification_code" id="totp_verification_code" class="form-control" style="width: 150px;" autocomplete="off" placeholder="000000"/>
+    </div>
   </div>
 </div>
 <div class="form-group">
@@ -64,3 +72,53 @@
     <button class="btn btn-default formbutton-default" type="button" value="{tmpl_var name='btn_cancel_txt'}" data-load-content="tools/index.php">{tmpl_var name='btn_cancel_txt'}</button>
   </div>
 </div>
+<script type="text/javascript" src="../js/qrcode.js"></script>
+<script type="text/javascript">
+
+function generateTOTPSecret(length = 32) {
+  const array = new Uint8Array(length);
+  window.crypto.getRandomValues(array);
+  return btoa(String.fromCharCode(...array)) // Convert to Base64
+    .replace(/[^A-Z2-7]/gi, "") // Convert to Base32-like format
+    .substring(0, length);
+}
+
+function updateOtpPage() {
+	type = jQuery('#otp_type').val();
+	if (type == 'totp') {	
+		if (jQuery('#totp_secret').val() != '(already_set)') {
+			resetTotpSecret();
+		}
+	} else {
+		jQuery('#totp-form').hide();
+	}
+}
+
+function resetTotpSecret() {
+	//jQuery('#totp_secret').val('FPDBZLFNWCL5OYPD527GUN5Q3PULA4WX');
+	jQuery('#totp_secret').val(generateTOTPSecret());
+	draw_new_totp_info();
+	jQuery('#totp-form').show();
+}
+
+function checkTotpCode() {
+
+}
+
+function draw_new_totp_info() {
+	// docs: https://github.com/kazuhikoarase/qrcode-generator/tree/master/js
+	var typeNumber = 0;
+	var errorCorrectionLevel = 'L';
+	var qr = qrcode(typeNumber, errorCorrectionLevel);
+
+	// TODO get sitename to use as Issuer
+	// TODO get site url to use 
+	otpauth_url = 'otpauth://totp/Test2@ispdev.mx10.nl?secret=' + jQuery('#totp_secret').val() + '&issuer=ISPconfig';
+	qr.addData(otpauth_url);
+	qr.make();
+	document.getElementById('qr_placeHolder').innerHTML = qr.createImgTag(5, 2, 'QR code');
+	document.getElementById('url_placeHolder').innerHTML = 'Secret: ' + jQuery('#totp_secret').val() + '<br / >URL: ' + otpauth_url;
+}
+
+</script>
+
