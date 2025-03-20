@@ -232,6 +232,8 @@ function is_ip_in_list($ip, $whitelist)
 function ipv4_matches_cidr ($ip, $cidr)
 {
 	if (strpos($ip, '.') === false) return false;
+	// Fail on an ipv6 address.
+	if (strpos($ip, ':') || strpos($cidr, ':')) return false;
 
 	list ($net, $mask) = explode ('/', $cidr);
 	if (!$mask) $mask = 32;
