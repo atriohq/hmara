@@ -153,7 +153,20 @@ if($_SESSION["s"]["user"]["typ"] == 'admin') {
 	}
 }
 
-$app->tpl->setloop('info', $info);
+// Load messages from sys_message
+$app->uses('message');
+$messages = $app->message->get_current_messages();
+if(!empty($messages)) {
+	foreach($messages as $message) {
+		if($message['message_state'] == 'info') $info[] = array('info_msg' => '<p>'.$message['message'].'</p>');
+		if($message['message_state'] == 'warning') $warning[] = array('warning_msg' => '<p>'.$message['message'].'</p>');
+		if($message['message_state'] == 'error') $error[] = array('error_msg' => '<p>'.$message['message'].'</p>');
+	}
+}
+
+if(!empty($info)) $app->tpl->setloop('info', $info);
+if(!empty($warning)) $app->tpl->setloop('warning', $warning);
+if(!empty($error)) $app->tpl->setloop('error', $error);
 
 /* Load the dashlets*/
 $dashlet_list = array();
