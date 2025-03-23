@@ -1,14 +1,14 @@
 <tmpl_if name="config_error_msg">
-<div class="alert alert-danger">
-    <p>
-      <tmpl_var name="configuration_error_txt">
-        <div>
-          <div style="float:left;width:150px;">{tmpl_var name='config_error_tstamp'} :&nbsp;</div>
-          <div style="padding-left:150px;">{tmpl_var name='config_error_msg'}</div>
-        </div>
-    </p>
-  </div>
-</tmpl_if>
+    <div>
+        <p>
+          <div id="errormsg" class="alert alert-danger alert-dismissible" role="alert">
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <div style="float:left;width:150px;">{tmpl_var name='config_error_tstamp'} :&nbsp;</div>
+            <div style="padding-left:150px;">{tmpl_var name='config_error_msg'}</div>
+          </div>
+        </p>
+      </div>
+  </tmpl_if>
 
 
 
@@ -91,5 +91,9 @@
             }
         });
     }
+
+    $('#errormsg').on('closed.bs.alert', function () {
+        $.get("sites/message_ack.php?relation=web_domain:{tmpl_var name='id'}&_csrf_id={tmpl_var name='_csrf_id_msg'}&_csrf_key={tmpl_var name='_csrf_key_msg'}");
+    });
 
 </script>
