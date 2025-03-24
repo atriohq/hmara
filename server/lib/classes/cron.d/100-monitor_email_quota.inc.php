@@ -163,7 +163,7 @@ class cronjob_monitor_email_quota extends cronjob {
 	private function export_metrics($data) {
 		global $app, $conf;
 
-		if (!empty($data) && !empty($conf['graphite_collector_command'])) {
+		if (!empty($data)) {
 			$server_config = $app->getconf->get_server_config($conf['server_id'], 'server');
 			$hostname = preg_replace('/\./', '_', $server_config['hostname']);
 

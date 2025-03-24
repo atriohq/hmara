@@ -956,7 +956,7 @@ class monitor_tools {
 
 		$pipes = array();
 		$return_value = 0;
-		$process = proc_open(escapeshellcmd($conf['graphite_collector_command']), $descriptorspec, $pipes);
+		$process = proc_open(escapeshellcmd($graphite_collector_command), $descriptorspec, $pipes);
 
 		if (is_resource($process)) {
 			foreach($metrics as $key => $data) {
