@@ -104,7 +104,7 @@ class cronjob_monitor_domain_mx  extends cronjob {
 			$smtpin_ips = array_merge($smtpin_ips, explode(',', $mail_config['additional_smtp_ips']));
 		}
 
-		$maildomains = $app->db->queryAllRecords("SELECT domain, active FROM mail_domain WHERE server_id = ?", $server_id);
+		$maildomains = $app->db->queryAllRecords("SELECT domain, active, local_delivery FROM mail_domain WHERE server_id = ?", $server_id);
 		if(is_array($maildomains)) {
 			$state = 'ok';
 			foreach ($maildomains as $maildomain) {
@@ -129,7 +129,7 @@ class cronjob_monitor_domain_mx  extends cronjob {
 				}
 
 				if (empty($mx_ip) || !in_array( $mx_ip, $smtpin_ips)) {
-					if ($maildomain['active'] == 'y') {
+					if ($maildomain['active'] == 'y' && $maildomain['local_delivery'] == 'y') {
 						$str = 'Domain is active but the DNS does not match our IP.';
 						if ($first_mx) {
 							$str .= ' (points to ' . $first_mx . ' on ' . $mx_ip . ')';
