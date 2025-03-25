@@ -8,6 +8,7 @@ $module['template']  = 'module.tpl.htm';
 $module['startpage']  = 'tools/user_settings.php';
 $module['tab_width']    = '60';
 $module['order']    = '80';
+$module['icon'] = 'icon icon-tools';
 
 
 //**** Change User password
@@ -24,4 +25,4 @@ $module['nav'][] = array(   'title' => 'User Settings',
 	'items' => $items);
 
 unset($items);
-?>
+

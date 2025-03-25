@@ -7,7 +7,7 @@ $module['title']   = 'top_menu_mailuser';
 $module['template']             = 'module.tpl.htm';
 $module['startpage']            = 'mailuser/index.php';
 $module['tab_width']            = '';
-
+$module['icon'] = 'icon icon-mailuser';
 
 //**** menu
 $items = array();
