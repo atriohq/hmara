@@ -3,12 +3,13 @@
 /*
  Config of the Module
  */
-$module["name"]   = "monitor";
-$module["title"]   = "top_menu_monitor";
-$module["template"]  = "module.tpl.htm";
-$module["tab_width"]    = '';
-$module["startpage"]  = "monitor/show_sys_state.php?state=system";
+$module['name']   = 'monitor';
+$module['title']   = 'top_menu_monitor';
+$module['template']  = 'module.tpl.htm';
+$module['tab_width']    = '';
+$module['startpage']  = 'monitor/show_sys_state.php?state=system';
 $module['order']    = '60';
+$module['icon'] = 'icon icon-monitor';
 
 unset($items);
 $items[] = array( 'title'  => "Overview",
@@ -34,7 +35,6 @@ $items[] = array( 'title'  => 'Data Log History',
 $module["nav"][] = array( 'title' => 'System State (All Servers)',
 	'open'  => 1,
 	'items' => $items);
-
 
 /*
  We need all the available servers on the left navigation.

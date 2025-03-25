@@ -25,6 +25,7 @@ class dashlet_modules {
 			foreach($modules as $mt) {
 				if(is_file('../' . $mt . '/lib/module.conf.php')) {
 					if(!preg_match("/^[a-z]{2,20}$/i", $mt)) die('module name contains unallowed chars.');
+					if(isset($module)) unset($module);
 					include_once '../' . $mt.'/lib/module.conf.php';
 					/* We don't want to show the dashboard */
 					if ($mt != 'dashboard') {
@@ -52,9 +53,12 @@ class dashlet_modules {
 						} else {
 							if(strlen($module_title) > 8) $module_title = substr($module_title, 0, 7).'..';
 						}
+						$icon = isset($module['icon']) ? $module['icon'] : 'icon icon-'. $module['name'];
 						$mod[$module['order'].'-'.$module['name']] = array( 'modules_title'  => $module_title,
 							'modules_startpage' => $module['startpage'],
-							'modules_name'   => $module['name']);
+							'modules_name'   => $module['name'],
+							'modules_icon'   => $icon,
+							);
 					}
 				}
 			}

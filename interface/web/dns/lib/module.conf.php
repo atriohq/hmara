@@ -8,6 +8,7 @@ $module["template"]  = "module.tpl.htm";
 $module["startpage"]  = "dns/dns_soa_list.php";
 $module["tab_width"]    = '';
 $module['order']    = '50';
+$module['icon'] = 'icon icon-dns';
 
 
 $items[] = array( 'title'  => "Add DNS Zone",
@@ -44,12 +45,6 @@ $items[] = array( 'title'  => "Zones",
 	'target'  => 'content',
 	'link' => 'dns/dns_soa_list.php',
 	'html_id' => 'dns_soa_list');
-/*
-$items[] = array( 'title' 	=> "A-Records",
-				  'target' 	=> 'content',
-				  'link'	=> 'dns/dns_a_list.php',
-				  'html_id' => 'dns_a_list');
-*/
 
 
 $module["nav"][] = array( 'title' => 'DNS',
@@ -71,10 +66,3 @@ if($app->auth->get_client_limit($userid, 'dns_slave_zone') != 0)
 	
 	unset($items);
 }
-
-
-
-
-
-
-?>
