@@ -64,7 +64,7 @@ class system{
 	 * @return string
 	 */
 	public function hostname(){
-		$dist = $this->server_conf['dist'];
+		$dist = $this->get_os_type();
 
 		ob_start();
 		passthru('hostname');
@@ -1228,7 +1228,7 @@ class system{
 		global $app;
 		$dist_init_scripts = $app->system->server_conf['dist_init_scripts'];
 		$dist_runlevel = $app->system->server_conf['dist_runlevel'];
-		$dist = $app->system->server_conf['dist'];
+		$dist = $this->get_os_type();
 		if(trim($dist_runlevel) == ''){ // falls es keine runlevel gibt (FreeBSD)
 			if($action == 'on'){
 				@symlink($dist_init_scripts.'/'.$service, $dist_init_scripts.'/'.$service.'.sh');
@@ -1382,7 +1382,7 @@ class system{
 	function daemon_init($daemon, $action){
 		//* $action = start|stop|restart|reload
 		global $app;
-		$dist = $this->server_conf['dist'];
+		$dist = $this->get_os_type();
 		$dist_init_scripts = $this->server_conf['dist_init_scripts'];
 		if(!strstr($dist, 'freebsd')){
 			$app->log->caselog("$dist_init_scripts/$daemon $action &> /dev/null", $this->FILE, __LINE__);
@@ -1478,7 +1478,7 @@ class system{
 	 *
 	 */
 	function network_info(){
-		$dist = $this->server_conf['dist'];
+		$dist = $this->get_os_type();
 		ob_start();
 		passthru('ifconfig');
 		$output = ob_get_contents();
