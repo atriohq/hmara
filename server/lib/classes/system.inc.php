@@ -64,7 +64,8 @@ class system{
 	 * @return string
 	 */
 	public function hostname(){
-		$dist = $this->get_os_type();
+		$dist_temp = $this->get_os_type();
+		$dist = isset($dist_temp['type']) ? $dist_temp['type'] : 'unknown';
 
 		ob_start();
 		passthru('hostname');
@@ -1228,7 +1229,8 @@ class system{
 		global $app;
 		$dist_init_scripts = $app->system->server_conf['dist_init_scripts'];
 		$dist_runlevel = $app->system->server_conf['dist_runlevel'];
-		$dist = $this->get_os_type();
+		$dist_temp = $this->get_os_type();
+		$dist = isset($dist_temp['type']) ? $dist_temp['type'] : 'unknown';
 		if(trim($dist_runlevel) == ''){ // falls es keine runlevel gibt (FreeBSD)
 			if($action == 'on'){
 				@symlink($dist_init_scripts.'/'.$service, $dist_init_scripts.'/'.$service.'.sh');
@@ -1382,7 +1384,8 @@ class system{
 	function daemon_init($daemon, $action){
 		//* $action = start|stop|restart|reload
 		global $app;
-		$dist = $this->get_os_type();
+		$dist_temp = $this->get_os_type();
+		$dist = isset($dist_temp['type']) ? $dist_temp['type'] : 'unknown';
 		$dist_init_scripts = $this->server_conf['dist_init_scripts'];
 		if(!strstr($dist, 'freebsd')){
 			$app->log->caselog("$dist_init_scripts/$daemon $action &> /dev/null", $this->FILE, __LINE__);
@@ -1478,7 +1481,8 @@ class system{
 	 *
 	 */
 	function network_info(){
-		$dist = $this->get_os_type();
+		$dist_temp = $this->get_os_type();
+		$dist = isset($dist_temp['type']) ? $dist_temp['type'] : 'unknown';
 		ob_start();
 		passthru('ifconfig');
 		$output = ob_get_contents();
@@ -2370,53 +2374,89 @@ class system{
 		$version = "unknown";
 		$full_version = "unknown";
 
-		if (file_exists('/etc/redhat-release') && (filesize('/etc/redhat-release') > 0)) {
+		if(file_exists('/etc/redhat-release') && (filesize('/etc/redhat-release') > 0)) {
 			$dist = "redhat";
-			if (file_exists('/etc/os-release')) {
+			if(file_exists('/etc/os-release')) {
 				$os_release = file_get_contents('/etc/os-release');
-				if (preg_match('/VERSION_ID="([^"]+)"/', $os_release, $matches)) {
+				if(preg_match('/VERSION_ID="([^"]+)"/', $os_release, $matches)) {
 					$version = $matches[1];
 				}
-			}
-			$full_version = trim(file_get_contents('/etc/redhat-release'));
-		} elseif (file_exists('/etc/debian_version') && (filesize('/etc/debian_version') > 0)) {
-			$dist = "debian";
-			if (file_exists('/etc/os-release')) {
-				$os_release = file_get_contents('/etc/os-release');
-				if (preg_match('/VERSION_ID="([^"]+)"/', $os_release, $matches)) {
-					$version = $matches[1];
-				}
-			}
-			$full_version = trim(file_get_contents('/etc/debian_version'));
-		} elseif (strstr(trim(file_get_contents('/etc/issue')), 'Ubuntu') || (is_file('/etc/os-release') && stristr(file_get_contents('/etc/os-release'), 'Ubuntu'))) {
-			$dist = "ubuntu";
-			if (file_exists('/etc/os-release')) {
-				$os_release = file_get_contents('/etc/os-release');
-				if (preg_match('/VERSION="([^"]+)"/', $os_release, $matches)) {
+				if(preg_match('/PRETTY_NAME="([^"]+)"/', $os_release, $matches)) {
 					$full_version = $matches[1];
 				}
-				if (preg_match('/VERSION_ID="([^"]+)"/', $os_release, $matches)) {
-					$version = $matches[1];
-				}
 			}
-		} elseif (file_exists('/etc/SuSE-release') && (filesize('/etc/SuSE-release') > 0)) {
-			$dist = "suse";
-			if (file_exists('/etc/os-release')) {
+		} elseif(file_exists('/etc/debian_version') && (filesize('/etc/debian_version') > 0)) {
+			$dist = "debian";
+			if(file_exists('/etc/os-release')) {
 				$os_release = file_get_contents('/etc/os-release');
-				if (preg_match('/VERSION_ID="([^"]+)"/', $os_release, $matches)) {
+				/*if (preg_match('/VERSION_ID="([^"]+)"/', $os_release, $matches)) {
 					$version = $matches[1];
+				}*/
+				// This returns (at least for Debian 12) a more accurate version number
+				$version = trim(file_get_contents('/etc/debian_version'));
+
+				if(preg_match('/PRETTY_NAME="([^"]+)"/', $os_release, $matches)) {
+					$full_version = $matches[1];
 				}
 			}
-			$full_version = trim(file_get_contents('/etc/SuSE-release'));
-		} elseif (file_exists('/etc/gentoo-release') && (filesize('/etc/gentoo-release') > 0)) {
+		} elseif(strstr(trim(file_get_contents('/etc/issue')), 'Ubuntu') || (is_file('/etc/os-release') && stristr(file_get_contents('/etc/os-release'), 'Ubuntu'))) {
+			$dist = "ubuntu";
+			if(file_exists('/etc/os-release')) {
+				$os_release = file_get_contents('/etc/os-release');
+				if(preg_match('/VERSION_ID="([^"]+)"/', $os_release, $matches)) {
+					$version = $matches[1];
+				}
+				if(preg_match('/PRETTY_NAME="([^"]+)"/', $os_release, $matches)) {
+					$full_version = $matches[1];
+				}
+			}
+
+		// There is no more SuSE-release file in newer (open)SuSE releases present to determine if it's something SuSE-like,
+		// so we have to use the os-release file to find out the dist type and version
+		} elseif(file_exists('/etc/os-release') && (filesize('/etc/os-release') > 0)) {
+			if(file_exists('/etc/os-release')) {
+				$os_release = file_get_contents('/etc/os-release');
+				if(preg_match('/ID_LIKE="([^"]+)"$/', $os_release, $matches)) {
+					$dist_like = $matches[1];
+					if(preg_match('/\b(?:suse|opensuse)\b/', $dist_like, $matches)) {
+						$dist = "suse";
+						if(preg_match('/VERSION_ID="([^"]+)"/', $os_release, $matches)) {
+							$version = $matches[1];
+						}
+						if(preg_match('/PRETTY_NAME="([^"]+)"/', $os_release, $matches)) {
+							$full_version = $matches[1];
+						}
+					}
+				}
+			}
+		} elseif(file_exists('/etc/gentoo-release') && (filesize('/etc/gentoo-release') > 0)) {
 			$dist = "gentoo";
-			if (file_exists('/etc/os-release')) {
+			if(file_exists('/etc/os-release')) {
 				$os_release = file_get_contents('/etc/os-release');
-				if (preg_match('/VERSION_ID="([^"]+)"/', $os_release, $matches)) {
+				if(preg_match('/VERSION_ID="([^"]+)"/', $os_release, $matches)) {
 					$version = $matches[1];
 				}
+				// Gentoo's PRETTY_NAME doesn't include the version number, let's append it to the full_version string
+				if(preg_match('/PRETTY_NAME="([^"]+)"/', $os_release, $matches)) {
+					$full_version = $matches[1] . ' ' . $version;
+				}
 			}
-			$full_version = trim(file_get_contents('/etc/gentoo-release'));
+		} elseif(file_exists('/bin/freebsd-version') && (filesize('/bin/freebsd-version') > 0)) {
+			$dist = "freebsd";
+			if(file_exists('/etc/os-release')) {
+				$os_release = file_get_contents('/etc/os-release');
+				if(preg_match('/VERSION_ID="([^"]+)"/', $os_release, $matches)) {
+					$version = $matches[1];
+				}
+				if(preg_match('/PRETTY_NAME="([^"]+)"/', $os_release, $matches)) {
+					$full_version = $matches[1];
+				}
+				/*
+				if (preg_match('/^ID=([^"]+)$/', $os_release, $matches)) {
+					$dist = $matches[1];
+				}
+				*/
+			}
 		}
 
 		return [
