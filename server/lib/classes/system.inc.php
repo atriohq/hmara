@@ -2353,16 +2353,6 @@ class system{
 		return true;
 	}
 
-	public function is_redhat_os() {
-		global $app;
-
-		if(file_exists('/etc/redhat-release') && (filesize('/etc/redhat-release') > 0)) {
-			return true;
-		} else {
-			return false;
-		}
-	}
-
 	public function get_os_type() {
 		global $app;
 
