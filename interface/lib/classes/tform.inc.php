@@ -115,7 +115,7 @@ class tform extends tform_base {
 			// Show the same tab again in case of an error
 			$active_tab = $_SESSION["s"]["form"]["tab"];
 		}
-		
+
 		if(!preg_match('/^[a-zA-Z0-9_]{0,50}$/',$active_tab)) {
 			die('Invalid next tab name.');
 		}
@@ -132,7 +132,7 @@ class tform extends tform_base {
 
 	function isReadonlyTab($tab, $primary_id) {
 		global $app, $conf;
-		
+
 		if(isset($this->formDef['tabs'][$tab]['readonly']) && $this->formDef['tabs'][$tab]['readonly'] == true) {
 
 			// Add backticks for incomplete table names.
@@ -149,7 +149,7 @@ class tform extends tform_base {
 			if($record['sys_userid'] != $_SESSION["s"]["user"]["userid"]) {
 				return true;
 			} else {
-				return false;	
+				return false;
 			}
 		} else {
 			return false;
@@ -204,7 +204,7 @@ class tform extends tform_base {
 		if($client['parent_client_id'] != 0) {
 
 			//* first we need to know the groups of this reseller
-			$tmp = $app->db->queryOneRecord("SELECT userid, groups FROM sys_user WHERE client_id = ?", $client['parent_client_id']);
+			$tmp = $app->db->queryOneRecord("SELECT userid, `groups` FROM sys_user WHERE client_id = ?", $client['parent_client_id']);
 			$reseller_groups = $tmp["groups"];
 			$reseller_userid = $tmp["userid"];
 
@@ -247,7 +247,7 @@ class tform extends tform_base {
 		return $diffrec;
 
 	}
-	
+
 	/**
 	 * Generate HTML for DATE fields.
 	 *
@@ -260,10 +260,10 @@ class tform extends tform_base {
 	{
 		$_date = ($default_value && $default_value != '0000-00-00' ? strtotime($default_value) : false);
 		$_showdate = ($_date === false) ? false : true;
-		
+
 		$tmp_dt = strtr($this->dateformat,array('d' => 'dd', 'm' => 'mm', 'Y' => 'yyyy', 'y' => 'yy'));
-		
-		return '<input type="text" class="form-control" name="' . $form_element . '" value="' . ($_showdate ? date($this->dateformat, $_date) : '') . '"  data-input-element="date" data-date-format="' . $tmp_dt . '" />'; 
+
+		return '<input type="text" class="form-control" name="' . $form_element . '" value="' . ($_showdate ? date($this->dateformat, $_date) : '') . '"  data-input-element="date" data-date-format="' . $tmp_dt . '" />';
 	}
 
 
@@ -285,12 +285,12 @@ class tform extends tform_base {
 		if ($display_seconds === true) {
 			$dselect[] = 'second';
 		}
-		
+
 		$tmp_dt = strtr($this->datetimeformat,array('d' => 'dd', 'm' => 'mm', 'Y' => 'yyyy', 'y' => 'yy', 'H' => 'hh', 'h' => 'HH', 'i' => 'ii')) . ($display_seconds ? ':ss' : '');
 
 		$out = '';
-		
-		return '<input type="text" class="form-control" name="' . $form_element . '" value="' . ($_showdate ? date($this->datetimeformat . ($display_seconds ? ':s' : ''), $_datetime) : '') . '"  data-input-element="datetime" data-date-format="' . $tmp_dt . '" />'; 
+
+		return '<input type="text" class="form-control" name="' . $form_element . '" value="' . ($_showdate ? date($this->datetimeformat . ($display_seconds ? ':s' : ''), $_datetime) : '') . '"  data-input-element="datetime" data-date-format="' . $tmp_dt . '" />';
 /*
 		foreach ($dselect as $dt_element)
 		{
@@ -352,7 +352,7 @@ class tform extends tform_base {
 				$selected_value = (int)floor(date('s', $_datetime));
 				break;
 			}
-	
+
 			$out .= "<select name=\"".$form_element."[$dt_element]\" id=\"".$form_element."_$dt_element\" class=\"selectInput\" style=\"width: auto; float: none;\">";
 			if (!$_showdate) {
 				$out .= "<option value=\"-\" selected=\"selected\">--</option>" . PHP_EOL;

@@ -41,6 +41,7 @@
 $form["title"]   = "Client";
 $form["description"]    = "";
 $form["name"]   = "client";
+$form["record_name_field"] = "username";
 $form["action"]  = "client_edit.php";
 $form["db_table"] = "client";
 $form["db_table_idx"] = "client_id";
@@ -230,6 +231,9 @@ $form["tabs"]['address'] = array (
 		'language' => array (
 			'datatype' => 'VARCHAR',
 			'formtype' => 'SELECT',
+			'validators' => array ( 0 => array ( 'type' => 'NOTEMPTY',
+					'errmsg'=> 'language_error_empty'),
+			),
 			'default' => $conf["language"],
 			'value'  => $language_list,
 			'separator' => '',
@@ -1453,6 +1457,20 @@ $form["tabs"]['limits'] = array (
 			'formtype' => 'TEXT',
 			'validators' => array (  0 => array ( 'type' => 'ISINT',
 					'errmsg'=> 'limit_database_quota_error_notint'),
+			),
+			'default' => '-1',
+			'value'  => '',
+			'separator' => '',
+			'width'  => '10',
+			'maxlength' => '10',
+			'rows'  => '',
+			'cols'  => ''
+		),
+		'limit_database_postgresql' => array (
+			'datatype' => 'INTEGER',
+			'formtype' => 'TEXT',
+			'validators' => array (  0 => array ( 'type' => 'ISINT',
+					'errmsg'=> 'limit_database_error_notint'),
 			),
 			'default' => '-1',
 			'value'  => '',

@@ -41,6 +41,7 @@
 $form["title"]    = "Database User";
 $form["description"]  = "";
 $form["name"]    = "database_user";
+$form["record_name_field"] = "database_user";
 $form["action"]   = "database_user_edit.php";
 $form["db_table"]  = "web_database_user";
 $form["db_table_idx"] = "database_user_id";
@@ -111,6 +112,24 @@ $form["tabs"]['database_user'] = array (
 				)
 			),
 			'encryption' => 'MYSQL',
+			'default' => '',
+			'value'  => '',
+			'width'  => '30',
+			'maxlength' => '255'
+		),
+		'database_password_sha2' => array (
+			'datatype' => 'VARCHAR',
+			'formtype' => 'PASSWORD',
+			'encryption' => 'MYSQLSHA2',
+			'default' => '',
+			'value'  => '',
+			'width'  => '30',
+			'maxlength' => '255'
+		),
+		'database_password_postgres' => array (
+			'datatype' => 'VARCHAR',
+			'formtype' => 'PASSWORD',
+			'encryption' => 'POSTGRESHA256',
 			'default' => '',
 			'value'  => '',
 			'width'  => '30',

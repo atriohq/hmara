@@ -82,11 +82,22 @@ class remoting_lib extends tform_base {
 	//* Load the form definition from file. - special version for remoting
 	// module parameter is only for compatibility with base class
 	function loadFormDef($file, $module = '') {
-		global $app, $conf;
+		global $app;
 
 		include $file;
 
+		// Search for module name by path because $_SESSION['s']['module']['name']
+		// isn't set in a remote call.
+		$module_path = array_reverse(explode('/', $file));
+		$module_name = isset($module_path[2]) && $module_path[1] == 'form' && preg_match("/^[a-z]{2,20}$/i", $module_path[2]) ? $module_path[2] : '';
+
+		// Allow plugins to be loaded
+		if ($module_name) {
+			$app->plugin->raiseEvent($module_name.':'.$form['name'] . ':on_remote_before_formdef', $this);
+		}
+
 		$this->formDef = $form;
+
 		unset($this->formDef['tabs']);
 
 		//* Copy all fields from all tabs into one form definition
@@ -96,6 +107,11 @@ class remoting_lib extends tform_base {
 			}
 		}
 		unset($form);
+
+		// Allow plugins to be loaded
+		if ($module_name) {
+			$app->plugin->raiseEvent($module_name.':'.$this->formDef['name'] . ':on_remote_after_formdef', $this);
+		}
 
 		$this->dateformat = 'Y-m-d'; //$app->lng('conf_format_dateshort');
 		$this->datetimeformat = 'Y-m-d H:i:s'; //$app->lng('conf_format_datetime');
@@ -127,6 +143,10 @@ class remoting_lib extends tform_base {
 			$_SESSION["s"]["user"]["typ"] = 'admin';
 		} else {
 			$user = $app->db->queryOneRecord("SELECT * FROM sys_user WHERE client_id = ?", $this->client_id);
+			if(empty($user)) {
+				throw new SoapFault('invalid_client_id', 'Invalid client_id '.$this->client_id);
+				return false;
+			}
 			$this->sys_username         = $user['username'];
 			$this->sys_userid            = $user['userid'];
 			$this->sys_default_group     = $user['default_group'];
@@ -199,14 +219,14 @@ class remoting_lib extends tform_base {
 	function getSQL($record, $action = 'INSERT', $primary_id = 0, $sql_ext_where = '', $dummy = '') {
 
 		global $app;
-		
+
 		// early usage. make sure _primary_id is sanitized if present.
 		if ( isset($record['_primary_id']) && is_numeric($record['_primary_id'])) {
 			$_primary_id = intval($record['_primary_id']);
 			if ($_primary_id > 0)
 				$this->primary_id_override = $_primary_id;
 		}
-		
+
 		if(!is_array($this->formDef)) $app->error("Form definition not found.");
 		$this->dataRecord = $record;
 

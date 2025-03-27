@@ -153,7 +153,20 @@ if($_SESSION["s"]["user"]["typ"] == 'admin') {
 	}
 }
 
-$app->tpl->setloop('info', $info);
+// Load messages from sys_message
+$app->uses('message');
+$messages = $app->message->get_current_messages();
+if(!empty($messages)) {
+	foreach($messages as $message) {
+		if($message['message_state'] == 'info') $info[] = array('info_msg' => '<p>'.$message['message'].'</p>');
+		if($message['message_state'] == 'warning') $warning[] = array('warning_msg' => '<p>'.$message['message'].'</p>');
+		if($message['message_state'] == 'error') $error[] = array('error_msg' => '<p>'.$message['message'].'</p>');
+	}
+}
+
+if(!empty($info)) $app->tpl->setloop('info', $info);
+if(!empty($warning)) $app->tpl->setloop('warning', $warning);
+if(!empty($error)) $app->tpl->setloop('error', $error);
 
 /* Load the dashlets*/
 $dashlet_list = array();
@@ -174,7 +187,7 @@ while ($file = @readdir($handle)) {
 
 /* Which dashlets in which column */
 /******************************************************************************/
-$default_leftcol_dashlets = array('modules', 'invoices', 'quota', 'mailquota', 'databasequota');
+$default_leftcol_dashlets = array('modules', 'metrics', 'invoices', 'quota', 'mailquota', 'databasequota');
 $default_rightcol_dashlets = array('customer', 'products', 'shop', 'limits');
 
 $app->uses('getconf');
@@ -214,12 +227,18 @@ if($app->auth->is_admin()) {
 	}
 }
 
+if ($app->auth->is_admin() || $app->auth->is_reseller()) {
+	$limit_to_client_id = null;
+}
+else {
+	$limit_to_client_id = $_SESSION['s']['user']['client_id'];
+}
 
 /* Fill the left column */
 $leftcol = array();
 foreach($leftcol_dashlets as $name) {
 	if(isset($dashlet_list[$name])) {
-		$leftcol[]['content'] = $dashlet_list[$name]->show();
+		$leftcol[]['content'] = $dashlet_list[$name]->show($limit_to_client_id);
 	}
 }
 $app->tpl->setloop('leftcol', $leftcol);
@@ -228,7 +247,7 @@ $app->tpl->setloop('leftcol', $leftcol);
 $rightcol = array();
 foreach($rightcol_dashlets as $name) {
 	if(isset($dashlet_list[$name])) {
-		$rightcol[]['content'] = $dashlet_list[$name]->show();
+		$rightcol[]['content'] = $dashlet_list[$name]->show($limit_to_client_id);
 	}
 }
 $app->tpl->setloop('rightcol', $rightcol);

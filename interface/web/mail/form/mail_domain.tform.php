@@ -41,6 +41,7 @@
 $form["title"]    = "Mail Domain";
 $form["description"]  = "";
 $form["name"]    = "mail_domain";
+$form["record_name_field"] = "domain";
 $form["action"]   = "mail_domain_edit.php";
 $form["db_table"]  = "mail_domain";
 $form["db_table_idx"] = "domain_id";
@@ -86,10 +87,14 @@ $form["tabs"]['domain'] = array (
 			),
 			'validators' => array (  0 => array ( 'type' => 'NOTEMPTY',
 					'errmsg'=> 'domain_error_empty'),
-				1 => array ( 'type' => 'UNIQUE',
-					'errmsg'=> 'domain_error_unique'),
-				2 => array ( 'type' => 'ISDOMAIN',
+				1 => array ( 'type' => 'ISDOMAIN',
 					'errmsg'=> 'domain_error_regex'),
+				3 => array(
+					'type' => 'CUSTOM',
+					'class' => 'validate_mail_transport',
+					'function' => 'validate_isnot_mailtransport',
+					'errmsg'=> 'domain_is_transport',
+				),
 			),
 			'default' => '',
 			'value'  => '',
@@ -130,9 +135,9 @@ $form["tabs"]['domain'] = array (
 			'default'       => 'default',
 			'value'         => 'default',
 			'width'  => '20',
-			'maxlength' => '63',
+			'maxlength' => '126',
 			'validators' => array (  0 => array (   'type' => 'REGEX',
-					'regex' => '/^(?=.*[a-z])[a-z0-9]{1,63}$/',
+					'regex' => '/^[a-z0-9]{1,63}(?:\.[a-z0-9]{1,63})?$/',
 					'errmsg'=> 'dkim_selector_error'),
 			),
 		),
@@ -161,6 +166,12 @@ $form["tabs"]['domain'] = array (
 				'maxlength' => '255'
 		),
 		'active' => array (
+			'datatype' => 'VARCHAR',
+			'formtype' => 'CHECKBOX',
+			'default' => 'y',
+			'value'  => array(0 => 'n', 1 => 'y')
+		),
+		'local_delivery' => array (
 			'datatype' => 'VARCHAR',
 			'formtype' => 'CHECKBOX',
 			'default' => 'y',

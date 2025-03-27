@@ -252,7 +252,16 @@ $form["tabs"]['sites'] = array (
 			'formtype' => 'CHECKBOX',
 			'default' => 'y',
 			'value'  => array(0 => 'n', 1 => 'y')
-		),	
+		),
+		'postgresql_database' => array (
+			'datatype' => 'VARCHAR',
+			'formtype' => 'CHECKBOX',
+			'default'  => 'n',
+			'value' => array (
+				0 => 'n',
+				1 => 'y'
+			)
+		),
 		//#################################
 		// END Datatable fields
 		//#################################
@@ -301,6 +310,12 @@ $form["tabs"]['mail'] = array (
 			'datatype' => 'VARCHAR',
 			'formtype' => 'CHECKBOX',
 			'default'  => 'y',
+			'value'    => array(0 => 'n', 1 => 'y')
+		),
+		'mailbox_show_last_access' => array (
+			'datatype' => 'VARCHAR',
+			'formtype' => 'CHECKBOX',
+			'default'  => 'n',
 			'value'    => array(0 => 'n', 1 => 'y')
 		),
 		'mailboxlist_webmail_link' => array (
@@ -486,6 +501,18 @@ $form["tabs"]['dns'] = array (
 			),
 			'value'  => '',
 			'name'  => 'default_slave_dnsserver'
+		),
+		'dns_external_slave_fqdn' => array (
+			'datatype' => 'VARCHAR',
+			'formtype' => 'TEXT',
+			'filters'   => array(
+					0 => array( 'event' => 'SAVE',
+					'type' => 'STRIPTAGS'),
+					1 => array( 'event' => 'SAVE',
+					'type' => 'STRIPNL')
+			),
+			'default' => '',
+			'value'  => ''
 		),
 		'dns_show_zoneexport' => array (
 			'datatype' => 'VARCHAR',

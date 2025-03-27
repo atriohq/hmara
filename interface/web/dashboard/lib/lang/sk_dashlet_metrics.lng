@@ -1,0 +1,7 @@
+<?php
+$wb['metrics_txt'] = 'Systémové metriky';
+$wb['loadchart_label'] = 'Zaťaženie systému %';
+$wb['memchart_label'] = 'Využitie pamäte %';
+$wb['rxchart_label'] = 'Sieť prichádzajúce/kB';
+$wb['txchart_label'] = 'Sieť odchádzajúce/kB';
+$wb['label_chart_title'] = 'Systémové metriky';

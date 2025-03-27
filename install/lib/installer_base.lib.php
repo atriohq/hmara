@@ -28,7 +28,7 @@ NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-class installer_base {
+class installer_base extends stdClass {
 
 	var $wb = array();
 	var $language = 'en';
@@ -253,11 +253,12 @@ class installer_base {
 		if ($conf['default_php'] != '') {
 			if(version_compare(phpversion('tidy'), $conf['default_php'], '==')) $msg .= "Your PHP version is not the OS default. Change the PHP version back to the default version of the OS. The currently used PHP version is " . phpversion() . "The default version for your OS is PHP " . $conf['default_php'] . ".\n";
 		}
-		if(version_compare(phpversion(), '5.4', '<')) $msg .= "PHP Version 5.4 or newer is required. The currently used PHP version is " . phpversion() . ".\n";
+		if(version_compare(phpversion(), '7.0', '<')) $msg .= "PHP Version 7.0 or newer is required. The currently used PHP version is " . phpversion() . ".\n";
 		//if(version_compare(phpversion(), '8.2', '>=')) $msg .= "PHP Version 8.2+ is not supported yet. Change the PHP version back to the default version of the OS. The currently used PHP version is " . phpversion() . ".\n";
 		if(!function_exists('curl_init')) $msg .= "PHP Curl Module is missing.\n";
 		if(!function_exists('mysqli_connect')) $msg .= "PHP MySQLi Module is nmissing.\n";
 		if(!function_exists('mb_detect_encoding')) $msg .= "PHP Multibyte Module (MB) is missing.\n";
+        if(!function_exists('openssl_pkey_get_details')) $msg .= "PHP OpenSSL fiúnctions are missing.\n";
 
 		if($msg != '') die($msg);
 	}
@@ -436,7 +437,7 @@ class installer_base {
 		$tpl_ini_array['fastcgi']['fastcgi_bin'] = $conf['fastcgi']['fastcgi_bin'];
 		$tpl_ini_array['server']['hostname'] = $conf['hostname'];
 		$tpl_ini_array['server']['ip_address'] = @gethostbyname($conf['hostname']);
-		$tpl_ini_array['server']['firewall'] = ($conf['ufw']['installed'] == true)?'ufw':'bastille';
+		$tpl_ini_array['server']['firewall'] = (@$conf['ufw']['installed'] == true)?'ufw':'bastille';
 		$tpl_ini_array['web']['website_basedir'] = $conf['web']['website_basedir'];
 		$tpl_ini_array['web']['website_path'] = $conf['web']['website_path'];
 		$tpl_ini_array['web']['website_symlinks'] = $conf['web']['website_symlinks'];
@@ -774,7 +775,7 @@ class installer_base {
 					$this->warning('Unable to set rights of user in master database: '.$value['db']."\n Query: ".$query."\n Error: ".$this->dbmaster->errorMessage);
 				}
 
-				$query = "GRANT SELECT, INSERT , DELETE ON ?? TO ?@?";
+				$query = "GRANT SELECT, INSERT, UPDATE, DELETE ON ?? TO ?@?";
 				if ($verbose){
 					echo $query ."\n";
 				}
@@ -913,20 +914,22 @@ class installer_base {
 		$config_dir = $cf['config_dir'];
 		$jk_init = $cf['jk_init'];
 		$jk_chrootsh = $cf['jk_chrootsh'];
+		$dest_jk_init = 'jk_init.ini';
+		$dest_jk_chrootsh = 'jk_chrootsh.ini';
 
 		if (is_dir($config_dir)) {
-			if(is_file($config_dir.'/'.$jk_init)) copy($config_dir.'/'.$jk_init, $config_dir.'/'.$jk_init.'~');
-			if(is_file($config_dir.'/'.$jk_chrootsh.'.master')) copy($config_dir.'/'.$jk_chrootsh.'.master', $config_dir.'/'.$jk_chrootsh.'~');
+			if(is_file($config_dir.'/'.$jk_init)) copy($config_dir.'/'.$jk_init, $config_dir.'/'.$dest_jk_init.'~');
+			if(is_file($config_dir.'/'.$jk_chrootsh)) copy($config_dir.'/'.$jk_chrootsh, $config_dir.'/'.$dest_jk_chrootsh.'~');
 
 			if(is_file($conf['ispconfig_install_dir'].'/server/conf-custom/install/'.$jk_init.'.master')) {
-				copy($conf['ispconfig_install_dir'].'/server/conf-custom/install/'.$jk_init.'.master', $config_dir.'/'.$jk_init);
+				copy($conf['ispconfig_install_dir'].'/server/conf-custom/install/'.$jk_init.'.master', $config_dir.'/'.$dest_jk_init);
 			} else {
-				copy('tpl/'.$jk_init.'.master', $config_dir.'/'.$jk_init);
+				copy('tpl/'.$jk_init.'.master', $config_dir.'/'.$dest_jk_init);
 			}
 			if(is_file($conf['ispconfig_install_dir'].'/server/conf-custom/install/'.$jk_chrootsh.'.master')) {
-				copy($conf['ispconfig_install_dir'].'/server/conf-custom/install/'.$jk_chrootsh.'.master', $config_dir.'/'.$jk_chrootsh);
+				copy($conf['ispconfig_install_dir'].'/server/conf-custom/install/'.$jk_chrootsh.'.master', $config_dir.'/'.$dest_jk_chrootsh);
 			} else {
-				copy('tpl/'.$jk_chrootsh.'.master', $config_dir.'/'.$jk_chrootsh);
+				copy('tpl/'.$jk_chrootsh.'.master', $config_dir.'/'.$dest_jk_chrootsh);
 			}
 		}
 
@@ -1069,6 +1072,7 @@ class installer_base {
 
 			# reduce 3 or more newlines to 2
 			$content = rf($conf['postfix']['config_dir'].'/master.cf');
+			$content = preg_replace( '/^# Data returning from Amavis .*$/m', '', $content );  # Cleanup comment we generated
 			$content = preg_replace( '/(\r?\n){3,}/', '$1$1', $content );
 			wf( $conf['postfix']['config_dir'].'/master.cf', $content );
 
@@ -1353,7 +1357,7 @@ class installer_base {
 			$change_maildrop_flags = @(preg_match("/$quoted_regex/", $configfile))?false:true;
 		}
 		if ($change_maildrop_flags) {
-			//* Change maildrop service in posfix master.cf
+			//* Change maildrop service in postfix master.cf
 			if(is_file($config_dir.'/master.cf')) {
 				copy($config_dir.'/master.cf', $config_dir.'/master.cf~');
 			}
@@ -1362,8 +1366,8 @@ class installer_base {
  			}
 			$configfile = $config_dir.'/master.cf';
 			$content = rf($configfile);
-			$content =	str_replace('flags=DRhu user=vmail argv=/usr/bin/maildrop -d ${recipient}',
-						'flags=DRhu user='.$cf['vmail_username'].' argv=/usr/bin/maildrop -d '.$cf['vmail_username'].' ${extension} ${recipient} ${user} ${nexthop} ${sender}',
+			$content =	preg_replace('/flags=(DRX?hu) user=vmail argv=\/usr\/bin\/maildrop -d \${recipient}/',
+						'flags=$1 user='.$cf['vmail_username'].' argv=/usr/bin/maildrop -d '.$cf['vmail_username'].' \${extension} \${recipient} \${user} \${nexthop} \${sender}',
 						$content);
 			wf($configfile, $content);
 		}
@@ -1539,7 +1543,7 @@ class installer_base {
 			if(is_file($config_dir.'/master.cf')){
 				copy($config_dir.'/master.cf', $config_dir.'/master.cf~2');
 			}
-			if(is_file($config_dir.'/master.cf~')){
+			if(is_file($config_dir.'/master.cf~2')){
 				chmod($config_dir.'/master.cf~2', 0400);
 			}
 			//* Configure master.cf and add a line for deliver
@@ -2049,7 +2053,7 @@ class installer_base {
 			rename("/etc/rspamd/local.d/greylist.conf", "/etc/rspamd/local.d/greylist.old");
 		}
 
-		exec('chmod a+r /etc/rspamd/local.d/* /etc/rspamd/local.d/maps.d/* /etc/rspamd/override.d/*');
+		exec('chmod a+r,-x+X /etc/rspamd/local.d/* /etc/rspamd/local.d/maps.d/* /etc/rspamd/override.d/*');
 		# protect passwords in these files
 		exec('chgrp _rspamd /etc/rspamd/local.d/redis.conf /etc/rspamd/local.d/classifier-bayes.conf');
 		exec('chmod 640 /etc/rspamd/local.d/redis.conf /etc/rspamd/local.d/classifier-bayes.conf');
@@ -2060,8 +2064,10 @@ class installer_base {
 		}
 
 		# unneccesary, since this was done above?
-		$command = 'usermod -a -G amavis _rspamd';
-		caselog($command.' &> /dev/null', __FILE__, __LINE__, "EXECUTED: $command", "Failed to execute the command $command");
+		if(is_user('_rspamd') && is_group('amavis')) {
+			$command = 'usermod -a -G amavis _rspamd';
+			caselog($command.' &> /dev/null', __FILE__, __LINE__, "EXECUTED: $command", "Failed to execute the command $command");
+		}
 
 		if(strpos(rf('/etc/rspamd/rspamd.conf'), '.include "$LOCAL_CONFDIR/local.d/users.conf"') === false){
 			af('/etc/rspamd/rspamd.conf', '.include "$LOCAL_CONFDIR/local.d/users.conf"');
@@ -2096,6 +2102,18 @@ class installer_base {
 		$tpl->setVar('rspamd_password', $rspamd_password);
 		wf('/etc/rspamd/local.d/worker-controller.inc', $tpl->grab());
 		chmod('/etc/rspamd/local.d/worker-controller.inc', 0644);
+
+		// rspamd.local.lua
+		if(file_exists($conf['ispconfig_install_dir']."/server/conf-custom/install/rspamd.local.lua.master")) {
+			exec('cp '.$conf['ispconfig_install_dir']."/server/conf-custom/install/rspamd.local.lua.master /etc/rspamd/rspamd.local.lua");
+		} else {
+			exec("cp tpl/rspamd.local.lua.master /etc/rspamd/rspamd.local.lua");
+		}
+		if(file_exists('/etc/rspamd/rspamd.local.lua')) {
+			exec('chgrp _rspamd /etc/rspamd/rspamd.local.lua');
+			exec('chmod 640 /etc/rspamd/rspamd.local.lua');
+		}
+
 	}
 
 	public function configure_spamassassin() {
@@ -2394,13 +2412,17 @@ class installer_base {
 			replaceLine('/etc/apache2/ports.conf', 'Listen 443', 'Listen 443', 1);
 
 			// Comment out the namevirtualhost lines, as they were added by ispconfig in ispconfig.conf file again
-			replaceLine('/etc/apache2/ports.conf', 'NameVirtualHost *:80', '# NameVirtualHost *:80', 1);
-			replaceLine('/etc/apache2/ports.conf', 'NameVirtualHost *:443', '# NameVirtualHost *:443', 1);
+			replaceLine('/etc/apache2/ports.conf', 'NameVirtualHost *:80', '# NameVirtualHost *:80', 1, 0);
+			replaceLine('/etc/apache2/ports.conf', 'NameVirtualHost *:443', '# NameVirtualHost *:443', 1, 0);
 		}
 
 		if(is_file('/etc/apache2/mods-available/fcgid.conf')) {
 			// add or modify the parameters for fcgid.conf
-			replaceLine('/etc/apache2/mods-available/fcgid.conf','MaxRequestLen','MaxRequestLen 15728640',1);
+			if(hasLine('/etc/apache2/mods-available/fcgid.conf','MaxRequestLen')) {
+				replaceLine('/etc/apache2/mods-available/fcgid.conf','MaxRequestLen','  MaxRequestLen 15728640',1);
+			} else {
+				preg_replace('/^(.*\n)(.*)$/sU', '$1  MaxRequestLen 15728640\n$2', '/etc/apache2/mods-available/fcgid.conf');
+			}
 		}
 
 		if(is_file('/etc/apache2/apache.conf')) {
@@ -2597,17 +2619,20 @@ class installer_base {
 
 		$row = $this->db->queryOneRecord('SELECT * FROM ?? WHERE server_id = ?', $conf["mysql"]["database"] . '.firewall', $conf['server_id']);
 
-		if(trim($row['tcp_port']) != '' || trim($row['udp_port']) != '') {
-			$tcp_public_services = trim(str_replace(',', ' ', $row['tcp_port']));
-			$udp_public_services = trim(str_replace(',', ' ', $row['udp_port']));
-		} else {
-			$tcp_public_services = '21 22 25 53 80 110 143 443 3306 8080 10000';
-			$udp_public_services = '53';
-		}
+		$tcp_public_services = '21 22 25 53 80 110 143 443 3306 8080 10000';
+		$udp_public_services = '53';
 
-		if(!stristr($tcp_public_services, $conf['apache']['vhost_port'])) {
-			$tcp_public_services .= ' '.intval($conf['apache']['vhost_port']);
-			if($row['tcp_port'] != '') $this->db->query("UPDATE firewall SET tcp_port = tcp_port + ? WHERE server_id = ?", ',' . intval($conf['apache']['vhost_port']), $conf['server_id']);
+		if (!empty($row)) {
+			if(trim($row['tcp_port']) != '' || trim($row['udp_port']) != '') {
+				$tcp_public_services = trim(str_replace(',', ' ', $row['tcp_port']));
+				$udp_public_services = trim(str_replace(',', ' ', $row['udp_port']));
+			}
+
+			if(!stristr($tcp_public_services, $conf['apache']['vhost_port'])) {
+				$tcp_public_services .= ' '.intval($conf['apache']['vhost_port']);
+				if($row['tcp_port'] != '') $this->db->query("UPDATE firewall SET tcp_port = tcp_port + ? WHERE server_id = ?", ',' . intval($conf['apache']['vhost_port']), $conf['server_id']);
+			}
+
 		}
 
 		$content = str_replace('{TCP_PUBLIC_SERVICES}', $tcp_public_services, $content);
@@ -2682,7 +2707,7 @@ class installer_base {
 
 			//$command = 'adduser '.$conf['apache']['user'].' '.$apps_vhost_group;
 			$command = 'usermod -a -G '.$apps_vhost_group.' '.$conf['apache']['user'];
-			caselog($command.' &> /dev/null', __FILE__, __LINE__, "EXECUTED: $command", "Failed to execute the command $command");
+			caselog($command.' &> /dev/null 2>&1', __FILE__, __LINE__, "EXECUTED: $command", "Failed to execute the command $command");
 
 			if(!@is_dir($install_dir)){
 				mkdir($install_dir, 0755, true);
@@ -2765,6 +2790,11 @@ class installer_base {
 			$apps_vhost_group = escapeshellcmd($conf['web']['apps_vhost_group']);
 			$install_dir = escapeshellcmd($conf['web']['website_basedir'].'/apps');
 
+			//* Get the apps vhost port
+			if($this->is_update == true) {
+				$conf['web']['apps_vhost_port'] = get_apps_vhost_port_number();
+			}
+
 			$command = 'groupadd '.$apps_vhost_user;
 			if(!is_group($apps_vhost_group)) caselog($command.' &> /dev/null 2> /dev/null', __FILE__, __LINE__, "EXECUTED: $command", "Failed to execute the command $command");
 
@@ -2774,7 +2804,7 @@ class installer_base {
 
 			//$command = 'adduser '.$conf['nginx']['user'].' '.$apps_vhost_group;
 			$command = 'usermod -a -G '.$apps_vhost_group.' '.$conf['nginx']['user'];
-			caselog($command.' &> /dev/null', __FILE__, __LINE__, "EXECUTED: $command", "Failed to execute the command $command");
+			caselog($command.' &> /dev/null 2>&1', __FILE__, __LINE__, "EXECUTED: $command", "Failed to execute the command $command");
 
 			if(!@is_dir($install_dir)){
 				mkdir($install_dir, 0755, true);
@@ -2978,33 +3008,33 @@ class installer_base {
 			}
 		}
 		$dns_ips = array();
-		if (checkdnsrr($hostname, 'A')) {
-			$dnsa=dns_get_record($hostname, DNS_A);
+		if(checkdnsrr($hostname, 'A')) {
+			$dnsa = dns_get_record($hostname, DNS_A);
 			if($dnsa) {
-				foreach ($dnsa as $rec) {
-					$dns_ips[] = $rec['ip'];
+				foreach($dnsa as $rec) {
+					if(is_array($rec) && isset($rec['ip'])) $dns_ips[] = $rec['ip'];
 				}
 			}
 		}
-		if (checkdnsrr($hostname, 'AAAA')) {
-			$dnsaaaa=dns_get_record($hostname, DNS_AAAA);
+		if(checkdnsrr($hostname, 'AAAA')) {
+			$dnsaaaa = dns_get_record($hostname, DNS_AAAA);
 			if($dnsaaaa) {
-				foreach ($dnsaaaa as $rec) {
-					$dns_ips[] = $rec['ip'];
+				foreach($dnsaaaa as $rec) {
+					if(is_array($rec) && isset($rec['ip'])) $dns_ips[] = $rec['ip'];
 				}
 			}
 		}
 
 		//* Define and check ISPConfig SSL folder */
-		$ssl_dir = $conf['ispconfig_install_dir'].'/interface/ssl';
+		$ssl_dir = $conf['ispconfig_install_dir'] . '/interface/ssl';
 		if(!@is_dir($ssl_dir)) {
 			mkdir($ssl_dir, 0755, true);
 		}
 
-		$ssl_crt_file = $ssl_dir.'/ispserver.crt';
-		$ssl_csr_file = $ssl_dir.'/ispserver.csr';
-		$ssl_key_file = $ssl_dir.'/ispserver.key';
-		$ssl_pem_file = $ssl_dir.'/ispserver.pem';
+		$ssl_crt_file = $ssl_dir . '/ispserver.crt';
+		$ssl_csr_file = $ssl_dir . '/ispserver.csr';
+		$ssl_key_file = $ssl_dir . '/ispserver.key';
+		$ssl_pem_file = $ssl_dir . '/ispserver.pem';
 
 		$date = new DateTime();
 
@@ -3012,17 +3042,100 @@ class installer_base {
 
 		swriteln('Checking / creating certificate for ' . $hostname);
 
-		$acme_cert_dir = '/usr/local/ispconfig/server/scripts/' . $hostname;
-		$check_acme_file = $acme_cert_dir . '/' . $hostname . '.cer';
-		if(!@is_dir($acme_cert_dir)) {
-			$acme_cert_dir = '/root/.acme.sh/' . $hostname;
-			$check_acme_file = $acme_cert_dir . '/' . $hostname . '.cer';
-			if(!@is_dir($acme_cert_dir)) {
-				$acme_cert_dir = '/etc/letsencrypt/live/' . $hostname;
-				$check_acme_file = $acme_cert_dir . '/cert.pem';
+		// Get the default LE client name and version
+		$which_certbot = shell_exec('which certbot /root/.local/share/letsencrypt/bin/letsencrypt /opt/eff.org/certbot/venv/bin/certbot letsencrypt');
+		$certbot = explode("\n", $which_certbot ?: '');
+		$certbot = reset($certbot);
+		$certbot_version = '0.0.0-unknown';
+		if($certbot) {
+			$matches = [];
+			$output = shell_exec($certbot . ' --version  2>&1');
+			if(preg_match('/^(\S+|\w+)\s+(\d+(\.\d+)+)$/', $output, $matches)) {
+				$certbot_version = $matches[2];
+				swriteln('Discovered certbot version ' . $certbot_version . ' with certificate home /etc/letsencrypt');
+			} else {
+				$certbot = '';
 			}
 		}
-		swriteln('Using certificate path ' . $acme_cert_dir);
+
+		// Check for Neilpang acme.sh as well and install it when we did not find certbot
+		$which_acme = shell_exec('which acme.sh /usr/local/ispconfig/server/scripts/acme.sh /root/.acme.sh/acme.sh');
+		$acme = explode("\n", $which_acme ? $which_acme : '');
+		$acme = reset($acme);
+		$acme_version = '0.0.0-unknown';
+
+		if(!$certbot && !$acme) {
+			$this->install_acme();
+			$which_acme = shell_exec('which acme.sh /usr/local/ispconfig/server/scripts/acme.sh /root/.acme.sh/acme.sh');
+			$acme = explode("\n", $which_acme ?: '');
+			$acme = reset($acme);
+		}
+		if($acme) {
+			// always update acme.sh
+			$this->update_acme();
+			$matches = [];
+			$output = shell_exec($acme . ' --version  2>&1') ?: '';
+			if(preg_match('/^v(\d+(\.\d+)+)$/m', $output, $matches)) {
+				$acme_version = $matches[1];
+			} else {
+				$acme = '';
+			}
+			if($acme) {
+				$ret = 0;
+				$acme_cert_home = [];
+				exec(join(' ; ', [
+					'_info() { :',
+					'  _info_stdout=$(' . escapeshellarg($acme) . ' --info 2>/dev/null)',
+					'  _info_ret=$?',
+					'}',
+					'_echo_home() { :',
+					'  eval "$_info_stdout"',
+					'  _info_ret=$?',
+					'  if [ $_info_ret -eq 0 ]; then :',
+					'    if [ -z "$CERT_HOME" ]',
+					'      then echo "$LE_CONFIG_HOME"',
+					'      else echo "$CERT_HOME"',
+					'    fi',
+					'   else :',
+					'     echo "Error eval-ing --info output (exit code $_info_ret). stdout was: $_info_stdout"',
+					'     exit 1',
+					'  fi',
+					'}',
+					'_info',
+					'if [ $_info_ret -eq 0 ]; then :',
+					'  _echo_home',
+					'else :',
+					'  echo "--info failed. stdout was: $_info_stdout"',
+					'  exit 1',
+					'fi',
+				]), $acme_cert_home, $ret);
+				$acme_cert_home = trim(implode("\n", $acme_cert_home));
+				if($ret != 0 || empty($acme_cert_home) || !is_dir($acme_cert_home)) {
+					swriteln('Cannot find acme.sh certificate home: ' . $acme_cert_home);
+					$acme = '';
+				} else {
+					swriteln('Discovered acme.sh version ' . $acme_version . ' with certificate home ' . $acme_cert_home);
+				}
+			}
+		}
+
+		$acme_cert_dir = 'not found';
+		$check_acme_file = '';
+		if($certbot) {
+			if(version_compare($certbot_version, '2.0', '>=')) {
+				$acme_cert_dir = '/etc/letsencrypt/live/' . $hostname . '_ecc';
+			} else {
+				$acme_cert_dir = '/etc/letsencrypt/live/' . $hostname;
+			}
+			$check_acme_file = $acme_cert_dir . '/cert.pem';
+			swriteln('Using certificate path ' . $acme_cert_dir . ' / ' . $check_acme_file);
+		} elseif($acme) {
+			$acme_cert_dir = $acme_cert_home . '/' . $hostname . '_ecc'; // always use ECC since we updated acme.sh
+			$check_acme_file = $acme_cert_dir . '/' . $hostname . '.cer';
+			swriteln('Using certificate path ' . $acme_cert_dir . ' / ' . $check_acme_file);
+		} else {
+			swriteln('Failed discovering certbot or acme.sh and installing acme.sh. Will not be able to issue certificate during install.');
+		}
 
 		if(!is_dir($conf['ispconfig_log_dir'])) {
 			mkdir($conf['ispconfig_log_dir'], 0755, true);
@@ -3031,8 +3144,8 @@ class installer_base {
 
 		$ip_address_match = false;
 		if(!(($svr_ip4 && in_array($svr_ip4, $dns_ips)) || ($svr_ip6 && in_array($svr_ip6, $dns_ips)))) {
-			swriteln('Server\'s public ip(s) (' . $svr_ip4 . ($svr_ip6 ? ', ' . $svr_ip6 : '') . ') not found in A/AAAA records for ' . $hostname . ': ' . implode(', ', $dns_ips));
-			if(strtolower($this->simple_query('Ignore DNS check and continue to request certificate?', array('y', 'n') , 'n','ignore_hostname_dns')) == 'y') {
+			swriteln('Server\'s public ip(s) (' . implode(', ', array_filter([$svr_ip4, $svr_ip6])) . ') not found in A/AAAA records for ' . $hostname . ': ' . implode(', ', $dns_ips));
+			if(strtolower($this->simple_query('Ignore DNS check and continue to request certificate?', array('y', 'n'), 'n', 'ignore_hostname_dns')) == 'y') {
 				$ip_address_match = true;
 			}
 		} else {
@@ -3040,12 +3153,31 @@ class installer_base {
 		}
 
 		// Get subject and issuer of ispserver.crt to check if it is self-signed cert
-		if (file_exists($ssl_crt_file)) {
-			$crt_subject = exec("openssl x509 -in ".escapeshellarg($ssl_crt_file)." -inform PEM -noout -subject");
-			$crt_issuer = exec("openssl x509 -in ".escapeshellarg($ssl_crt_file)." -inform PEM -noout -issuer");
+		$self_signed = false;
+		if(file_exists($ssl_crt_file)) {
+			$crt_subject = exec("openssl x509 -in " . escapeshellarg($ssl_crt_file) . " -inform PEM -noout -subject");
+			$crt_issuer = exec("openssl x509 -in " . escapeshellarg($ssl_crt_file) . " -inform PEM -noout -issuer");
+			// strip the subject= and issuer= prefix to check for equality
+			if(is_string($crt_subject) && strpos($crt_subject, 'subject=') !== false) {
+				$crt_subject = explode('=', $crt_subject, 2)[1];
+			}
+			if(is_string($crt_issuer) && strpos($crt_issuer, 'issuer=') !== false) {
+				$crt_issuer = explode('=', $crt_issuer, 2)[1];
+			}
+			$self_signed = $crt_subject == $crt_issuer;
+			if ($self_signed) {
+				swriteln('ISPConfig currently is using a self-signed certificate.');
+			}
 		}
 
-		if ((@file_exists($ssl_crt_file) && ($crt_subject == $crt_issuer)) || (!@is_dir($acme_cert_dir) || !@file_exists($check_acme_file) || !@file_exists($ssl_crt_file) || md5_file($check_acme_file) != md5_file($ssl_crt_file)) && $ip_address_match == true) {
+		$issued_successfully = false;
+
+		// if we have certbot or acme.sh, the required DNS records and our desired certificate is not the current one, try to get it
+		if(
+			($acme || $certbot) && $ip_address_match
+			&& ($self_signed ||
+				(!@is_dir($acme_cert_dir) || !@file_exists($check_acme_file) || !@file_exists($ssl_crt_file) || md5_file($check_acme_file) != md5_file($ssl_crt_file)))
+		) {
 
 			// This script is needed earlier to check and open http port 80 or standalone might fail
 			// Make executable and temporary symlink latest letsencrypt pre, post and renew hook script before install
@@ -3074,46 +3206,17 @@ class installer_base {
 				chmod('/usr/local/bin/letsencrypt_renew_hook.sh', 0700);
 			}
 
-			// Check http port 80 status as it cannot be determined at post hook stage
-			$port80_status=exec('true &>/dev/null </dev/tcp/127.0.0.1/80 && echo open || echo close');
+			// Check http port 80 status (open when any IP listens on port 80) as it cannot be determined at post hook stage
+			$port80_status = exec('netstat -tln | awk \'BEGIN{open=0} $6 == "LISTEN" && $4~/:80$/{open=1} END{if (open>0) print "open"; else print "close";}\'');
 
-			// Set pre-, post- and renew hook
-			$pre_hook = "--pre-hook \"letsencrypt_pre_hook.sh\"";
-			$renew_hook = "  --renew-hook \"letsencrypt_renew_hook.sh\"";
+			// Set pre-, post- and renew hook (acme.sh and certbot use the same arguments)
+			$pre_hook = '--pre-hook "letsencrypt_pre_hook.sh"';
+			$renew_hook = '  --renew-hook "letsencrypt_renew_hook.sh"';
 			if($port80_status == 'close') {
-				$post_hook = " --post-hook \"letsencrypt_post_hook.sh\"";
+				$post_hook = ' --post-hook "letsencrypt_post_hook.sh"';
 				$hook = $pre_hook . $post_hook . $renew_hook;
 			} else {
 				$hook = $pre_hook . $renew_hook;
-			}
-
-			$which_certbot = shell_exec('which certbot /root/.local/share/letsencrypt/bin/letsencrypt /opt/eff.org/certbot/venv/bin/certbot letsencrypt');
-
-			// Get the default LE client name and version
-			$le_client = explode("\n", $which_certbot ? $which_certbot : '');
-			$le_client = reset($le_client);
-
-			$which_acme = shell_exec('which acme.sh /usr/local/ispconfig/server/scripts/acme.sh /root/.acme.sh/acme.sh');
-			// Check for Neilpang acme.sh as well
-			$acme = explode("\n", $which_acme ? $which_acme : '');
-			$acme = reset($acme);
-
-			if((!$acme || !is_executable($acme)) && (!$le_client || !is_executable($le_client))) {
-				$success = $this->install_acme();
-				if(!$success) {
-					swriteln('Failed installing acme.sh. Will not be able to issue certificate during install.');
-				} else {
-					$acme = explode("\n", shell_exec('which acme.sh /usr/local/ispconfig/server/scripts/acme.sh /root/.acme.sh/acme.sh'));
-					$acme = reset($acme);
-					if($acme && is_executable($acme)) {
-						swriteln('Installed acme.sh and using it for certificate creation during install.');
-
-						// we do this even on install to enable automatic updates
-						$this->update_acme();
-					} else {
-						swriteln('Failed installing acme.sh. Will not be able to issue certificate during install.');
-					}
-				}
 			}
 
 			$restore_conf_symlink = false;
@@ -3128,22 +3231,20 @@ class installer_base {
 				$server = 'nginx';
 			} elseif($conf['apache']['installed'] == true) {
 				swriteln('Using apache for certificate validation');
-				if($this->is_update == false && @is_link($vhost_conf_enabled_dir.'/000-ispconfig.conf')) {
+				if($this->is_update == false && @is_link($vhost_conf_enabled_dir . '/000-ispconfig.conf')) {
 					$restore_conf_symlink = true;
-					unlink($vhost_conf_enabled_dir.'/000-ispconfig.conf');
+					unlink($vhost_conf_enabled_dir . '/000-ispconfig.conf');
 				}
 				$server = 'apache';
 			}
 
 			if($conf[$server]['installed'] == true && $conf[$server]['init_script'] != '') {
 				if($this->is_update) {
-					system($this->getinitcommand($conf[$server]['init_script'], 'force-reload').' &> /dev/null || ' . $this->getinitcommand($conf[$server]['init_script'], 'restart').' &> /dev/null');
+					system($this->getinitcommand($conf[$server]['init_script'], 'force-reload') . ' &> /dev/null || ' . $this->getinitcommand($conf[$server]['init_script'], 'restart') . ' &> /dev/null');
 				} else {
-					system($this->getinitcommand($conf[$server]['init_script'], 'restart').' &> /dev/null');
+					system($this->getinitcommand($conf[$server]['init_script'], 'restart') . ' &> /dev/null');
 				}
 			}
-
-			$issued_successfully = false;
 
 			// Backup existing ispserver ssl files
 			//
@@ -3160,24 +3261,20 @@ class installer_base {
 			// - actual file copied to tmp name.
 			//   if cert request is successful, rename tmp copy to perm rename;
 			//   if cert request fails, delete tmp copy
-			$cert_files = array( $ssl_crt_file, $ssl_key_file, $ssl_pem_file );
-			foreach ($cert_files as $f) {
-				if (is_link($f) && ! file_exists($f)) {
-					rename($f, $f.'-'.$date->format('YmdHis').'.bak');
-				} elseif (is_link($f)) {
-					rename($f, $f.'-temporary.bak');
-					copy($f.'-temporary.bak', $f);
+			$cert_files = array($ssl_crt_file, $ssl_key_file, $ssl_pem_file);
+			foreach($cert_files as $f) {
+				if(is_link($f) && !file_exists($f)) {
+					rename($f, $f . '-' . $date->format('YmdHis') . '.bak');
+				} elseif(is_link($f)) {
+					rename($f, $f . '-temporary.bak');
+					copy($f . '-temporary.bak', $f);
 				} elseif(file_exists($f)) {
-					copy($f, $f.'-temporary.bak');
+					copy($f, $f . '-temporary.bak');
 				}
 			}
 
 			// Attempt to use Neilpang acme.sh first, as it is now the preferred LE client
-			if (is_executable($acme)) {
-				$acme_cert_dir = dirname($acme) . '/' . $hostname;
-
-				swriteln('acme.sh is installed, overriding certificate path to use ' . $acme_cert_dir);
-
+			if($acme) {
 				# acme.sh does not set umask, resulting in incorrect permissions (ispconfig issue #6015)
 				$old_umask = umask(0022);
 
@@ -3187,13 +3284,11 @@ class installer_base {
 				$out = null;
 				$ret = null;
 				if($conf['nginx']['installed'] == true || $conf['apache']['installed'] == true) {
-					exec("$acme --issue --keylength 4096 --log $acme_log -w /usr/local/ispconfig/interface/acme -d " . escapeshellarg($hostname) . " $renew_hook", $out, $ret);
+					exec("$acme --issue --keylength ec-256 --ecc --log $acme_log -w /usr/local/ispconfig/interface/acme -d " . escapeshellarg($hostname) . " $renew_hook", $out, $ret);
+				} else { // Else, it is not webserver, so we use standalone
+					exec("$acme --issue --keylength ec-256 --ecc --log $acme_log --standalone -d " . escapeshellarg($hostname) . " $hook", $out, $ret);
 				}
-				// Else, it is not webserver, so we use standalone
-				else {
-					exec("$acme --issue --keylength 4096 --log $acme_log --standalone -d " . escapeshellarg($hostname) . " $hook", $out, $ret);
-				}
-
+				umask($old_umask);
 				if($ret == 0 || ($ret == 2 && file_exists($check_acme_file))) {
 					// acme.sh returns with 2 on issue for already existing certificate
 
@@ -3203,111 +3298,83 @@ class installer_base {
 					//$acme_cert = "--cert-file $acme_cert_dir/cert.pem";
 					$acme_key = "--key-file " . escapeshellarg($ssl_key_file);
 					$acme_chain = "--fullchain-file " . escapeshellarg($ssl_crt_file);
-					exec("$acme --install-cert --log $acme_log -d " . escapeshellarg($hostname) . " $acme_key $acme_chain");
+					exec("$acme --install-cert --log $acme_log -d " . escapeshellarg($hostname) . " --ecc $acme_key $acme_chain");
 					$issued_successfully = true;
-					umask($old_umask);
-
-					// Make temporary backup of self-signed certs permanent
-					foreach ($cert_files as $f) {
-						if (is_link($f.'-temporary.bak')) {
-							unlink($f.'-temporary.bak');
-						} elseif(file_exists($f.'-temporary.bak')) {
-							rename($f.'-temporary.bak', $f.'-'.$date->format('YmdHis').'.bak');
-						}
-					}
-
 				} else {
 					swriteln('Issuing certificate via acme.sh failed. Please check that your hostname can be verified by letsencrypt');
-
-					umask($old_umask);
-
-					// Restore/cleanup temporary backup of self-signed certs
-					foreach ($cert_files as $f) {
-						if (is_link($f.'-temporary.bak')) {
-							@unlink($f);
-							rename($f.'-temporary.bak', $f);
-						} elseif(file_exists($f.'-temporary.bak')) {
-							unlink($f.'-temporary.bak');
-						}
-					}
 				}
-			// Else, we attempt to use the official LE certbot client certbot
+
+				// Else, we attempt to use the official LE certbot client certbot
 			} else {
+				$out = null;
+				$ret = null;
 
-				//  But only if it is otherwise available
-				if(is_executable($le_client)) {
-					$out = null;
-					$ret = null;
-
-					// Get its version info due to be used for webroot arguement issues
-					$le_info = exec($le_client . ' --version  2>&1', $ret, $val);
-					if(preg_match('/^(\S+|\w+)\s+(\d+(\.\d+)+)$/', $le_info, $matches)) {
-						$le_version = $matches[2];
-					}
-
-					// Define certbot commands
-					$acme_version = '--server https://acme-v0' . (($le_version >=0.22) ? '2' : '1') . '.api.letsencrypt.org/directory';
-					$certonly = 'certonly --agree-tos --non-interactive --expand --rsa-key-size 4096';
-
-					// If this is a webserver
-					if($conf['nginx']['installed'] == true || $conf['apache']['installed'] == true) {
-						exec("$le_client $certonly $acme_version --authenticator webroot --webroot-path /usr/local/ispconfig/interface/acme --email " . escapeshellarg('postmaster@' . $hostname) . " -d " . escapeshellarg($hostname) . " $renew_hook", $out, $ret);
-					}
-					// Else, it is not webserver, so we use standalone
-					else {
-						exec("$le_client $certonly $acme_version --standalone --email " . escapeshellarg('postmaster@' . $hostname) . " -d " . escapeshellarg($hostname) . " $hook", $out, $ret);
-					}
-
-					if($ret == 0) {
-						// certbot returns with 0 on issue for already existing certificate
-
-						$acme_cert_dir = '/etc/letsencrypt/live/' . $hostname;
-						foreach (array( $ssl_crt_file, $ssl_key_file) as $f) {
-							if (file_exists($f) && ! is_link($f)) {
-								unlink($f);
-							}
-						}
-						symlink($acme_cert_dir . '/fullchain.pem', $ssl_crt_file);
-						symlink($acme_cert_dir . '/privkey.pem', $ssl_key_file);
-
-						$issued_successfully = true;
-
-						// Make temporary backup of self-signed certs permanent
-						foreach ($cert_files as $f) {
-							if (is_link($f.'-temporary.bak')) {
-								unlink($f.'-temporary.bak');
-							} elseif(file_exists($f.'-temporary.bak')) {
-								rename($f.'-temporary.bak', $f.'-'.$date->format('YmdHis').'.bak');
-							}
-						}
-
-					} else {
-						swriteln('Issuing certificate via certbot failed. Please check log files and make sure that your hostname can be verified by letsencrypt');
-
-						// Restore/cleanup temporary backup of self-signed certs
-						foreach ($cert_files as $f) {
-							if (is_link($f.'-temporary.bak')) {
-								@unlink($f);
-								rename($f.'-temporary.bak', $f);
-							} elseif(file_exists($f.'-temporary.bak')) {
-								unlink($f.'-temporary.bak');
-							}
-						}
-
-					}
+				if(version_compare($certbot_version, '0.22', '>=')) {
+					$acme_version = '--server https://acme-v02.api.letsencrypt.org/directory';
 				} else {
-					swriteln('Did not find any valid acme client (acme.sh or certbot)');
+					$acme_version = '--server https://acme-v01.api.letsencrypt.org/directory';
+				}
+				if(version_compare($certbot_version, '2.0', '>=')) {
+					$certonly = 'certonly --agree-tos --non-interactive --expand --cert-name ' . escapeshellarg($hostname . '_ecc') . ' --elliptic-curve secp256r1';
+				} elseif(version_compare($certbot_version, '0.30', '>=')) {
+					$certonly = 'certonly --agree-tos --non-interactive --expand --cert-name ' . escapeshellarg($hostname) . ' --rsa-key-size 4096';
+				} else {
+					$certonly = 'certonly --agree-tos --non-interactive --expand --rsa-key-size 4096';
+				}
+
+				// If this is a webserver
+				if($conf['nginx']['installed'] == true || $conf['apache']['installed'] == true) {
+					exec("$certbot $certonly $acme_version --authenticator webroot --webroot-path /usr/local/ispconfig/interface/acme --email " . escapeshellarg('postmaster@' . $hostname) . " -d " . escapeshellarg($hostname) . " $renew_hook", $out, $ret);
+				} else { // Else, it is not webserver, so we use standalone
+					exec("$certbot $certonly $acme_version --standalone --email " . escapeshellarg('postmaster@' . $hostname) . " -d " . escapeshellarg($hostname) . " $hook", $out, $ret);
+				}
+
+				if($ret == 0 && is_dir($acme_cert_dir)) {
+					// certbot returns with 0 on issue for already existing certificate
+
+					foreach(array($ssl_crt_file, $ssl_key_file) as $f) {
+						if(file_exists($f) && !is_link($f)) {
+							unlink($f);
+						}
+					}
+					symlink($acme_cert_dir . '/fullchain.pem', $ssl_crt_file);
+					symlink($acme_cert_dir . '/privkey.pem', $ssl_key_file);
+
+					$issued_successfully = true;
+				} else {
+					swriteln('Issuing certificate via certbot failed. Please check log files and make sure that your hostname can be verified by letsencrypt');
 				}
 			}
 
 			if($restore_conf_symlink) {
-				if(!@is_link($vhost_conf_enabled_dir.'/000-ispconfig.conf')) {
-					symlink($vhost_conf_dir.'/ispconfig.conf', $vhost_conf_enabled_dir.'/000-ispconfig.conf');
+				if(!@is_link($vhost_conf_enabled_dir . '/000-ispconfig.conf')) {
+					symlink($vhost_conf_dir . '/ispconfig.conf', $vhost_conf_enabled_dir . '/000-ispconfig.conf');
+				}
+			}
+
+			if($issued_successfully) {
+				// Make temporary backup of self-signed certs permanent
+				foreach($cert_files as $f) {
+					if(is_link($f . '-temporary.bak')) {
+						unlink($f . '-temporary.bak');
+					} elseif(file_exists($f . '-temporary.bak')) {
+						rename($f . '-temporary.bak', $f . '-' . $date->format('YmdHis') . '.bak');
+					}
+				}
+			} else {
+				// Restore/cleanup temporary backup of self-signed certs
+				foreach($cert_files as $f) {
+					if(is_link($f . '-temporary.bak')) {
+						@unlink($f);
+						rename($f . '-temporary.bak', $f);
+					} elseif(file_exists($f . '-temporary.bak')) {
+						unlink($f . '-temporary.bak');
+					}
 				}
 			}
 		} else {
 			if($ip_address_match) {
-				// the directory already exists so we have to assume that it was created previously
+				// the directory already exists, so we have to assume that it was created previously
 				$issued_successfully = true;
 			}
 		}
@@ -3322,7 +3389,7 @@ class installer_base {
 
 			// We can still use the old self-signed method
 			$openssl_cmd = 'openssl req -nodes -newkey rsa:4096 -x509 -days 3650 -keyout ' . escapeshellarg($ssl_key_file) . ' -out ' . escapeshellarg($ssl_crt_file);
-			if(AUTOINSTALL){
+			if(AUTOINSTALL) {
 				$openssl_cmd .= ' -subj ' . escapeshellarg('/C=' . $autoinstall['ssl_cert_country'] . '/ST=' . $autoinstall['ssl_cert_state'] . '/L=' . $autoinstall['ssl_cert_locality'] . '/O=' . $autoinstall['ssl_cert_organisation'] . '/OU=' . $autoinstall['ssl_cert_organisation_unit'] . '/CN=' . $autoinstall['ssl_cert_common_name']);
 			}
 			exec($openssl_cmd);
@@ -3333,18 +3400,18 @@ class installer_base {
 			exec("cat $ssl_key_file $ssl_crt_file > $ssl_pem_file; chmod 600 $ssl_pem_file");
 
 			// Extend LE SSL certs to postfix
-			if ($conf['postfix']['installed'] == true && strtolower($this->simple_query('Symlink ISPConfig SSL certs to Postfix?', array('y', 'n'), 'y','ispconfig_postfix_ssl_symlink')) == 'y') {
+			if($conf['postfix']['installed'] == true && strtolower($this->simple_query('Symlink ISPConfig SSL certs to Postfix?', array('y', 'n'), 'y', 'ispconfig_postfix_ssl_symlink')) == 'y') {
 
 				// Define folder, file(s)
 				$cf = $conf['postfix'];
 				$postfix_dir = $cf['config_dir'];
 				if(!is_dir($postfix_dir)) $this->error("The Postfix configuration directory '$postfix_dir' does not exist.");
-				$smtpd_crt = $postfix_dir.'/smtpd.cert';
-				$smtpd_key = $postfix_dir.'/smtpd.key';
+				$smtpd_crt = $postfix_dir . '/smtpd.cert';
+				$smtpd_key = $postfix_dir . '/smtpd.key';
 
 				// Backup existing postfix ssl files
-				if (file_exists($smtpd_crt)) rename($smtpd_crt, $smtpd_crt . '-' .$date->format('YmdHis') . '.bak');
-				if (file_exists($smtpd_key)) rename($smtpd_key, $smtpd_key . '-' .$date->format('YmdHis') . '.bak');
+				if(file_exists($smtpd_crt)) rename($smtpd_crt, $smtpd_crt . '-' . $date->format('YmdHis') . '.bak');
+				if(file_exists($smtpd_key)) rename($smtpd_key, $smtpd_key . '-' . $date->format('YmdHis') . '.bak');
 
 				// Create symlink to ISPConfig SSL files
 				symlink($ssl_crt_file, $smtpd_crt);
@@ -3352,26 +3419,25 @@ class installer_base {
 			}
 
 			// Extend LE SSL certs to pureftpd
-			if ($conf['pureftpd']['installed'] == true && strtolower($this->simple_query('Symlink ISPConfig SSL certs to Pure-FTPd? Creating dhparam file may take some time.', array('y', 'n'), 'y','ispconfig_pureftpd_ssl_symlink')) == 'y') {
+			if($conf['pureftpd']['installed'] == true && strtolower($this->simple_query('Symlink ISPConfig SSL certs to Pure-FTPd? Creating dhparam file may take some time.', array('y', 'n'), 'y', 'ispconfig_pureftpd_ssl_symlink')) == 'y') {
 
 				// Define folder, file(s)
 				$pureftpd_dir = '/etc/ssl/private';
 				if(!is_dir($pureftpd_dir)) mkdir($pureftpd_dir, 0755, true);
-				$pureftpd_pem = $pureftpd_dir.'/pure-ftpd.pem';
+				$pureftpd_pem = $pureftpd_dir . '/pure-ftpd.pem';
 
 				// Backup existing pureftpd ssl files
-				if (file_exists($pureftpd_pem)) rename($pureftpd_pem, $pureftpd_pem . '-' .$date->format('YmdHis') . '.bak');
+				if(file_exists($pureftpd_pem)) rename($pureftpd_pem, $pureftpd_pem . '-' . $date->format('YmdHis') . '.bak');
 
 				// Create symlink to ISPConfig SSL files
 				symlink($ssl_pem_file, $pureftpd_pem);
-				if (!file_exists("$pureftpd_dir/pure-ftpd-dhparams.pem"))
-					symlink('/usr/local/ispconfig/interface/ssl/dhparam4096.pem', $pureftpd_dir.'/pure-ftpd-dhparams.pem');
-					//exec("cd $pureftpd_dir; openssl dhparam -out dhparam2048.pem 2048; ln -sf dhparam2048.pem pure-ftpd-dhparams.pem");
+				if(!file_exists("$pureftpd_dir/pure-ftpd-dhparams.pem"))
+					symlink('/usr/local/ispconfig/interface/ssl/dhparam4096.pem', $pureftpd_dir . '/pure-ftpd-dhparams.pem');
+				//exec("cd $pureftpd_dir; openssl dhparam -out dhparam2048.pem 2048; ln -sf dhparam2048.pem pure-ftpd-dhparams.pem");
 			}
 		}
 
 		exec("chown -R root:root $ssl_dir");
-
 	}
 
 	public function install_ispconfig() {
@@ -3654,19 +3720,31 @@ class installer_base {
 		// and must be fixed as this will allow the apache user to read the ispconfig files.
 		// Later this must run as own apache server or via suexec!
 		if($conf['apache']['installed'] == true){
-			$command = 'adduser '.$conf['apache']['user'].' ispconfig';
-			caselog($command.' &> /dev/null', __FILE__, __LINE__, "EXECUTED: $command", "Failed to execute the command $command");
-			if(is_group('ispapps')){
-				$command = 'adduser '.$conf['apache']['user'].' ispapps';
+			$ispc_groupinfo = posix_getgrnam('ispconfig');
+			if(!in_array($conf['apache']['user'],$ispc_groupinfo['members'])) {
+				$command = 'adduser '.$conf['apache']['user'].' ispconfig';
 				caselog($command.' &> /dev/null', __FILE__, __LINE__, "EXECUTED: $command", "Failed to execute the command $command");
+			}
+			if(is_group('ispapps')){
+				$ispapps_groupinfo = posix_getgrnam('ispapps');
+				if(!in_array($conf['apache']['user'],$ispapps_groupinfo['members'])) {
+					$command = 'adduser '.$conf['apache']['user'].' ispapps';
+					caselog($command.' &> /dev/null', __FILE__, __LINE__, "EXECUTED: $command", "Failed to execute the command $command");
+				}
 			}
 		}
 		if($conf['nginx']['installed'] == true){
-			$command = 'adduser '.$conf['nginx']['user'].' ispconfig';
-			caselog($command.' &> /dev/null', __FILE__, __LINE__, "EXECUTED: $command", "Failed to execute the command $command");
-			if(is_group('ispapps')){
-				$command = 'adduser '.$conf['nginx']['user'].' ispapps';
+			$ispc_groupinfo = posix_getgrnam('ispconfig');
+			if(!in_array($conf['nginx']['user'],$ispc_groupinfo['members'])) {
+				$command = 'adduser '.$conf['nginx']['user'].' ispconfig';
 				caselog($command.' &> /dev/null', __FILE__, __LINE__, "EXECUTED: $command", "Failed to execute the command $command");
+			}
+			if(is_group('ispapps')){
+				$ispapps_groupinfo = posix_getgrnam('ispapps');
+				if(!in_array($conf['nginx']['user'],$ispapps_groupinfo['members'])) {
+					$command = 'adduser '.$conf['nginx']['user'].' ispapps';
+					caselog($command.' &> /dev/null', __FILE__, __LINE__, "EXECUTED: $command", "Failed to execute the command $command");
+				}
 			}
 		}
 
@@ -3793,6 +3871,12 @@ class installer_base {
 		if(!is_link('/usr/local/bin/ispconfig_update_from_dev.sh')) symlink($install_dir.'/server/scripts/ispconfig_update.sh', '/usr/local/bin/ispconfig_update_from_dev.sh');
 		if(!is_link('/usr/local/bin/ispconfig_update.sh')) symlink($install_dir.'/server/scripts/ispconfig_update.sh', '/usr/local/bin/ispconfig_update.sh');
 
+		// Install ISPConfig cli command
+		if(is_file('/usr/local/bin/ispc')) unlink('/usr/local/bin/ispc');
+		chown($install_dir.'/server/cli/ispc', 'root');
+		chmod($install_dir.'/server/cli/ispc', 0700);
+		symlink($install_dir.'/server/cli/ispc', '/usr/local/bin/ispc');
+
 		// Make executable then unlink and symlink letsencrypt pre, post and renew hook scripts
 		chown($install_dir.'/server/scripts/letsencrypt_pre_hook.sh', 'root');
 		chown($install_dir.'/server/scripts/letsencrypt_post_hook.sh', 'root');
@@ -3909,7 +3993,7 @@ class installer_base {
 		$install_dir = $conf['ispconfig_install_dir'];
 
 		//* Root Crontab
-		exec('crontab -u root -l > crontab.txt');
+		exec('crontab -u root -l > crontab.txt 2>/dev/null');
 		$existing_root_cron_jobs = file('crontab.txt');
 
 		// remove existing ispconfig cronjobs, in case the syntax has changed
@@ -3938,7 +4022,7 @@ class installer_base {
 		//* Getmail crontab
 		if(is_user('getmail')) {
 			$cf = $conf['getmail'];
-			exec('crontab -u getmail -l > crontab.txt');
+			exec('crontab -u getmail -l > crontab.txt 2>/dev/null');
 			$existing_cron_jobs = file('crontab.txt');
 
 			$cron_jobs = array(

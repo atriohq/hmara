@@ -266,6 +266,7 @@ class page_action extends tform_actions {
 					$php_select .= "<option value='" . $php_record['server_php_id'] . "' $selected>".$app->functions->htmlentities($php_record['name'])."</option>\r\n";
 				}
 			}
+
 			$app->tpl->setVar("server_php_id", $php_select);
 			unset($php_records);
 
@@ -280,6 +281,7 @@ class page_action extends tform_actions {
 
 			if($this->_vhostdomain_type == 'domain') {
 				$client = $app->db->queryOneRecord("SELECT client.client_id, client.limit_web_domain, client.web_servers, client.default_webserver, client.contact_name, CONCAT(IF(client.company_name != '', CONCAT(client.company_name, ' :: '), ''), client.contact_name, ' (', client.username, IF(client.customer_no != '', CONCAT(', ', client.customer_no), ''), ')') as contactname, sys_group.name, client." . implode(", client.", $read_limits) . " FROM sys_group, client WHERE sys_group.client_id = client.client_id and sys_group.groupid = ?", $client_group_id);
+				$only_one_server = (count(explode(',', $client['web_servers'])) === 1);
 				$app->tpl->setVar('only_one_server', $only_one_server);
 			} elseif($this->_vhostdomain_type == 'subdomain') {
 				$client = $app->db->queryOneRecord("SELECT client.client_id, client.limit_web_subdomain, client.web_servers, client.default_webserver, client.contact_name, CONCAT(IF(client.company_name != '', CONCAT(client.company_name, ' :: '), ''), client.contact_name, ' (', client.username, IF(client.customer_no != '', CONCAT(', ', client.customer_no), ''), ')') as contactname, sys_group.name, client." . implode(", client.", $read_limits) . " FROM sys_group, client WHERE sys_group.client_id = client.client_id and sys_group.groupid = ?", $client_group_id);
@@ -409,6 +411,7 @@ class page_action extends tform_actions {
 					$php_select .= "<option value='" . $php_record['server_php_id'] . "' $selected>".$app->functions->htmlentities($php_record['name'])."</option>\r\n";
 				}
 			}
+
 			$app->tpl->setVar("server_php_id", $php_select);
 			unset($php_records);
 
@@ -587,6 +590,7 @@ class page_action extends tform_actions {
 					$php_select .= "<option value='" . $php_record['server_php_id'] . "' $selected>".$app->functions->htmlentities($php_record['name'])."</option>\r\n";
 				}
 			}
+
 			$app->tpl->setVar("server_php_id", $php_select);
 			unset($php_records);
 
@@ -673,9 +677,16 @@ class page_action extends tform_actions {
 			$app->tpl->setVar('fixed_folder', 'y');
 			if($this->_vhostdomain_type == 'domain') {
 				$app->tpl->setVar("server_id_value", $this->dataRecord["server_id"], true);
-				$app->tpl->setVar("document_root", $this->dataRecord["document_root"], true);
-			}
-			else $app->tpl->setVar('server_id_value', $parent_domain['server_id']);
+                if(isset($this->dataRecord["document_root"])) {
+                    $app->tpl->setVar("document_root", $this->dataRecord["document_root"], true);
+                } else {
+                    $tmp = $app->tform->getDataRecord($this->id);
+                    $app->tpl->setVar("document_root", $tmp["document_root"], true);
+                    unset($tmp);
+                }
+			} else {
+                $app->tpl->setVar('server_id_value', $parent_domain['server_id']);
+            }
 		} else {
 			$app->tpl->setVar("edit_disabled", 0);
 			$app->tpl->setVar('fixed_folder', 'n');
@@ -740,14 +751,35 @@ class page_action extends tform_actions {
 
 		if($this->_vhostdomain_type != 'domain') $app->tpl->setVar("domain", $this->dataRecord["domain"], true);
 
-		// check for configuration errors in sys_datalog
+		// check for configuration errors in sys_datalog and message system
 		if($this->id > 0) {
+			// Get errors and warnings from message system
+			$app->uses('message');
+			$config_error_msg = [];
+			$config_error_tstamp = '';
+			$messages = $app->message->get_current_messages('web_domain:'.$this->id);
+			if(!empty($messages)) {
+				foreach($messages as $tmp) {
+					if($tmp['message_state'] == 'warning' || $tmp['message_state'] == 'error') {
+						$config_error_msg[] = $tmp['message'];
+						$config_error_tstamp = strtotime($tmp['message_date']);
+					}
+				}
+			}
+			// Get errors and warnings from sys_datalog
 			$datalog = $app->db->queryOneRecord("SELECT sys_datalog.error, sys_log.tstamp FROM sys_datalog, sys_log WHERE sys_datalog.dbtable = 'web_domain' AND sys_datalog.dbidx = ? AND sys_datalog.datalog_id = sys_log.datalog_id AND sys_log.message = CONCAT('Processed datalog_id ',sys_log.datalog_id) ORDER BY sys_datalog.tstamp DESC", 'domain_id:' . $this->id);
 			if(is_array($datalog) && !empty($datalog)){
 				if(trim($datalog['error']) != ''){
-					$app->tpl->setVar("config_error_msg", nl2br($app->functions->htmlentities($datalog['error'])));
-					$app->tpl->setVar("config_error_tstamp", date($app->lng('conf_format_datetime'), $datalog['tstamp']));
+					$config_error_msg[] = $datalog['error'];
+					$config_error_tstamp = strtotime($datalog['tstamp']);
 				}
+			}
+			if(!empty($config_error_msg)) {
+				$app->tpl->setVar("config_error_msg", implode("<br>", $config_error_msg));
+				$app->tpl->setVar("config_error_tstamp", date($app->lng('conf_format_datetime'), $config_error_tstamp));
+				$csrf = $app->auth->csrf_token_get('message');
+				$app->tpl->setVar("_csrf_id_msg", $csrf['csrf_id']);
+				$app->tpl->setVar("_csrf_key_msg", $csrf['csrf_key']);
 			}
 		}
 
@@ -842,6 +874,15 @@ class page_action extends tform_actions {
 		} else {
 			$app->tpl->setVar('is_pagespeed_enabled', ($web_config['nginx_enable_pagespeed']));
 		}
+
+               $csrf_token = $app->auth->csrf_token_get('web_vhost_domain_del');
+               $app->tpl->setVar('_csrf_id', $csrf_token['csrf_id']);
+               $app->tpl->setVar('_csrf_key', $csrf_token['csrf_key']);
+
+               $global_config = $app->getconf->get_global_config();
+               $app->tpl->setVar('show_delete_on_forms', $global_config['misc']['show_delete_on_forms']);
+
+		$app->tpl->setVar('app_module', 'sites');
 
 		parent::onShowEnd();
 	}
@@ -1327,10 +1368,10 @@ class page_action extends tform_actions {
 
 		if($this->_vhostdomain_type == 'domain') {
 			$document_root = str_replace("[website_id]", $this->id, $web_config["website_path"]);
-			$document_root = str_replace("[website_idhash_1]", $this->id_hash($page_form->id, 1), $document_root);
-			$document_root = str_replace("[website_idhash_2]", $this->id_hash($page_form->id, 1), $document_root);
-			$document_root = str_replace("[website_idhash_3]", $this->id_hash($page_form->id, 1), $document_root);
-			$document_root = str_replace("[website_idhash_4]", $this->id_hash($page_form->id, 1), $document_root);
+			$document_root = str_replace("[website_idhash_1]", $this->id_hash($this->id, 1), $document_root);
+			$document_root = str_replace("[website_idhash_2]", $this->id_hash($this->id, 2), $document_root);
+			$document_root = str_replace("[website_idhash_3]", $this->id_hash($this->id, 3), $document_root);
+			$document_root = str_replace("[website_idhash_4]", $this->id_hash($this->id, 4), $document_root);
 
 			// get the ID of the client
 			if($_SESSION["s"]["user"]["typ"] != 'admin' && !$app->auth->has_clients($_SESSION['s']['user']['userid'])) {
@@ -1441,6 +1482,25 @@ class page_action extends tform_actions {
 		global $app, $conf;
 
 		if(isset($this->dataRecord['folder_directive_snippets'])) $app->db->query("UPDATE web_domain SET folder_directive_snippets = ? WHERE domain_id = ?", $this->dataRecord['folder_directive_snippets'], $this->id);
+
+		// Triggers an update of the website's cronjobs and shell users when the PHP version is changed
+		if(isset($this->dataRecord['server_php_id']) && $this->oldDataRecord['server_php_id'] != $this->dataRecord['server_php_id']) {
+			$cronjob_list = $app->db->queryAllRecords("SELECT * FROM cron WHERE parent_domain_id = ? and active = 'y'", $this->dataRecord['id']);
+			if(is_array($cronjob_list)) {
+				foreach($cronjob_list as $cronjob) {
+					// Only update cronjobs with placeholders
+					if(preg_match("/([\{][a-zA-Z_\-0-9]+[\}]|[\[][a-zA-Z_\-0-9]+[\]])/", $cronjob['command'])) {
+						$app->db->datalogUpdate('cron', $cronjob, 'id', $cronjob['id'], true);
+					}
+				}
+			}
+			$shelluser_list = $app->db->queryAllRecords("SELECT * FROM shell_user WHERE parent_domain_id = ? and active = 'y'", $this->dataRecord['id']);
+			if(is_array($shelluser_list)) {
+				foreach($shelluser_list as $shelluser) {
+						$app->db->datalogUpdate('shell_user', $shelluser, 'shell_user_id', $shelluser['shell_user_id'], true);
+				}
+			}
+		}
 	}
 
 	function validateDefaultFastcgiPhpVersion() {

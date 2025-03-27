@@ -233,6 +233,7 @@ CREATE TABLE `client` (
   `default_dbserver` int(11) NOT NULL DEFAULT '1',
   `dns_servers` text,
   `limit_database` int(11) NOT NULL DEFAULT '-1',
+  `limit_database_postgresql` int(11) NOT NULL default '-1',
   `limit_database_user` int(11) NOT NULL DEFAULT '-1',
   `limit_database_quota` int(11) NOT NULL default '-1',
   `limit_cron` int(11) NOT NULL DEFAULT '0',
@@ -363,6 +364,7 @@ CREATE TABLE `client_template` (
   `limit_dns_record` int(11) NOT NULL default '-1',
   `db_servers` text,
   `limit_database` int(11) NOT NULL default '-1',
+  `limit_database_postgresql` int(11) NOT NULL default '-1',
   `limit_database_user` int(11) NOT NULL DEFAULT '-1',
   `limit_database_quota` int(11) NOT NULL default '-1',
   `limit_cron` int(11) NOT NULL default '0',
@@ -559,6 +561,7 @@ INSERT INTO `dns_ssl_ca` (`id`, `sys_userid`, `sys_groupid`, `sys_perm_user`, `s
 (NULL, 1, 1, 'riud', 'riud', '', 'Y', 'ACCV', 'accv.es', 'Y', '', 0),
 (NULL, 1, 1, 'riud', 'riud', '', 'Y', 'Actalis', 'actalis.it', 'Y', '', 0),
 (NULL, 1, 1, 'riud', 'riud', '', 'Y', 'Amazon', 'amazon.com', 'Y', '', 0),
+(NULL, 1, 1, 'riud', 'riud', '', 'Y', 'Amazon Trust Services', 'amazontrust.com', 'Y', '', 0),
 (NULL, 1, 1, 'riud', 'riud', '', 'Y', 'Asseco', 'certum.pl', 'Y', '', 0),
 (NULL, 1, 1, 'riud', 'riud', '', 'Y', 'Buypass', 'buypass.com', 'Y', '', 0),
 (NULL, 1, 1, 'riud', 'riud', '', 'Y', 'CA Disig', 'disig.sk', 'Y', '', 0),
@@ -893,6 +896,7 @@ CREATE TABLE `mail_domain` (
   `relay_user` varchar(255) NOT NULL DEFAULT '',
   `relay_pass` varchar(255) NOT NULL DEFAULT '',
   `active` enum('n','y') NOT NULL DEFAULT 'n',
+  `local_delivery` enum('n','y') NOT NULL DEFAULT 'y',
   PRIMARY KEY  (`domain_id`),
   KEY `server_id` (`server_id`,`domain`),
   KEY `domain_active` (`domain`,`active`)
@@ -1096,6 +1100,7 @@ CREATE TABLE `mail_user` (
   `disablelda` enum('n','y') NOT NULL default 'n',
   `disablelmtp` enum('n','y') NOT NULL default 'n',
   `disabledoveadm` enum('n','y') NOT NULL default 'n',
+  `last_access` int(11) NULL DEFAULT NULL,
   `disablequota-status` enum('n','y') NOT NULL default 'n',
   `disableindexer-worker` enum('n','y') NOT NULL default 'n',
   `last_quota_notification` date NULL default NULL,
@@ -1460,6 +1465,8 @@ CREATE TABLE `server_php` (
   `php_fpm_ini_dir` varchar(255) DEFAULT NULL,
   `php_fpm_pool_dir` varchar(255) DEFAULT NULL,
   `php_fpm_socket_dir` varchar(255) DEFAULT NULL,
+  `php_cli_binary` varchar(255) DEFAULT NULL,
+  `php_jk_section` varchar(255) DEFAULT NULL,
   `active` enum('n','y') NOT NULL DEFAULT 'y',
   `sortprio` int(20) NOT NULL DEFAULT 100,
   PRIMARY KEY (`server_php_id`)
@@ -1532,9 +1539,9 @@ CREATE TABLE `spamfilter_policy` (
   `addr_extension_spam` varchar(64) default NULL,
   `addr_extension_banned` varchar(64) default NULL,
   `addr_extension_bad_header` varchar(64) default NULL,
-  `warnvirusrecip` enum('N','Y') default 'N',
-  `warnbannedrecip` enum('N','Y') default 'N',
-  `warnbadhrecip` enum('N','Y') default 'N',
+  `warnvirusrecip` VARCHAR(1) NULL default 'N',
+  `warnbannedrecip` VARCHAR(1) NULL default 'N',
+  `warnbadhrecip` VARCHAR(1) NULL default 'N',
   `newvirus_admin` varchar(64) default NULL,
   `virus_admin` varchar(64) default NULL,
   `banned_admin` varchar(64) default NULL,
@@ -1741,8 +1748,8 @@ CREATE TABLE `sys_group` (
 CREATE TABLE `sys_ini` (
   `sysini_id` int(11) unsigned NOT NULL auto_increment,
   `config` longtext,
-  `default_logo` text NOT NULL,
-  `custom_logo` text NOT NULL,
+  `default_logo` text NULL,
+  `custom_logo` text NULL,
   PRIMARY KEY  (`sysini_id`)
 ) DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
@@ -1761,6 +1768,27 @@ CREATE TABLE `sys_log` (
   `message` text,
   PRIMARY KEY  (`syslog_id`)
 ) DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `sys_message`
+--
+
+CREATE TABLE IF NOT EXISTS `sys_message` (
+  `message_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `sys_userid` int(11) unsigned NOT NULL DEFAULT 0,
+  `sys_groupid` int(11) unsigned NOT NULL DEFAULT 0,
+  `sys_perm_user` VARCHAR(5) DEFAULT 'r',
+  `sys_perm_group` VARCHAR(5) DEFAULT 'r',
+  `sys_perm_other` VARCHAR(5) DEFAULT '',
+  `message_state` enum('info','warning','error') NOT NULL DEFAULT 'info',
+  `message_date` datetime NULL DEFAULT NULL,
+  `message_ack` enum('y','n') NOT NULL DEFAULT 'n',
+  `relation` varchar(255) NULL DEFAULT NULL,
+  `message` TEXT DEFAULT NULL,
+  PRIMARY KEY (`message_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;
 
 -- --------------------------------------------------------
 
@@ -1945,7 +1973,9 @@ CREATE TABLE IF NOT EXISTS `web_database_user` (
   `database_user` varchar(64) DEFAULT NULL,
   `database_user_prefix` varchar(50) NOT NULL default '',
   `database_password` varchar(64) DEFAULT NULL,
+  `database_password_sha2` varchar(70) DEFAULT NULL,
   `database_password_mongo` varchar(32) DEFAULT NULL,
+  `database_password_postgres` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`database_user_id`)
 )  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
@@ -2046,6 +2076,7 @@ CREATE TABLE `web_domain` (
   `delete_unused_jailkit` enum('n','y') NOT NULL default 'n',
   `last_jailkit_update` date NULL DEFAULT NULL,
   `last_jailkit_hash` varchar(255) DEFAULT NULL,
+  `disable_symlinknotowner` enum('n','y') NOT NULL default 'n',
   PRIMARY KEY  (`domain_id`),
   UNIQUE KEY `serverdomain` (  `server_id` , `ip_address`,  `domain` )
 ) ENGINE=InnoDB ROW_FORMAT=DYNAMIC DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;

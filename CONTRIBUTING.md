@@ -3,10 +3,13 @@ ISPConfig is a open source project and community contributions are very welcome.
 
 This document is under development and will be continuously improved.
 
+Please do not refactor existing code and do not change the signature or the behaviour of central functions or libraries. Such changes may only be made by the core development team. We have had many bad experiences with such changes affecting the stability of ISPConfig, so we no longer accept submissions containing such changes. Merge requests containing such changes will be closed and not merged.
+
 # Issues
 * Before opening a new issue, use the search function to check if there isn't a bug report / feature request already.
 * If you are reporting a bug, please share your OS and PHP (CLI) version.
 * If you want to report several bugs or request several features, open a separate issue for each one of them.
+* Do note re-open issues that were closed by the core dev team unless something new and important that is not mentioned in the original issue needs to be added. Permanently re-opening issues that we commented on and closed will get your account banned. You may add comments to issues without re-opening them though.
 
 # Branches
 * If you are a new user, please send an email to: dev [at] ispconfig [dot] org to receive rights to fork the project.

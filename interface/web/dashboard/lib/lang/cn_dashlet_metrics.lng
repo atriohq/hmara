@@ -1,0 +1,7 @@
+<?php
+$wb['metrics_txt'] = '系统指标';
+$wb['loadchart_label'] = '系统负载 %';
+$wb['memchart_label'] = '内存使用 %';
+$wb['rxchart_label'] = '网络入站/kB';
+$wb['txchart_label'] = '网络出站/kB';
+$wb['label_chart_title'] = '系统指标';

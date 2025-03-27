@@ -41,6 +41,7 @@
 $form["title"]    = "Database";
 $form["description"]  = "";
 $form["name"]    = "database";
+$form["record_name_field"] = "database_name";
 $form["action"]   = "database_edit.php";
 $form["db_table"]  = "web_database";
 $form["db_table_idx"] = "database_id";
@@ -54,6 +55,16 @@ $form["auth_preset"]["groupid"] = 0; // 0 = default groupid of the user, > 0 id 
 $form["auth_preset"]["perm_user"] = 'riud'; //r = read, i = insert, u = update, d = delete
 $form["auth_preset"]["perm_group"] = 'riud'; //r = read, i = insert, u = update, d = delete
 $form["auth_preset"]["perm_other"] = ''; //r = read, i = insert, u = update, d = delete
+
+$app->uses('getconf,system');
+$web_config = $app->getconf->get_global_config('sites');
+
+// Available database types
+$database_type = ['mysql' => 'MySQL'];
+if($web_config['postgresql_database'] == 'y') {
+	$database_type['postgresql'] = 'PostgreSQL';
+}
+
 
 $form["tabs"]['database'] = array (
 	'title'  => "Database",
@@ -89,11 +100,19 @@ $form["tabs"]['database'] = array (
 			'datatype' => 'VARCHAR',
 			'formtype' => 'SELECT',
 			'default' => 'mysql',
-			'value'  => array(
-				/*'mongo' => 'MongoDB',*/
-				'mysql' => 'MySQL'
-			)
+			'value'  => $database_type
 		),
+		'backup_interval' => [
+			'datatype' => 'VARCHAR',
+			'formtype' => 'SELECT',
+			'default' => 'none',
+			'value'  => [
+				'none' => 'no_backup_txt',
+				'daily' => 'daily_backup_txt',
+				'weekly' => 'weekly_backup_txt',
+				'monthly' => 'monthly_backup_txt',
+			]
+		],
 		'database_name' => array (
 			'datatype' => 'VARCHAR',
 			'formtype' => 'TEXT',

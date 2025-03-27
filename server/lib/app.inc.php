@@ -1,5 +1,5 @@
 <?php
-/**
+/*
 Copyright (c) 2007-2022, Till Brehm, projektfarm Gmbh
 All rights reserved.
 
@@ -49,16 +49,26 @@ if(DEVSYSTEM !== true) {
  * @author Till Brehm
  * @license bsd-3-clause
  * @link empty
+ *
+ * @property-read functions $functions
+ * @property-read getconf $getconf
+ * @property-read letsencrypt $letsencrypt
+ * @property-read modules $modules
+ * @property-read plugins $plugins
+ * @property-read services $services
+ * @property-read system $system
  **/
-class app {
+class app extends stdClass {
 	/** @var array	List of modules that have been loaded. */
 	var $loaded_modules = [];
 	/** @var array	List of plugins that have been loaded. */
 	var $loaded_plugins = [];
 	/** @var callable	Script calling this. */
 	var $_calling_script = '';
-	/** @var resource?	Database used for ISPConfig3. */
+	/** @var db|false	Database used for ISPConfig3. */
 	public $db;
+	/** @var db|false */
+	public $dbmaster;
 
 	/**
 	 * Class constructor, which depends on the global configuration stored in $conf.
@@ -83,7 +93,10 @@ class app {
 				if we are in a multiserver setup
 			*/
 
-			if($conf['dbmaster_host'] != '' && ($conf['dbmaster_host'] != $conf['db_host'] || ($conf['dbmaster_host'] == $conf['db_host'] && $conf['dbmaster_database'] != $conf['db_database']))) {
+			if($conf['dbmaster_host'] != ''
+					&& ($conf['dbmaster_host'] != $conf['db_host']
+						|| ($conf['dbmaster_host'] == $conf['db_host']
+								&& ($conf['dbmaster_database'] != $conf['db_database'] || $conf['dbmaster_port'] != $conf['db_port'])))) {
 				try {
 					$this->dbmaster = new db($conf['dbmaster_host'], $conf['dbmaster_user'], $conf['dbmaster_password'], $conf['dbmaster_database'], $conf['dbmaster_port'], $conf['dbmaster_client_flags']);
 				} catch (Exception $e) {
@@ -321,7 +334,7 @@ class app {
 
 		// Send an email to the administrator if the current priority demands it.
 		if(isset($conf['admin_notify_priority']) && $priority >= $conf['admin_notify_priority'] && $conf['admin_mail'] != '') {
-			if($conf['hostname'] != 'localhost' && $conf['hostname'] != '') {
+			if(isset($conf['hostname']) && $conf['hostname'] != 'localhost' && $conf['hostname'] != '') {
 				$hostname = $conf['hostname'];
 			} else {
 				$hostname = exec('hostname -f');

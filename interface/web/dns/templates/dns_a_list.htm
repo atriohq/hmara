@@ -73,13 +73,13 @@
                     <td><input class="form-control" type="text" name="search_aux" value="{tmpl_var name='search_aux'}" /></td>
                     <td><input class="form-control" type="text" name="search_ttl" value="{tmpl_var name='search_ttl'}" /></td>
                     <td class="text-right">
-                        <button type="button" class="btn btn-default formbutton-default formbutton-narrow" name="Filter" id="Filter" value="{tmpl_var name="filter_txt"}" onclick="return ISPConfig.changeTab('dns_records','dns/dns_soa_edit.php');" data-form-action="dns/dns_a_list.php"><span class="icon icon-filter"></span></button>
+                        <button type="button" class="btn btn-default formbutton-default formbutton-narrow" name="Filter" id="Filter" value="{tmpl_var name='filter_txt'}" onclick="return ISPConfig.changeTab('dns_records','dns/dns_soa_edit.php',true);" data-form-action="dns/dns_soa_edit.php?id={tmpl_var name='parent_id'}&next_tab=dns_records"><span class="icon icon-filter"></span></button>
                     </td>
                 </tr>
             </thead>
             <tbody>
                 <tmpl_loop name="records">
-                    <tr>
+                    <tr <tmpl_if name="warn_inactive"> class="danger" </tmpl_if> >
                         <td><a href="#" data-load-content="dns/dns_{tmpl_var name='type_lowercase'}_edit.php?id={tmpl_var name='id'}">{tmpl_var name="active"}</a></td>
                         <td><a href="#" data-load-content="dns/dns_{tmpl_var name='type_lowercase'}_edit.php?id={tmpl_var name='id'}">{tmpl_var name="type"}</a></td>
                         <td><a href="#" data-load-content="dns/dns_{tmpl_var name='type_lowercase'}_edit.php?id={tmpl_var name='id'}" data-toggle="tooltip" data-placement="bottom" title="{tmpl_var name='name'}">{tmpl_var name="name"}</a></td>

@@ -85,8 +85,6 @@ if(realpath(dirname(__FILE__)) != $cur_dir) {
 	chdir( realpath(dirname(__FILE__)) );
 }
 
-//** Install logfile
-define('ISPC_LOG_FILE', '/var/log/ispconfig_install.log');
 define('ISPC_INSTALL_ROOT', realpath(dirname(__FILE__).'/../'));
 
 //** Include the templating lib
@@ -156,9 +154,14 @@ swriteln($inst->lng('    Default values are in [brackets] and can be accepted wi
 swriteln($inst->lng('    Tap in "quit" (without the quotes) to stop the installer.'."\n\n"));
 
 //** Check log file is writable (probably not root or sudo)
-if(!is_writable(dirname(ISPC_LOG_FILE))){
-	die("ERROR: Cannot write to the ".dirname(ISPC_LOG_FILE)." directory. Are you root or sudo ?\n\n");
+if(!is_writable(dirname($conf['ispconfig_log_dir']))){
+	die("ERROR: Cannot write to the ".$conf['ispconfig_log_dir']." directory. Are you root or sudo ?\n\n");
 }
+
+if(!is_dir($conf['ispconfig_log_dir'])) {
+	mkdir($conf['ispconfig_log_dir'], 0755, true);
+}
+define('ISPC_LOG_FILE', $conf['ispconfig_log_dir'] . '/install.log');
 
 //** Check for ISPConfig 2.x versions
 if(is_dir('/root/ispconfig') || is_dir('/home/admispconfig')) {
@@ -664,7 +667,7 @@ if($conf['powerdns']['installed'] == true && isset($conf['powerdns']['init_scrip
 if($conf['bind']['installed'] == true && isset($conf['bind']['init_script']) && $conf['bind']['init_script'] != '') system($inst->getinitcommand($conf['bind']['init_script'], 'restart').' &> /dev/null');
 //if($conf['squid']['installed'] == true && isset($conf['squid']['init_script']) && $conf['squid']['init_script'] != '' && is_file($conf['init_scripts'].'/'.$conf['squid']['init_script']))     system($conf['init_scripts'].'/'.$conf['squid']['init_script'].' restart &> /dev/null');
 if($conf['nginx']['installed'] == true && isset($conf['nginx']['init_script']) && $conf['nginx']['init_script'] != '') system($inst->getinitcommand($conf['nginx']['init_script'], 'restart').' &> /dev/null');
-if($conf['ufw']['installed'] == true && isset($conf['ufw']['init_script']) && $conf['ufw']['init_script'] != '') system($inst->getinitcommand($conf['ufw']['init_script'], 'restart').' &> /dev/null');
+if(isset($conf['ufw']['installed']) && $conf['ufw']['installed'] == true && isset($conf['ufw']['init_script']) && $conf['ufw']['init_script'] != '') system($inst->getinitcommand($conf['ufw']['init_script'], 'restart').' &> /dev/null');
 if($conf['xmpp']['installed'] == true && isset($conf['xmpp']['init_script']) && $conf['xmpp']['init_script'] != '') system($inst->getinitcommand($conf['xmpp']['init_script'], 'restart').' &> /dev/null');
 
 

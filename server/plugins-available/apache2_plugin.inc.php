@@ -662,7 +662,7 @@ class apache2_plugin {
 					$app->log('Renaming existing directory in new docroot location. mv '.$data['new']['document_root'].' '.$data['new']['document_root'].'_bak_'.date('Y_m_d_H_i_s'), LOGLEVEL_DEBUG);
 				}
 
-				//* Unmount the old log directory bfore we move the log dir
+				//* Unmount the old log directory before we move the log dir
 				$app->system->exec_safe('umount -l ?', $data['old']['document_root'].'/log');
 
 				//* Create new base directory, if it does not exist yet
@@ -717,7 +717,8 @@ class apache2_plugin {
 		if(!is_dir($data['new']['document_root'].'/cgi-bin')) $app->system->mkdirpath($data['new']['document_root'].'/cgi-bin');
 		if(!is_dir($data['new']['document_root'].'/tmp')) $app->system->mkdirpath($data['new']['document_root'].'/tmp', 0770);
 		if(!is_dir($data['new']['document_root'].'/webdav')) $app->system->mkdirpath($data['new']['document_root'].'/webdav');
-		if(!is_dir($data['new']['document_root'].'/backup')) $app->system->mkdirpath($data['new']['document_root'].'/backup');
+		if(!is_dir($data['new']['document_root'].'/backup')) $app->system->mkdirpath($data['new']['document_root'].'/backup', 0755, $username, $groupname);
+		if(!is_dir($data['new']['document_root'].'/.composer')) $app->system->mkdirpath($data['new']['document_root'].'/.composer', 0750, $username, $groupname);
 
 		if(!is_dir($data['new']['document_root'].'/.ssh')) {
 			$app->system->mkdirpath($data['new']['document_root'].'/.ssh');
@@ -848,7 +849,7 @@ class apache2_plugin {
 
 		// Get the client ID
 		$client = $app->dbmaster->queryOneRecord('SELECT client_id FROM sys_group WHERE sys_group.groupid = ?', $data['new']['sys_groupid']);
-		$client_id = intval($client['client_id']);
+		$client_id = (!empty($client))?intval($client['client_id']):0;
 		unset($client);
 
 		// Remove old symlinks, if site is renamed
@@ -1024,9 +1025,9 @@ class apache2_plugin {
 			if(!is_dir($data['new']['document_root'].'/private')) $app->system->mkdir($data['new']['document_root'].'/private');
 
 			if($web_config['security_level'] == 20) {
-
+				$web_folder_permission = (isset($web_config['web_folder_permission']))?octdec($web_config['web_folder_permission']):0711;
 				$app->system->chmod($data['new']['document_root'], 0755);
-				$app->system->chmod($data['new']['document_root'].'/web', 0711);
+				$app->system->chmod($data['new']['document_root'].'/web', $web_folder_permission);
 				$app->system->chmod($data['new']['document_root'].'/webdav', 0710);
 				$app->system->chmod($data['new']['document_root'].'/private', 0710);
 				$app->system->chmod($data['new']['document_root'].'/ssl', 0755);
@@ -1255,6 +1256,7 @@ class apache2_plugin {
 		$vhost_data['has_custom_php_ini'] = $has_custom_php_ini;
 		$vhost_data['custom_php_ini_dir'] = $custom_php_ini_dir;
 		$vhost_data['logging'] = $web_config['logging'];
+		$vhost_data['disable_symlinknotowner '] = $data['new']['disable_symlinknotowner'];
 
 		// Custom Apache directives
 		if(intval($data['new']['directive_snippets_id']) > 0){
@@ -1507,7 +1509,7 @@ class apache2_plugin {
 
 			// begin a new ServerAlias line after 30 alias domains
 			foreach($server_alias as $tmp_alias) {
-				if($n % 30 == 0) $server_alias_str .= "\n    ServerAlias ";
+				if($n % 30 == 0) $server_alias_str .= "\n                ServerAlias ";
 				$server_alias_str .= $tmp_alias;
 			}
 			unset($tmp_alias);
@@ -2189,27 +2191,35 @@ class apache2_plugin {
 		}
 
 		if($data['old']['type'] == 'vhost' || $data['old']['type'] == 'vhostsubdomain' || $data['old']['type'] == 'vhostalias'){
-			if(is_array($log_folders) && !empty($log_folders)){
+			if(isset($log_folders) && is_array($log_folders) && !empty($log_folders)){
 				foreach($log_folders as $log_folder){
 					$app->system->exec_safe('umount -l ? 2>/dev/null', $data['old']['document_root'].'/'.$log_folder);
 				}
 			} else {
 				$app->system->exec_safe('umount -l ? 2>/dev/null', $data['old']['document_root'].'/'.$log_folder);
 			}
+		}
 
-			// remove letsencrypt if it exists (renew will always fail otherwise)
-
-			$old_domain = $data['old']['domain'];
-			if(substr($old_domain, 0, 2) === '*.') {
-				// wildcard domain not yet supported by letsencrypt!
-				$old_domain = substr($old_domain, 2);
+		// remove (and maybe revoke) Let's Encrypt certificate (renew will always fail otherwise)
+		if(!empty($web_config['le_delete_on_site_remove']) && $web_config['le_delete_on_site_remove'] == 'y'
+			&& !empty($data['old']['document_root'])
+			&& $data['old']['ssl_letsencrypt'] == 'y' && $data['old']['ssl'] == 'y') {
+			$app->uses('letsencrypt');
+			$paths = $app->letsencrypt->get_website_certificate_paths(['new' => $data['old']]);
+			$info = $app->letsencrypt->extract_x509($paths['crt']);
+			if($info) {
+				$certificates = $app->letsencrypt->get_certificate_list();
+				foreach($certificates as $certificate) {
+					if($certificate['serial_number'] == $info['serial_number']) {
+						$app->letsencrypt->remove_certificate($certificate);
+						break;
+					}
+				}
 			}
-			$le_conf_file = '/etc/letsencrypt/renewal/' . $old_domain . '.conf';
-			@rename('/etc/letsencrypt/renewal/' . $old_domain . '.conf', '/etc/letsencrypt/renewal/' . $old_domain . '.conf~backup');
 		}
 
 		//* remove mountpoint from fstab
-		if(is_array($log_folders) && !empty($log_folders)){
+		if(isset($log_folders) && is_array($log_folders) && !empty($log_folders)){
 			foreach($log_folders as $log_folder){
 				$fstab_line = '/var/log/ispconfig/httpd/'.$data['old']['domain'].' '.$data['old']['document_root'].'/'.$log_folder.'    none    bind';
 				$app->system->removeLine('/etc/fstab', $fstab_line);
@@ -2365,7 +2375,7 @@ class apache2_plugin {
 
 				// Delete the symlinks for the sites
 				$client = $app->db->queryOneRecord('SELECT client_id FROM sys_group WHERE sys_group.groupid = ?', $data['old']['sys_groupid']);
-				$client_id = intval($client['client_id']);
+				$client_id = (is_array($client) && isset($client['client_id']))?intval($client['client_id']):0;
 				unset($client);
 				$tmp_symlinks_array = explode(':', $web_config['website_symlinks']);
 				if(is_array($tmp_symlinks_array)) {
@@ -3370,8 +3380,9 @@ class apache2_plugin {
 		$tpl->setVar('pm_process_idle_timeout', $data['new']['pm_process_idle_timeout']);
 		$tpl->setVar('pm_max_requests', $data['new']['pm_max_requests']);
 		$tpl->setVar('document_root', $data['new']['document_root']);
-		$tpl->setVar('security_level', $web_config['security_level']);
 		$tpl->setVar('domain', $data['new']['domain']);
+
+		$tpl->setVar('security_level', $web_config['security_level']);
 		$php_open_basedir = ($data['new']['php_open_basedir'] == '')?$data['new']['document_root']:$data['new']['php_open_basedir'];
 		$tpl->setVar('php_open_basedir', $php_open_basedir);
 		if($php_open_basedir != ''){
@@ -3391,7 +3402,7 @@ class apache2_plugin {
 
 		// Custom php.ini settings
 		$final_php_ini_settings = array();
-		$custom_php_ini_settings = trim($data['new']['custom_php_ini']);
+		$custom_php_ini_settings = (isset($data['new']['custom_php_ini']) && !is_null($data['new']['custom_php_ini']))?trim($data['new']['custom_php_ini']):'';
 
 		if(intval($data['new']['directive_snippets_id']) > 0){
 			$snippet = $app->db->queryOneRecord("SELECT * FROM directive_snippets WHERE directive_snippets_id = ? AND type = 'apache' AND active = 'y' AND customer_viewable = 'y'", intval($data['new']['directive_snippets_id']));

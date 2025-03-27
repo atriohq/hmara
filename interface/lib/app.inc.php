@@ -46,7 +46,7 @@ if(DEVSYSTEM !== true) {
 /*
     Application Class
 */
-class app {
+class app extends stdClass {
 
 	private $_language_inc = 0;
 	private $_wb;
@@ -214,8 +214,10 @@ class app {
 
 	public function auth_log($msg) {
 		$authlog_handle = fopen($this->_conf['ispconfig_log_dir'].'/auth.log', 'a');
-		fwrite($authlog_handle, $msg . PHP_EOL);
-		fclose($authlog_handle);
+		if($authlog_handle) {
+			fwrite($authlog_handle, $msg . PHP_EOL);
+			fclose($authlog_handle);
+		}
 	}
 
 	/** Priority values are: 0 = DEBUG, 1 = WARNING,  2 = ERROR */

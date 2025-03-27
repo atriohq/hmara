@@ -1,0 +1,7 @@
+<?php
+$wb['metrics_txt'] = 'Järjestelmän mittarit';
+$wb['loadchart_label'] = 'Järjestelmän kuormitus %';
+$wb['memchart_label'] = 'Muistin käyttö %';
+$wb['rxchart_label'] = 'Verkko sisään/kB';
+$wb['txchart_label'] = 'Verkko ulos/kB';
+$wb['label_chart_title'] = 'Järjestelmän mittarit';
