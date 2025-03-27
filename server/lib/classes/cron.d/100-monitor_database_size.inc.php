@@ -136,10 +136,11 @@ class cronjob_monitor_database_size extends cronjob {
 
 			$metrics = array();
 			$timestamp = time();
-			foreach ($databases as $i => $db) {
+			foreach ($data as $i => $db) {
 				$database_name = preg_replace('/\./', '_', $db['database_name']);
-				$metrics["ispconfig.$hostname.monitor_data.database_quota.$database_nam"] = array('value' => $data[$i]['size'], 'timestamp' => $timestamp);
+				$metrics["ispconfig.$hostname.monitor_data.database_quota.$database_name"] = array('value' => $data[$i]['size'], 'timestamp' => $timestamp);
 			}
+
 			return $this->_tools->deliver_exported_metrics($metrics);
 		}
 	}
