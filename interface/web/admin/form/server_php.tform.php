@@ -261,7 +261,10 @@ $form["tabs"]['php_cli'] = array (
 			'datatype' => 'VARCHAR',
 			'formtype' => 'TEXT',
 			'validators' => array(
-				0 => array (
+				0 => array('type' => 'NOTEMPTY',
+					'errmsg' => 'php_cli_binary_empty'
+				),
+				1 => array (
 					'type' => 'REGEX',
 					'regex' => '/^\/[a-zA-Z0-9\/\-\_\.\s]*$/',
 					'errmsg'=> 'php_cli_binary_error_regex'
@@ -277,7 +280,10 @@ $form["tabs"]['php_cli'] = array (
 			'formtype' => 'TEXT',
 			'default' => '',
 			'validators' => array(
-				0 => array (
+				0 => array('type' => 'NOTEMPTY',
+					'errmsg' => 'php_cli_jk_section_empty'
+				),
+				1 => array (
 					'type' => 'REGEX',
 					'regex' => '/^[a-zA-Z0-9\-\_]*$/',
 					'errmsg'=> 'php_cli_jk_section_error_regex'

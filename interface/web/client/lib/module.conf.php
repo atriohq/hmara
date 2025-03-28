@@ -6,7 +6,7 @@ $module["template"]  = "module.tpl.htm";
 $module["startpage"]  = "client/client_list.php";
 $module["tab_width"]    = '';
 $module['order']    = '20';
-
+$module['icon'] = 'icon icon-client';
 
 $items[] = array(   'title'  => "Edit Client",
 	'target'  => 'content',

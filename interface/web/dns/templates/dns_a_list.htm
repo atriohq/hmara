@@ -79,7 +79,7 @@
             </thead>
             <tbody>
                 <tmpl_loop name="records">
-                    <tr>
+                    <tr <tmpl_if name="warn_inactive"> class="danger" </tmpl_if> >
                         <td><a href="#" data-load-content="dns/dns_{tmpl_var name='type_lowercase'}_edit.php?id={tmpl_var name='id'}">{tmpl_var name="active"}</a></td>
                         <td><a href="#" data-load-content="dns/dns_{tmpl_var name='type_lowercase'}_edit.php?id={tmpl_var name='id'}">{tmpl_var name="type"}</a></td>
                         <td><a href="#" data-load-content="dns/dns_{tmpl_var name='type_lowercase'}_edit.php?id={tmpl_var name='id'}" data-toggle="tooltip" data-placement="bottom" title="{tmpl_var name='name'}">{tmpl_var name="name"}</a></td>

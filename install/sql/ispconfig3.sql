@@ -1772,6 +1772,27 @@ CREATE TABLE `sys_log` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `sys_message`
+--
+
+CREATE TABLE IF NOT EXISTS `sys_message` (
+  `message_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `sys_userid` int(11) unsigned NOT NULL DEFAULT 0,
+  `sys_groupid` int(11) unsigned NOT NULL DEFAULT 0,
+  `sys_perm_user` VARCHAR(5) DEFAULT 'r',
+  `sys_perm_group` VARCHAR(5) DEFAULT 'r',
+  `sys_perm_other` VARCHAR(5) DEFAULT '',
+  `message_state` enum('info','warning','error') NOT NULL DEFAULT 'info',
+  `message_date` datetime NULL DEFAULT NULL,
+  `message_ack` enum('y','n') NOT NULL DEFAULT 'n',
+  `relation` varchar(255) NULL DEFAULT NULL,
+  `message` TEXT DEFAULT NULL,
+  PRIMARY KEY (`message_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `sys_remoteaction`
 --
 

@@ -44,7 +44,8 @@ class validate_database {
 				$cur_value = trim($cur_value);
 				$valid = true;
 				if(function_exists('filter_var')) {
-					if(!filter_var($cur_value, FILTER_VALIDATE_IP)) {
+					// value must be either an IP address or hostname
+					if(!filter_var($cur_value, FILTER_VALIDATE_IP) && !filter_var($cur_value, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME)) {
 						$valid = false;
 					}
 				} else return "function filter_var missing <br />\r\n";

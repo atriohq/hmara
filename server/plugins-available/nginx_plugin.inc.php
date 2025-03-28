@@ -2941,7 +2941,8 @@ class nginx_plugin {
 		$tpl->setVar('fpm_user', $data['new']['system_user']);
 
 		// RH workaround here
-		if($app->system->is_redhat_os() == true) {
+		$dist = $app->system->get_os_type();
+		if(isset($dist['type']) && $dist['type'] == 'redhat'){
 			$tpl->setVar('fpm_group', $data['new']['system_group']);
 			$tpl->setVar('fpm_listen_group', $data['new']['system_group']);
 		} else {

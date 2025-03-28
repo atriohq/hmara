@@ -8,7 +8,7 @@ $module['template']  = 'module.tpl.htm';
 $module['startpage']  = 'mail/mail_domain_list.php';
 $module['tab_width']    = '';
 $module['order']    = '40';
-
+$module['icon'] = 'icon icon-mail';
 
 //**** Email accounts menu
 $items = array();

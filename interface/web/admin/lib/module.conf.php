@@ -8,6 +8,7 @@ $module['template']  = 'module.tpl.htm';
 $module['startpage']  = 'admin/server_list.php';
 $module['tab_width']    = '60';
 $module['order']    = '90';
+$module['icon'] = 'icon icon-admin';
 
 
 $items[] = array(   'title'     => 'CP Users',
