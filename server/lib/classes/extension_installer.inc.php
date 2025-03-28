@@ -6,6 +6,7 @@ class extension_installer {
 	private $ispconfig_dir = '/usr/local/ispconfig';
 	private $download_url = 'https://repo.ispconfig.com/packages/';
 	private $repo_list_url = 'https://repo.ispconfig.com/api/v1/list/';
+	private $repo_cache = [];
 
 	public $errors = [];
 
@@ -59,8 +60,7 @@ class extension_installer {
         }
 
         // check if extension exists in repository
-		$response = file_get_contents($this->getRepoListUrl());
-		$repo_extensions = json_decode($response, true);
+		$repo_extensions = $this->getRepoExtensions();
 
 		if(empty($repo_extensions)) {
 			$this->addError('No extensions available in repository.');
@@ -357,8 +357,7 @@ class extension_installer {
 		}
 
 		// check if extension exists in repository
-		$response = file_get_contents($this->getRepoListUrl());
-		$repo_extensions = json_decode($response, true);
+		$repo_extensions = $this->getRepoExtensions();
 
 		if(empty($repo_extensions)) {
 			$app->log('No extensions available in repository', LOGLEVEL_WARN);
@@ -669,13 +668,38 @@ class extension_installer {
 	 * @return bool
 	 */
 
-	 public function install_extension($name, $version = null) {
+	 public function install_extension($name, $version = null, $install_dependencies = true) {
 		global $app;
+
+		// Check if the extension has dependencies
+		if($install_dependencies) {
+			$repo_extension = $this->getRepoExtension($name);
+			if(!empty($repo_extension['dependencies'])) {
+				// split dependencies by ","
+				$dependencies = explode(',', $repo_extension['dependencies']);
+				foreach($dependencies as $dependency) {
+					$dependency = trim($dependency);
+					if($dependency == $name) {
+						continue;
+					}
+					if($this->isExtensionInstalled($dependency)) {
+						$app->log("Dependency {$dependency} already installed", LOGLEVEL_DEBUG);
+						continue;
+					}
+					if(!$this->install_extension($dependency, null, $install_dependencies)) {
+						$this->addError("Failed to install dependency {$dependency}");
+						return false;
+					} else {
+						$app->log("Installed dependency {$dependency}", LOGLEVEL_DEBUG);
+					}
+				}
+			}
+		}
 
 		// download extension if not already downloaded
         if(!is_dir($this->extension_basedir.'/'.$name)) {
             if(!$this->download_extension($name,$version)) {
-                $this->addError('Failed to download extension '.$name);
+                $this->addError("Failed to download extension {$name}");
                 return false;
             }
         }
@@ -1012,6 +1036,54 @@ class extension_installer {
 		// scan extension directory
 		$this->scan_extensions();
 
+		return true;
+	}
+
+	/**
+	 * Get the list of available extensions from the repository
+	 * @return array
+	 */
+	public function getRepoExtensions() {
+		if(empty($this->repo_cache)) {
+			$response = file_get_contents($this->getRepoListUrl());
+			if (empty($response)) {
+				return [];
+			} else {
+				$this->repo_cache = json_decode($response, true);
+			}
+		}
+		
+		return $this->repo_cache;
+	}
+
+	/**
+	 * Get the repository extension
+	 * @param string $name
+	 * @return array|null
+	 */
+	public function getRepoExtension($name) {
+		$repo_extensions = $this->getRepoExtensions();
+		
+		$repo_extension = array_filter($repo_extensions, function($ext) use ($name) {
+			return $ext['name'] === $name;
+		});
+
+		if(!empty($repo_extension)) {
+			return reset($repo_extension);
+		} else {
+			return null;
+		}
+	}
+
+	/**
+	 * Check if the extension is installed
+	 * @param string $name
+	 * @return bool
+	 */
+	public function isExtensionInstalled($name) {
+		if(!is_dir($this->extension_basedir.'/'.$name)) {
+			return false;
+		}
 		return true;
 	}
 
