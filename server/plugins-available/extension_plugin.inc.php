@@ -113,7 +113,7 @@ class extension_plugin {
             foreach($app->extension_installer->getErrors() as $error) {
                 $error_txt .= $error . "\n";
             }
-            $app->log('Extension installer error: ' . $error_txt, LOGLEVEL_WARNING);
+            $app->log('Extension installer error: ' . $error_txt, LOGLEVEL_WARN);
             return 'error';
         }
 		

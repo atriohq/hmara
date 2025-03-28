@@ -47,4 +47,5 @@ $wb['license_txt'] = 'License key';
 $wb['repo_version_txt'] = 'Repository Version';
 $wb['update_extension_txt'] = 'Update Extension';
 $wb['btn_save_txt'] = 'Save';
+$wb['invalid_license_txt'] = 'Invalid license key';
 ?>

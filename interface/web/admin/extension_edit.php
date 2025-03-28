@@ -118,7 +118,7 @@ if(count($_POST) > 0) {
 		// if license has changed
 		if($extension['license'] != $_POST['license']) {
 			// check license with regex
-			if(!preg_match('/^[a-zA-Z0-9\-]+$/', $_POST['license'])) {
+			if(!empty($_POST['license']) && !preg_match('/^[a-zA-Z0-9\-]+$/', $_POST['license'])) {
 				show_message('invalid_license_txt', 'admin/extension_repo_list.php');
 				$success = false;
 			}

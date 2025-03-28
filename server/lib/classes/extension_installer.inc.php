@@ -936,13 +936,13 @@ class extension_installer {
 		global $app;
 
 		// check name with regex
-		if (!preg_match('/^[a-z0-9_]+$/', $name)) {
+		if (!preg_match('/^[a-zA-Z0-9\-]+$/', $name)) {
 			$this->addError('Invalid extension name.');
 			return false;
 		}
 
 		// check license
-		if (!preg_match('/^[a-zA-Z0-9\-]+$/', $license)) {
+		if (!empty($license) && !preg_match('/^[a-zA-Z0-9\-]+$/', $license)) {
 			$this->addError('Invalid license.');
 			return false;
 		}
@@ -978,7 +978,7 @@ class extension_installer {
 		global $app;
 
 		// check name with regex
-		if (!preg_match('/^[a-z0-9_]+$/', $name)) {
+		if (!preg_match('/^[a-zA-Z0-9\-]+$/', $name)) {
 			$this->addError('Invalid extension name.');
 			return false;
 		}
@@ -1011,7 +1011,7 @@ class extension_installer {
 		global $app;
 
 		// check name with regex
-		if (!preg_match('/^[a-z0-9_]+$/', $name)) {
+		if (!preg_match('/^[a-zA-Z0-9\-]+$/', $name)) {
 			$this->addError('Invalid extension name.');
 			return false;
 		}
