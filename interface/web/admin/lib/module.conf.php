@@ -95,6 +95,24 @@ $module['nav'][] = array(   'title'     => 'Interface',
 // cleanup
 unset($items);
 
+$items[] = array(   'title'  => 'Available Extensions',
+	'target'  => 'content',
+	'link' => 'admin/extension_repo_list.php',
+	'html_id'   => 'extension_repo_list');
+
+$items[] = array(   'title'  => 'Installed Extensions',
+	'target'  => 'content',
+	'link' => 'admin/extension_install_list.php',
+	'html_id'   => 'extension_install_list');
+
+$module['nav'][] = array(   'title'     => 'Extension Installer',
+	'open'      => "1",
+	'items'     => $items);
+
+
+// cleanup
+unset($items);
+
 $items[] = array(   'title'  => 'Languages',
 	'target'  => 'content',
 	'link' => 'admin/language_list.php',

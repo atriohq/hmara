@@ -58,10 +58,11 @@ class extension_plugin {
         $app->plugins->registerAction('extension_disable', $this->plugin_name, 'extension_action');
         $app->plugins->registerAction('extension_list', $this->plugin_name, 'extension_action');
         $app->plugins->registerAction('extension_available', $this->plugin_name, 'extension_action');
+        $app->plugins->registerAction('extension_license_update', $this->plugin_name, 'extension_action');
 		
 	}
 
-	//* Do a backup action
+	//* Do a extension action
 	public function extension_action($action_name, $data) {
 		global $app, $conf;
 
@@ -73,24 +74,34 @@ class extension_plugin {
         switch($action_name) {
             case 'extension_install':
                 $app->extension_installer->install_extension($extension_name);
+                $app->extension_installer->scan_extensions();
                 break;
             case 'extension_update':
                 $app->extension_installer->update_extension($extension_name);
+                $app->extension_installer->scan_extensions();
                 break;
             case 'extension_uninstall':
                 $app->extension_installer->uninstall_extension($extension_name);
+                $app->extension_installer->scan_extensions();
                 break;
             case 'extension_enable':
                 $app->extension_installer->enable_extension($extension_name);
+                $app->extension_installer->scan_extensions();
                 break;
             case 'extension_disable':
                 $app->extension_installer->disable_extension($extension_name);
+                $app->extension_installer->scan_extensions();
                 break;
             case 'extension_list':
                 $app->extension_installer->list_extensions();
                 break;
             case 'extension_available':
                 $app->extension_installer->list_available_extensions();
+                break;
+            case 'extension_license_update':
+                // decode json
+                $data = json_decode($data, true);
+                $app->extension_installer->updateLicense($data['name'], $conf['server_id'], $data['license']);
                 break;
             default:
                 return 'Error: Invalid action';

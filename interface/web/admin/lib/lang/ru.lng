@@ -49,4 +49,7 @@ $wb['Do ISPConfig-Update'] = 'Обновление ISPConfig';
 $wb['Directive Snippets'] = 'Заготовки директив';
 $wb['Sites'] = 'Сайты';
 $wb['DNS'] = 'DNS';
+$wb['Extension Installer'] = 'Extension Installer';
+$wb['Available Extensions'] = 'Available Extensions';
+$wb['Installed Extensions'] = 'Installed Extensions';
 ?>

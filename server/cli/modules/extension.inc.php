@@ -445,7 +445,7 @@ class extension_cli extends cli {
         $red = "\033[31m";
         
         // Very simple table with fixed spacing
-        $this->swriteln($bold . "Name                Version     License      Description" . $ansi_reset);
+        $this->swriteln($bold . "Name                Version     Date         Description" . $ansi_reset);
         $this->swriteln("--------------------------------------------------------------------");
         
         foreach($extensions as $extension) {
@@ -462,10 +462,10 @@ class extension_cli extends cli {
                 $version = substr($version, 0, 7) . '...';
             }
             
-            $license = isset($extension['license']) ? $extension['license'] : 'Unknown';
-            // Truncate long license
-            if (strlen($license) > 10) {
-                $license = substr($license, 0, 7) . '...';
+            $date = isset($extension['date']) ? $extension['date'] : 'Unknown';
+            // Truncate long date
+            if (strlen($date) > 10) {
+                $date = substr($date, 0, 7) . '...';
             }
             
             $title = isset($extension['title']) ? $extension['title'] : 'No title available';
@@ -479,9 +479,9 @@ class extension_cli extends cli {
             // Add padding after version
             $this->swrite(str_repeat(' ', max(0, 12 - strlen($version))));
             
-            $this->swrite($license);
-            // Add padding after license
-            $this->swrite(str_repeat(' ', max(0, 13 - strlen($license))));
+            $this->swrite($date);
+            // Add padding after date
+            $this->swrite(str_repeat(' ', max(0, 13 - strlen($date))));
             
             $this->swriteln($title);
         }

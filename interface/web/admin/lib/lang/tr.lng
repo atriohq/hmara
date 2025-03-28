@@ -59,4 +59,7 @@ $wb['Import'] = 'Dil Yükleme';
 $wb['Remote Actions'] = 'Uzak İşlemler';
 $wb['Do OS-Update'] = 'İşletim Sistemi Güncelleme';
 $wb['Do ISPConfig-Update'] = 'ISPConfig Güncelleme';
+$wb['Extension Installer'] = 'Extension Installer';
+$wb['Available Extensions'] = 'Available Extensions';
+$wb['Installed Extensions'] = 'Installed Extensions';
 ?>

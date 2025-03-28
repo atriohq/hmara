@@ -49,4 +49,8 @@ $wb['System'] = 'Sistema';
 $wb['Updates'] = 'Actualizaciones';
 $wb['User Management'] = 'Administrador de usuarios';
 $wb['Web'] = 'Web';
+
+$wb['Extension Installer'] = 'Instalador de extensiones';
+$wb['Available Extensions'] = 'Extensiones disponibles';
+$wb['Installed Extensions'] = 'Extensiones instaladas';
 ?>

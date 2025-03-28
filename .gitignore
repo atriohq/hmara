@@ -65,3 +65,5 @@ Temporary Items
 /server/lib/config.inc.local.php
 /interface/lib/config.inc.local.php
 /install/existing_db.sql
+
+sync_config.jsonc

@@ -57,4 +57,8 @@ $wb['Import'] = '导入';
 $wb['Remote Actions'] = '远程操作';
 $wb['Do OS-Update'] = '执行操作系统更新';
 $wb['Do ISPConfig-Update'] = '执行ISPConfig更新';
+
+$wb['Extension Installer'] = '扩展安装器';
+$wb['Available Extensions'] = '可用的扩展';
+$wb['Installed Extensions'] = '已安装的扩展';
 ?>

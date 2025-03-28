@@ -630,11 +630,12 @@ class extension_installer {
 					'version' => $version,
 					'license' => $license
 				];
+				$app->log('Found extension: '.basename($extension_directory), LOGLEVEL_DEBUG);
             }
         }
 
 		if(!empty($extensions)) {
-			$app->log('Found extensions: '.print_r($extensions, true), LOGLEVEL_DEBUG);
+			//$app->log('Found extensions: '.print_r($extensions, true), LOGLEVEL_DEBUG);
 			// store in monitor_data table
 
 			// check if we have this type in monitor_data
@@ -897,6 +898,120 @@ class extension_installer {
 			throw new Exception("Failed to change group of target file: $target");
 		}
 	
+		return true;
+	}
+
+	/**
+	 * Update the license
+	 * @param string $name
+	 * @param int $server_id
+	 * @param string $license
+	 * @return bool
+	 */
+	public function updateLicense($name, $server_id, $license) {
+		global $app;
+
+		// check name with regex
+		if (!preg_match('/^[a-z0-9_]+$/', $name)) {
+			$this->addError('Invalid extension name.');
+			return false;
+		}
+
+		// check license
+		if (!preg_match('/^[a-zA-Z0-9\-]+$/', $license)) {
+			$this->addError('Invalid license.');
+			return false;
+		}
+
+		// check if extension is installed
+		if(!is_dir($this->extension_basedir.'/'.$name)) {
+			$this->addError('Extension - '.$name.' - is not installed.');
+			return false;
+		}
+
+		// write license file
+		$license_file = $this->extension_basedir.'/'.$name.'/license';
+		file_put_contents($license_file, $license);
+		chmod($license_file, 0640);
+		chown($license_file, 'ispconfig');
+		chgrp($license_file, 'ispconfig');
+
+		$app->log('License updated for extension - '.$name.' - on server - '.$server_id.' -', LOGLEVEL_DEBUG);
+
+		// scan extension directory
+		$this->scan_extensions();
+
+		return true;
+	}
+
+	/**
+	 * Get the license
+	 * @param string $name
+	 * @param int $server_id
+	 * @return string
+	 */
+	public function getLicense($name, $server_id) {
+		global $app;
+
+		// check name with regex
+		if (!preg_match('/^[a-z0-9_]+$/', $name)) {
+			$this->addError('Invalid extension name.');
+			return false;
+		}
+
+		// check if extension is installed
+		if(!is_dir($this->extension_basedir.'/'.$name)) {
+			$this->addError('Extension - '.$name.' - is not installed.');
+			return false;
+		}
+
+		// read license file
+		$license_file = $this->extension_basedir.'/'.$name.'/license';
+		if (!file_exists($license_file)) {
+			$this->addError('License file - '.$license_file.' - does not exist.');
+			return false;
+		}
+
+		$app->log('License read for extension - '.$name.' - on server - '.$server_id.' -', LOGLEVEL_DEBUG);
+
+		return file_get_contents($license_file);
+	}
+
+	/**
+	 * Delete the license
+	 * @param string $name
+	 * @param int $server_id
+	 * @return bool
+	 */
+	public function deleteLicense($name, $server_id) {
+		global $app;
+
+		// check name with regex
+		if (!preg_match('/^[a-z0-9_]+$/', $name)) {
+			$this->addError('Invalid extension name.');
+			return false;
+		}
+
+		// check if extension is installed
+		if(!is_dir($this->extension_basedir.'/'.$name)) {
+			$this->addError('Extension - '.$name.' - is not installed.');
+			return false;
+		}
+
+		// delete license file
+		$license_file = $this->extension_basedir.'/'.$name.'/license';
+		if (!file_exists($license_file)) {
+			$this->addError('License file - '.$license_file.' - does not exist.');
+			return false;
+		}
+
+		unlink($license_file);
+		
+		$app->log('License deleted for extension - '.$name.' - on server - '.$server_id.' -', LOGLEVEL_DEBUG);
+
+		// scan extension directory
+		$this->scan_extensions();
+
 		return true;
 	}
 
