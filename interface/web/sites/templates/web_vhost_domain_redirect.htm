@@ -1,14 +1,14 @@
 <tmpl_if name="config_error_msg">
-<div class="alert alert-danger">
-    <p>
-      <tmpl_var name="configuration_error_txt">
-        <div>
-          <div style="float:left;width:150px;">{tmpl_var name='config_error_tstamp'} :&nbsp;</div>
-          <div style="padding-left:150px;">{tmpl_var name='config_error_msg'}</div>
-        </div>
-    </p>
-  </div>
-</tmpl_if>
+    <div>
+        <p>
+          <div id="errormsg" class="alert alert-danger alert-dismissible" role="alert">
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <div style="float:left;width:150px;">{tmpl_var name='config_error_tstamp'} :&nbsp;</div>
+            <div style="padding-left:150px;">{tmpl_var name='config_error_msg'}</div>
+          </div>
+        </p>
+      </div>
+  </tmpl_if>
 
 
 
@@ -30,7 +30,7 @@
 			<div class="form-group nginx">
                 <label for="rewrite_rules" class="col-sm-3 control-label">{tmpl_var name='rewrite_rules_txt'}</label>
                 <div class="col-sm-9"><textarea class="form-control" name="rewrite_rules" id="rewrite_rules" rows='10' cols='50'>{tmpl_var name='rewrite_rules'}</textarea>
-				<b>{tmpl_var name="allowed_rewrite_rule_directives_txt"}</b>&nbsp;break&nbsp;if&nbsp;return&nbsp;rewrite&nbsp;set<br />&nbsp;<a href="http://wiki.nginx.org/HttpRewriteModule" target="_blank">http://wiki.nginx.org/HttpRewriteModule</a></div>
+                    <b>{tmpl_var name="allowed_rewrite_rule_directives_txt"}</b>&nbsp;break&nbsp;if&nbsp;return&nbsp;rewrite&nbsp;set<br />&nbsp;<a href="https://nginx.org/docs/http/ngx_http_rewrite_module.html" target="_blank">https://nginx.org/docs/http/ngx_http_rewrite_module.html</a></div>
             </div>
 			<tmpl_if name="is_ssl_enabled" op="==" value="y">
 			<div class="form-group">
@@ -91,5 +91,9 @@
             }
         });
     }
+
+    $('#errormsg').on('closed.bs.alert', function () {
+        $.get("sites/message_ack.php?relation=web_domain:{tmpl_var name='id'}&_csrf_id={tmpl_var name='_csrf_id_msg'}&_csrf_key={tmpl_var name='_csrf_key_msg'}");
+    });
 
 </script>

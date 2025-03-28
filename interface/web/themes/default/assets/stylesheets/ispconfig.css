@@ -119,6 +119,10 @@ max-width: 1260px; }
 	transition: all ease 500ms; }
 	#main-navigation .icon {
 	font-size: 32px; }
+	#main-navigation .bi-icon {
+		margin-top: 3px;
+		margin-bottom: -3px;
+		font-size: 28px; }
 	#main-navigation .title {
 		margin-top: 2px;
 	font-weight: bold; }
@@ -215,6 +219,12 @@ max-width: 1260px; }
 		float: left;
 		margin-right: 15px;
 	font-size: 50px; }
+	.modules .bi-icon {
+		float: left;
+		margin-right: 15px;
+		margin-top: 5px;
+		margin-left: 5px;
+		font-size: 35px; }
 	.modules .left {
 	margin-top: 5px; }
 	.modules .title {

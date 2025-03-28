@@ -3,21 +3,24 @@
 </div>
 
 <tmpl_if name='error'>
-	<div class="alert alert-danger">
+	<div id="errormsg" class="alert alert-danger alert-dismissible" role="alert">
+		<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
 		<tmpl_loop name="error">
 			{tmpl_var name='error_msg'}
 		</tmpl_loop>
 	</div>
 </tmpl_if>
 <tmpl_if name='warning'>
-	<div class="alert alert-danger">
+	<div id="warningmsg" class="alert alert-warning alert-dismissible" role="alert">
+		<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
 		<tmpl_loop name="warning">
 			{tmpl_var name='warning_msg'}
 		</tmpl_loop>
 	</div>
 </tmpl_if>
 <tmpl_if name='info'>
-	<div class="alert alert-notification">
+	<div id="infomsg" class="alert alert-notification alert-dismissible" role="alert">
+		<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
 		<tmpl_loop name="info">
 			{tmpl_var name='info_msg'}
 		</tmpl_loop>
@@ -30,3 +33,15 @@
 <tmpl_loop name='rightcol'>
 	{tmpl_var name='content'}
 </tmpl_loop>
+
+<script type = "text/javascript">
+	$('#infomsg').on('closed.bs.alert', function () {
+		$.get("dashboard/message_ack.php?message_state=info");
+	});
+	$('#warningmsg').on('closed.bs.alert', function () {
+		$.get("dashboard/message_ack.php?message_state=warning");
+	});
+	$('#errormsg').on('closed.bs.alert', function () {
+		$.get("dashboard/message_ack.php?message_state=error");
+	});
+</script>

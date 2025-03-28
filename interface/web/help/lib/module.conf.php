@@ -34,6 +34,7 @@ if(isset($_GET['go2_faq_sections_list'])){
 
 //* The width of the tab. Normally you should leave this empty and let the browser define the width automatically.
 $module['tab_width'] = '';
+$module['icon'] = 'icon icon-help';
 
 
 //*** Menu Definition *****************************************
@@ -89,8 +90,6 @@ else { //* the user
 		}
 }
 //* -- end of the FAQ menu section
-
-
 
 if($_SESSION['s']['user']['typ'] == 'admin') {
 	//* make sure that the items array is empty

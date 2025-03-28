@@ -159,7 +159,7 @@ class shelluser_jailkit_plugin {
 						//* call the ssh-rsa update function
 						$this->_setup_ssh_rsa();
 
-						$this->_setup_php_jailkit();
+						$this->_setup_shell_php();
 
 						$app->system->usermod($data['new']['username'], 0, 0, '', '/usr/sbin/jk_chrootsh', '', '');
 
@@ -273,7 +273,7 @@ class shelluser_jailkit_plugin {
 
 						$this->_add_jailkit_user();
 
-						$this->_setup_php_jailkit();
+						$this->_setup_shell_php();
 
 						//* call the ssh-rsa update function
 						$this->_setup_ssh_rsa();
@@ -740,8 +740,9 @@ class shelluser_jailkit_plugin {
 
 
 
-	function _setup_php_jailkit() {
+	function _setup_shell_php() {
 		global $app;
+
 
 		// Create .bashrc file
 		$app->load('tpl');
@@ -750,15 +751,18 @@ class shelluser_jailkit_plugin {
 		$os_type = $app->system->get_os_type();
 		$used_os_type = isset($os_type['type']) ? $os_type['type'] : 'unknown';
 
+		$web_docroot = rtrim($this->web['document_root'], '/');
+
 		if($used_os_type == "debian" || $used_os_type == "ubuntu") {
 			$tpl->newTemplate("bashrc_user_deb.master");
-			$php_binary = $this->web['document_root'] . '/etc/alternatives/php';
+			$php_alternatives = $web_docroot . '/etc/alternatives/php';
+			$home_php = $php_alternatives;
 		} elseif ($used_os_type == "redhat") {
 			$tpl->newTemplate("bashrc_user_redhat.master");
-			$php_binary = $this->web['document_root'] . '/home/' . $this->data['new']['username'] . '/.local/bin/php';
+			$home_php = $web_docroot . '/home/' . $this->data['new']['username'] . '/.local/bin/php';
 		} else {
 			$tpl->newTemplate("bashrc_user_generic.master");
-			$php_binary = $this->web['document_root'] . '/home/' . $this->data['new']['username'] . '/.local/bin/php';
+			$home_php = $web_docroot . '/home/' . $this->data['new']['username'] . '/.local/bin/php';
 		}
 
 		// Predefine some template vars
@@ -767,42 +771,8 @@ class shelluser_jailkit_plugin {
 		$tpl->setVar('home_dir', $this->_get_home_dir(""));
 
 		$php_bin_dir = dirname($this->web['php_cli_binary']);
-		$php_binary_path = $this->web['document_root'] . '/' . $this->web['php_cli_binary'];
+		$php_binary_path = $web_docroot . '/' . $this->web['php_cli_binary'];
 
-		if(preg_match('/^(\/usr\/(s)?bin|\/(s)?bin)/', $php_bin_dir)) {
-			// Use symlink if PHP binary is in /usr/(s)?bin or /(s)?bin
-			$tpl->setVar('use_php_path', false);
-
-			if(!file_exists($php_binary_path)) {
-				$app->log("The PHP cli binary " . $this->web['php_cli_binary'] . " is not available in the jail of the web " . $this->web['domain'] . " / SSH/SFTP user: " . $this->data['new']['username'] . ". Check your Jailkit setup!", LOGLEVEL_DEBUG);
-
-				$fallback_php = $app->system->get_newest_php_bin($this->web['document_root'] . $php_bin_dir);
-				if (!empty($fallback_php)) {
-					$fallback_php_bin = str_replace($this->web['document_root'], '', $fallback_php);
-
-					if(file_exists($fallback_php_bin)) {
-						if(is_link($php_binary) || is_file($php_binary) || !file_exists($php_binary)) {
-							unlink($php_binary);
-						}
-						symlink($fallback_php_bin, $php_binary);
-						$app->log("Found " . $fallback_php_bin . " as a fallback PHP binary in the jail of " . $this->web['domain'], LOGLEVEL_DEBUG);
-					}
-				}
-			} else {
-				if(is_link($php_binary) || is_file($php_binary) || !file_exists($php_binary)) {
-					unlink($php_binary);
-				}
-				symlink($this->web['php_cli_binary'], $php_binary);
-			}
-		} else {
-			// Use .bashrc to extend $PATH if PHP binary is in a custom path
-			$tpl->setVar('use_php_path', true);
-			$tpl->setVar('php_bin_dir', $php_bin_dir);
-
-			if(file_exists($php_binary)) {
-				unlink($php_binary);
-			}
-		}
 
 		$bashrc = $this->web['document_root'] . '/home/' . $this->data['new']['username'] . '/.bashrc';
 
@@ -816,6 +786,50 @@ class shelluser_jailkit_plugin {
 		$app->log("Added bashrc script: " . $bashrc, LOGLEVEL_DEBUG);
 
 		unset($tpl);
+
+		if(($this->web['server_php_id'] > 0) && empty($this->web['php_cli_binary'])) {
+			$app->log("The PHP cli binary is not set for the selected PHP version. Affected web: " . $this->web['domain'], LOGLEVEL_WARN);
+			return;
+		}
+
+		// Delete the PHP symlink in ~/.local/bin. This is necessary if we switch a shelluser's shell from none to jaikit!
+		// The symlink will be recreated later in this function, regardless of the chosen shell.
+		// In case you want to keep the symlink in .home/php, you can create a lock file ".lock_homephp" in the same directory.
+		// This can be useful if you want to keep the PHP binary in the jailkit chroot for some reason, instead of /etc/alternatives/php if you use a OS that uses alternatives.
+		if(file_exists($web_docroot . '/home/' . $this->data['new']['username'] . '/.local/bin/php') && !file_exists($web_docroot . '/home/' . $this->data['new']['username'] . '/.local/bin/.lock_homephp')) {
+			unlink($web_docroot . '/home/' . $this->data['new']['username'] . '/.local/bin/php');
+		} else {
+			$app->log("Lock file .lock_homephp for PHP exists in " . $web_docroot . '/home/' . $this->data['new']['username'] . '/.local/bin/.lock_homephp', LOGLEVEL_DEBUG);
+		}
+
+
+		// Check if the web's used PHP binary exists in jail
+		if(!file_exists($php_binary_path)) {
+			$app->log("The PHP cli binary " . $this->web['php_cli_binary'] . " is not available in the jail of the web " . $this->web['domain'] . " / SSH/SFTP user: " . $this->data['new']['username'] . ". Check your Jailkit setup!", LOGLEVEL_DEBUG);
+
+			// Check if any PHP binary is available in the jail and use the most recent version as fallback
+			$fallback_php = $app->system->get_newest_php_bin($web_docroot . $php_bin_dir);
+
+			if (!empty($fallback_php)) {
+				$fallback_php_bin = str_replace($web_docroot, '', $fallback_php);
+
+				if(file_exists($fallback_php_bin)) {
+					if(is_link($home_php) || is_file($home_php) || !file_exists($home_php)) {
+						unlink($home_php);
+					}
+					symlink($fallback_php_bin, $home_php);
+					$app->log("Found " . $fallback_php_bin . " as a fallback PHP binary in the jail of " . $this->web['domain'], LOGLEVEL_DEBUG);
+				}
+			}
+
+		} else {
+			// Create symlink to PHP binary in jail
+			if(is_link($home_php) || is_file($home_php) || !file_exists($home_php)) {
+				unlink($home_php);
+			}
+			symlink($this->web['php_cli_binary'], $home_php);
+			$app->log("Created symlink from " . $this->web['php_cli_binary'] ." to PHP binary: " . $home_php, LOGLEVEL_DEBUG);
+		}
 	}
 } // end class
 

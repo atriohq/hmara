@@ -1,6 +1,6 @@
 <?php
 /*
-Copyright (c) 2010 Till Brehm, projektfarm Gmbh and Oliver Vogel www.muv.com
+Copyright (c) 2025, Falko Timme, Timme Hosting GmbH & Co. KG
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
@@ -27,11 +27,19 @@ NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-$module['name']   = 'dashboard';
-$module['title']   = 'top_menu_dashboard';
-$module['template']  = 'dashboard.tpl.htm';
-$module['startpage']  = 'dashboard/dashboard.php';
-$module['tab_width']    = '';
-$module['order']    = '1';
-$module['icon'] = 'icon icon-dashboard';
+require_once '../../lib/config.inc.php';
+require_once '../../lib/app.inc.php';
 
+//* Check permissions for module
+$app->auth->check_module_permissions('dashboard');
+
+$app->uses('message');
+
+if(!empty($_GET['message_state'])) {
+    $app->message->hide_by_message_state($_GET['message_state']);
+}
+if(!empty($_GET['relation'])) {
+    $app->message->hide_by_message_relation($_GET['relation']);
+}
+
+?>
