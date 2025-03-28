@@ -20,7 +20,7 @@
                         <th data-column="server_id"><tmpl_var name="server_id_txt"></th>
                         <th data-column="parent_domain_id"><tmpl_var name="parent_domain_id_txt"></th>
                         <th data-column="run_min"><tmpl_var name="run_min_txt"></th>
-                        <th data-column="run_hour"><tmpl_var name="run_hour_txt"></th>
+                        <th class="tiny-col" data-column="run_hour"><tmpl_var name="run_hour_txt"></th>
                         <th data-column="run_mday"><tmpl_var name="run_mday_txt"></th>
                         <th data-column="run_month"><tmpl_var name="run_month_txt"></th>
                         <th data-column="run_wday"><tmpl_var name="run_wday_txt"></th>
@@ -45,7 +45,7 @@
                 <tbody>
                     <tmpl_loop name="records">
                         <tr>
-                            <td><a href="#" data-load-content="sites/cron_edit.php?id={tmpl_var name='id'}">{tmpl_var name="active"}</a></td>
+                            <td rowspan="2"><a href="#" data-load-content="sites/cron_edit.php?id={tmpl_var name='id'}">{tmpl_var name="active"}</a></td>
                             <td><a href="#" data-load-content="sites/cron_edit.php?id={tmpl_var name='id'}" data-toggle="tooltip" data-placement="bottom" title="{tmpl_var name='server_id'}">{tmpl_var name="server_id"}</a></td>
                             <td><a href="#" data-load-content="sites/cron_edit.php?id={tmpl_var name='id'}" data-toggle="tooltip" data-placement="bottom" title="{tmpl_var name='parent_domain_id'}">{tmpl_var name="parent_domain_id"}</a></td>
                             <td><a href="#" data-load-content="sites/cron_edit.php?id={tmpl_var name='id'}">{tmpl_var name="run_min"}</a></td>
@@ -53,12 +53,15 @@
                             <td><a href="#" data-load-content="sites/cron_edit.php?id={tmpl_var name='id'}">{tmpl_var name="run_mday"}</a></td>
                             <td><a href="#" data-load-content="sites/cron_edit.php?id={tmpl_var name='id'}">{tmpl_var name="run_month"}</a></td>
                             <td><a href="#" data-load-content="sites/cron_edit.php?id={tmpl_var name='id'}">{tmpl_var name="run_wday"}</a></td>
-                            <td><a href="#" data-load-content="sites/cron_edit.php?id={tmpl_var name='id'}" data-toggle="tooltip" data-placement="bottom" title="{tmpl_var name='command'}">{tmpl_var name="command"}</a></td>
-                            <td class="text-right">
+                            <td></td>
+                            <td rowspan="2" class="text-right" style="vertical-align: middle;">
                                 <div class="buttons icons16">
                                     <a class="btn btn-default formbutton-danger formbutton-narrow" href="javascript: ISPConfig.confirm_action('sites/cron_del.php?id={tmpl_var name='id'}&_csrf_id={tmpl_var name='csrf_id'}&_csrf_key={tmpl_var name='csrf_key'}&phpsessid={tmpl_var name='phpsessid'}','{tmpl_var name='delete_confirmation'}');"><span class="icon icon-delete"></span></a>
                                 </div>
                             </td>
+                        </tr>
+                        <tr>
+                            <td colspan=8><a href="#" data-load-content="sites/cron_edit.php?id={tmpl_var name='id'}" data-toggle="tooltip" data-placement="bottom" title="{tmpl_var name='command'}">{tmpl_var name="command"}</a></td>
                         </tr>
                     </tmpl_loop>
                     <tmpl_unless name="records">
