@@ -89,8 +89,11 @@ class extension_installer
 	public function getRepoExtension($name) {
 		$repo_extensions = $this->getRepoExtensions();
 		
-		$repo_extension = array_filter($repo_extensions, fn($ext) => $ext['name'] === $name);
-		
+		//$repo_extension = array_filter($repo_extensions, fn($ext) => $ext['name'] === $name);
+		$repo_extension = array_filter($repo_extensions, function($ext) use ($name) {
+			return $ext['name'] === $name;
+		});
+
 		if(!empty($repo_extension)) {
 			return reset($repo_extension);
 		} else {
@@ -122,7 +125,9 @@ class extension_installer
 				if(!empty($data_records) && is_array($data_records)) {
 					foreach($data_records as $data) {
 						// get title by searching in repo extensions
-						$repo_extension = array_filter($repo_extensions, fn($ext) => $ext['name'] === $data['name']);
+						$repo_extension = array_filter($repo_extensions, function($ext) use ($data) {
+							return $ext['name'] === $data['name'];
+						});
 						if(!empty($repo_extension)) {
 							$repo_extension = reset($repo_extension);
 							$extensions[] = [
@@ -148,7 +153,9 @@ class extension_installer
 		$extensions = $this->getInstalledExtensions($server_id);
 		
 		// search in extensions
-		$extension = array_filter($extensions, fn($ext) => $ext['name'] === $name);
+		$extension = array_filter($extensions, function($ext) use ($name) {
+			return $ext['name'] === $name;
+		});
 		if(!empty($extension)) {
 			return reset($extension);
 		} else {
@@ -168,7 +175,9 @@ class extension_installer
 
 		// check if extension is already installed
 		$installed_extensions = $this->getInstalledExtensions($server_id);
-		$extension = array_filter($installed_extensions, fn($ext) => $ext['name'] === $name);
+		$extension = array_filter($installed_extensions, function($ext) use ($name) {
+			return $ext['name'] === $name;
+		});
 		if(!empty($extension)) {
 			$this->addError('Extension already installed');
 			return false;
@@ -202,7 +211,9 @@ class extension_installer
 		
 		// check if extension is already installed
 		$installed_extensions = $this->getInstalledExtensions($server_id);
-		$extension = array_filter($installed_extensions, fn($ext) => $ext['name'] === $name);
+		$extension = array_filter($installed_extensions, function($ext) use ($name) {
+			return $ext['name'] === $name;
+		});
 		if(empty($extension)) {
 			$this->addError('Extension not installed');
 			return false;
@@ -229,7 +240,9 @@ class extension_installer
 		
 		// check if extension is already installed
 		$installed_extensions = $this->getInstalledExtensions($server_id);
-		$extension = array_filter($installed_extensions, fn($ext) => $ext['name'] === $name);
+		$extension = array_filter($installed_extensions, function($ext) use ($name) {
+			return $ext['name'] === $name;
+		});
 		if(empty($extension)) {
 			$this->addError('Extension not installed');
 			return false;
@@ -256,7 +269,9 @@ class extension_installer
 		
 		// check if extension is already installed
 		$installed_extensions = $this->getInstalledExtensions($server_id);
-		$extension = array_filter($installed_extensions, fn($ext) => $ext['name'] === $name);
+		$extension = array_filter($installed_extensions, function($ext) use ($name) {
+			return $ext['name'] === $name;
+		});
 		if(empty($extension)) {
 			$this->addError('Extension not installed');
 			return false;
@@ -283,7 +298,9 @@ class extension_installer
 		
 		// check if extension is already installed
 		$installed_extensions = $this->getInstalledExtensions($server_id);
-		$extension = array_filter($installed_extensions, fn($ext) => $ext['name'] === $name);
+		$extension = array_filter($installed_extensions, function($ext) use ($name) {
+			return $ext['name'] === $name;
+		});
 		if(empty($extension)) {
 			$this->addError('Extension not installed');
 			return false;
@@ -310,7 +327,9 @@ class extension_installer
 		
 		// check if extension is already installed
 		$installed_extensions = $this->getInstalledExtensions($server_id);
-		$extension = array_filter($installed_extensions, fn($ext) => $ext['name'] === $name);
+		$extension = array_filter($installed_extensions, function($ext) use ($name) {
+			return $ext['name'] === $name;
+		});
 		if(empty($extension)) {
 			$this->addError('Extension not installed');
 			return false;
