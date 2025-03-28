@@ -78,7 +78,8 @@ if(count($_POST) > 0) {
 			show_message('install_failed', $next_link, true);
 		} else {
 			$next_link = 'admin/extension_install_list.php';
-			show_message('install_success', $next_link);
+			$repo_extension = $app->extension_installer->getRepoExtension($name);
+			show_message('install_success', $next_link,false,$repo_extension['postinstall_info']);
 		}
 		
     }
@@ -127,19 +128,19 @@ if(count($_POST) > 0) {
 		}
 
 		if($success) {
-			show_message('update_success', 'admin/extension_repo_list.php');
+			show_message('update_success', 'admin/extension_repo_list.php', false);
 		} else {
-			show_message('update_failed', 'admin/extension_repo_list.php');
+			show_message('update_failed', 'admin/extension_repo_list.php', true);
 		}
 		
 		// update extension
 		/*
 		if($app->extension_installer->updateExtension($name, $server_id) === false) {
 			$next_link = 'admin/extension_install_list.php';
-			show_message('update_failed', $next_link);
+			show_message('update_failed', $next_link, true);
 		} else {
 			$next_link = 'admin/extension_install_list.php';
-			show_message('update_success', $next_link);
+			show_message('update_success', $next_link, false);
 		}
 		*/	
     }
@@ -196,28 +197,28 @@ switch($action) {
         if($app->extension_installer->deleteExtension($name, $server_id) === false) {
             show_message('delete_failed', 'admin/extension_install_list.php', true);
         } else {
-            show_message('delete_success', 'admin/extension_install_list.php');
+            show_message('delete_success', 'admin/extension_install_list.php', false);
         }
         break;
 	case 'enable':
 		if($app->extension_installer->enableExtension($name, $server_id) === false) {
             show_message('enable_failed', 'admin/extension_install_list.php', true);
         } else {
-            show_message('enable_success', 'admin/extension_install_list.php');
+            show_message('enable_success', 'admin/extension_install_list.php', false);
         }
 		break;
 	case 'disable':
 		if($app->extension_installer->disableExtension($name, $server_id) === false) {
             show_message('disable_failed', 'admin/extension_install_list.php', true);
         } else {
-            show_message('disable_success', 'admin/extension_install_list.php');
+            show_message('disable_success', 'admin/extension_install_list.php', false);
         }
 		break;
 	case 'update':
 		if($app->extension_installer->updateExtension($name, $server_id) === false) {
             show_message('update_failed', 'admin/extension_install_list.php', true);
         } else {
-            show_message('update_success', 'admin/extension_install_list.php');
+            show_message('update_success', 'admin/extension_install_list.php', false);
         }
 		break;
     default:
@@ -232,7 +233,7 @@ $app->tpl_defaults();
 $app->tpl->pparse();
 
 // ----------------------------------------------------------------------------------------
-function show_message($message, $next_link, $show_errors = false) {
+function show_message($message, $next_link, $show_errors = false, $info_text = '') {
 	global $app;
 
 	$app->tpl->newTemplate('form.tpl.htm');
@@ -250,6 +251,7 @@ function show_message($message, $next_link, $show_errors = false) {
 	
 	$app->tpl->setVar('message_txt', $message_txt);
 	$app->tpl->setVar('next_link', $next_link);
+	$app->tpl->setVar('info_text', $info_text);
 
 	$app->tpl_defaults();
 	$app->tpl->pparse();

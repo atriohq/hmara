@@ -7,6 +7,11 @@
 <p style="text-align:center;">
     {tmpl_var name='message_txt'}
 </p>
+{tmpl_if name='info_text'}
+<p style="text-align:center;">
+    {tmpl_var name='info_text'}
+</p>
+{/tmpl_if}
 <p style="text-align:center;">
     <a class="btn btn-default formbutton-default" type="button" value="{tmpl_var name='btn_next_txt'}" data-load-content="{tmpl_var name='next_link'}">{tmpl_var name='btn_next_txt'} &gt;</a>
 </p>
