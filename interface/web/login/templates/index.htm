@@ -12,9 +12,6 @@
 			    		<div class="form-group">
 			    			<input class="form-control" placeholder="{tmpl_var name='password_txt'}" name="password" id="password" type="password" value="">
 			    		</div>
-						<div class="form-group">
-							Logging in from: {tmpl_var name='remote_address'}
-						</div>
 						<tmpl_if name="session_timeout" op=">" value="0">
 						<tmpl_if name="session_allow_endless" value="y">
 			    		<div class="checkbox">
