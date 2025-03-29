@@ -49,4 +49,7 @@ $wb['Do ISPConfig-Update'] = 'Nadogradnja control panela';
 $wb['Directive Snippets'] = 'Direktive';
 $wb['Sites'] = 'Sites';
 $wb['DNS'] = 'DNS';
+$wb['Extension Installer'] = 'Extension Installer';
+$wb['Available Extensions'] = 'Available Extensions';
+$wb['Installed Extensions'] = 'Installed Extensions';
 ?>

@@ -49,4 +49,8 @@ $wb['Do OS-Update'] = 'Udfør OS-Opdatering';
 $wb['Do ISPConfig-Update'] = 'Udfør ISPConfig-Opdatering';
 $wb['Sites'] = 'Sites';
 $wb['DNS'] = 'DNS';
+
+$wb['Extension Installer'] = 'Instalátor rozšíření';
+$wb['Available Extensions'] = 'Dostupná rozšíření';
+$wb['Installed Extensions'] = 'Nainstalovaná rozšíření';
 ?>

@@ -1,0 +1,10 @@
+<?php
+$wb['name_txt'] = 'Name';
+$wb['version_txt'] = 'Version';
+$wb['date_txt'] = 'Datum';
+$wb['title_txt'] = 'Titel';
+$wb['delete_confirmation'] = 'Sind Sie sicher, dass Sie diese Extension löschen möchten?';
+$wb['update_extension_txt'] = 'Update';
+$wb['install_extension_txt'] = 'Installieren';
+$wb['server_id_txt'] = 'Server ID';
+?>

@@ -50,3 +50,7 @@ $wb['Import'] = 'Importar';
 $wb['Remote Actions'] = 'Ações remotas';
 $wb['Do OS-Update'] = 'Atualizar sistema operacional';
 $wb['Do ISPConfig-Update'] = 'Atualizar o ISPConfig';
+
+$wb['Extension Installer'] = 'Extension Installer';
+$wb['Available Extensions'] = 'Available Extensions';
+$wb['Installed Extensions'] = 'Installed Extensions';

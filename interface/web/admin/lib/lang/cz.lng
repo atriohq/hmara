@@ -51,3 +51,7 @@ $wb['Sites'] = 'Stránky';
 $wb['DNS'] = 'DNS';
 $wb['2'] = 'Uživatelské jméno nebo heslo je prázdné.';
 $wb['3'] = 'Uživatelské jméno nebo heslo je nesprávné.';
+
+$wb['Extension Installer'] = 'Instalátor rozšíření';
+$wb['Available Extensions'] = 'Dostupná rozšíření';
+$wb['Installed Extensions'] = 'Nainstalovaná rozšíření';

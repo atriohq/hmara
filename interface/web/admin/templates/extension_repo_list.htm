@@ -1,0 +1,59 @@
+<div class='page-header'>
+	<h1><tmpl_var name="available_extensions_list_head_txt"></h1>
+</div>
+
+<p><tmpl_var name="available_extensions_list_desc_txt"></p>
+<p class="fieldset-legend">{tmpl_var name="toolsarea_head_txt"}</p>
+<!-- <button class="btn btn-default formbutton-success" type="button" data-load-content="admin/firewall_edit.php">{tmpl_var name="add_new_record_txt"}</button> -->
+<p class="fieldset-legend"><tmpl_var name="list_head_txt"></p>
+
+<div class="table-wrapper marginTop15">
+    <table class="table">
+        <thead class="dark form-group-sm">
+            <tr>
+                <th data-column="name"><tmpl_var name="name_txt"></th>
+                <th data-column="version"><tmpl_var name="version_txt"></th>
+                <th data-column="date"><tmpl_var name="date_txt"></th>
+                <th data-column="title"><tmpl_var name="title_txt"></th>
+                <th class="small-col text-right">{tmpl_var name='search_limit'}</th>
+            </tr>
+            <!--
+            <tr>
+                <td><select class="form-control" name="search_name">{tmpl_var name='search_name'}</select></td>
+                <td><select class="form-control" name="search_version">{tmpl_var name='search_version'}</select></td>
+                <td><input class="form-control" type="text" name="search_title" value="{tmpl_var name='search_title'}" /></td>
+                <td class="text-right">
+                    <button type="button" class="btn btn-default formbutton-default formbutton-narrow" name="Filter" id="Filter" value="{tmpl_var name="filter_txt"}" data-submit-form="pageForm" data-form-action="admin/firewall_list.php"><span class="icon icon-filter"></span></button>
+                </td>
+            </tr>
+            -->
+        </thead>
+        <tbody>
+            <tmpl_loop name="records">
+                <tr>
+                    <td><a href="#" data-load-content="admin/extension_edit.php?name={tmpl_var name='name'}&action=install">{tmpl_var name="name"}</a></td>
+                    <td><a href="#" data-load-content="admin/extension_edit.php?name={tmpl_var name='name'}&action=install">{tmpl_var name="version"}</a></td>
+                    <td><a href="#" data-load-content="admin/extension_edit.php?name={tmpl_var name='name'}&action=install">{tmpl_var name="date"}</a></td>
+                    <td><a href="#" data-load-content="admin/extension_edit.php?name={tmpl_var name='name'}&action=install">{tmpl_var name="title"}</a></td>
+                    <td class="text-right">
+                        <button class="btn btn-default formbutton-success formbutton-narrow" type="button" data-load-content="admin/extension_edit.php?name={tmpl_var name='name'}&action=install">{tmpl_var name="install_extension_txt"}</button>
+                    </td>
+                </tr>
+            </tmpl_loop>
+            <tmpl_unless name="records">
+                <tr class="tbl_row_noresults tbl_row_<tmpl_if name='__EVEN__'}even<tmpl_else>uneven</tmpl_if>">
+                    <td colspan="5">{tmpl_var name='globalsearch_noresults_text_txt'}</td>
+                </tr>
+            </tmpl_unless>
+        </tbody>
+        <!--
+        <tfoot>
+            <tr>
+                <td colspan="5"><tmpl_var name="paging"></td>
+            </tr>
+        </tfoot>
+        -->
+    </table>
+</div>
+        
+    
