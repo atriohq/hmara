@@ -53,6 +53,7 @@ $msg = '';
 $max_session_code_retry = 3;
 $max_global_code_retry = 10;
 $otp_recovery_code_length = 32;
+$max_time = 600; // time in seconds until the session gets invalidated
 
 // CSRF Check if we got POST data.
 if(count($_POST) >= 1) {
@@ -83,6 +84,8 @@ function finish_2fa_success($msg = '') {
 	die();
 }
 
+$sys_user = $app->db->queryOneRecord('SELECT otp_attempts FROM sys_user WHERE userid = ?', $_SESSION['s_pending']['user']['userid']);
+
 // Handle recovery code
 if(isset($_POST['code']) && strlen($_POST['code']) == $otp_recovery_code_length) {
 	//* TODO Recovery code handling
@@ -91,6 +94,7 @@ if(isset($_POST['code']) && strlen($_POST['code']) == $otp_recovery_code_length)
 
 	//* We allow one more try to enter recovery code
 	if($user['otp_attempts'] > $max_global_code_retry + 1) {
+		# TODO document what the adin can do.
 		die("Sorry, contact your administrator.");
 	}
 
@@ -102,13 +106,16 @@ if(isset($_POST['code']) && strlen($_POST['code']) == $otp_recovery_code_length)
 	}
 }
 
+if ($sys_user['otp_attempts'] > $max_global_code_retry) {
+	$app->error('Otp max attemptys reached', 'index.php');
+	die();
+}
 
 // Begin 2fa via Email.
 if($_SESSION['otp']['type'] == 'email') {
 
 	//* Email 2fa handler settings
 	$max_code_resend = 3;
-	$max_time = 600; // time in seconds until the code gets invalidated
 	$code_length = 6;
 
 	if(isset($_POST['code']) && strlen($_POST['code']) == $code_length && isset($_SESSION['otp']['code_hash'])) {
@@ -232,35 +239,31 @@ if($_SESSION['otp']['type'] == 'email') {
 	// Show form to enter email code
 	// ... below
 
-} elseif($_SESSION['otp']['type'] == 'totp') {
+} elseif ($_SESSION['otp']['type'] == 'totp') {
 
 	// Get otp_data
-	$sys_user = $app->db->queryOneRecord('SELECT otp_data FROM sys_user WHERE userid = ?', $_SESSION['s_pending']['user']['userid']);
+	$sys_user = $app->db->queryOneRecord('SELECT otp_data, otp_attempts FROM sys_user WHERE userid = ?', $_SESSION['s_pending']['user']['userid']);
 	$data = json_decode($sys_user['otp_data'], TRUE);
 
 	$code_length = 6;
 
+	if (isset($_POST['code']) && strlen($_POST['code']) == $code_length && is_numeric($_POST['code'])
+		&& isset($data['totp_secret'])) {
 
-
-	if(isset($_POST['code']) && strlen($_POST['code']) == $code_length && isset($data['totp_secret'])) {
-
-	$auth = new SimpleAuthenticator($code_length, 'SHA1');
-
-		$user = $app->db->queryOneRecord('SELECT otp_attempts FROM sys_user WHERE userid = ?', $_SESSION['s_pending']['user']['userid']);
+		$auth = new SimpleAuthenticator($code_length, 'SHA1');
 
 		//* Check if we reached limits
-#		if($_SESSION['otp']['sent'] > $max_code_resend /// ???
-#			|| $_SESSION['otp']['session_attempts'] > $max_session_code_retry
-#			|| $user['otp_attempts'] > $max_global_code_retry
-#			|| time() > $_SESSION['otp']['starttime'] + $max_time
-#			) {
-#			unset($_SESSION['otp']);
-#			unset($_SESSION['s_pending']);
-#			$app->error('2FA failed','index.php');
-#		}
+		if (
+			$_SESSION['otp']['session_attempts'] > $max_session_code_retry
+			|| $sys_user['otp_attempts'] > $max_global_code_retry
+			|| time() > $_SESSION['otp']['starttime'] + $max_time
+			) {
+			unset($_SESSION['otp']);
+			unset($_SESSION['s_pending']);
+			$app->error('2FA failed','index.php');
+		}
 
-		// TODO verify $data['totp_secret'] matches
-		if($auth->verifyCode($data['totp_secret'], $_POST['code'], 2)) {
+		if ($auth->verifyCode($data['totp_secret'], $_POST['code'], 2)) {
 			// 2fa success
 			finish_2fa_success('with totp-2fa');
 		} else {
@@ -270,8 +273,11 @@ if($_SESSION['otp']['type'] == 'email') {
 		}
 	}
 	else {
+		$_SESSION['otp']['starttime'] = time();
+
 		// JUST FOR DEBUGGING - provide a sample totp code.
 		#$auth = new SimpleAuthenticator($code_length, 'SHA1');
+		#$_SESSION['otp']['sys_user'] = $sys_user;
 		#$_SESSION['otp']['sample_code'] = $auth->getCode($data['totp_secret']);
 	}
 } else {
