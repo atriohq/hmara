@@ -175,6 +175,10 @@ switch($action) {
 		} else {
 			$app->tpl->setVar('show_update', false);
 		}
+		// show postinstall_info
+		if(!empty($extension['postinstall_info'])) {
+			$app->tpl->setVar('postinstall_info', $extension['postinstall_info']);
+		}
         break;
     case 'install':
         $app->tpl->setInclude('content_tpl', 'templates/extension_install.htm');

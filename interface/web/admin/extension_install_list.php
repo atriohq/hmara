@@ -56,7 +56,7 @@ if(!empty($records)) {
 unset($records);
 
 $app->tpl->setLoop('records', $records_out);
-$app->tpl->setVar('show_extensions', !empty($records_out));
+$app->tpl->setVar('has_records', !empty($records_out));
 
 //* load language file
 $lng_file = 'lib/lang/'.$app->functions->check_language($_SESSION['s']['language']).'_extension_install_list.lng';
