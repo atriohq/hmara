@@ -655,7 +655,11 @@ class extension_installer {
 				"'" . 'ok' . "'" .
 				')';
 				$app->dbmaster->query($sql);
-			}
+			} 
+		} else {
+			// Delete monitor_data record
+			$sql = 'DELETE FROM `monitor_data` WHERE `type` = ? and `server_id` = ?';
+			$app->dbmaster->query($sql, 'extensions', $conf['server_id']);
 		}
 
         return $extensions;

@@ -85,6 +85,15 @@
             </div>
         </div>   
         <!-- -------------------------- -->
+        <tmpl_if name="postinstall_info">
+        <div class="form-group">
+            <label class="col-sm-3 control-label">{tmpl_var name='postinstall_info_txt'}</label>
+            <div class="col-sm-9">
+                <p style="margin-top: 8px;">{tmpl_var name='postinstall_info'}</p>
+            </div>
+        </div>
+        </tmpl_if>
+        <!-- -------------------------- -->
         <input type="hidden" name="action" value="edit" />
                 
         <div class="clear">
