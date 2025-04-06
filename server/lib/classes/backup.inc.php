@@ -1749,7 +1749,7 @@ class backup
         if (empty($backup_job))
             $backup_job = "auto";
 
-        $records = $app->dbmaster->queryAllRecords("SELECT * FROM web_database WHERE server_id = ? AND parent_domain_id = ?", $server_id, $domain_id);
+        $records = $app->dbmaster->queryAllRecords("SELECT * FROM web_database WHERE type = 'mysql' AND server_id = ? AND parent_domain_id = ?", $server_id, $domain_id);
         if (empty($records)){
             $app->log('Skipping database backup for domain ' . $web_domain['domain_id'] . ', because no related databases found.', LOGLEVEL_DEBUG);
             return true;
