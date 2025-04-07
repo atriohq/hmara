@@ -77,6 +77,19 @@ class page_action extends tform_actions {
 		}
 	}
 
+function onShowEdit() {
+    global $app, $conf;
+
+		$sys_user = $app->db->queryOneRecord('SELECT otp_type, otp_data FROM sys_user WHERE userid = ?', $this->id);
+		$data = json_decode($sys_user['otp_data'], TRUE);
+		$app->tpl->setVar('otp_type_value', $sys_user['otp_type']);
+		if (!empty($data['totp_secret'])) {
+			$app->tpl->setVar('totp_secret', '(already_set)');
+		}
+
+    parent::onShowEdit();
+  }
+
 	function onInsert() {
 		die('No inserts allowed.');
 	}
@@ -95,7 +108,7 @@ class page_action extends tform_actions {
 		$_SESSION['s']['language'] = $language;
 	}
 
-function onSubmit() {
+	function onSubmit() {
 		global $app, $conf;
 
 		if ($this->dataRecord['otp_type'] == 'totp' && !empty($this->dataRecord['totp_secret'])) {
@@ -106,19 +119,17 @@ function onSubmit() {
 				$sys_user = $app->db->queryOneRecord('SELECT otp_data FROM sys_user WHERE userid = ?', $_SESSION['s']['user']['userid']);
 				$data = json_decode($sys_user['otp_data'], TRUE);
 
-				$app->db->query("UPDATE sys_user SET otp_data=? WHERE userid = ?", json_encode($data), $_SESSION['s']['user']['userid']);
 				$data['totp_secret'] = $this->dataRecord['totp_secret'];
-				//$this->dataRecord['otp_data'] = json_encode($data);
+				$app->db->query("UPDATE sys_user SET otp_data=? WHERE userid = ?", json_encode($data), $_SESSION['s']['user']['userid']);
 			}
 			else {
 				//$this->dataRecord['totp_secret'] = ''; // ???
 				$app->tform->errorMessage = 'totp_verification_code_incorrect'; $app->tform->lng('totp_verification_code_incorrect');
 			}
-		} 
-# Store totp secret in otp_data column
+		}
 
-parent::onSubmit();
-}
+		parent::onSubmit();
+	}
 
 	function onAfterUpdate() {
 		global $app;

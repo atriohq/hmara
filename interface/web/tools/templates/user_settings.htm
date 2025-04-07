@@ -32,9 +32,11 @@
     <select name="otp_type" id="otp_type" class="form-control" OnChange="updateOtpPage();">
       {tmpl_var name='otp_type'}
     </select>
+	<tmpl_if name='otp_type_value' op="==" value="totp">
 	<button class="btn btn-default formbutton-success" type="button" value="FOO" OnClick="resetTotpSecret()">Reset TOTP secret</button>
+	</tmpl_if>
 	<div id="totp-form" style="display: none;">
-	  <input type="hidden" id="totp_secret" name="totp_secret" value="">
+	  <input type="hidden" id="totp_secret" name="totp_secret" value="{tmpl_var name='totp_secret'}">
 	  <div id="qr_placeHolder"></div>
 	  <div id="url_placeHolder"></div>
 	  <label for="totp_verification_code">Load the QR code in an authenticator app and enter a verification code to Save it: </label>
@@ -99,6 +101,7 @@ function resetTotpSecret() {
 	jQuery('#totp_secret').val(generateTOTPSecret());
 	draw_new_totp_info();
 	jQuery('#totp-form').show();
+	jQuery('#totp_verification_code').focus();
 }
 
 function checkTotpCode() {
