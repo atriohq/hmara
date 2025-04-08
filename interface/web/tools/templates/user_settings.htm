@@ -123,7 +123,6 @@ function updateOtpPage() {
 }
 
 function resetTotpSecret() {
-	//jQuery('#totp_secret').val('FPDBZLFNWCL5OYPD527GUN5Q3PULA4WX');
 	jQuery('#totp_secret').val(generateTOTPSecret());
 	draw_new_totp_info();
 	jQuery('#totp-form').show();

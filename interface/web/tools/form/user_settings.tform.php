@@ -122,7 +122,7 @@ if($_SESSION["s"]["user"]["typ"] == 'admin') {
 $otp_method_list = array(
 	'none' => 'none',
 	'email' => 'email',
-	'totp' => 'totp',
+	'totp' => 'TOTP',
 );
 
 //* Load themes
