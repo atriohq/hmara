@@ -77,8 +77,8 @@ class page_action extends tform_actions {
 		}
 	}
 
-function onShowEdit() {
-    global $app, $conf;
+	function onShowEdit() {
+		global $app, $conf;
 
 		$sys_user = $app->db->queryOneRecord('SELECT otp_type, otp_data FROM sys_user WHERE userid = ?', $this->id);
 		$data = json_decode($sys_user['otp_data'], TRUE);
@@ -87,8 +87,15 @@ function onShowEdit() {
 			$app->tpl->setVar('totp_secret', '(already_set)');
 		}
 
-    parent::onShowEdit();
-  }
+		$server_domain = (isset($_SERVER['SERVER_NAME']) ? $_SERVER['SERVER_NAME'] : $_SERVER['HTTP_HOST']);
+		if (!empty($conf['interface_base_url'])) {
+			$server_domain = parse_url($conf['interface_base_url'], PHP_URL_HOST);
+		}
+		$app->tpl->setVar('server_domain', $server_domain);
+		$app->tpl->setVar('cpuser', $_SESSION['s']['user']['username'], true);
+
+		parent::onShowEdit();
+	}
 
 	function onInsert() {
 		die('No inserts allowed.');

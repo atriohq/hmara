@@ -33,7 +33,7 @@
       {tmpl_var name='otp_type'}
     </select>
 	<tmpl_if name='otp_type_value' op="==" value="totp">
-	<button class="btn btn-default formbutton-success" type="button" value="FOO" OnClick="resetTotpSecret()">Reset TOTP secret</button>
+	<button class="btn btn-default formbutton-success" type="button" id="reset_totp_button" OnClick="resetTotpSecret()">Reset TOTP secret</button>
 	</tmpl_if>
 	<div id="totp-form" style="display: none;">
 	  <input type="hidden" id="totp_secret" name="totp_secret" value="{tmpl_var name='totp_secret'}">
@@ -77,22 +77,48 @@
 <script type="text/javascript" src="../js/qrcode.js"></script>
 <script type="text/javascript">
 
-function generateTOTPSecret(length = 32) {
+// Base32 encoder (RFC 4648, no padding)
+function base32Encode(bytes) {
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+  let bits = 0;
+  let value = 0;
+  let output = '';
+
+  for (let byte of bytes) {
+	value = (value << 8) | byte;
+	bits += 8;
+
+	while (bits >= 5) {
+	  output += alphabet[(value >>> (bits - 5)) & 31];
+	  bits -= 5;
+	}
+  }
+
+  if (bits > 0) {
+	output += alphabet[(value << (5 - bits)) & 31];
+  }
+
+  return output;
+}
+
+// Generate a random Base32 secret
+function generateTOTPSecret(length = 20) {
   const array = new Uint8Array(length);
-  window.crypto.getRandomValues(array);
-  return btoa(String.fromCharCode(...array)) // Convert to Base64
-    .replace(/[^A-Z2-7]/gi, "") // Convert to Base32-like format
-    .substring(0, length);
+  crypto.getRandomValues(array);
+  return base32Encode(array);
 }
 
 function updateOtpPage() {
 	type = jQuery('#otp_type').val();
-	if (type == 'totp') {	
-		if (jQuery('#totp_secret').val() != '(already_set)') {
+	if (type == 'totp') {
+		if (jQuery('#totp_secret').val() == '(already_set)') {
+			jQuery('#reset_totp_button').show();
+		} else {
 			resetTotpSecret();
 		}
 	} else {
 		jQuery('#totp-form').hide();
+		jQuery('#reset_totp_button').hide();
 	}
 }
 
@@ -114,14 +140,11 @@ function draw_new_totp_info() {
 	var errorCorrectionLevel = 'L';
 	var qr = qrcode(typeNumber, errorCorrectionLevel);
 
-	// TODO get sitename to use as Issuer
-	// TODO get site url to use 
-	otpauth_url = 'otpauth://totp/Test2@ispdev.mx10.nl?secret=' + jQuery('#totp_secret').val() + '&issuer=ISPconfig';
+	otpauth_url = 'otpauth://totp/' + encodeURIComponent('{tmpl_var name='cpuser'}') + '@' + encodeURIComponent('{tmpl_var name='server_domain'}') + '?secret=' + jQuery('#totp_secret').val() + '&issuer=ISPconfig';
 	qr.addData(otpauth_url);
 	qr.make();
 	document.getElementById('qr_placeHolder').innerHTML = qr.createImgTag(5, 2, 'QR code');
-	document.getElementById('url_placeHolder').innerHTML = 'Secret: ' + jQuery('#totp_secret').val() + '<br / >URL: ' + otpauth_url;
+	document.getElementById('url_placeHolder').innerHTML = 'Secret: ' + jQuery('#totp_secret').val() + '<br / >URL: <a href=' + otpauth_url + '">' + otpauth_url + '</a>';
 }
 
 </script>
-
