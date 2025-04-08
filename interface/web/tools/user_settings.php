@@ -94,6 +94,12 @@ class page_action extends tform_actions {
 		$app->tpl->setVar('server_domain', $server_domain);
 		$app->tpl->setVar('cpuser', $_SESSION['s']['user']['username'], true);
 
+		// A message from the previous page onSubmit()?
+		if (isset($_SESSION['msg'])) {
+			$app->tpl->setVar('msg', $_SESSION['msg']);
+			unset($_SESSION['msg']);
+		}
+
 		parent::onShowEdit();
 	}
 
@@ -118,7 +124,11 @@ class page_action extends tform_actions {
 	function onSubmit() {
 		global $app, $conf;
 
-		if ($this->dataRecord['otp_type'] == 'totp' && !empty($this->dataRecord['totp_secret'])) {
+		if ($this->dataRecord['otp_type'] == 'totp' && !empty($this->dataRecord['totp_secret'])
+			&& $this->dataRecord['totp_secret'] != '(already_set)') {
+
+			$sys_user = $app->db->queryOneRecord('SELECT otp_type, otp_data FROM sys_user WHERE userid = ?', $_SESSION['s']['user']['userid']);
+
 			$code_length = 6;
 			$auth = new SimpleAuthenticator($code_length, 'SHA1');
 
@@ -128,10 +138,12 @@ class page_action extends tform_actions {
 
 				$data['totp_secret'] = $this->dataRecord['totp_secret'];
 				$app->db->query("UPDATE sys_user SET otp_data=? WHERE userid = ?", json_encode($data), $_SESSION['s']['user']['userid']);
+				$_SESSION['msg'] = 'TOTP secret validated and stored, Two Factor Authentication is now enabled.';
 			}
 			else {
-				//$this->dataRecord['totp_secret'] = ''; // ???
-				$app->tform->errorMessage = 'totp_verification_code_incorrect'; $app->tform->lng('totp_verification_code_incorrect');
+				$app->tform->errorMessage = $app->tform->lng('totp_verification_code_incorrect');
+				$this->dataRecord['totp_secret'] = ''; // Force reset...
+				$this->dataRecord['otp_type'] = $sys_user['otp_type'];
 			}
 		}
 

@@ -32,9 +32,7 @@
     <select name="otp_type" id="otp_type" class="form-control" OnChange="updateOtpPage();">
       {tmpl_var name='otp_type'}
     </select>
-	<tmpl_if name='otp_type_value' op="==" value="totp">
-	<button class="btn btn-default formbutton-success" type="button" id="reset_totp_button" OnClick="resetTotpSecret()">Reset TOTP secret</button>
-	</tmpl_if>
+	<button class="btn btn-default formbutton-success" type="button" id="reset_totp_button" OnClick="resetTotpSecret()" style="display: none;">Reset TOTP secret</button>
 	<div id="totp-form" style="display: none;">
 	  <input type="hidden" id="totp_secret" name="totp_secret" value="{tmpl_var name='totp_secret'}">
 	  <div id="qr_placeHolder"></div>
@@ -129,10 +127,6 @@ function resetTotpSecret() {
 	jQuery('#totp_verification_code').focus();
 }
 
-function checkTotpCode() {
-
-}
-
 function draw_new_totp_info() {
 	// docs: https://github.com/kazuhikoarase/qrcode-generator/tree/master/js
 	var typeNumber = 0;
@@ -145,5 +139,7 @@ function draw_new_totp_info() {
 	document.getElementById('qr_placeHolder').innerHTML = qr.createImgTag(5, 2, 'QR code');
 	document.getElementById('url_placeHolder').innerHTML = 'Secret: ' + jQuery('#totp_secret').val() + '<br / >URL: <a href=' + otpauth_url + '">' + otpauth_url + '</a>';
 }
+
+updateOtpPage();
 
 </script>
