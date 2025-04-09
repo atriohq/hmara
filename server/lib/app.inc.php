@@ -311,18 +311,26 @@ class app extends stdClass {
 			if($dblog === true && isset($this->dbmaster)) {
 				$server_id = $conf['server_id'];
 				$loglevel = $priority;
-				$message = $msg;
-				$datalog_id = (isset($this->modules->current_datalog_id) && $this->modules->current_datalog_id > 0)? $this->modules->current_datalog_id : 0;
+
+				// Truncate the message for database logging if a limit is set and if the message exceeds that limit
+				// Full message is logged to the logfiles
+				$db_message = $msg;
+				if(isset($conf['db_log_message_max_length']) && is_int($conf['db_log_message_max_length']) && $conf['db_log_message_max_length'] > 0) {
+					if(strlen($db_message) > $conf['db_log_message_max_length']) {
+						$db_message = substr($db_message, 0, length: $conf['db_log_message_max_length']) . '...';
+					}
+				}
+
+				$datalog_id = (isset($this->modules->current_datalog_id) && $this->modules->current_datalog_id > 0) ? $this->modules->current_datalog_id : 0;
 				if($datalog_id > 0) {
 					$tmp_rec = $this->dbmaster->queryOneRecord("SELECT count(syslog_id) as number FROM sys_log WHERE datalog_id = ? AND loglevel = ?", $datalog_id, LOGLEVEL_ERROR);
-					//* Do not insert duplicate errors into the web log.
 					if($tmp_rec['number'] == 0) {
 						$sql = "INSERT INTO sys_log (server_id,datalog_id,loglevel,tstamp,message) VALUES (?, ?, ?, UNIX_TIMESTAMP(), ?)";
-						$this->dbmaster->query($sql, $server_id, $datalog_id, $loglevel, $message);
+						$this->dbmaster->query($sql, $server_id, $datalog_id, $loglevel, $db_message);
 					}
 				} else {
 					$sql = "INSERT INTO sys_log (server_id,datalog_id,loglevel,tstamp,message) VALUES (?, 0, ?, UNIX_TIMESTAMP(), ?)";
-					$this->dbmaster->query($sql, $server_id, $loglevel, $message);
+					$this->dbmaster->query($sql, $server_id, $loglevel, $db_message);
 				}
 			}
 
