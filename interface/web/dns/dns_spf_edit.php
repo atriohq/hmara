@@ -164,13 +164,13 @@ class page_action extends tform_actions {
 		
 		// Check that the record does not yet exist.
 		// '' and 'example.com.' are effectively the same name so we also look for those variants.
-		$existing_records = $app->db->queryAllRecords("SELECT r.*, s.origin FROM dns_rr r
-					LEFT JOIN dns_soa s ON (r.zone=s.id)
-					WHERE zone = ? AND (name = ? /* an exact match */
-										OR (name = s.origin AND ? = '') /* e.g. name = 'example.com.' and we are posting an empty value */
-										OR (name = '' AND s.origin = ?) /* e.g. name is empty and we're posting e.g. 'example.com' */ )
-						AND type = 'TXT' AND data LIKE 'v=spf1%'
-						AND " . $app->tform->getAuthSQL('r', 'r'),
+		$existing_records = $app->db->queryAllRecords("SELECT r.*, s.origin FROM dns_rr r"
+					." LEFT JOIN dns_soa s ON (r.zone=s.id)"
+					." WHERE zone = ? AND (name = ?" /* an exact match */
+										." OR (name = s.origin AND ? = '')" /* e.g. name = 'example.com.' and we're posting an empty value */
+										." OR (name = '' AND s.origin = ?))" /* e.g. name is empty and we're posting e.g. 'example.com' */
+						." AND type = 'TXT' AND data LIKE 'v=spf1%'"
+						." AND " . $app->tform->getAuthSQL('r', 'r'),
 					$_POST['zone'], $_POST['name'], $_POST['name'], $_POST['name']);
 
 		if (!empty($existing_records)) {
