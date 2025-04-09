@@ -34,6 +34,7 @@ $wb['username_error_collision'] = 'O nome de usuário não pode conter a palavra
 $wb['client_not_admin_err'] = 'Um usuário que pertence a um cliente não pode ser configurado para: admin.';
 $wb['lost_password_function_txt'] = 'Função de senha esquecida disponível';
 $wb['no_user_insert'] = 'Os usuários do Painel de Controle (ISPC) do tipo -user- são adicionados e atualizados automaticamente quando você adiciona um cliente ou revenda.';
+$wb['admin_totp_setup_not_suported'] = 'Setting up a TOTP secret is currently only supported for the user himself.';
 $wb['startmodule_empty'] = 'O módulo inicial está vazio.';
 $wb['startmodule_regex'] = 'Caracteres inválidos no módulo inicial.';
 $wb['app_theme_empty'] = 'Tema está vazio.';
