@@ -317,7 +317,7 @@ class app extends stdClass {
 				$db_message = $msg;
 				if(isset($conf['db_log_message_max_length']) && is_int($conf['db_log_message_max_length']) && $conf['db_log_message_max_length'] > 0) {
 					if(strlen($db_message) > $conf['db_log_message_max_length']) {
-						$db_message = substr($db_message, 0, length: $conf['db_log_message_max_length']) . '...';
+						$db_message = substr($db_message, 0, $conf['db_log_message_max_length']) . '...';
 					}
 				}
 
