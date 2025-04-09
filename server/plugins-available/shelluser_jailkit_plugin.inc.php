@@ -812,10 +812,12 @@ class shelluser_jailkit_plugin {
 		// The symlink will be recreated later in this function, regardless of the chosen shell.
 		// In case you want to keep the symlink in .home/php, you can create a lock file ".lock_homephp" in the same directory.
 		// This can be useful if you want to keep the PHP binary in the jailkit chroot for some reason, instead of /etc/alternatives/php if you use a OS that uses alternatives.
-		if(file_exists($web_docroot . '/home/' . $this->data['new']['username'] . '/.local/bin/php') && !file_exists($web_docroot . '/home/' . $this->data['new']['username'] . '/.local/bin/.lock_homephp')) {
-			unlink($web_docroot . '/home/' . $this->data['new']['username'] . '/.local/bin/php');
-		} else {
-			$app->log("Lock file .lock_homephp for PHP exists in " . $web_docroot . '/home/' . $this->data['new']['username'] . '/.local/bin/.lock_homephp', LOGLEVEL_DEBUG);
+		if($used_os_type == "debian" || $used_os_type == "ubuntu") {
+			if(file_exists($web_docroot . '/home/' . $this->data['new']['username'] . '/.local/bin/php') && !file_exists($web_docroot . '/home/' . $this->data['new']['username'] . '/.local/bin/.lock_homephp')) {
+				unlink($web_docroot . '/home/' . $this->data['new']['username'] . '/.local/bin/php');
+			} else {
+				$app->log("Lock file .lock_homephp for PHP exists in " . $web_docroot . '/home/' . $this->data['new']['username'] . '/.local/bin/.lock_homephp', LOGLEVEL_DEBUG);
+			}
 		}
 
 
