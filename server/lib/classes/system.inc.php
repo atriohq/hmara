@@ -1883,22 +1883,33 @@ class system{
 	function web_folder_protection($document_root, $protect) {
 		global $app, $conf;
 
-		if($this->checkpath($document_root) == false) {
+		// Ensure $document_root is a string and not null
+		$document_root = is_string($document_root) ? trim($document_root) : '';
+
+		// Check if the path is valid
+		if ($this->checkpath($document_root) === false) {
 			$app->log("Action aborted, target is a symlink: $document_root", LOGLEVEL_DEBUG);
 			return false;
 		}
 
-		//* load the server configuration options
+		// Load the server configuration options
 		$app->uses('getconf');
 		$web_config = $app->getconf->get_server_config($conf['server_id'], 'web');
 
-		if($protect == true && $web_config['web_folder_protection'] == 'y') {
-			//* Add protection
-			if($document_root != '' && $document_root != '/' && strlen($document_root) > 6 && !stristr($document_root, '..')) $this->exec_safe('chattr +i ?', $document_root);
+		// Add or remove protection based on $protect and configuration
+		if ($protect === true && isset($web_config['web_folder_protection']) && $web_config['web_folder_protection'] === 'y') {
+			// Add protection
+			if ($document_root !== '' && $document_root !== '/' && strlen($document_root) > 6 && strpos($document_root, '..') === false) {
+				$this->exec_safe('chattr +i ?', $document_root);
+			}
 		} else {
-			//* Remove protection
-			if($document_root != '' && $document_root != '/' && strlen($document_root) > 6 && !stristr($document_root, '..')) $this->exec_safe('chattr -i ?', $document_root);
+			// Remove protection
+			if ($document_root !== '' && $document_root !== '/' && strlen($document_root) > 6 && strpos($document_root, '..') === false) {
+				$this->exec_safe('chattr -i ?', $document_root);
+			}
 		}
+
+		return true;
 	}
 
 	function usermod($username, $uid = 0, $gid = 0, $home = '', $shell = '', $password = '', $login = '') {

@@ -385,9 +385,25 @@ class shelluser_jailkit_plugin {
 			WHERE `domain_id` = ?", $this->data["new"]["parent_domain_id"]);
 
 
-		$last_updated = preg_split('/[\s,]+/', $this->jailkit_config['jailkit_chroot_app_sections']
-						  .' '.$this->jailkit_config['jailkit_chroot_app_programs']
-						  .' '.$this->jailkit_config['jailkit_chroot_cron_programs']);
+		$sections = isset($this->jailkit_config['jailkit_chroot_app_sections'])
+			? (is_array($this->jailkit_config['jailkit_chroot_app_sections'])
+				? $this->jailkit_config['jailkit_chroot_app_sections']
+				: preg_split('/[\s,]+/', $this->jailkit_config['jailkit_chroot_app_sections']))
+			: [];
+
+		$programs = isset($this->jailkit_config['jailkit_chroot_app_programs'])
+			? (is_array($this->jailkit_config['jailkit_chroot_app_programs'])
+				? $this->jailkit_config['jailkit_chroot_app_programs']
+				: preg_split('/[\s,]+/', $this->jailkit_config['jailkit_chroot_app_programs']))
+			: [];
+
+		$cron_programs = isset($this->jailkit_config['jailkit_chroot_cron_programs'])
+			? (is_array($this->jailkit_config['jailkit_chroot_cron_programs'])
+				? $this->jailkit_config['jailkit_chroot_cron_programs']
+				: preg_split('/[\s,]+/', $this->jailkit_config['jailkit_chroot_cron_programs']))
+			: [];
+
+		$last_updated = array_merge($sections, $programs, $cron_programs);
 		$last_updated = array_unique($last_updated, SORT_REGULAR);
 		sort($last_updated, SORT_STRING);
 		$update_hash = hash('md5', implode(' ', $last_updated));
