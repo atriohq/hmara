@@ -118,7 +118,7 @@ class shelluser_jailkit_plugin {
 					* Setup Jailkit Chroot System If Enabled
 					*/
 
-					if ($data['new']['chroot'] == "jailkit")
+					if($data['new']['chroot'] == "jailkit")
 					{
 
 						// load the server configuration options
@@ -126,14 +126,14 @@ class shelluser_jailkit_plugin {
 						$this->data = $data;
 						$this->jailkit_config = $app->getconf->get_server_config($conf["server_id"], 'jailkit');
 
-						foreach (array('jailkit_chroot_app_sections', 'jailkit_chroot_app_programs') as $section) {
+						foreach(array('jailkit_chroot_app_sections', 'jailkit_chroot_app_programs') as $section) {
 							// Replace and don't inherit the server's Jailkit config
-							if (isset($web[$section]) && $web[$section] != '' ) {
+							if(isset($web[$section]) && $web[$section] != '' ) {
 								$this->jailkit_config[$section] = $web[$section];
 							}
 							// Add selected PHP version to the jailkit chroot
-							if ($section == 'jailkit_chroot_app_sections') {
-								if (isset($web['php_jk_section']) && $web['php_jk_section'] != '' ) {
+							if($section == 'jailkit_chroot_app_sections') {
+								if(isset($web['php_jk_section']) && $web['php_jk_section'] != '' ) {
 									if(is_array($this->jailkit_config['jailkit_chroot_app_sections'])) {
 										$this->jailkit_config['jailkit_chroot_app_sections'] = implode(' ', $this->jailkit_config['jailkit_chroot_app_sections']);
 									}
@@ -232,7 +232,7 @@ class shelluser_jailkit_plugin {
 					/**
 					* Setup Jailkit Chroot System If Enabled
 					*/
-					if ($data['new']['chroot'] == "jailkit")
+					if($data['new']['chroot'] == "jailkit")
 					{
 
 						// load the server configuration options
@@ -240,18 +240,18 @@ class shelluser_jailkit_plugin {
 						$this->data = $data;
 						$this->jailkit_config = $app->getconf->get_server_config($conf["server_id"], 'jailkit');
 
-						foreach (array('jailkit_chroot_app_sections', 'jailkit_chroot_app_programs') as $section) {
+						foreach(array('jailkit_chroot_app_sections', 'jailkit_chroot_app_programs') as $section) {
 							// Replace and don't inherit the server's Jailkit config
-							if (isset($web[$section]) && $web[$section] != '' ) {
+							if(isset($web[$section]) && $web[$section] != '' ) {
 								$this->jailkit_config[$section] = $web[$section];
 							}
-							if (is_array($this->jailkit_config['jailkit_chroot_app_sections'])) {
+							if(is_array($this->jailkit_config['jailkit_chroot_app_sections'])) {
 								$this->jailkit_config['jailkit_chroot_app_sections'] = implode(' ', $this->jailkit_config['jailkit_chroot_app_sections']);
 							}
 							// Add selected PHP version to the jailkit chroot
-							if ($section == 'jailkit_chroot_app_sections') {
-								if (isset($web['php_jk_section']) && $web['php_jk_section'] != '' ) {
-									if (is_array($this->jailkit_config['jailkit_chroot_app_sections'])) {
+							if($section == 'jailkit_chroot_app_sections') {
+								if(isset($web['php_jk_section']) && $web['php_jk_section'] != '' ) {
+									if(is_array($this->jailkit_config['jailkit_chroot_app_sections'])) {
 										$this->jailkit_config['jailkit_chroot_app_sections'] = implode(' ', $this->jailkit_config['jailkit_chroot_app_sections']);
 									}
 
@@ -320,15 +320,15 @@ class shelluser_jailkit_plugin {
 			return false;
 		}
 
-		if ($data['old']['chroot'] == "jailkit")
+		if($data['old']['chroot'] == "jailkit")
 		{
 			$web = $app->db->queryOneRecord("SELECT * FROM web_domain WHERE domain_id = ?", $data['old']['parent_domain_id']);
 
 			$app->uses("getconf");
 			$this->jailkit_config = $app->getconf->get_server_config($conf["server_id"], 'jailkit');
 
-			foreach (array('jailkit_chroot_app_sections', 'jailkit_chroot_app_programs', 'jailkit_do_not_remove_paths') as $section) {
-				if (isset($web[$section]) && $web[$section] != '' ) {
+			foreach(array('jailkit_chroot_app_sections', 'jailkit_chroot_app_programs', 'jailkit_do_not_remove_paths') as $section) {
+				if(isset($web[$section]) && $web[$section] != '' ) {
 					$this->jailkit_config[$section] = $web[$section];
 				}
 			}
@@ -352,7 +352,7 @@ class shelluser_jailkit_plugin {
 				$app->log("Jailkit Plugin -> delete chroot home:".$data['old']['dir'].$jailkit_chroot_userhome, LOGLEVEL_DEBUG);
 			}
 
-			if (isset($web['delete_unused_jailkit']) && $web['delete_unused_jailkit'] == 'y') {
+			if(isset($web['delete_unused_jailkit']) && $web['delete_unused_jailkit'] == 'y') {
 				$this->_delete_jailkit_if_unused($web['domain_id']);
 			}
 
@@ -368,10 +368,10 @@ class shelluser_jailkit_plugin {
 	{
 		global $app, $conf;
 
-		if (isset($this->jailkit_config) && isset($this->jailkit_config['jailkit_hardlinks'])) {
-			if ($this->jailkit_config['jailkit_hardlinks'] == 'yes') {
+		if(isset($this->jailkit_config) && isset($this->jailkit_config['jailkit_hardlinks'])) {
+			if($this->jailkit_config['jailkit_hardlinks'] == 'yes') {
 				$options = array('hardlink');
-			} elseif ($this->jailkit_config['jailkit_hardlinks'] == 'no') {
+			} elseif($this->jailkit_config['jailkit_hardlinks'] == 'no') {
 				$options = array();
 			} else {
 				$options = array();
@@ -395,7 +395,7 @@ class shelluser_jailkit_plugin {
 		// should move return here if $update_hash == $web['last_jailkit_hash'] ?
 
 		// check if the chroot environment is created yet if not create it with a list of program sections from the config
-		if (!is_dir($this->data['new']['dir'].'/etc/jailkit'))
+		if(!is_dir($this->data['new']['dir'].'/etc/jailkit'))
 		{
 
 			$app->load('tpl');
@@ -424,12 +424,12 @@ class shelluser_jailkit_plugin {
 				  . $this->jailkit_config['jailkit_chroot_cron_programs'];
 
 
-			if ($update_hash == $web['last_jailkit_hash']) {
+			if($update_hash == $web['last_jailkit_hash']) {
 				return;
 			}
 
 			$records = $app->db->queryAllRecords('SELECT web_folder FROM `web_domain` WHERE `parent_domain_id` = ? AND `document_root` = ? AND web_folder != \'\' AND web_folder IS NOT NULL AND `server_id` = ?', $this->data['new']['parent_domain_id'], $this->data['new']['dir'], $conf['server_id']);
-			foreach ($records as $record) {
+			foreach($records as $record) {
 				$options[] = 'skip='.$record['web_folder'];
 			}
 
@@ -578,14 +578,14 @@ class shelluser_jailkit_plugin {
 		$sshrsa = $app->file->remove_blank_lines($sshrsa, 0);
 
 		// If this user has no key yet, generate a pair
-		if ($userkey == '' && $id > 0){
+		if($userkey == '' && $id > 0){
 			//Generate ssh-rsa-keys
 			$app->uses('functions');
 			$app->functions->generate_ssh_key($id, $username);
 			$app->log("ssh-rsa keypair generated for ".$username, LOGLEVEL_DEBUG);
 		};
 
-		if (!file_exists($sshkeys)){
+		if(!file_exists($sshkeys)){
 			// add root's key
 			$app->file->mkdirs($sshdir, '0700');
 			$authorized_keys_template = $this->jailkit_config['jailkit_chroot_authorized_keys_template'];
@@ -625,7 +625,7 @@ class shelluser_jailkit_plugin {
 		if(is_array($old_keys)) {
 			foreach($old_keys as $key => $val) {
 				$k = array_search(trim($val), $existing_keys);
-				if ($k !== false) {
+				if($k !== false) {
 					unset($existing_keys[$k]);
 				}
 			}
@@ -704,12 +704,12 @@ class shelluser_jailkit_plugin {
 
 		// get jail directory
 		$parent_domain = $app->db->queryOneRecord("SELECT * FROM `web_domain` WHERE `domain_id` = ? OR `parent_domain_id` = ? AND `document_root` IS NOT NULL", $parent_domain_id, $parent_domain_id);
-		if (!is_dir($parent_domain['document_root'])) {
+		if(!is_dir($parent_domain['document_root'])) {
 			return;
 		}
 
 		// chroot is used by php-fpm
-		if (isset($parent_domain['php_fpm_chroot']) && $parent_domain['php_fpm_chroot'] == 'y') {
+		if(isset($parent_domain['php_fpm_chroot']) && $parent_domain['php_fpm_chroot'] == 'y') {
 			return;
 		}
 
@@ -727,7 +727,7 @@ class shelluser_jailkit_plugin {
 
 		$options = array();
 		$records = $app->db->queryAllRecords('SELECT web_folder FROM `web_domain` WHERE `parent_domain_id` = ? AND `document_root` = ? AND web_folder != \'\' AND web_folder IS NOT NULL AND `server_id` = ?', $parent_domain_id, $parent_domain['document_root'], $conf['server_id']);
-		foreach ($records as $record) {
+		foreach($records as $record) {
 			$options[] = 'skip='.$record['web_folder'];
 		}
 
@@ -757,7 +757,7 @@ class shelluser_jailkit_plugin {
 			$tpl->newTemplate("bashrc_user_deb.master");
 			$php_alternatives = $web_docroot . '/etc/alternatives/php';
 			$home_php = $php_alternatives;
-		} elseif ($used_os_type == "redhat") {
+		} elseif($used_os_type == "redhat") {
 			$tpl->newTemplate("bashrc_user_redhat.master");
 			$home_php = $web_docroot . '/home/' . $this->data['new']['username'] . '/.local/bin/php';
 		} else {
@@ -776,7 +776,7 @@ class shelluser_jailkit_plugin {
 
 		$bashrc = $this->web['document_root'] . '/home/' . $this->data['new']['username'] . '/.bashrc';
 
-		if (@is_file($bashrc) || @is_link($bashrc)) {
+		if(@is_file($bashrc) || @is_link($bashrc)) {
 			unlink($bashrc);
 		}
 		file_put_contents($bashrc, $tpl->grab());
@@ -810,7 +810,7 @@ class shelluser_jailkit_plugin {
 			// Check if any PHP binary is available in the jail and use the most recent version as fallback
 			$fallback_php = $app->system->get_newest_php_bin($web_docroot . $php_bin_dir);
 
-			if (!empty($fallback_php)) {
+			if(!empty($fallback_php)) {
 				$fallback_php_bin = str_replace($web_docroot, '', $fallback_php);
 
 				if(file_exists($fallback_php_bin)) {
