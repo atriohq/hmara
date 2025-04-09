@@ -187,6 +187,8 @@ if(!$conf['mysql']['ip'] = gethostbyname($conf['mysql']['host'])) die('Unable to
 
 $conf['server_id'] = intval($conf_old["server_id"]);
 $conf['ispconfig_log_priority'] = $conf_old["log_priority"];
+$conf['db_log_message_max_length'] = (isset($conf_old['db_log_message_max_length'])) ? $conf_old['db_log_message_max_length'] : '32768';
+
 
 $inst = new installer();
 $inst->is_update = true;
@@ -377,25 +379,25 @@ if(isset($conf['powerdns']['installed']) && $conf['powerdns']['installed'] == tr
 
 if(isset($conf['apache']['installed']) && $conf['apache']['installed'] == true || isset($conf['nginx']['installed']) && $conf['nginx']['installed'] == true) {
 	$conf['services']['web'] = check_service_config_state('web_server', true);
-} else { 
+} else {
 	$conf['services']['web'] = check_service_config_state('web_server', false);
 }
 
 if(isset($conf['xmpp']['installed']) && $conf['xmpp']['installed'] == true) {
 	$conf['services']['xmpp'] = check_service_config_state('xmpp_server', true);
-} else { 
+} else {
 	$conf['services']['xmpp'] = check_service_config_state('xmpp_server', false);
 }
 
 if(isset($conf['ufw']['installed']) && $conf['ufw']['installed'] == true || isset($conf['firewall']['installed']) && $conf['firewall']['installed'] == true) {
 	$conf['services']['firewall'] = check_service_config_state('firewall_server', true);
-} else { 
+} else {
 	$conf['services']['firewall'] = check_service_config_state('firewall_server', false);
 }
 
 if(isset($conf['vserver']['installed']) && $conf['vserver']['installed'] == true) {
 	$conf['services']['vserver'] = check_service_config_state('vserver_server', true);
-} else { 
+} else {
 	$conf['services']['vserver'] = check_service_config_state('vserver_server', false);
 }
 

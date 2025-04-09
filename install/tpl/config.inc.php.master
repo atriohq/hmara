@@ -139,6 +139,7 @@ $conf['demo_mode'] = false;
 //** Logging
 $conf['log_file'] = $conf['ispconfig_log_dir'].$conf['fs_div'].'ispconfig.log';
 $conf['log_priority'] = {ispconfig_log_priority}; // 0 = Debug, 1 = Warning, 2 = Error
+$conf['db_log_message_max_length'] = 32768;
 
 
 //** Themes
