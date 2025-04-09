@@ -184,10 +184,10 @@ class cronjob_quota_notify extends cronjob {
 					$domain = $rec['domain'];
 
 					$username = $rec['system_user'];
-					$rec['used'] = @$monitor_data['user'][$username]['used'];
-					$rec['soft'] = @$monitor_data['user'][$username]['soft'];
-					$rec['hard'] = @$monitor_data['user'][$username]['hard'];
-					$rec['files'] = @$monitor_data['user'][$username]['files'];
+					$rec['used'] = isset($monitor_data['user'][$username]['used']) ? $monitor_data['user'][$username]['used'] : 0;
+					$rec['soft'] = isset($monitor_data['user'][$username]['soft']) ? $monitor_data['user'][$username]['soft'] : 0;
+					$rec['hard'] = isset($monitor_data['user'][$username]['hard']) ? $monitor_data['user'][$username]['hard'] : 0;
+					$rec['files'] = isset($monitor_data['user'][$username]['files']) ? $monitor_data['user'][$username]['files'] : 0;
 
 					if (!is_numeric($rec['used'])){
 						if ($rec['used'][0] > $rec['used'][1]){
@@ -525,7 +525,7 @@ class cronjob_quota_notify extends cronjob {
 												$recipients[] = $clients[$rec['sys_groupid']]['reseller'];
 											}
 										}
-										
+
 										//* Send email to client
 										if($web_config['overquota_db_notify_client'] == 'y') {
 											if($clients[$rec['sys_groupid']]['email'] != '') {
