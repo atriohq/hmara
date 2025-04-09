@@ -687,7 +687,7 @@ fi
 				unlink($home_php);
 			}
 			symlink($php_binary_path, $home_php);
-			$app->log("Created symlink from " . $php_binary_path ." to PHP binary: " . $home_php, LOGLEVEL_DEBUG);
+			$app->log("Created symlink from " . $home_php ." to PHP binary: " . $php_binary_path, LOGLEVEL_DEBUG);
 		}
 	}
 

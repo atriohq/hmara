@@ -846,7 +846,7 @@ class shelluser_jailkit_plugin {
 				unlink($home_php);
 			}
 			symlink($this->web['php_cli_binary'], $home_php);
-			$app->log("Created symlink from " . $this->web['php_cli_binary'] ." to PHP binary: " . $home_php, LOGLEVEL_DEBUG);
+			$app->log("Created symlink from " . $home_php . " to PHP binary: " . $this->web['php_cli_binary'], LOGLEVEL_DEBUG);
 		}
 	}
 } // end class
