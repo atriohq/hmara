@@ -96,39 +96,6 @@ class SimpleAuthenticator
     }
 
     /**
-     * Get QR-Code URL for image, from Google charts.
-     *
-     * @param string $label
-     * @param string $secret
-     * @param string|null $issuer
-     * @param array $params width, height and ecc
-     *
-     * @return string
-     *@example getQRCodeGoogleUrl('Example code', '123456789')
-     *
-     */
-    public function getQRCodeGoogleUrl(string $secret, string $label, ?string $issuer = null, array $params = []): string
-    {
-        $params += [
-            'width' => 200,
-            'height' => 200,
-            'ecc' => 'M',
-        ];
-
-        $width = !empty($params['width']) && (int)$params['width'] > 0 ? (int)$params['width'] : 200;
-        $height = !empty($params['height']) && (int)$params['height'] > 0 ? (int)$params['height'] : 200;
-        $ecc = !empty($params['ecc']) && in_array($params['ecc'], ['L', 'M', 'Q', 'H']) ? $params['ecc'] : 'M';
-
-        $urlencoded = urlencode('otpauth://totp/' .
-            (!is_null($issuer) ? $issuer . ':' : '') . $label .
-            '?secret=' . $secret .
-            ($this->alg != 'SHA1' ? '&algorithm='.$this->alg : '') .
-            (!is_null($issuer) ? '&issuer=' . $issuer : ''));
-
-        return "https://api.qrserver.com/v1/create-qr-code/?data=$urlencoded&size={$width}x$height&ecc=$ecc";
-    }
-
-    /**
      * Check if the code is correct. This will accept codes starting from $discrepancy*30sec ago to $discrepancy*30sec from now.
      *
      * @param string $secret
