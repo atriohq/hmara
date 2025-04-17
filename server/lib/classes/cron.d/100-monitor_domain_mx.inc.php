@@ -67,7 +67,7 @@ class cronjob_monitor_domain_mx  extends cronjob {
 		$app->uses('getconf,functions');
 		$mail_config = $app->getconf->get_server_config($conf['server_id'], 'mail');
 
-		if ($mail_config['monitor_mx_records'] != 'y') {
+		if (!isset($mail_config['monitor_mx_records']) || $mail_config['monitor_mx_records'] != 'y') {
 			return;
 		}
 		/* used for all monitor cronjobs */
