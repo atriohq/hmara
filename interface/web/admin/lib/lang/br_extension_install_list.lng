@@ -43,4 +43,5 @@ $wb['license_txt'] = 'Chave de licença';
 $wb['repo_version_txt'] = 'Versão do Repositório';
 $wb['no_records_txt'] = 'Nenhuma extensão encontrada';
 $wb['postinstall_info_txt'] = 'Informação';
+$wb['free_limits_txt'] = 'Limites de uso gratuito';
 ?>

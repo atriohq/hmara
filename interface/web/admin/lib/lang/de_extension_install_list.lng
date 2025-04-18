@@ -9,4 +9,5 @@ $wb['install_extension_txt'] = 'Installieren';
 $wb['server_id_txt'] = 'Server ID';
 $wb['no_records_txt'] = 'Keine Erweiterungen gefunden';
 $wb['postinstall_info_txt'] = 'Info';
+$wb['free_limits_txt'] = 'Einschränkungen für kostenlose Nutzung';
 ?>

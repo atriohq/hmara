@@ -179,6 +179,10 @@ switch($action) {
 		if(!empty($extension['postinstall_info'])) {
 			$app->tpl->setVar('postinstall_info', $extension['postinstall_info']);
 		}
+		// show free limits
+		if(!empty($extension['free_limits'])) {
+			$app->tpl->setVar('free_limits', $extension['free_limits']);
+		}
         break;
     case 'install':
         $app->tpl->setInclude('content_tpl', 'templates/extension_install.htm');

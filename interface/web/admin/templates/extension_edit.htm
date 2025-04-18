@@ -83,7 +83,16 @@
             <div class="col-sm-9">
                 <input type="checkbox" name="active" id="active" value="1" {tmpl_if name='active'} checked="checked"{/tmpl_if} />
             </div>
-        </div>   
+        </div>
+        <!-- -------------------------- -->
+        <tmpl_if name="free_limits">
+            <div class="form-group">
+            <label class="col-sm-3 control-label">{tmpl_var name='free_limits_txt'}</label>
+            <div class="col-sm-9">
+                <p style="margin-top: 8px;">{tmpl_var name='free_limits'}</p>
+            </div>
+        </div>
+        </tmpl_if>
         <!-- -------------------------- -->
         <tmpl_if name="postinstall_info">
         <div class="form-group">

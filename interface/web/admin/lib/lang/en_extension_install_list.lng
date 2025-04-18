@@ -50,4 +50,5 @@ $wb['btn_save_txt'] = 'Save';
 $wb['invalid_license_txt'] = 'Invalid license key';
 $wb['no_records_txt'] = 'No extensions found';
 $wb['postinstall_info_txt'] = 'Info';
+$wb['free_limits_txt'] = 'Conditions for free use';
 ?>
