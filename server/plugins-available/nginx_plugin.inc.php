@@ -3170,7 +3170,7 @@ class nginx_plugin {
                 $app->log('Token ##subroot is unsecure (server ID: '.$conf['server_id'].').', LOGLEVEL_WARN);
             } else {
                 $insert_pos = strpos($vhost_conf, ';', strpos($vhost_conf, 'root '));
-                $vhost_conf = substr_replace($vhost_conf, ltrim($subroot[1], '/'), $insert_pos, 0);
+                $vhost_conf = substr_replace($vhost_conf, '/'.ltrim($subroot[1], '/'), $insert_pos, 0);
             }
         }
 
