@@ -129,9 +129,9 @@ class dns_page_action extends tform_actions {
 
 		if($this->checkDuplicate()) $app->tform->errorMessage .= $app->tform->lng("data_error_duplicate")."<br>";
 
-		// Remove accidental quotes around a record.
+		// Remove accidental quotes around a record
 		$matches = array();
-		if(preg_match('/^"(.*)"$/', $this->dataRecord["data"], $matches)) {
+		if(substr_count($this->dataRecord["data"], '"') == 2 && preg_match('/^"(.*)"$/', $this->dataRecord["data"], $matches)) {
 			$this->dataRecord["data"] = $matches[1];
 		}
 

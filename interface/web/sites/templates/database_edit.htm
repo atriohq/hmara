@@ -166,3 +166,36 @@
         resultBoxPosition: ''
     });
 </script>
+
+<script type="text/javascript">
+    jQuery(document).ready(function() {
+        // Function to toggle backup_interval and database_quota visibility based on database type
+        function togglePostgresqlFields() {
+            var dbType = jQuery('#type').val();
+            if (dbType === 'postgresql') {
+                jQuery('#backup_interval').closest('.form-group').hide();
+                jQuery('#quota').closest('.form-group').hide();
+            } else {
+                jQuery('#backup_interval').closest('.form-group').show();
+                jQuery('#quota').closest('.form-group').show();
+            }
+        }
+
+        // Check on page load
+        togglePostgresqlFields();
+
+        // Check when type changes
+        jQuery('#type').change(function() {
+            togglePostgresqlFields();
+        });
+
+        // For the case when type is disabled and using hidden input
+        if (jQuery('#type').length === 0 && jQuery('input[name="type"]').length > 0) {
+            var hiddenType = jQuery('input[name="type"]').val();
+            if (hiddenType === 'postgresql') {
+                jQuery('#backup_interval').closest('.form-group').hide();
+                jQuery('#quota').closest('.form-group').hide();
+            }
+        }
+    });
+</script>

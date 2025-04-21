@@ -1937,7 +1937,7 @@ CREATE TABLE `web_database` (
   `sys_perm_other` varchar(5) DEFAULT NULL,
   `server_id` int(11) unsigned NOT NULL DEFAULT '0',
   `parent_domain_id` int(11) unsigned NOT NULL DEFAULT  '0',
-  `type` varchar(16) NOT NULL DEFAULT 'y',
+  `type` varchar(16) NOT NULL DEFAULT 'mysql',
   `database_name` varchar(64) DEFAULT NULL,
   `database_name_prefix` varchar(50) NOT NULL default '',
   `database_quota` int(11) DEFAULT NULL,

@@ -74,7 +74,7 @@ if(isset($_GET['nav']) && $_GET['nav'] == 'top') {
 						if($vm_servers['cnt'] == 0) continue;
 					}
 
-					if(isset($module)) unset($module);
+					if(isset($module['icon'])) unset($module['icon']);
 					include_once $mt.'/lib/module.conf.php';
 					$language = $app->functions->check_language((isset($_SESSION['s']['user']['language']))?$_SESSION['s']['user']['language']:$conf['language']);
 					$app->load_language_file('web/'.$mt.'/lib/'.$language.'.lng');
