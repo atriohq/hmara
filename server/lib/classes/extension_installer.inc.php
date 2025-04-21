@@ -589,6 +589,53 @@ class extension_installer {
 		return true;
 	}
 
+	/**
+	 * Run uninstall.sql file in the database
+	 */
+	public function run_uninstall_sql($name) {
+		global $app, $conf;
+
+		// check name validity
+		if(!preg_match('/^[a-zA-Z0-9_]{1,64}$/',$name)) {
+			$app->log('Invalid extension name: '.$name, LOGLEVEL_WARN);
+			$this->addError('Invalid extension name: '.$name);
+			return false;
+		}
+
+		$ext_dir = $this->extension_basedir.'/'.$name;
+
+		// Check if the extension has already been downloaded
+		if(!is_dir($ext_dir)) {
+			$app->log('Loading install.sql for extension'.$name.'failed. No such directory.',LOGLEVEL_WARN);
+			$this->addError('No such directory: '.$ext_dir);
+			return false;
+		}
+
+		// Check if we have a uninstall.sql
+		$uninstall_sql_path = $ext_dir.'/install/uninstall.sql';
+		if(!file_exists($uninstall_sql_path)) {
+			$app->log('The extension '.$name.' has no uninstall.sql.',LOGLEVEL_DEBUG);
+			//$this->errors[] = 'No uninstall.sql: '.$uninstall_sql_path;
+			return false;
+		}
+		
+		// Run uninstall.sql using mysql command with login details from $conf
+		exec('mysql -u '.escapeshellarg($conf['mysql']['user']).' -p'.escapeshellarg($conf['mysql']['password']).' -D '.escapeshellarg($conf['mysql']['db_name']).' < '.escapeshellarg($uninstall_sql_path), $output, $return_var);
+		
+		// check if execcommand was successful
+		if($return_var != 0) {
+			$app->log('Failed to run uninstall.sql for extension '.$name, LOGLEVEL_WARN);
+			$this->addError('Failed to run uninstall.sql: '.$uninstall_sql_path);
+			return false;
+		}
+		
+
+		// log success
+		$app->log('Run uninstall.sql for extension '.$name, LOGLEVEL_INFO);
+		
+		return true;
+	}
+
 	public function scan_extensions() {
         global $app, $conf;
 
@@ -809,6 +856,9 @@ class extension_installer {
 
 		// Uninstall extension
 		$installer->uninstall($name);
+
+		// Run uninstall.sql
+		$this->run_uninstall_sql($name);
 
 		// Remove extension directory
         if(!empty($this->extension_basedir.'/'.$name) && is_dir($this->extension_basedir.'/'.$name)) {
