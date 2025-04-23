@@ -41,4 +41,5 @@ $wb['extension_edit_heading_txt'] = 'Extensão';
 $wb['extension_edit_desc_txt'] = 'Esta página permite editar extensões do ISPConfig.';
 $wb['license_txt'] = 'Chave de licença';
 $wb['repo_version_txt'] = 'Versão do Repositório';
+$wb['pending_installs_txt'] = 'There are pending extensions to install. Please wait a minute, they will show up in the list soon.';
 ?>

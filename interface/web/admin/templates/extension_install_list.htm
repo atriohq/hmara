@@ -7,6 +7,12 @@
 <!-- <button class="btn btn-default formbutton-success" type="button" data-load-content="admin/firewall_edit.php">{tmpl_var name="add_new_record_txt"}</button> -->
 <p class="fieldset-legend"><tmpl_var name="list_head_txt"></p>
 
+<tmpl_if name="has_pending_installs">
+    <div class="alert alert-warning">
+        <tmpl_var name="pending_installs_txt">
+    </div>
+</tmpl_if>
+
 <div class="table-wrapper marginTop15">
     <table class="table">
         <thead class="dark form-group-sm">
