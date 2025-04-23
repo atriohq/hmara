@@ -63,5 +63,10 @@ $lng_file = 'lib/lang/'.$app->functions->check_language($_SESSION['s']['language
 include $lng_file;
 $app->tpl->setVar($wb);
 
+// Check if there are any pending installs in sys_remoteaction
+$pending_installs = $app->extension_installer->getPendingInstalls();
+
+$app->tpl->setVar('has_pending_installs', !empty($pending_installs));
+
 $app->tpl_defaults();
 $app->tpl->pparse();

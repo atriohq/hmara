@@ -362,4 +362,15 @@ class extension_installer
 		return $record['server_name'];
 	}
 
+	/**
+	 * Get the list of pending extensions to install
+	 * @return array
+	 */
+	public function getPendingInstalls() {
+		global $app;
+		$sql = 'SELECT * FROM `sys_remoteaction` WHERE `action_type` = ? and `action_state` = ?';
+		$records = $app->db->queryAllRecords($sql, 'extension_install', 'pending');
+		return $records;
+	}
+
 }

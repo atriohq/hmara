@@ -41,4 +41,5 @@ $wb['extension_edit_heading_txt'] = 'Расширение';
 $wb['extension_edit_desc_txt'] = 'Эта страница позволяет редактировать расширения ISPConfig.';
 $wb['license_txt'] = 'Лицензионный ключ';
 $wb['repo_version_txt'] = 'Версия в репозитории';
+$wb['pending_installs_txt'] = 'There are pending extensions to install. Please wait a minute, they will show up in the list soon.';
 ?>
