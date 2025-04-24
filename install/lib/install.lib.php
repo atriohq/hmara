@@ -52,12 +52,12 @@ function get_distname() {
 
 	//** Debian or Ubuntu
 	if(file_exists('/etc/debian_version')) {
-		
+
 		// Check if this is Ubuntu and not Debian
 		if (strstr(trim(file_get_contents('/etc/issue')), 'Ubuntu') || (is_file('/etc/os-release') && stristr(file_get_contents('/etc/os-release'), 'Ubuntu'))) {
-			
+
 			$issue = file_get_contents('/etc/issue');
-			
+
 			// Use content of /etc/issue file
 			if(strstr($issue,'Ubuntu')) {
 				if (strstr(trim($issue), 'LTS')) {
@@ -83,7 +83,7 @@ function get_distname() {
 				} else {
 					$lts = "";
 				}
-				
+
 				$distname = 'Ubuntu';
 				$distid = 'debian60';
 				$distbaseid = 'debian';
@@ -413,7 +413,7 @@ function get_distname() {
 	} else {
 		die('Unrecognized GNU/Linux distribution');
 	}
-	
+
 	// Set $distconfid to distid, if no different id for the config is defined
 	if(!isset($distconfid)) $distconfid = $distid;
 
@@ -998,7 +998,7 @@ function get_system_timezone() {
 		exec('date +%Z', $tzinfo);
 		$timezone = $tzinfo[0];
 	}
-	
+
 	if(substr($timezone, 0, 1) === '/') $timezone = substr($timezone, 1);
 
 	return $timezone;
@@ -1006,7 +1006,7 @@ function get_system_timezone() {
 
 function getapacheversion($get_minor = false) {
 	global $app;
-	
+
 	$cmd = '';
 	if(is_installed('apache2ctl')) $cmd = 'apache2ctl -v';
 	elseif(is_installed('apachectl')) $cmd = 'apachectl -v';
@@ -1014,13 +1014,13 @@ function getapacheversion($get_minor = false) {
 		ilog("Could not check apache version, apachectl not found.");
 		return '2.2';
 	}
-	
+
 	exec($cmd, $output, $return_var);
 	if($return_var != 0 || !$output[0]) {
 		ilog("Could not check apache version, apachectl did not return any data.");
 		return '2.2';
 	}
-	
+
 	if(preg_match('/version:\s*Apache\/(\d+)(\.(\d+)(\.(\d+))*)?(\D|$)/i', $output[0], $matches)) {
 		return $matches[1] . (isset($matches[3]) ? '.' . $matches[3] : '') . (isset($matches[5]) && $get_minor == true ? '.' . $matches[5] : '');
 	} else {
@@ -1031,7 +1031,7 @@ function getapacheversion($get_minor = false) {
 
 function getapachemodules() {
 	global $app;
-	
+
 	$cmd = '';
 	if(is_installed('apache2ctl')) $cmd = 'apache2ctl -t -D DUMP_MODULES';
 	elseif(is_installed('apachectl')) $cmd = 'apachectl -t -D DUMP_MODULES';
@@ -1039,21 +1039,45 @@ function getapachemodules() {
 		ilog("Could not check apache modules, apachectl not found.");
 		return array();
 	}
-	
+
 	exec($cmd . ' 2>/dev/null', $output, $return_var);
 	if($return_var != 0 || !$output[0]) {
 		ilog("Could not check apache modules, apachectl did not return any data.");
 		return array();
 	}
-	
+
 	$modules = array();
 	for($i = 0; $i < count($output); $i++) {
 		if(preg_match('/^\s*(\w+)\s+\((shared|static)\)\s*$/', $output[$i], $matches)) {
 			$modules[] = $matches[1];
 		}
 	}
-	
+
 	return $modules;
+}
+
+function getnginxversion($get_minor = false) {
+	global $app;
+
+	if(is_installed('nginx')) $cmd = 'nginx -v 2>&1';
+	else {
+		ilog("Could not check Nginx version, Nginx not found.");
+		return false;
+	}
+
+	exec($cmd, $output, $return_var);
+
+	if($return_var != 0 || !$output[0]) {
+		ilog("Could not check Nginx version, Nginx did not return any data.");
+		return false;
+	}
+
+	if(preg_match('/nginx version: nginx\/\s*(\d+)(\.(\d+)(\.(\d+))*)?(\D|$)/i', $output[0], $matches)) {
+		return $matches[1] . (isset($matches[3]) ? '.' . $matches[3] : '') . (isset($matches[5]) && $get_minor == true ? '.' . $matches[5] : '');
+	} else {
+		ilog("Could not check Nginx version, did not find version string in Nginx output.");
+		return false;
+	}
 }
 
 ?>

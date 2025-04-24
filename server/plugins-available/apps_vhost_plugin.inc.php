@@ -206,14 +206,37 @@ class apps_vhost_plugin {
 				$use_socket = '#';
 			}
 
-            /* Check if SSL should be enabled: */
-            if(is_file('/usr/local/ispconfig/interface/ssl/ispserver.crt') && is_file('/usr/local/ispconfig/interface/ssl/ispserver.key')) {
+
+			$nginx_openssl_build_ver = $app->system->exec_safe('nginx -V 2>&1 | grep \'built with OpenSSL\' | sed \'s/.*built\([a-zA-Z ]*\)OpenSSL \([0-9.]*\).*/\2/\'');
+			$nginx_openssl_running_ver = $app->system->exec_safe('nginx -V 2>&1 | grep \'running with OpenSSL\' | sed \'s/.*running\([a-zA-Z ]*\)OpenSSL \([0-9.]*\).*/\2/\'');
+			$nginx_version = $app->system->getnginxversion(true);
+
+
+           	/* Check if SSL should be enabled: */
+           	if(is_file('/usr/local/ispconfig/interface/ssl/ispserver.crt') && is_file('/usr/local/ispconfig/interface/ssl/ispserver.key')) {
 				$content = str_replace('{ssl_comment}', '', $content);
-				$content = str_replace('{ssl_on}', 'ssl http2', $content);
-            } else {
+				if(version_compare($nginx_version, '1.13.0', '>=')
+					&& version_compare($nginx_openssl_build_ver, '1.1.1', '>=')
+					&& (empty($nginx_openssl_running_ver) || version_compare($nginx_openssl_running_ver, '1.1.1', '>='))) {
+						$content = str_replace('{ssl_proto_version}', 'TLSv1.3 TLSv1.2', $content);
+					} else {
+						$content = str_replace('{ssl_proto_version}', 'TLSv1.2', $content);
+					}
+
+					if(version_compare($nginx_version, '1.25.1', '>=')) {
+						$content = str_replace('{ssl_on}', 'ssl', $content);
+						$content = str_replace('{ssl_http2_directive}', 'http2 on;', $content);
+					} else {
+						$content = str_replace('{ssl_on}', 'ssl http2', $content);
+						$content = str_replace('{ssl_http2_directive}', '', $content);
+					}
+
+			} else {
 				$content = str_replace('{ssl_comment}', '#', $content);
 				$content = preg_replace('/(\s)\{ssl_on\}/', '', $content);
 			}
+
+
 
 			$content = str_replace('{use_tcp}', $use_tcp, $content);
 			$content = str_replace('{use_socket}', $use_socket, $content);

@@ -2821,7 +2821,11 @@ class installer_base extends stdClass {
 
 			// Dont just copy over the virtualhost template but add some custom settings
 			$content = rfsel($conf['ispconfig_install_dir'].'/server/conf-custom/install/nginx_apps.vhost.master', 'tpl/nginx_apps.vhost.master');
+			$nginx_openssl_build_ver = exec('nginx -V 2>&1 | grep \'built with OpenSSL\' | sed \'s/.*built\([a-zA-Z ]*\)OpenSSL \([0-9.]*\).*/\2/\'');
+			$nginx_openssl_running_ver = exec('nginx -V 2>&1 | grep \'running with OpenSSL\' | sed \'s/.*running\([a-zA-Z ]*\)OpenSSL \([0-9.]*\).*/\2/\'');
+			$nginx_version = getnginxversion(true);
 
+			/*
 			// Enable SSL if a cert is in place.
 			if(is_file($conf['ispconfig_install_dir'].'/interface/ssl/ispserver.crt') && is_file($conf['ispconfig_install_dir'].'/interface/ssl/ispserver.key')) {
 				$content = str_replace('{ssl_on}', 'ssl http2', $content);
@@ -2829,6 +2833,30 @@ class installer_base extends stdClass {
 			} else {
 				$content = str_replace('{ssl_on}', '', $content);
 				$content = str_replace('{ssl_comment}', '#', $content);
+			}
+			*/
+
+			if(is_file($conf['ispconfig_install_dir'].'/interface/ssl/ispserver.crt') && is_file($conf['ispconfig_install_dir'].'/interface/ssl/ispserver.key')) {
+				$content = str_replace('{ssl_comment}', '', $content);
+				if(version_compare($nginx_version, '1.13.0', '>=')
+					&& version_compare($nginx_openssl_build_ver, '1.1.1', '>=')
+					&& (empty($nginx_openssl_running_ver) || version_compare($nginx_openssl_running_ver, '1.1.1', '>='))) {
+						$content = str_replace('{ssl_proto_version}', 'TLSv1.3 TLSv1.2', $content);
+					} else {
+						$content = str_replace('{ssl_proto_version}', 'TLSv1.2', $content);
+					}
+
+					if(version_compare($nginx_version, '1.25.1', '>=')) {
+						$content = str_replace('{ssl_on}', 'ssl', $content);
+						$content = str_replace('{ssl_http2_directive}', 'http2 on;', $content);
+					} else {
+						$content = str_replace('{ssl_on}', 'ssl http2', $content);
+						$content = str_replace('{ssl_http2_directive}', '', $content);
+					}
+
+			} else {
+				$content = str_replace('{ssl_comment}', '#', $content);
+				$content = preg_replace('/(\s)\{ssl_on\}/', '', $content);
 			}
 
 			if($conf['web']['apps_vhost_ip'] == '_default_'){
@@ -2901,7 +2929,7 @@ class installer_base extends stdClass {
 			//copy('tpl/nginx_ispconfig.vhost.master', "$vhost_conf_dir/ispconfig.vhost");
 			//* and create the symlink
 			if(@is_link($vhost_conf_enabled_dir.'/apps.vhost')) unlink($vhost_conf_enabled_dir.'/apps.vhost');
-			if(file_exists($vhost_conf_dir.'/apps.vhost') && is_dir($vhost_conf_enabled_dir) && !@is_link($vhost_conf_enabled_dir.'/000-apps.vhost')) {
+			if(!@is_link($vhost_conf_enabled_dir.'/000-apps.vhost')) {
 				symlink($vhost_conf_dir.'/apps.vhost', $vhost_conf_enabled_dir.'/000-apps.vhost');
 			}
 		}
@@ -2981,7 +3009,7 @@ class installer_base extends stdClass {
 		if(@is_link($vhost_conf_enabled_dir.'/' . $use_symlink)) {
 			unlink($vhost_conf_enabled_dir.'/' . $use_symlink);
 		}
-		if(file_exists($vhost_conf_dir.'/' . $use_name) && is_dir($vhost_conf_enabled_dir) && !@is_file($vhost_conf_enabled_dir.'/' . $use_symlink)) {
+		if(!@is_file($vhost_conf_enabled_dir.'/' . $use_symlink)) {
 			symlink($vhost_conf_dir.'/' . $use_name, $vhost_conf_enabled_dir.'/' . $use_symlink);
 		}
 	}
