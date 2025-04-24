@@ -2929,7 +2929,7 @@ class installer_base extends stdClass {
 			//copy('tpl/nginx_ispconfig.vhost.master', "$vhost_conf_dir/ispconfig.vhost");
 			//* and create the symlink
 			if(@is_link($vhost_conf_enabled_dir.'/apps.vhost')) unlink($vhost_conf_enabled_dir.'/apps.vhost');
-			if(!@is_link($vhost_conf_enabled_dir.'/000-apps.vhost')) {
+			if(file_exists($vhost_conf_dir.'/apps.vhost') && is_dir($vhost_conf_enabled_dir) && !@is_link($vhost_conf_enabled_dir.'/000-apps.vhost')) {
 				symlink($vhost_conf_dir.'/apps.vhost', $vhost_conf_enabled_dir.'/000-apps.vhost');
 			}
 		}
@@ -3009,7 +3009,7 @@ class installer_base extends stdClass {
 		if(@is_link($vhost_conf_enabled_dir.'/' . $use_symlink)) {
 			unlink($vhost_conf_enabled_dir.'/' . $use_symlink);
 		}
-		if(!@is_file($vhost_conf_enabled_dir.'/' . $use_symlink)) {
+		if(file_exists($vhost_conf_dir.'/' . $use_name) && is_dir($vhost_conf_enabled_dir) && !@is_file($vhost_conf_enabled_dir.'/' . $use_symlink)) {
 			symlink($vhost_conf_dir.'/' . $use_name, $vhost_conf_enabled_dir.'/' . $use_symlink);
 		}
 	}
