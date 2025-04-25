@@ -258,7 +258,7 @@ class installer_base extends stdClass {
 		if(!function_exists('curl_init')) $msg .= "PHP Curl Module is missing.\n";
 		if(!function_exists('mysqli_connect')) $msg .= "PHP MySQLi Module is nmissing.\n";
 		if(!function_exists('mb_detect_encoding')) $msg .= "PHP Multibyte Module (MB) is missing.\n";
-        if(!function_exists('openssl_pkey_get_details')) $msg .= "PHP OpenSSL functions are missing.\n";
+		if(!function_exists('openssl_pkey_get_details')) $msg .= "PHP OpenSSL functions are missing.\n";
 
 		if($msg != '') die($msg);
 	}
