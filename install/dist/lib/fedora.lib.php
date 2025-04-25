@@ -1011,6 +1011,11 @@ class installer_dist extends installer_base {
 			//}
 		}
 
+		$nginx_openssl_build_ver = exec('nginx -V 2>&1 | grep \'built with OpenSSL\' | sed \'s/.*built\([a-zA-Z ]*\)OpenSSL \([0-9.]*\).*/\2/\'');
+		$nginx_openssl_running_ver = exec('nginx -V 2>&1 | grep \'running with OpenSSL\' | sed \'s/.*running\([a-zA-Z ]*\)OpenSSL \([0-9.]*\).*/\2/\'');
+		$nginx_version = getnginxversion(true);
+
+
 		if($conf['nginx']['installed'] == true && $this->install_ispconfig_interface == true){
 			//* Copy the ISPConfig vhost for the controlpanel
 			$vhost_conf_dir = $conf['nginx']['vhost_conf_dir'];
@@ -1021,14 +1026,34 @@ class installer_dist extends installer_base {
 			$content = str_replace('{vhost_port}', $conf['nginx']['vhost_port'], $content);
 
 			if(is_file($install_dir.'/interface/ssl/ispserver.crt') && is_file($install_dir.'/interface/ssl/ispserver.key')) {
-				$content = str_replace('{ssl_on}', 'ssl', $content);
+
 				$content = str_replace('{ssl_comment}', '', $content);
 				$content = str_replace('{fastcgi_ssl}', 'on', $content);
+
+				if(version_compare($nginx_version, '1.13.0', '>=')
+					&& version_compare($nginx_openssl_build_ver, '1.1.1', '>=')
+					&& (empty($nginx_openssl_running_ver) || version_compare($nginx_openssl_running_ver, '1.1.1', '>='))) {
+						$content = str_replace('{ssl_proto_version}', 'TLSv1.3 TLSv1.2', $content);
+					} else {
+						$content = str_replace('{ssl_proto_version}', 'TLSv1.2', $content);
+					}
+
+					if(version_compare($nginx_version, '1.25.1', '>=')) {
+						$content = str_replace('{ssl_on}', 'ssl', $content);
+						$content = str_replace('{ssl_http2_directive}', 'http2 on;', $content);
+					} else {
+						$content = str_replace('{ssl_on}', 'ssl http2', $content);
+						$content = str_replace('{ssl_http2_directive}', '', $content);
+					}
+
 			} else {
 				$content = str_replace('{ssl_on}', '', $content);
 				$content = str_replace('{ssl_comment}', '#', $content);
 				$content = str_replace('{fastcgi_ssl}', 'off', $content);
+				$content = str_replace('{ssl_http2_directive}', '', $content);
 			}
+
+
 
 			$socket_dir = escapeshellcmd($conf['nginx']['php_fpm_socket_dir']);
 			if(substr($socket_dir, -1) != '/') $socket_dir .= '/';

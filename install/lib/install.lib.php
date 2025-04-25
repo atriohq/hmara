@@ -1068,14 +1068,12 @@ function getnginxversion($get_minor = false) {
 	exec($cmd, $output, $return_var);
 
 	if($return_var != 0 || !$output[0]) {
-		ilog("Could not check Nginx version, Nginx did not return any data.");
 		return false;
 	}
 
 	if(preg_match('/nginx version: nginx\/\s*(\d+)(\.(\d+)(\.(\d+))*)?(\D|$)/i', $output[0], $matches)) {
 		return $matches[1] . (isset($matches[3]) ? '.' . $matches[3] : '') . (isset($matches[5]) && $get_minor == true ? '.' . $matches[5] : '');
 	} else {
-		ilog("Could not check Nginx version, did not find version string in Nginx output.");
 		return false;
 	}
 }

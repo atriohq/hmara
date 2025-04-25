@@ -56,7 +56,7 @@ class installer extends installer_base
 		if(!is_dir($config_dir)){
 			$this->error("The postfix configuration directory '$config_dir' does not exist.");
 		}
-    
+
     //* Get postfix version
 		exec('postconf -d mail_version 2>&1', $out);
 		$postfix_version = preg_replace('/.*=\s*/', '', $out[0]);
@@ -69,7 +69,7 @@ class installer extends installer_base
 
 		//* mysql-verify_recipients.cf
 		$this->process_postfix_config('mysql-verify_recipients.cf');
-    
+
     // test if lmtp if available
 		$configure_lmtp = $this->get_postfix_service('lmtp','unix');
 
@@ -82,7 +82,7 @@ class installer extends installer_base
 			$content = preg_replace('/amavis:/', 'lmtp:', $content);
 		}
 		wf($full_file_name, $content);
-    
+
     $filename='tag_as_foreign.re';
 		$full_file_name=$config_dir.'/'.$filename;
 		if(is_file($full_file_name)) copy($full_file_name, $full_file_name.'~');
@@ -90,8 +90,8 @@ class installer extends installer_base
 		if($configure_lmtp) {
 			$content = preg_replace('/amavis:/', 'lmtp:', $content);
 		}
-		wf($full_file_name, $content);    
-    
+		wf($full_file_name, $content);
+
 		//* Changing mode and group of the new created config files.
 		/*caselog('chmod o= '.$config_dir.'/mysql-virtual_*.cf* &> /dev/null',
 			__FILE__, __LINE__, 'chmod on mysql-virtual_*.cf*', 'chmod on mysql-virtual_*.cf* failed');
@@ -167,7 +167,7 @@ class installer extends installer_base
 		$postconf_tpl = rfsel($conf['ispconfig_install_dir'].'/server/conf-custom/install/gentoo_postfix.conf.master', 'tpl/gentoo_postfix.conf.master');
 		$postconf_tpl = strtr($postconf_tpl, $postconf_placeholders);
 		$postconf_commands = array_filter(explode("\n", $postconf_tpl)); // read and remove empty lines
-        
+
     //* Merge version-specific postfix config
 		if(version_compare($postfix_version , '2.5', '>=')) {
 		    $configfile = 'postfix_2-5.conf';
@@ -202,7 +202,7 @@ class installer extends installer_base
 
 		// Remove comment lines, these would give fatal errors when passed to postconf.
 		$postconf_commands = array_filter($postconf_commands, function($line) { return preg_match('/^[^#]/', $line); });
-    
+
 		//* These postconf commands will be executed on installation only
 		if($this->is_update == false) {
 			$postconf_commands = array_merge($postconf_commands, array(
@@ -218,7 +218,7 @@ class installer extends installer_base
 		touch($config_dir.'/nested_header_checks');
 		touch($config_dir.'/body_checks');
 		touch($config_dir.'/sasl_passwd');
-    
+
     //* Create the mailman files
 		if(!is_dir('/var/lib/mailman/data')) exec('mkdir -p /var/lib/mailman/data');
 		if(!is_file('/var/lib/mailman/data/aliases')) touch('/var/lib/mailman/data/aliases');
@@ -258,7 +258,7 @@ class installer extends installer_base
       swriteln($command);
       caselog($command." &> /dev/null", __FILE__, __LINE__, 'EXECUTED: '.$command, 'Failed to execute the command '.$command);
 		}
-		
+
 		if (!stristr($options, 'dont-create-certs')){
 			//* Create the SSL certificate
       if(AUTOINSTALL){
@@ -302,7 +302,7 @@ class installer extends installer_base
 						$content);
 			wf($configfile, $content);
 		}
-    
+
     //* Writing the Maildrop mailfilter file
 		$configfile = 'mailfilter';
 		if(is_file($cf['vmail_mailbox_base'].'/.'.$configfile)) {
@@ -310,13 +310,13 @@ class installer extends installer_base
 		}
 		$content = rfsel($conf['ispconfig_install_dir'].'/server/conf-custom/install/'.$configfile.'.master', 'tpl/'.$configfile.'.master');
 		$content = str_replace('{dist_postfix_vmail_mailbox_base}', $cf['vmail_mailbox_base'], $content);
-		wf($cf['vmail_mailbox_base'].'/.'.$configfile, $content);     
+		wf($cf['vmail_mailbox_base'].'/.'.$configfile, $content);
 
 		//* Create the directory for the custom mailfilters
 		if(!is_dir($cf['vmail_mailbox_base'].'/mailfilters')) {
 			$command = 'mkdir '.$cf['vmail_mailbox_base'].'/mailfilters';
 			caselog($command." &> /dev/null", __FILE__, __LINE__, "EXECUTED: $command", "Failed to execute the command $command");
-		}	
+		}
 
 		//* Chmod and chown the .mailfilter file
 		$command = 'chown '.$cf['vmail_username'].':'.$cf['vmail_groupname'].' '.$cf['vmail_mailbox_base'].'/.mailfilter';
@@ -326,7 +326,7 @@ class installer extends installer_base
 		caselog($command." &> /dev/null", __FILE__, __LINE__, "EXECUTED: $command", "Failed to execute the command $command");
 
 	}
-  
+
 	public function configure_saslauthd()
 	{
 		global $conf;
@@ -505,7 +505,7 @@ class installer extends installer_base
 					// Create symlink to ISPConfig dhparam file
 					swriteln('Creating symlink /etc/dovecot/dh.pem to ISPConfig DHParam file.');
 					symlink('/usr/local/ispconfig/interface/ssl/dhparam4096.pem', '/etc/dovecot/dh.pem');
-          
+
           /*
           swriteln('Creating new DHParams file, this takes several minutes. Do not interrupt the script.');
 					if(file_exists('/var/lib/dovecot/ssl-parameters.dat')) {
@@ -513,11 +513,11 @@ class installer extends installer_base
 						$command = 'dd if=/var/lib/dovecot/ssl-parameters.dat bs=1 skip=88 | openssl dhparam -inform der > /etc/dovecot/dh.pem';
 						caselog($command.' &> /dev/null', __FILE__, __LINE__, "EXECUTED: $command", "Failed to execute the command $command");
 					} else {
-						
+
 						   //Create a new dhparams file. We use 2048 bit only as it simply takes too long
 						   //on smaller systems to generate a 4096 bit dh file (> 30 minutes). If you need
 						  // a 4096 bit file, create it manually before you install ISPConfig
-						
+
 						$command = 'openssl dhparam -out /etc/dovecot/dh.pem 2048';
 						caselog($command.' &> /dev/null', __FILE__, __LINE__, "EXECUTED: $command", "Failed to execute the command $command");
 					}
@@ -712,18 +712,18 @@ class installer extends installer_base
 		 $content = preg_replace('/MISC_OTHER="[^"]+"/', 'MISC_OTHER="-b -A -E -Z -D -H -O clf:'.$logdir.'/transfer.log'.$enable_tls.'"', $content);
 
 		$this->write_config_file($conf['pureftpd']['config_file'], $content);
-    
-    //* Since version 1.0.50: Configuration through /etc/conf.d/pure-ftpd is now deprecated!    
+
+    //* Since version 1.0.50: Configuration through /etc/conf.d/pure-ftpd is now deprecated!
     exec("/usr/sbin/pure-ftpd --help | head -1",$out);
     if(preg_match("#v([0-9\.]+)\s#",$out[0],$matches)){
       $pureftpd_version = $matches[1];
-      
-      if(version_compare($pureftpd_version, '1.0.50', '>=')) { 
+
+      if(version_compare($pureftpd_version, '1.0.50', '>=')) {
         $configfile = $conf['pureftpd']['main_config_file'];
     		if(is_file($configfile)) {
     			copy($configfile, $configfile.'~');
     		}
-    		
+
         $content = rf($configfile);
         $content = preg_replace('/BrokenClientsCompatibility\s+(yes|no)/', 'BrokenClientsCompatibility   yes', $content);
         $content = preg_replace('/ChrootEveryone\s+(yes|no)/', 'ChrootEveryone               yes', $content);
@@ -733,15 +733,15 @@ class installer extends installer_base
         $content = preg_replace('/DisplayDotFiles\s+(yes|no)/', 'DisplayDotFiles              yes', $content);
         $content = preg_replace('/DontResolve\s+(yes|no)/', 'DontResolve                  yes', $content);
         $content = preg_replace('/#? MySQLConfigFile\s+\/.*\s/', 'MySQLConfigFile              ' . $conf['pureftpd']['mysql_config_file'], $content);
-        
+
         if(file_exists('/etc/ssl/private/pure-ftpd.pem')) {
           $content = preg_replace('/(#?) TLS\s+(0|1)/', 'TLS                          1', $content);
         }
-        
+
         wf($configfile, $content);
       }
     }
-    
+
 	}
 
 	public function configure_powerdns()
@@ -1074,12 +1074,12 @@ class installer extends installer_base
 
 		}
 	}
-  
+
   public function get_host_ips() {
 		$out = array();
 		exec("ip addr show | awk '/global/ { print $2 }' | cut -d '/' -f 1", $ret, $val);
 		if($val == 0) {
-			if(is_array($ret) && !empty($ret)){				
+			if(is_array($ret) && !empty($ret)){
 				foreach($ret as $ip) {
 					$ip = trim($ip);
           $out[] = $ip;
@@ -1089,7 +1089,7 @@ class installer extends installer_base
 
 		return $out;
 	}
-  
+
 	public function install_ispconfig() {
 		global $conf;
 
@@ -1454,10 +1454,15 @@ class installer extends installer_base
 			exec('chown -R ispconfig:ispconfig /var/www/php-fcgi-scripts/ispconfig');
 			$this->set_immutable('/var/www/php-fcgi-scripts/ispconfig/.php-fcgi-starter', true);
 			//}
-      
+
       // unlink acme vhost symlink
       if(is_link($vhost_conf_dir . '/999-acme.conf') && file_exists($vhost_conf_dir . '/acme.conf')) unlink($vhost_conf_dir . '/999-acme.conf');
 		}
+
+
+		$nginx_openssl_build_ver = exec('nginx -V 2>&1 | grep \'built with OpenSSL\' | sed \'s/.*built\([a-zA-Z ]*\)OpenSSL \([0-9.]*\).*/\2/\'');
+		$nginx_openssl_running_ver = exec('nginx -V 2>&1 | grep \'running with OpenSSL\' | sed \'s/.*running\([a-zA-Z ]*\)OpenSSL \([0-9.]*\).*/\2/\'');
+		$nginx_version = getnginxversion(true);
 
 		if($conf['nginx']['installed'] == true && $this->install_ispconfig_interface == true){
 			//* Copy the ISPConfig vhost for the controlpanel
@@ -1468,14 +1473,33 @@ class installer extends installer_base
 			$content = rfsel($conf['ispconfig_install_dir'].'/server/conf-custom/install/nginx_ispconfig.vhost.master', 'tpl/nginx_ispconfig.vhost.master');
 			$content = str_replace('{vhost_port}', $conf['nginx']['vhost_port'], $content);
 
+
 			if(is_file($install_dir.'/interface/ssl/ispserver.crt') && is_file($install_dir.'/interface/ssl/ispserver.key')) {
-				$content = str_replace('{ssl_on}', 'ssl http2', $content);
+
 				$content = str_replace('{ssl_comment}', '', $content);
 				$content = str_replace('{fastcgi_ssl}', 'on', $content);
+
+				if(version_compare($nginx_version, '1.13.0', '>=')
+					&& version_compare($nginx_openssl_build_ver, '1.1.1', '>=')
+					&& (empty($nginx_openssl_running_ver) || version_compare($nginx_openssl_running_ver, '1.1.1', '>='))) {
+						$content = str_replace('{ssl_proto_version}', 'TLSv1.3 TLSv1.2', $content);
+					} else {
+						$content = str_replace('{ssl_proto_version}', 'TLSv1.2', $content);
+					}
+
+					if(version_compare($nginx_version, '1.25.1', '>=')) {
+						$content = str_replace('{ssl_on}', 'ssl', $content);
+						$content = str_replace('{ssl_http2_directive}', 'http2 on;', $content);
+					} else {
+						$content = str_replace('{ssl_on}', 'ssl http2', $content);
+						$content = str_replace('{ssl_http2_directive}', '', $content);
+					}
+
 			} else {
 				$content = str_replace('{ssl_on}', '', $content);
 				$content = str_replace('{ssl_comment}', '#', $content);
 				$content = str_replace('{fastcgi_ssl}', 'off', $content);
+				$content = str_replace('{ssl_http2_directive}', '', $content);
 			}
 
 			$socket_dir = escapeshellcmd($conf['nginx']['php_fpm_socket_dir']);
