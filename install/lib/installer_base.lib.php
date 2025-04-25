@@ -3858,7 +3858,6 @@ class installer_base extends stdClass {
 
 
 			if(is_file($install_dir.'/interface/ssl/ispserver.crt') && is_file($install_dir.'/interface/ssl/ispserver.key')) {
-				echo $install_dir."/interface/ssl/ispserver.crt\n\n";
 
 				$content = str_replace('{ssl_comment}', '', $content);
 				$content = str_replace('{fastcgi_ssl}', 'on', $content);

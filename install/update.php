@@ -415,11 +415,9 @@ if($conf['mysql']['master_slave_setup'] == 'y') {
 //** Is the ISPConfg Panel installed on this host? This might partially override user's preferences later.
 if($conf['apache']['installed'] == true){
 	if(!is_file($conf['apache']['vhost_conf_dir'].'/ispconfig.vhost')) $inst->install_ispconfig_interface = false;
-	//if(!is_file($conf['apache']['vhost_conf_dir'].'/ispconfig.vhost') && $conf['webserver']['server_type'] == 'apache') $inst->install_ispconfig_interface = true;
 }
 elseif($conf['nginx']['installed'] == true){
 	if(!is_file($conf['nginx']['vhost_conf_dir'].'/ispconfig.vhost')) $inst->install_ispconfig_interface = false;
-	//if(!is_file($conf['nginx']['vhost_conf_dir'].'/ispconfig.vhost') && $conf['webserver']['server_type'] == 'nginx') $inst->install_ispconfig_interface = true;
 }
 else {
 	// If neither webserver is installed then this can't be the server that hosts the ispconfig interface.
