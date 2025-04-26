@@ -1165,4 +1165,4 @@ class installer_dist extends installer_base {
 	}
 }
 
-?>
+
