@@ -182,7 +182,7 @@ class page_action extends tform_actions {
 		if($_SESSION["s"]["user"]["typ"] != 'admin') {
 			// Get the limits of the client
 			$client_group_id = $_SESSION["s"]["user"]["default_group"];
-			$client = $app->db->queryOneRecord("SELECT db_servers, limit_database, limit_database_quota, parent_client_id FROM sys_group, client WHERE sys_group.client_id = client.client_id AND sys_group.groupid = ?", $client_group_id);
+			$client = $app->db->queryOneRecord("SELECT db_servers, limit_database, limit_database_postgresql, limit_database_quota, parent_client_id FROM sys_group, client WHERE sys_group.client_id = client.client_id AND sys_group.groupid = ?", $client_group_id);
 
 			// When the record is updated
 			if($this->id > 0) {
@@ -254,7 +254,7 @@ class page_action extends tform_actions {
 				}
 
 				// Check if the user may add another MySQL database
-				if($client["limit_database"] >= 0) {
+				if($this->dataRecord["type"] == 'mysql' && $client["limit_database"] >= 0) {
 					$tmp = $app->db->queryOneRecord("SELECT count(`database_id`) as `number` FROM `web_database` WHERE `type` = 'mysql' AND  `sys_groupid` = ?", $client_group_id);
 					if($tmp["number"] >= $client["limit_database"]) {
 						$app->error($app->tform->wordbook["limit_database_txt"]);
@@ -262,7 +262,7 @@ class page_action extends tform_actions {
 				}
 
 				// Check if the user may add another PostgreSQL database
-				if($client["limit_database_postgresql"] >= 0) {
+				if($this->dataRecord["type"] == 'postgresql' && $client["limit_database_postgresql"] >= 0) {
 					$tmp = $app->db->queryOneRecord("SELECT count(`database_id`) as `number` FROM `web_database` WHERE `type` = 'postgresql' AND  `sys_groupid` = ?", $client_group_id);
 					if($tmp["number"] >= $client["limit_database_postgresql"]) {
 						$app->error($app->tform->wordbook["limit_database_txt"]);
@@ -372,8 +372,10 @@ class page_action extends tform_actions {
 			$tmp = $app->db->queryOneRecord('SELECT `database_id` FROM `web_database` WHERE `type` = "postgresql" AND `server_id` = ? AND (`database_user_id` = ? OR `database_ro_user_id` = ?) AND `database_id` != ?', $this->dataRecord['server_id'],$this->dataRecord['database_user_id'],$this->dataRecord['database_user_id'], $this->id);
 			if(!empty($tmp)) $app->tform->errorMessage .= $app->tform->lng('error_db_user_in_use_txt').'<br />';
 			// Check that database ro user is not used by any other postgres database
-			$tmp = $app->db->queryOneRecord('SELECT `database_id` FROM `web_database` WHERE `type` = "postgresql" AND `server_id` = ? AND (`database_user_id` = ? OR `database_ro_user_id` = ?)  AND `database_id` != ?', $this->dataRecord['server_id'],$this->dataRecord['database_ro_user_id'],$this->dataRecord['database_ro_user_id'], $this->id);
-			if(!empty($tmp)) $app->tform->errorMessage .= $app->tform->lng('error_db_ro_user_in_use_txt').'<br />';
+			if(!empty($this->dataRecord['database_ro_user_id']) && $this->dataRecord['database_ro_user_id'] != $this->dataRecord['database_user_id']) {
+				$tmp = $app->db->queryOneRecord('SELECT `database_id` FROM `web_database` WHERE `type` = "postgresql" AND `server_id` = ? AND (`database_user_id` = ? OR `database_ro_user_id` = ?)  AND `database_id` != ?', $this->dataRecord['server_id'],$this->dataRecord['database_ro_user_id'],$this->dataRecord['database_ro_user_id'], $this->id);
+				if(!empty($tmp)) $app->tform->errorMessage .= $app->tform->lng('error_db_ro_user_in_use_txt').'<br />';
+			}
 		}
 
 		// get the web server ip (parent domain)
@@ -489,8 +491,10 @@ class page_action extends tform_actions {
 			$tmp = $app->db->queryOneRecord('SELECT `database_id` FROM `web_database` WHERE `type` = "postgresql" AND `server_id` = ? AND (`database_user_id` = ? OR `database_ro_user_id` = ?)', $this->dataRecord['server_id'],$this->dataRecord['database_user_id'],$this->dataRecord['database_user_id']);
 			if(!empty($tmp)) $app->tform->errorMessage .= $app->tform->lng('error_db_user_in_use_txt').'<br />';
 			// Check that database ro user is not used by any other postgres database
-			$tmp = $app->db->queryOneRecord('SELECT `database_id` FROM `web_database` WHERE `type` = "postgresql" AND `server_id` = ? AND (`database_user_id` = ? OR `database_ro_user_id` = ?)', $this->dataRecord['server_id'],$this->dataRecord['database_ro_user_id'],$this->dataRecord['database_ro_user_id']);
-			if(!empty($tmp)) $app->tform->errorMessage .= $app->tform->lng('error_db_ro_user_in_use_txt').'<br />';
+			if(!empty($this->dataRecord['database_ro_user_id']) && $this->dataRecord['database_ro_user_id'] != $this->dataRecord['database_user_id']) {
+				$tmp = $app->db->queryOneRecord('SELECT `database_id` FROM `web_database` WHERE `type` = "postgresql" AND `server_id` = ? AND (`database_user_id` = ? OR `database_ro_user_id` = ?)', $this->dataRecord['server_id'],$this->dataRecord['database_ro_user_id'],$this->dataRecord['database_ro_user_id']);
+				if(!empty($tmp)) $app->tform->errorMessage .= $app->tform->lng('error_db_ro_user_in_use_txt').'<br />';
+			}
 		}
 
 		// get the web server ip (parent domain)
