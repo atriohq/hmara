@@ -192,7 +192,7 @@ class apps_vhost_plugin {
 			$content = str_replace('{fpm_socket}', $fpm_socket, $content);
 			$content = str_replace('{cgi_socket}', $cgi_socket, $content);
 			if(	file_exists('/var/run/php5-fpm.sock')
-                                || file_exists('/var/lib/php5-fpm/apps.sock')
+                || file_exists('/var/lib/php5-fpm/apps.sock')
 				|| file_exists('/var/run/php/php7.0-fpm.sock')
 				|| file_exists('/var/run/php/php7.1-fpm.sock')
 				|| file_exists('/var/run/php/php7.2-fpm.sock')
@@ -205,7 +205,6 @@ class apps_vhost_plugin {
 				$use_tcp = '';
 				$use_socket = '#';
 			}
-
 
 			$nginx_openssl_build_ver = $app->system->exec_safe('nginx -V 2>&1 | grep \'built with OpenSSL\' | sed \'s/.*built\([a-zA-Z ]*\)OpenSSL \([0-9.]*\).*/\2/\'');
 			$nginx_openssl_running_ver = $app->system->exec_safe('nginx -V 2>&1 | grep \'running with OpenSSL\' | sed \'s/.*running\([a-zA-Z ]*\)OpenSSL \([0-9.]*\).*/\2/\'');
