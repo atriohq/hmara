@@ -167,7 +167,13 @@ class page_action extends tform_actions {
             }
 
 			# Get addresses for this account.
-			$addresses = $app->db->queryAllRecords("SELECT source, type FROM mail_forwarding WHERE destination = ? AND ".$app->tform->getAuthSQL('r'), $email);
+			$addresses = $app->db->queryAllRecords("SELECT source, type FROM mail_forwarding WHERE (destination = ? OR destination = ?) AND ".$app->tform->getAuthSQL('r'), $email, '@' . $email_parts[1]);
+			// For domain alias, prepend the username.
+			foreach ($addresses as $key => $a) {
+				if (preg_match('/^@/', $a['source'])) {
+					$addresses[$key]['source'] = $email_parts[0] . $a['source'];
+				}
+			}
 			$app->tpl->setLoop("mail_addresses", $addresses);
 		}
 
