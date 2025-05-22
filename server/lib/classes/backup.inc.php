@@ -1161,6 +1161,7 @@ class backup
                 return ($a['created_at'] > $b['created_at']) ? -1 : 1;
             });
             //Delete old files that are beyond the limit
+            $repoToCompactList=[];
             for ($n = $max_backup_copies; $n < sizeof($repos_archives); $n++) {
                 $archive = $repos_archives[$n];
                 $app->log('Backup archive ' . $archive['archive'] . ' is beyond the limit of ' . $max_backup_copies . " copies and will be deleted from disk and database", LOGLEVEL_DEBUG);
@@ -1169,7 +1170,12 @@ class backup
                     $db->query($sql, $server_id, $web_id, $archive['archive']);
                 }
                 $backup_repos_path = $backup_dir . '/' . $archive['repos'];
+                $repoToCompactList[] = explode(':',$backup_repos_path)[0];
                 self::deleteArchive($backup_mode, $backup_repos_path, $archive['archive'], $password);
+            }
+            //compact archive
+            foreach (array_unique($repoToCompactList) as $repo) {
+                self::compactArchive($backup_mode, $repo);
             }
         }
         return true;
@@ -1234,6 +1240,20 @@ class backup
         switch ($backup_mode) {
             case 'borg':
                 $app->system->exec_safe('borg delete ?', $backup_repos_path . '::' . $backup_archive);
+                return $app->system->last_exec_retcode() == 0;
+            default:
+                $app->log("Unknown repos type " . $backup_mode, LOGLEVEL_ERROR);
+        }
+        return FALSE;
+    }
+
+    protected static function compactArchive($backup_mode, $backup_repos_path)
+    {
+        global $app;
+        $app->log("Compact Archive - repos = " . $backup_repos_path, LOGLEVEL_DEBUG);
+        switch ($backup_mode) {
+            case 'borg':
+                $app->system->exec_safe('borg compact ?', $backup_repos_path);
                 return $app->system->last_exec_retcode() == 0;
             default:
                 $app->log("Unknown repos type " . $backup_mode, LOGLEVEL_ERROR);
