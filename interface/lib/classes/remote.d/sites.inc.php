@@ -432,6 +432,9 @@ class remoting_sites extends remoting {
 		if($params['system_group'] == '') $params['system_group'] = '-';
 		if($params['log_retention'] == '') $params['log_retention'] = 30;
 
+		if($params['vhost_type'] == '') $params['vhost_type'] = 'name';
+		if($params['ip_address'] == '') $params['ip_address'] = '*';
+
 		//* Set a few defaults for nginx servers
 		if($params['pm_max_children'] == '') $params['pm_max_children'] = 10;
 		if($params['pm_start_servers'] == '') $params['pm_start_servers'] = 2;
