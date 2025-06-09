@@ -105,7 +105,9 @@ $form["tabs"]['whitelist'] = array (
 				3 => array( 'event' => 'SAVE',
 					'type' => 'STRIPTAGS'),
 				4 => array( 'event' => 'SAVE',
-					'type' => 'STRIPNL')
+					'type' => 'STRIPNL'),
+				5 => array( 'event' => 'SAVE',
+					'type' => 'TRIM')
 			),
 			'validators' => array (  0 => array ( 'type' => 'NOTEMPTY',
 					'errmsg'=> 'email_error_notempty'),
