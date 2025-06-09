@@ -260,3 +260,11 @@ includesections = php_common
 [imagemagick]
 comment = ImageMagick needed for php-imagemagick extension
 paths = /usr/share/ImageMagick-*, /etc/ImageMagick-*, /usr/lib/*/ImageMagick-*
+
+[java]
+comment = Java (openjdk package)
+paths = /usr/bin/java, /usr/share/java, /usr/lib/jvm/,  /etc/ld.so.conf*
+
+[pdftk]
+comment = pdftk
+paths = /usr/bin/pdftk, /usr/share/pdftk/
