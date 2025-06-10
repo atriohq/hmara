@@ -261,7 +261,7 @@ class page_action extends tform_actions {
 
 		if($this->id > 0) {
 			if ($this->dataRecord['dkim'] == 'y') {
-				$dns_record_status = dns_get_record($rec['dkim_selector'] . '._domainkey.' . $rec['domain'], DNS_TXT);
+				$dns_record_status = dns_get_record($this->dataRecord['dkim_selector'] . '._domainkey.' . $this->dataRecord['domain'], DNS_TXT);
 				if (empty($dns_record_status) || empty($dns_record_status[0]['txt'])) {
 					// Record not found
 					$app->tpl->setVar('dkim_status', $app->tform->wordbook['dkim_enabled_dns_not_found_txt'], true);
