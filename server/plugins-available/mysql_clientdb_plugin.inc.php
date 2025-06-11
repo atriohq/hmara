@@ -282,7 +282,7 @@ class mysql_clientdb_plugin {
 	}
 
 	function dbUserUpdate($event_name, $data) {
-		global $app;
+		global $app, $conf;
 
 		// nothing to do when username and password are the same. No need to check database_password_sha2 since it is always in sync with database_password
 		if($data['old']['database_user'] == $data['new']['database_user'] && ($data['old']['database_password'] == $data['new']['database_password'] || $data['new']['database_password'] == '')) {
@@ -295,7 +295,7 @@ class mysql_clientdb_plugin {
 
 		// get all databases this user was active for
 		$user_id = intval($data['old']['database_user_id']);
-		$db_list = $app->db->queryAllRecords('SELECT `remote_access`, `remote_ips` FROM `web_database` WHERE `database_user_id` = ? OR database_ro_user_id = ?', $user_id, $user_id);
+		$db_list = $app->db->queryAllRecords('SELECT `remote_access`, `remote_ips` FROM `web_database` WHERE `server_id` = ? AND `database_user_id` = ? OR database_ro_user_id = ?', $conf['server_id'], $user_id, $user_id);
 		// nothing to do on this server for this db user
 		if(empty($db_list)) {
 			return;
