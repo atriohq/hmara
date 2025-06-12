@@ -152,7 +152,7 @@ class remoting_dns extends remoting {
 			return false;
 		}
 
-		$rec = $app->db->queryOneRecord("SELECT id FROM dns_soa WHERE origin like ?", $origin."%");
+		$rec = $app->db->queryOneRecord("SELECT id FROM dns_soa WHERE origin = ? or origin = ?", $origin, $origin.'.');
 		if(isset($rec['id'])) {
 			return $app->functions->intval($rec['id']);
 		} else {
@@ -743,7 +743,7 @@ class remoting_dns extends remoting {
 			return false;
 		}
 	}
-	
+
 	/*
 	* Set DNSSec Algo and activate it if needed.
 	*
@@ -754,14 +754,14 @@ class remoting_dns extends remoting {
 	*
 	* @author Tom Albers <kovoks@kovoks.nl> KovoKs B.V. 2023
 	*/
-	
+
 	public function dns_zone_set_dnssec($session_id, $client_id, $primary_id, $algo, $update_serial=false) {
 		global $app;
 		if(!$this->checkPerm($session_id, 'dns_zone_set_status')) {
 			throw new SoapFault('permission_denied', 'You do not have the permissions to access this function.');
 			return false;
 		}
-		
+
 		if(!in_array($algo, ['NSEC3RSASHA1', 'ECDSAP256SHA256', 'NSEC3RSASHA1,ECDSAP256SHA256'])) {
 			throw new SoapFault('permission_denied', 'You are not using a valid algorithm for this function.');
 			return false;
