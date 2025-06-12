@@ -44,7 +44,7 @@ class hostfact_plugin
     if (!empty($app->tpl->getInclude('domain_extra_info_tpl'))) {
       $app->tpl->setInclude('domain_extra_info_tpl_more', $app->tpl->getInclude('domain_extra_info_tpl'));
     }
-    $app->tpl->setInclude('domain_extra_info_tpl', 'templates/domain_edit_extra_info.htm');
+    $app->tpl->setInclude('domain_extra_info_tpl', 'templates/domain_edit_hostfact.htm');
   }
 
   public function sendRequest($controller, $action, $params){
