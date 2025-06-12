@@ -36,6 +36,19 @@ $app->auth->check_module_permissions('monitor');
 /* Change the Server if needed */
 if (isset($_GET['server'])) {
 	$server = explode('|', $_GET['server'], 2);
+	
+	// Validate server_id (should be numeric)
+	if (!isset($server[0]) || !is_numeric($server[0])) {
+		$app->error('Invalid server ID');
+		exit;
+	}
+	
+	// Validate server_name (allow alphanumeric, spaces, hyphens, dots, underscores, and parentheses)
+	if (!isset($server[1]) || !preg_match('/^[a-zA-Z0-9\s\-\._()]+$/', $server[1]) || strlen($server[1]) > 60) {
+		$app->error('Invalid server name');
+		exit;
+	}
+	
 	$_SESSION['monitor']['server_id'] = $server[0];
 	$_SESSION['monitor']['server_name'] = $server[1];
 }
@@ -104,6 +117,11 @@ if($metrics_data) {
             so reload every 2 minutes is impossible!
 */
 $refresh = (isset($_GET["refresh"]))?$app->functions->intval($_GET["refresh"]):0;
+
+// Ensure refresh value is within acceptable range (0-3600 seconds)
+if ($refresh < 0 || $refresh > 3600) {
+	$refresh = 0; // Reset to default if invalid
+}
 
 $refresh_values = array('0' => '- '.$app->lng("No Refresh").' -', '5' => '5 '.$app->lng("minutes"), '10' => '10 '.$app->lng("minutes"), '15' => '15 '.$app->lng("minutes"), '30' => '30 '.$app->lng("minutes"), '60' => '60 '.$app->lng("minutes"));
 $tmp = '';
