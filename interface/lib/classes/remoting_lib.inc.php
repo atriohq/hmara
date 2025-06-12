@@ -297,6 +297,16 @@ class remoting_lib extends tform_base {
 			$modules = $conf['interface_modules_enabled'];
 		} else {
 			$modules = $params['modules'];
+
+			// Check if modules are allowed and remove unknown modules
+			$allowed_modules = explode(',', $conf['interface_modules_enabled']);
+			$modules_array = explode(',', $modules);
+			foreach($modules_array as $key => $module) {
+				if(!in_array($module, $allowed_modules)) {
+					unset($modules_array[$key]);
+				}
+			}
+			$modules = implode(',', $modules_array);
 		}
 		if(isset($params['limit_client']) && $params['limit_client'] > 0) {
 			$modules .= ',client';
@@ -306,7 +316,7 @@ class remoting_lib extends tform_base {
 			$startmodule = 'dashboard';
 		} else {
 			$startmodule = $params["startmodule"];
-			if(!preg_match('/'.$startmodule.'/', $modules)) {
+			if(!in_array($startmodule, explode(',', $modules))) {
 				$_modules = explode(',', $modules);
 				$startmodule=$_modules[0];
 			}
@@ -325,12 +335,22 @@ class remoting_lib extends tform_base {
 	}
 
 	function ispconfig_sysuser_update($params, $client_id){
-		global $app;
+		global $app, $conf;
 		$username = $params["username"];
 		$clear_password = $params["password"];
 		$language = $params['language'];
 		$modules = $params['modules'];
 		$client_id = $app->functions->intval($client_id);
+
+		// Check if modules are allowed and remove unknown modules
+		$allowed_modules = explode(',', $conf['interface_modules_enabled']);
+		$modules_array = explode(',', $modules);
+		foreach($modules_array as $key => $module) {
+			if(!in_array($module, $allowed_modules)) {
+				unset($modules_array[$key]);
+			}
+		}
+		$modules = implode(',', $modules_array);
 
 		if(!isset($params['_ispconfig_pw_crypted']) || $params['_ispconfig_pw_crypted'] != 1) $password = $app->auth->crypt_password(stripslashes($clear_password));
 		else $password = $clear_password;
