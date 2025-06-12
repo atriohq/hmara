@@ -1329,6 +1329,7 @@ class installer_dist extends installer_base {
 		if(!is_dir($conf['ispconfig_log_dir'])) mkdir($conf['ispconfig_log_dir']);
 		if(!is_file($conf['ispconfig_log_dir'].'/ispconfig.log')) exec('touch '.$conf['ispconfig_log_dir'].'/ispconfig.log');
 		chmod($conf['ispconfig_log_dir'].'/ispconfig.log', 0600);
+		exec('chmod o-rw /var/log/ispconfig/*.gz /var/log/ispconfig/*.log');
 
 		if(is_user('getmail')) {
 			exec('mv /usr/local/ispconfig/server/scripts/run-getmail.sh /usr/local/bin/run-getmail.sh');

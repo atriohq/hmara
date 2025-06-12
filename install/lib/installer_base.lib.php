@@ -3909,6 +3909,7 @@ class installer_base extends stdClass {
 			touch($conf['ispconfig_log_dir'].'/ispconfig.log');
 		}
 		chmod($conf['ispconfig_log_dir'].'/ispconfig.log', 0600);
+		exec('chmod o-rw /var/log/ispconfig/*.gz /var/log/ispconfig/*.log');
 
 		//* Create the ispconfig auth log file and set uid/gid
 		if(!is_file($conf['ispconfig_log_dir'].'/auth.log')) {
