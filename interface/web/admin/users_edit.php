@@ -54,7 +54,7 @@ class page_action extends tform_actions {
 		global $app, $conf;
 		
 		//* Security settings check
-		if(isset($this->dataRecord['typ']) && $this->dataRecord['typ'][0] == 'admin') {
+		if(isset($this->dataRecord['typ']) && in_array('admin', $this->dataRecord['typ'])) {
 			$app->auth->check_security_permissions('admin_allow_new_admin');
 		}
 
@@ -63,7 +63,7 @@ class page_action extends tform_actions {
 		}
 		
 		//* Do not add users here
-		if(isset($this->dataRecord['typ']) && $this->dataRecord['typ'][0] == 'user') {
+		if(isset($this->dataRecord['typ']) && in_array('user', $this->dataRecord['typ'])) {
 			$app->tform->errorMessage .= $app->tform->wordbook['no_user_insert'];
 		}
 		
@@ -75,7 +75,7 @@ class page_action extends tform_actions {
 		if($conf['demo_mode'] == true && $_REQUEST['id'] <= 3) $app->error('This function is disabled in demo mode.');
 
 		//* Security settings check
-		if(isset($this->dataRecord['typ']) && $this->dataRecord['typ'][0] == 'admin') {
+		if(isset($this->dataRecord['typ']) && in_array('admin', $this->dataRecord['typ'])) {
 			$app->auth->check_security_permissions('admin_allow_new_admin');
 		}
 
@@ -86,12 +86,12 @@ class page_action extends tform_actions {
 		$this->oldDataRecord = $app->tform->getDataRecord($this->id);
 		
 		//* A user that belongs to a client record (client or reseller) may not have typ admin
-		if(isset($this->dataRecord['typ']) && $this->dataRecord['typ'][0] == 'admin'  && $this->oldDataRecord['client_id'] > 0) {
+		if(isset($this->dataRecord['typ']) && in_array('admin', $this->dataRecord['typ']) && $this->oldDataRecord['client_id'] > 0) {
 			$app->tform->errorMessage .= $app->tform->wordbook['client_not_admin_err'];
 		}
 		
 		//* Users have to belong to clients
-		if(isset($this->dataRecord['typ']) && $this->dataRecord['typ'][0] == 'user'  && $this->oldDataRecord['client_id'] == 0) {
+		if(isset($this->dataRecord['typ']) && in_array('user', $this->dataRecord['typ']) && $this->oldDataRecord['client_id'] == 0) {
 			$app->tform->errorMessage .= $app->tform->wordbook['no_user_insert'];
 		}
 		
