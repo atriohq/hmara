@@ -196,6 +196,10 @@ class page_action extends tform_actions {
 				if(!$domain) {
 					$app->tform->errorMessage .= $app->tform->lng("domain_error_empty")."<br />";
 				} else {
+					// $this->dataRecord['domain'] may not be empty
+					if(empty($this->dataRecord['domain'])) {
+						$app->tform->errorMessage .= $app->tform->lng("domain_error_empty")."<br />";
+					}
 					$this->dataRecord['domain'] = $this->dataRecord['domain'] . '.' . $domain;
 				}
 			} else {
