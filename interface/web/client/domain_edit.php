@@ -48,8 +48,6 @@ $app->auth->check_module_permissions('client');
 $app->uses('tpl,tform,tform_actions');
 $app->load('tform_actions');
 
-$app->load('hostfactapi');
-
 //* load language file
 $lng_file = 'lib/lang/'.$app->functions->check_language($_SESSION['s']['language']).'.lng';
 include $lng_file;
@@ -81,9 +79,6 @@ class page_action extends tform_actions {
 		}
 
 		if($_SESSION["s"]["user"]["typ"] == 'admin') {
-
-			$this->addHostfactData();
-
 			// Getting Clients of the user
 			//$sql = "SELECT groupid, name FROM sys_group WHERE client_id > 0 ORDER BY name";
 			$sql = "SELECT sys_group.groupid, sys_group.name, CONCAT(IF(client.company_name != '', CONCAT(client.company_name, ' :: '), ''), client.contact_name, ' (', client.username, IF(client.customer_no != '', CONCAT(', ', client.customer_no), ''), ')') as contactname FROM sys_group, client WHERE sys_group.client_id = client.client_id AND sys_group.client_id > 0 ORDER BY client.company_name, client.contact_name, sys_group.name";
@@ -143,25 +138,6 @@ class page_action extends tform_actions {
 		$app->tpl->setVar('show_delete_on_forms', $global_config['misc']['show_delete_on_forms']);
 
 		parent::onShowEnd();
-	}
-
-	function addHostfactData() {
-		global $conf, $app;
-
-		$hostfact = new HostFactAPI($conf['hostfact_url'], $conf['hostfact_api_key']);
-		$hinfo = $hostfact->get_domain($this->dataRecord['domain']);
-
-		$hostfact_status = array(
-				1 => 'Wachten op actie',
-				4 => 'Actief',
-				7 => 'Fout opgetreden',
-				8 => 'Geannuleerd',
-				9 => 'Verwijderd',
-				);
-		$app->tpl->setVar('hostfact_url', $conf['hostfact_url']);
-		$app->tpl->setVar('hostfact_debtor', $hinfo['Debtor']);
-		$app->tpl->setVar('hostfact_debtorcode', $hinfo['DebtorCode']);
-		$app->tpl->setVar('hostfact_status_label', $hostfact_status[$hinfo['Status']]);
 	}
 
 	function onSubmit() {
