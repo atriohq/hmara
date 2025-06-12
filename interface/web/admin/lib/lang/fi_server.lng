@@ -13,4 +13,5 @@ $wb['- None -'] = '- Ei mikään -';
 $wb['proxy_server_txt'] = 'Proxy-Server';
 $wb['firewall_server_txt'] = 'Firewall-Server';
 $wb['xmpp_server_txt'] = 'XMPP Server';
+$wb['server_name_error_regex'] = 'Virheellinen palvelimen nimi. Vain kirjaimet, numerot, välilyönnit, viivat, pisteet, alaviivat ja sulkeet ovat sallittuja.';
 ?>

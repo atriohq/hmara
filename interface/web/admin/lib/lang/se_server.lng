@@ -13,4 +13,5 @@ $wb['- None -'] = '- Ingen';
 $wb['proxy_server_txt'] = 'Proxy-server';
 $wb['firewall_server_txt'] = 'Brandväggsserver';
 $wb['xmpp_server_txt'] = 'XMPP Server';
+$wb['server_name_error_regex'] = 'Ogiltigt servernamn. Endast bokstäver, siffror, mellanslag, bindestreck, punkter, understreck och parenteser är tillåtna.';
 ?>

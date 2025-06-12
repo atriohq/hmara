@@ -31,10 +31,11 @@ require_once '../../lib/config.inc.php';
 require_once '../../lib/app.inc.php';
 
 function normalize_string($string, $quote, $allow_special = false) {
+	// First, handle quote concatenation by extracting content between quotes
+	$content = '';
 	$escaped = false;
-	$in_string = true;
-	$new_string = '';
-
+	$in_string = ($quote !== null);
+	
 	for($c = 0; $c < mb_strlen($string); $c++) {
 		$char = mb_substr($string, $c, 1);
 
@@ -51,34 +52,32 @@ function normalize_string($string, $quote, $allow_special = false) {
 			}
 		}
 
-		if($char === '"' && $escaped === true && $quote === '"') {
-			// unescape this
-			$new_string .= $char;
-			$escaped = false;
-			continue;
-		} elseif($char === "'" && $escaped === false && $quote === '"') {
-			// escape this
-			$new_string .= '\\' . $char;
-			continue;
-		}
-
 		if($escaped === true) {
-			// the next character is the escaped one.
+			// Handle escaped characters properly
 			if($allow_special === true && ($char === 'n' || $char === 'r' || $char === 't')) {
-				$new_string .= '\' . "\\' . $char . '" . \'';
+				// Convert escape sequences to actual characters for special cases
+				if($char === 'n') $content .= "\n";
+				elseif($char === 'r') $content .= "\r";
+				elseif($char === 't') $content .= "\t";
 			} else {
-				$new_string .= '\\' . $char;
+				$content .= $char; // Add the escaped character without the backslash
 			}
 			$escaped = false;
 		} else {
 			if($char === '\\') {
 				$escaped = true;
 			} else {
-				$new_string .= $char;
+				$content .= $char;
 			}
 		}
 	}
-	return $new_string;
+	
+	// Use var_export for secure escaping - this handles all edge cases correctly
+	// Remove outer quotes since we'll add our own
+	$safe_content = var_export($content, true);
+	// var_export returns single-quoted strings, so we can return as-is for single quotes
+	// or convert to double quotes if needed, but we'll standardize on single quotes
+	return substr($safe_content, 1, -1); // Remove the outer quotes added by var_export
 }
 
 function validate_line($line) {
@@ -95,17 +94,17 @@ function validate_line($line) {
 	$textquote = $matches[3]; // ' or "
 	$text = $matches[4];
 
-	$new_line = '$wb[\'';
+	// Validate and normalize the language key using secure escaping
+	$normalized_key = normalize_string($key, $keyquote);
+	
+	// Validate and normalize the text value using secure escaping
+	$normalized_text = normalize_string($text, $textquote, true);
 
-	// validate the language key
-	$key = normalize_string($key, $keyquote);
+	// Use var_export for final secure output generation
+	$safe_key = var_export($normalized_key, true);
+	$safe_text = var_export($normalized_text, true);
 
-	$new_line .= $key . '\'] = \'';
-
-	// validate this text to avoid code injection
-	$text = normalize_string($text, $textquote, true);
-
-	$new_line .= $text . '\';';
+	$new_line = '$wb[' . $safe_key . '] = ' . $safe_text . ';';
 
 	return $new_line;
 }
@@ -115,7 +114,7 @@ $app->auth->check_module_permissions('admin');
 $app->auth->check_security_permissions('admin_allow_langedit');
 
 //* This is only allowed for administrators
-if(!$app->auth->is_admin()) die('only allowed for administrators.');
+if(!$app->auth->is_admin()) die('Allowed for administrators only.');
 if($conf['demo_mode'] == true) $app->error('This function is disabled in demo mode.');
 
 if(!$conf['language_file_import_enabled']) $app->error('Languge import function is disabled in the interface config.inc.php file.');

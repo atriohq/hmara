@@ -13,4 +13,5 @@ $wb['- None -'] = '- Żaden -';
 $wb['proxy_server_txt'] = 'Proxy-Server';
 $wb['firewall_server_txt'] = 'Firewall-Server';
 $wb['xmpp_server_txt'] = 'XMPP Server';
+$wb['server_name_error_regex'] = 'Nieprawidłowa nazwa serwera. Dozwolone są tylko litery, cyfry, spacje, myślniki, kropki, podkreślenia i nawiasy.';
 ?>

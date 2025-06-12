@@ -47,6 +47,8 @@ $app->auth->check_module_permissions('admin');
 $app->auth->check_security_permissions('admin_allow_server_services');
 if($conf['demo_mode'] == true) $app->error('This function is disabled in demo mode.');
 
+if(!$app->auth->is_admin()) die('Allowed for administrators only.');
+
 $app->uses("tform_actions");
 $app->tform_actions->onDelete();
 

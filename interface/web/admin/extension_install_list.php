@@ -35,7 +35,7 @@ require_once '../../lib/app.inc.php';
 $app->auth->check_module_permissions('admin');
 
 //* This is only allowed for administrators
-if(!$app->auth->is_admin()) die('only allowed for administrators.');
+if(!$app->auth->is_admin()) die('Allowed for administrators only.');
 
 $app->uses('tpl,extension_installer');
 

@@ -44,6 +44,7 @@ require_once '../../lib/app.inc.php';
 
 //* Check permissions for module
 $app->auth->check_module_permissions('admin');
+if(!$app->auth->is_admin()) die('Allowed for administrators only.');
 
 // Loading classes
 $app->uses('tpl,tform,tform_actions');

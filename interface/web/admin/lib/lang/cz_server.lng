@@ -13,3 +13,5 @@ $wb['- None -'] = '- Žádný -';
 $wb['proxy_server_txt'] = 'Proxy-Server';
 $wb['firewall_server_txt'] = 'Firewall-Server';
 $wb['xmpp_server_txt'] = 'XMPP Server';
+$wb['server_name_error_regex'] = 'Neplatný název serveru. Povoleny jsou pouze písmena, čísla, mezery, pomlčky, tečky, podtržítka a závorky.';
+?>

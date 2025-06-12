@@ -13,3 +13,5 @@ $wb['active_txt'] = 'Ativo';
 $wb['mirror_server_id_txt'] = 'É um espelho de servidor';
 $wb['- None -'] = '-Nenhum-';
 $wb['xmpp_server_txt'] = 'Servidor XMPP';
+$wb['server_name_error_regex'] = 'Nome de servidor inválido. Apenas letras, números, espaços, hífens, pontos, sublinhados e parênteses são permitidos.';
+?>

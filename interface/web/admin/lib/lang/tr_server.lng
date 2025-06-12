@@ -13,4 +13,5 @@ $wb['active_txt'] = 'Etkin';
 $wb['mirror_server_id_txt'] = 'Sunucunun Yansısı';
 $wb['- None -'] = '- Hiçbiri -';
 $wb['xmpp_server_txt'] = 'XMPP Sunucusu';
+$wb['server_name_error_regex'] = 'Geçersiz sunucu adı. Sadece harfler, rakamlar, boşluklar, tire, nokta, alt çizgi ve parantez kullanılabilir.';
 ?>

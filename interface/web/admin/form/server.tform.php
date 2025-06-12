@@ -67,10 +67,15 @@ $form["tabs"]['services'] = array (
 					1 => array( 'event' => 'SAVE',
 					'type' => 'STRIPNL')
 			),
+			'validators' => array(
+					0 => array( 'type' => 'REGEX',
+					'regex' => '/^[a-zA-Z0-9\s\-\._()]+$/',
+					'errmsg' => 'server_name_error_regex')
+			),
 			'default' => '',
 			'value'  => '',
 			'width'  => '30',
-			'maxlength' => '255'
+			'maxlength' => '60'
 		),
 		'mail_server' => array (
 			'datatype' => 'INTEGER',
