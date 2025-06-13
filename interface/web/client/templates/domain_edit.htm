@@ -1,7 +1,7 @@
 <p><tmpl_var name="list_desc_txt"></p>
 
 
-        
+
             <div class="form-group">
                 <label for="domain" class="col-sm-3 control-label">{tmpl_var name='domain_txt'}</label>
                 <tmpl_if name="edit_disabled">
@@ -15,7 +15,7 @@
                 </select></div>
             </div>
 
-            <tmpl_dyninclude name="domain_extra_info_tpl">
+        {tmpl_hook name="client_domain_extra_info"}
 
         <input type="hidden" name="id" value="{tmpl_var name='id'}">
         <input type="hidden" name="type" value="local">
