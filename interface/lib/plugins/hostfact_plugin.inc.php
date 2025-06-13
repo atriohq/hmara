@@ -13,20 +13,28 @@ class hostfact_plugin
     global $app;
 
     //Register for the events
-    $app->plugin->registerEvent('client:domain:on_after_onShowEnd', $this->plugin_name, 'client_domain_form_onShowEnd');
+    $app->plugin->registerEvent('client:domain:client_domain_extra_info', $this->plugin_name, 'client_domain_form_print');
   }
 
-  function client_domain_form_onShowEnd($event, $data) {
+  function client_domain_form_print($event, $data) {
     global $app, $conf;
 
     if($_SESSION["s"]["user"]["typ"] != 'admin') {
       return; // Only show this for admin users for now.
     }
 
+    $listTpl = new tpl;
+    $listTpl->newTemplate('templates/domain_edit_hostfact.htm');
+
     $this->url = $conf['hostfact_url'] . 'Pro/apiv2/api.php';
     $this->api_key = $conf['hostfact_api_key'];
 
     $hinfo = $this->get_domain($data->dataRecord['domain']);
+
+    if (empty($hinfo)) {
+      $listTpl->setVar('hostfact_error', 'Geen HostFact informatie gevonden voor dit domein.');
+      return $listTpl->grab();
+    }
 
     $hostfact_status = array(
             1 => 'Wachten op actie',
@@ -35,16 +43,12 @@ class hostfact_plugin
             8 => 'Geannuleerd',
             9 => 'Verwijderd',
             );
-    $app->tpl->setVar('hostfact_url', $conf['hostfact_url']);
-    $app->tpl->setVar('hostfact_debtor', $hinfo['Debtor']);
-    $app->tpl->setVar('hostfact_debtorcode', $hinfo['DebtorCode']);
-    $app->tpl->setVar('hostfact_status_label', $hostfact_status[$hinfo['Status']]);
+    $listTpl->setVar('hostfact_url', $conf['hostfact_url']);
+    $listTpl->setVar('hostfact_debtor', $hinfo['Debtor']);
+    $listTpl->setVar('hostfact_debtorcode', $hinfo['DebtorCode']);
+    $listTpl->setVar('hostfact_status_label', $hostfact_status[$hinfo['Status']]);
 
-    // TESTME... attempt to daisy-chain the extra info template to allow more plugins to add their own info
-    if (!empty($app->tpl->getInclude('domain_extra_info_tpl'))) {
-      $app->tpl->setInclude('domain_extra_info_tpl_more', $app->tpl->getInclude('domain_extra_info_tpl'));
-    }
-    $app->tpl->setInclude('domain_extra_info_tpl', 'templates/domain_edit_hostfact.htm');
+    return $listTpl->grab();
   }
 
   public function sendRequest($controller, $action, $params){
@@ -118,7 +122,7 @@ class hostfact_plugin
     $domainParams = array(
         'Domain'  => $matches[1],
         'Tld'   => $matches[2],
-        //'mock' => true, // Set to true for testing purposes
+        // 'mock' => true, // Set to true for testing purposes
         );
 
     $response = $this->sendRequest('domain', 'show', $domainParams);

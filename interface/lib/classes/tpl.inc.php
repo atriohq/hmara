@@ -278,22 +278,6 @@ if (!defined('vlibTemplateClassLoaded')) {
 		}
 
 		/**
-		 * Gets a dynamic include from the template.
-		 * If the include is not set, it will return false.
-		 * @param string $k key to define variable name
-		 * @return mixed string or false
-		 * @access public
-		 */
-		function getInclude($k)
-		{
-			if (isset($this->_dyninclude[$k])) {
-				return $this->_dyninclude[$k];
-			} else {
-				return false;
-			}
-		}
-
-		/**
 		 * Unsets a variable which has already been set
 		 * Parse in all vars wanted for deletion in seperate parametres
 		 * @param string var name to remove use: vlibTemplate::unsetVar(var[, var..])
