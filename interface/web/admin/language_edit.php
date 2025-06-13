@@ -64,7 +64,7 @@ if(isset($_POST['records']) && is_array($_POST['records'])) {
 		$val = stripslashes($val);
 		// Use var_export for secure escaping - handles all edge cases including consecutive quotes
 		$escaped_val = var_export($val, true);
-		if(!preg_match("/^[a-z0-9_\]+$/", $key)) die('Invalid language file key.');
+		if(!preg_match("/^[a-z0-9_]+$/", $key)) die('Invalid language file key.');
 		$file_content .= '$wb['."'$key'".'] = '.$escaped_val.';'."\n";
 		$msg = 'File saved.';
 	}
