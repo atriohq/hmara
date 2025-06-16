@@ -31,6 +31,23 @@
  *  EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+ /**
+  * HostFact plugin for ISPConfig frontend
+  *
+  * This plugin allows you to view HostFact information for domains in ISPConfig.
+  * It registers an event to display the HostFact information in the domain edit form.
+  * The plugin uses the HostFact API to fetch domain and debtor information.
+  * It caches the domain information for one hour to reduce API calls.
+  * The plugin is designed to be used by admin users only.
+  *
+  * Setup:
+  * 1. Place this file in the interface/lib/plugins directory of your ISPConfig installation.
+  * 2. Add the HostFact API key and url to your ISPConfig configuration file (config.inc.php):
+  *    $conf['hostfact_api_key'] = 'your_hostfact_api_key';
+  *    $conf['hostfact_url'] = 'https://your_hostfact_url/';
+  * 3. Ensure that the HostFact API is accessible from your ISPConfig server.
+  * 4. Re-login as admin on the ISPConfig web interface to load the plugin.
+  */
 class hostfact_plugin
 {
 
@@ -43,7 +60,11 @@ class hostfact_plugin
   function onLoad() {
     global $app;
 
-    //Register for the events
+	if (empty($conf['hostfact_api_key'])) {
+		return;
+	}
+
+    // Register for the events
     $app->plugin->registerEvent('client:domain:client_domain_extra_info', $this->plugin_name, 'client_domain_form_print');
   }
 
@@ -83,7 +104,7 @@ class hostfact_plugin
   }
 
   public function sendRequest($controller, $action, $params){
-    if (isset($params['mock'] ) && $params['mock'] == true) {
+    if ($this->api_key == 'mock') {
       // Mock response for testing purposes
       return array(
           'controller' => $controller,
@@ -91,12 +112,10 @@ class hostfact_plugin
           'status' => 'success',
           'date' => date('c'),
           'domain' => array(
-              'Domain' => 'example',
-              'Tld' => 'com',
               'DebtorCode' => 'C12345',
               'Debtor' => '12345',
               'Status' => 4,
-              )
+              ) + $params
           );
     }
     if(is_array($params)){
@@ -153,7 +172,6 @@ class hostfact_plugin
     $domainParams = array(
         'Domain'  => $matches[1],
         'Tld'   => $matches[2],
-        // 'mock' => true, // Set to true for testing purposes
         );
 
     $response = $this->sendRequest('domain', 'show', $domainParams);
