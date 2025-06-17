@@ -74,6 +74,9 @@ class hostfact_plugin
 		if($_SESSION["s"]["user"]["typ"] != 'admin') {
 			return; // Only show this for admin users for now.
 		}
+		if (empty($data['vars']['id'])) {
+			return; // Only in edit mode.
+		}
 
 		$listTpl = new tpl;
 		$listTpl->newTemplate('templates/domain_edit_hostfact.htm');
