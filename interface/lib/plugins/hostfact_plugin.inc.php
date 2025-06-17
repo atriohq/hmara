@@ -84,7 +84,7 @@ class hostfact_plugin
 		$this->url = $conf['hostfact_url'] . 'Pro/apiv2/api.php';
 		$this->api_key = $conf['hostfact_api_key'];
 
-		$hinfo = $this->get_domain($data->dataRecord['domain']);
+		$hinfo = $this->get_domain($data['vars']['domain']);
 
 		if (empty($hinfo)) {
 			$listTpl->setVar('hostfact_error', 'Geen HostFact informatie gevonden voor dit domein.');
