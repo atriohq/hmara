@@ -891,7 +891,7 @@ class page_action extends tform_actions {
 		global $app;
 		if($app->tform->checkPerm($this->id, 'riud')) $app->tform->formDef['tabs']['domain']['readonly'] = false;
 
-		$sql = "SELECT domain_id, domain, type, redirect_type, redirect_path FROM web_domain WHERE (type='alias' OR type='subdomain') AND parent_domain_id = ?";
+		$sql = "SELECT domain_id, domain, type, redirect_type, redirect_path, active FROM web_domain WHERE (type='alias' OR type='subdomain') AND parent_domain_id = ?";
 		$subs = $app->db->queryAllRecords($sql, $this->id);
 		$app->tpl->setLoop('web_aliasdomains_info', $subs);
 
