@@ -35,7 +35,7 @@ $app->auth->check_module_permissions('admin');
 $app->auth->check_security_permissions('admin_allow_osupdate');
 
 //* This is only allowed for administrators
-if(!$app->auth->is_admin()) die('only allowed for administrators.');
+if(!$app->auth->is_admin()) die('Allowed for administrators only.');
 
 $app->uses('tpl');
 

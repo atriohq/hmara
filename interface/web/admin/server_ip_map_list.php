@@ -35,6 +35,7 @@ $list_def_file = "list/server_ip_map.list.php";
 
 //* Check permissions for module
 $app->auth->check_module_permissions('admin');
+if(!$app->auth->is_admin()) die('Allowed for administrators only.');
 
 $app->uses('listform_actions');
 

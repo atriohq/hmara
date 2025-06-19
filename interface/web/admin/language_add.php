@@ -35,7 +35,7 @@ $app->auth->check_module_permissions('admin');
 $app->auth->check_security_permissions('admin_allow_langedit');
 
 //* This is only allowed for administrators
-if(!$app->auth->is_admin()) die('only allowed for administrators.');
+if(!$app->auth->is_admin()) die('Allowed for administrators only.');
 if($conf['demo_mode'] == true) $app->error('This function is disabled in demo mode.');
 
 $app->uses('tpl');

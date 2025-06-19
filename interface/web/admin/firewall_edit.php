@@ -45,6 +45,8 @@ require_once '../../lib/app.inc.php';
 $app->auth->check_module_permissions('admin');
 $app->auth->check_security_permissions('admin_allow_firewall_config');
 
+if(!$app->auth->is_admin()) die('Allowed for administrators only.');
+
 // Loading classes
 $app->uses('tpl,tform,tform_actions');
 $app->load('tform_actions');

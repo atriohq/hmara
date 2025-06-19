@@ -13,4 +13,5 @@ $wb['server_name_txt'] = 'Nombre del servidor';
 $wb['vserver_server_txt'] = 'Servidor VServer';
 $wb['web_server_txt'] = 'Servidor web';
 $wb['xmpp_server_txt'] = 'Servidor XMPP';
+$wb['server_name_error_regex'] = 'Nombre de servidor inválido. Solo se permiten letras, números, espacios, guiones, puntos, guiones bajos y paréntesis.';
 ?>

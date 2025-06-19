@@ -13,4 +13,5 @@ $wb['active_txt'] = 'Active';
 $wb['mirror_server_id_txt'] = 'Is mirror of Server';
 $wb['- None -'] = '- None -';
 $wb['xmpp_server_txt'] = 'XMPP Server';
+$wb['server_name_error_regex'] = 'Nom de servidor no vàlid. Només es permeten lletres, números, espais, guions, punts, guions baixos i parèntesis.';
 ?>

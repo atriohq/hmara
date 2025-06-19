@@ -12,6 +12,8 @@ if(!stristr($_SESSION['s']['user']['modules'], 'admin')) {
 	die();
 }
 
+if(!$app->auth->is_admin()) die('Allowed for administrators only.');
+
 // Loading the class
 $app->uses('listform_actions');
 

@@ -33,6 +33,7 @@ require_once '../../lib/app.inc.php';
 
 //* Check permissions for module
 $app->auth->check_module_permissions('admin');
+if(!$app->auth->is_admin()) die('Allowed for administrators only.');
 
 //* load language file
 $lng_file = 'lib/lang/'.$app->functions->check_language($_SESSION['s']['language']).'_extension_install_list.lng';

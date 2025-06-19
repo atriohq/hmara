@@ -35,7 +35,7 @@ $app->auth->check_module_permissions('admin');
 $app->auth->check_security_permissions('admin_allow_langedit');
 
 //* This is only allowed for administrators
-if(!$app->auth->is_admin()) die('only allowed for administrators.');
+if(!$app->auth->is_admin()) die('Allowed for administrators only.');
 if($conf['demo_mode'] == true) $app->error('This function is disabled in demo mode.');
 
 $app->uses('tpl');
@@ -62,10 +62,10 @@ if(isset($_POST['records']) && is_array($_POST['records'])) {
 	$file_content = "<?php\n";
 	foreach($_POST['records'] as $key => $val) {
 		$val = stripslashes($val);
-		$val = preg_replace('/(^|[^\\\\])((\\\\\\\\)*)"/', '$1$2\\"', $val);
-		$val = str_replace('$', '', $val);
+		// Use var_export for secure escaping - handles all edge cases including consecutive quotes
+		$escaped_val = var_export($val, true);
 		if(!preg_match("/^[a-z0-9_]+$/", $key)) die('Invalid language file key.');
-		$file_content .= '$wb['."'$key'".'] = "'.$val.'";'."\n";
+		$file_content .= '$wb['."'$key'".'] = '.$escaped_val.';'."\n";
 		$msg = 'File saved.';
 	}
 	$file_content .= "?>\n";

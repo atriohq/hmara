@@ -197,6 +197,7 @@ class cronjob_logfiles extends cronjob {
 			if(is_file($ispconfig_logfile)) {
 				$app->system->exec_safe("gzip -c ? > ?", $ispconfig_logfile, $ispconfig_logfile . '.1.gz');
 				$app->system->exec_safe("cat /dev/null > ?", $ispconfig_logfile);
+				chmod($ispconfig_logfile . '.1.gz', 0600);
 			}
 			// remove older logs
 			$num = $max_syslog;

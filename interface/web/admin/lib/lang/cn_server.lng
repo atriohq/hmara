@@ -13,4 +13,5 @@ $wb['active_txt'] = '激活';
 $wb['mirror_server_id_txt'] = '镜像服务器';
 $wb['- None -'] = '- 空 -';
 $wb['xmpp_server_txt'] = 'XMPP 服务器';
+$wb['server_name_error_regex'] = '无效的服务器名称。只允许使用字母、数字、空格、连字符、句点、下划线和括号。';
 ?>
