@@ -81,22 +81,30 @@ if(isset($_POST['lng_select']) && $error == '') {
 		if ($file != '.' && $file != '..') {
 			if(@is_dir(ISPC_WEB_PATH.'/'.$file.'/lib/lang')) {
 				$handle2 = opendir(ISPC_WEB_PATH.'/'.$file.'/lib/lang');
-				while ($lang_file = @readdir($handle2)) {
-					if ($lang_file != '.' && $lang_file != '..' && substr($lang_file, 0, 2) == 'en') {
-						$target_lang_file = $selected_language.substr($lang_file, 2);
-						merge_langfile(ISPC_WEB_PATH.'/'.$file.'/lib/lang/'.$target_lang_file, ISPC_WEB_PATH.'/'.$file.'/lib/lang/'.$lang_file);
-					}
-				}
-				$handle2 = opendir(ISPC_WEB_PATH.'/'.$file.'/lib/lang');
-				while ($lang_file = @readdir($handle2)) {
-					if ($lang_file != '.' && $lang_file != '..' && substr($lang_file, 0, 2) == $selected_language) {
-						$master_lang_file=ISPC_WEB_PATH.'/'.$file.'/lib/lang/en'.substr($lang_file, 2);
-						$target_lang_file=ISPC_WEB_PATH.'/'.$file.'/lib/lang/'.$lang_file;
-						if(!file_exists($master_lang_file)){
-							unlink($target_lang_file);
-							$msg.="File $target_lang_file removed because does not exist in master language<br />";
+				if($handle2) {
+					while ($lang_file = @readdir($handle2)) {
+						if ($lang_file != '.' && $lang_file != '..' && substr($lang_file, 0, 2) == 'en') {
+							$target_lang_file = $selected_language.substr($lang_file, 2);
+							merge_langfile(ISPC_WEB_PATH.'/'.$file.'/lib/lang/'.$target_lang_file, ISPC_WEB_PATH.'/'.$file.'/lib/lang/'.$lang_file);
 						}
 					}
+					closedir($handle2);
+				}
+				
+				$handle2 = opendir(ISPC_WEB_PATH.'/'.$file.'/lib/lang');
+				if($handle2) {
+					while ($lang_file = @readdir($handle2)) {
+						if ($lang_file != '.' && $lang_file != '..' && substr($lang_file, 0, 2) == $selected_language) {
+							$master_lang_file=ISPC_WEB_PATH.'/'.$file.'/lib/lang/en'.substr($lang_file, 2);
+							$target_lang_file=ISPC_WEB_PATH.'/'.$file.'/lib/lang/'.$lang_file;
+							if(!file_exists($master_lang_file)){
+								if(@unlink($target_lang_file)) {
+									$msg.="File $target_lang_file removed because does not exist in master language<br />";
+								}
+							}
+						}
+					}
+					closedir($handle2);
 				}//Finish of remove the files how not exists in master language
 			}
 		}
@@ -141,9 +149,11 @@ function merge_langfile($langfile, $masterfile) {
 
 		$file_content = "<?php\n";
 		foreach($wb as $key => $val) {
-			$val = str_replace("'", "\\'", $val);
-			$val = str_replace('"', '\"', $val);
-			$file_content .= '$wb['."'$key'".'] = '."'$val';\n";
+			// Validate key: only allow letters, numbers, underscores, and spaces
+			if(!preg_match("/^[a-zA-Z0-9_ ]+$/", $key)) continue;
+			$safe_key = var_export($key, true);
+			$safe_val = var_export($val, true);
+			$file_content .= "\$wb[{$safe_key}] = {$safe_val};\n";
 		}
 		$file_content .= "?>\n";
 
@@ -172,6 +182,3 @@ $app->tpl->setVar($wb);
 
 $app->tpl_defaults();
 $app->tpl->pparse();
-
-
-?>
