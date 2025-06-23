@@ -42,7 +42,7 @@
   *
   * Setup:
   * 1. Place this file in the interface/lib/plugins directory of your ISPConfig installation.
-  * 2. Add the HostFact API key and url to your ISPConfig configuration file (config.inc.php):
+  * 2. Add the HostFact API key and url to your ISPConfig configuration file (interface/lib/config.inc.local.php):
   *    $conf['hostfact_api_key'] = 'your_hostfact_api_key';
   *    $conf['hostfact_url'] = 'https://your_hostfact_url/';
   * 3. Ensure that the HostFact API is accessible from your ISPConfig server.
