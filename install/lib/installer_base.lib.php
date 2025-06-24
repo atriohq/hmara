@@ -2419,9 +2419,7 @@ class installer_base extends stdClass {
 		if(is_file('/etc/apache2/mods-available/fcgid.conf')) {
 			// add or modify the parameters for fcgid.conf
 			if(hasLine('/etc/apache2/mods-available/fcgid.conf','MaxRequestLen')) {
-				replaceLine('/etc/apache2/mods-available/fcgid.conf','MaxRequestLen','  MaxRequestLen 15728640',1);
-			} else {
-				preg_replace('/^(.*\n)(.*)$/sU', '$1  MaxRequestLen 15728640\n$2', '/etc/apache2/mods-available/fcgid.conf');
+				replaceLine('/etc/apache2/mods-available/fcgid.conf','MaxRequestLen','  MaxRequestLen 15728640');
 			}
 		}
 
