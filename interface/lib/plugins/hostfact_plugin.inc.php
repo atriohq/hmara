@@ -58,7 +58,7 @@ class hostfact_plugin
 	private $api_key;
 
 	function onLoad() {
-		global $app;
+		global $app, $conf;
 
 		if (empty($conf['hostfact_api_key'])) {
 			return;
