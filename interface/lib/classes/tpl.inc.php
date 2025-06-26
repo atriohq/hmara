@@ -1109,7 +1109,7 @@ if (!defined('vlibTemplateClassLoaded')) {
 					'name' => $name,
 					'module' => $module,
 					'form' => $form,
-					'vars' => $this->_vars,
+					'vars' => $this->getVars(),
 				), true);
 				if(!$tmpresult) $tmpresult = '';
 				else $tmpresult = $this->_getData($tmpresult, false, true);
