@@ -59,6 +59,8 @@ class page_action extends tform_actions {
 
 		// Hide the usage tab when creating a new PHP version.
 		unset($app->tform->formDef["tabs"]['usage']);
+
+		parent::onShowNew();
 	}
 
 	function onShowEdit() {
