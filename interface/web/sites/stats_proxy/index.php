@@ -8,7 +8,7 @@
  *
  * To enable this script, add the following line to your ISPConfig configuration:
  * $conf['stats_proxy_username'] = 'internal_username';
- * $conf['stats_proxy_passsword'] = 'internal_password';
+ * $conf['stats_proxy_password'] = 'internal_password';
  * These credentials will be used for Basic Authentication to the backend server. They should never be
  * exposed to the user.
  */
@@ -94,7 +94,7 @@ curl_setopt($passthrough, CURLOPT_USERAGENT, "ISPconfig panel");
 curl_setopt($passthrough, CURLOPT_URL, $url);
 
 // Apply Basic Authentication
-curl_setopt($passthrough, CURLOPT_USERPWD, $conf['stats_proxy_username'] . ':' . $conf['stats_proxy_passsword']);
+curl_setopt($passthrough, CURLOPT_USERPWD, $conf['stats_proxy_username'] . ':' . $conf['stats_proxy_password']);
 
 $passthroughdata = curl_exec($passthrough);
 
