@@ -71,6 +71,10 @@ class z_php_fpm_incron_reload_plugin {
 
 	private function setup($data)
 	{
+		if ($data['server_php_id'] == 0) {
+			return;
+		}
+
 		$triggerFile = $this->getTriggerFilePath($data['document_root']);
 
 		$this->createTriggerFile($triggerFile, $data['system_user'], $data['system_group']);
