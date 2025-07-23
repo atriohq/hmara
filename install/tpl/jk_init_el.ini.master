@@ -202,67 +202,72 @@ includesections = env, logbasics, netbasics, mysqlutils, webutils, imagemagick
 
 [php5_4]
 comment = PHP 5.4
-paths = /opt/remi/php54/root/bin/php, /usr/bin/php54, /opt/remi/php54/root/bin/phar, /opt/remi/php54/root/usr/lib64/, /opt/remi/php54/root/usr/share/
+paths = /opt/remi/php54/root/bin/php, /usr/bin/php54, /usr/bin/php54-phar, /opt/remi/php54/root/bin/phar, /opt/remi/php54/root/bin/phar.phar, /opt/remi/php54/root/usr/lib64/, /opt/remi/php54/root/usr/share/
 includesections = php_common
 
 [php5_5]
 comment = PHP 5.5
-paths = /opt/remi/php55/root/bin/php, /usr/bin/php55, /opt/remi/php55/root/bin/phar, /opt/remi/php55/root/usr/lib64/, /opt/remi/php55/root/usr/share/
+paths = /opt/remi/php55/root/bin/php, /usr/bin/php55, /usr/bin/php55-phar, /opt/remi/php55/root/bin/phar, /opt/remi/php55/root/bin/phar.phar, /opt/remi/php55/root/usr/lib64/, /opt/remi/php55/root/usr/share/
 includesections = php_common
 
 [php5_6]
 comment = PHP 5.6
-paths = /opt/remi/php56/root/bin/php, /usr/bin/php56, /opt/remi/php56/root/bin/phar, /opt/remi/php56/root/usr/lib64/, /opt/remi/php56/root/usr/share/
+paths = /opt/remi/php56/root/bin/php, /usr/bin/php56, /usr/bin/php56-phar, /opt/remi/php56/root/bin/phar, /opt/remi/php56/root/bin/phar.phar, /opt/remi/php56/root/usr/lib64/, /opt/remi/php56/root/usr/share/
 includesections = php_common
 
 [php7_0]
 comment = PHP 7.0
-paths = /opt/remi/php70/root/bin/php, /usr/bin/php70, /opt/remi/php70/root/bin/phar, /opt/remi/php70/root/usr/lib64/, /opt/remi/php70/root/usr/share/
+paths = /opt/remi/php70/root/bin/php, /usr/bin/php70, /usr/bin/php70-phar, /opt/remi/php70/root/bin/phar, /opt/remi/php70/root/bin/phar.phar, /opt/remi/php70/root/usr/lib64/, /opt/remi/php70/root/usr/share/
 includesections = php_common
 
 [php7_1]
 comment = PHP 7.1
-paths = /opt/remi/php71/root/bin/php, /usr/bin/php71, /opt/remi/php71/root/bin/phar, /opt/remi/php71/root/usr/lib64/, /opt/remi/php71/root/usr/share/
+paths = /opt/remi/php71/root/bin/php, /usr/bin/php71, /usr/bin/php71-phar, /opt/remi/php71/root/bin/phar, /opt/remi/php71/root/bin/phar.phar, /opt/remi/php71/root/usr/lib64/, /opt/remi/php71/root/usr/share/
 includesections = php_common
 
 [php7_2]
 comment = PHP 7.2
-paths = /opt/remi/php72/root/bin/php, /usr/bin/php72, /opt/remi/php72/root/bin/phar, /opt/remi/php72/root/usr/lib64/, /opt/remi/php72/root/usr/share/
+paths = /opt/remi/php72/root/bin/php, /usr/bin/php72, /usr/bin/php72-phar, /opt/remi/php72/root/bin/phar, /opt/remi/php72/root/bin/phar.phar, /opt/remi/php72/root/usr/lib64/, /opt/remi/php72/root/usr/share/
 includesections = php_common
 
 [php7_3]
 comment = PHP 7.3
-paths = /opt/remi/php73/root/bin/php, /usr/bin/php73, /opt/remi/php73/root/bin/phar, /opt/remi/php73/root/usr/lib64/, /opt/remi/php73/root/usr/share/
+paths = /opt/remi/php73/root/bin/php, /usr/bin/php73, /usr/bin/php73-phar, /opt/remi/php73/root/bin/phar, /opt/remi/php73/root/bin/phar.phar, /opt/remi/php73/root/usr/lib64/, /opt/remi/php73/root/usr/share/
 includesections = php_common
 
 [php7_4]
 comment = PHP 7.4
-paths = /opt/remi/php74/root/bin/php, /usr/bin/php74, /opt/remi/php74/root/bin/phar, /opt/remi/php74/root/usr/lib64/, /opt/remi/php74/root/usr/share/
+paths = /opt/remi/php74/root/bin/php, /usr/bin/php74, /usr/bin/php74-phar, /opt/remi/php74/root/bin/phar, /opt/remi/php74/root/bin/phar.phar, /opt/remi/php74/root/usr/lib64/, /opt/remi/php74/root/usr/share/
 includesections = php_common
 
 [php8_0]
 comment = PHP 8.0
-paths = /opt/remi/php80/root/bin/php, /usr/bin/php80, /opt/remi/php80/root/bin/phar, /opt/remi/php80/root/usr/lib64/, /opt/remi/php80/root/usr/share/
+paths = /opt/remi/php80/root/bin/php, /usr/bin/php80, /usr/bin/php80-phar, /opt/remi/php80/root/bin/phar, /opt/remi/php80/root/bin/phar.phar, /opt/remi/php80/root/usr/lib64/, /opt/remi/php80/root/usr/share/
 includesections = php_common
 
 [php8_1]
 comment = PHP 8.1
-paths = /opt/remi/php81/root/bin/php, /usr/bin/php81, /opt/remi/php81/root/bin/phar, /opt/remi/php81/root/usr/lib64/, /opt/remi/php81/root/usr/share/
+paths = /opt/remi/php81/root/bin/php, /usr/bin/php81, /usr/bin/php81-phar, /opt/remi/php81/root/bin/phar, /opt/remi/php81/root/bin/phar.phar, /opt/remi/php81/root/usr/lib64/, /opt/remi/php81/root/usr/share/
 includesections = php_common
 
 [php8_2]
 comment = PHP 8.2
-paths = /opt/remi/php82/root/bin/php, /usr/bin/php82, /opt/remi/php82/root/bin/phar, /opt/remi/php82/root/usr/lib64/, /opt/remi/php82/root/usr/share/
+paths = /opt/remi/php82/root/bin/php, /usr/bin/php82, /usr/bin/php82-phar, /opt/remi/php82/root/bin/phar, /opt/remi/php82/root/bin/phar.phar, /opt/remi/php82/root/usr/lib64/, /opt/remi/php82/root/usr/share/
 includesections = php_common
 
 [php8_3]
 comment = PHP 8.3
-paths = /opt/remi/php83/root/bin/php, /usr/bin/php83, /opt/remi/php83/root/bin/phar, /opt/remi/php83/root/usr/lib64/, /opt/remi/php83/root/usr/share/
+paths = /opt/remi/php83/root/bin/php, /usr/bin/php83, /usr/bin/php83-phar, /opt/remi/php83/root/bin/phar, /opt/remi/php83/root/bin/phar.phar, /opt/remi/php83/root/usr/lib64/, /opt/remi/php83/root/usr/share/
 includesections = php_common
 
 [php8_4]
 comment = PHP 8.4
-paths = /opt/remi/php84/root/bin/php, /usr/bin/php84, /opt/remi/php84/root/bin/phar, /opt/remi/php84/root/usr/lib64/, /opt/remi/php84/root/usr/share/
+paths = /opt/remi/php84/root/bin/php, /usr/bin/php84, /usr/bin/php84-phar, /opt/remi/php84/root/bin/phar, /opt/remi/php84/root/bin/phar.phar, /opt/remi/php84/root/usr/lib64/, /opt/remi/php84/root/usr/share/
+includesections = php_common
+
+[php8_5]
+comment = PHP 8.5
+paths = /opt/remi/php85/root/bin/php, /usr/bin/php85, /usr/bin/php85-phar, /opt/remi/php85/root/bin/phar, /opt/remi/php85/root/bin/phar.phar, /opt/remi/php85/root/usr/lib64/, /opt/remi/php85/root/usr/share/
 includesections = php_common
 
 [imagemagick]
