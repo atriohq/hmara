@@ -159,7 +159,7 @@ unset($tmp_out);
 //** Set the mysql login information
 $conf["mysql"]["host"] = $conf_old["db_host"];
 $conf["mysql"]["database"] = $conf_old["db_database"];
-$conf['mysql']['charset'] = 'utf8';
+$conf['mysql']['charset'] = 'utf8mb4';
 $conf["mysql"]["ispconfig_user"] = $conf_old["db_user"];
 $conf["mysql"]["ispconfig_password"] = $conf_old["db_password"];
 $conf['mysql']['port'] = $conf_old["db_port"];

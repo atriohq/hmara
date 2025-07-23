@@ -56,7 +56,7 @@ $conf['db_port'] = 3306;
 $conf['db_database'] = 'ispconfig3_305';
 $conf['db_user'] = 'root';
 $conf['db_password'] = '';
-$conf['db_charset'] = 'utf8'; // same charset as html-charset - (HTML --> MYSQL: "utf-8" --> "utf8", "iso-8859-1" --> "latin1")
+$conf['db_charset'] = 'utf8mb4'; // same charset as html-charset - (HTML --> MYSQL: "utf-8" --> "utf8mb4", "iso-8859-1" --> "latin1")
 $conf['db_new_link'] = false;
 $conf['db_client_flags'] = 0;
 

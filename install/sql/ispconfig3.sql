@@ -69,7 +69,7 @@ CREATE TABLE IF NOT EXISTS `aps_instances` (
   `package_id` int(4) NOT NULL DEFAULT '0',
   `instance_status` int(4) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`)
-) DEFAULT CHARSET=utf8 ;
+) DEFAULT CHARSET=utf8mb4 ;
 
 -- --------------------------------------------------------
 
@@ -84,7 +84,7 @@ CREATE TABLE IF NOT EXISTS `aps_instances_settings` (
   `name` varchar(255) NOT NULL DEFAULT '',
   `value` text,
   PRIMARY KEY (`id`)
-) DEFAULT CHARSET=utf8 ;
+) DEFAULT CHARSET=utf8mb4 ;
 
 -- --------------------------------------------------------
 
@@ -102,7 +102,7 @@ CREATE TABLE IF NOT EXISTS `aps_packages` (
   `package_url` TEXT,
   `package_status` int(1) NOT NULL DEFAULT '2',
   PRIMARY KEY (`id`)
-) DEFAULT CHARSET=utf8 ;
+) DEFAULT CHARSET=utf8mb4 ;
 
 -- --------------------------------------------------------
 
@@ -116,7 +116,7 @@ CREATE TABLE IF NOT EXISTS `aps_settings` (
   `value` text,
   PRIMARY KEY (`id`),
   UNIQUE KEY `name` (`name`)
-) DEFAULT CHARSET=utf8 ;
+) DEFAULT CHARSET=utf8mb4 ;
 
 -- --------------------------------------------------------
 
@@ -128,7 +128,7 @@ CREATE TABLE `attempts_login` (
   `ip` varchar(39) NOT NULL DEFAULT '',
   `times` int(11) DEFAULT NULL,
   `login_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) DEFAULT CHARSET=utf8 ;
+) DEFAULT CHARSET=utf8mb4 ;
 
 -- --------------------------------------------------------
 
@@ -268,7 +268,7 @@ CREATE TABLE `client` (
   `risk_score` int(10) unsigned NOT NULL DEFAULT '0',
   `activation_code` varchar(10) NOT NULL DEFAULT '',
   PRIMARY KEY (`client_id`)
-) DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
@@ -288,7 +288,7 @@ CREATE TABLE `client_circle` (
   `description` text,
   `active` enum('n','y') NOT NULL default 'y',
   PRIMARY KEY (`circle_id`)
-) DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
@@ -377,7 +377,7 @@ CREATE TABLE `client_template` (
   `limit_openvz_vm` int(11) NOT NULL DEFAULT '0',
   `limit_openvz_vm_template_id` int(11) NOT NULL DEFAULT '0',
   PRIMARY KEY  (`template_id`)
-) DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
@@ -391,7 +391,7 @@ CREATE TABLE `client_template_assigned` (
   `client_template_id` int(11) NOT NULL DEFAULT '0',
   PRIMARY KEY (`assigned_template_id`),
   KEY `client_id` (`client_id`)
-) DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1 ;
 -- --------------------------------------------------------
 
 --
@@ -410,7 +410,7 @@ CREATE TABLE `client_message_template` (
   `subject` varchar(255) DEFAULT NULL,
   `message` text,
   PRIMARY KEY (`client_message_template_id`)
-) DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1 ;
 
 --
 -- Dumping data for table `invoice_message_template`
@@ -430,7 +430,7 @@ CREATE TABLE `country` (
   `numcode` smallint(6) DEFAULT NULL,
   `eu` enum('n','y') NOT NULL DEFAULT 'n',
   PRIMARY KEY (`iso`)
-) DEFAULT CHARSET=utf8 ;
+) DEFAULT CHARSET=utf8mb4 ;
 
 -- --------------------------------------------------------
 
@@ -456,7 +456,7 @@ CREATE TABLE `cron` (
   `log` enum('n','y') NOT NULL default 'n',
   `active` enum('n','y') NOT NULL default 'y',
   PRIMARY KEY  (`id`)
-) DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
@@ -480,7 +480,7 @@ CREATE TABLE IF NOT EXISTS `directive_snippets` (
   `master_directive_snippets_id` int(11) unsigned NOT NULL DEFAULT '0',
   `update_sites` ENUM('y','n') NOT NULL DEFAULT 'n',
   PRIMARY KEY (`directive_snippets_id`)
-) DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
@@ -506,7 +506,7 @@ CREATE TABLE `dns_rr` (
   `serial` int(10) unsigned default NULL,
   PRIMARY KEY  (`id`),
   KEY `rr` (`zone`,`type`,`name`)
-) DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
@@ -529,7 +529,7 @@ CREATE TABLE `dns_slave` (
   PRIMARY KEY  (`id`),
   UNIQUE KEY `slave` (`origin`,`server_id`),
   KEY `active` (`active`)
-) DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
@@ -552,7 +552,7 @@ CREATE TABLE IF NOT EXISTS `dns_ssl_ca` (
   `ca_critical` tinyint(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
   UNIQUE KEY (`ca_issue`)
-) DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1 ;
 
 ALTER TABLE `dns_ssl_ca` ADD UNIQUE(`ca_issue`);
 
@@ -642,7 +642,7 @@ CREATE TABLE `dns_soa` (
   PRIMARY KEY  (`id`),
   UNIQUE KEY `origin` (`origin`),
   KEY `active` (`active`)
-) DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
@@ -662,7 +662,7 @@ CREATE TABLE `dns_template` (
   `template` text,
   `visible` enum('N','Y') NOT NULL default 'Y',
   PRIMARY KEY  (`template_id`)
-) DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1 ;
 
 --
 -- Table structure for table  `domain`
@@ -678,7 +678,7 @@ CREATE TABLE `domain` (
   `domain` varchar(255) NOT NULL default '',
   PRIMARY KEY  (`domain_id`),
   UNIQUE KEY `domain` (`domain`)
-) DEFAULT CHARSET=utf8 ;
+) DEFAULT CHARSET=utf8mb4 ;
 
 -- --------------------------------------------------------
 
@@ -698,7 +698,7 @@ CREATE TABLE `firewall` (
   `udp_port` text,
   `active` enum('n','y') NOT NULL default 'y',
   PRIMARY KEY  (`firewall_id`)
-) DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
@@ -736,7 +736,7 @@ CREATE TABLE `ftp_user` (
   KEY `server_id` (`server_id`),
   KEY `username` (`username`),
   KEY `quota_files` (`quota_files`)
-) DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
@@ -750,7 +750,7 @@ CREATE TABLE `ftp_traffic` (
   `in_bytes` bigint(32) unsigned NOT NULL,
   `out_bytes` bigint(32) unsigned NOT NULL,
   UNIQUE KEY (`hostname`,`traffic_date`)
-) DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
@@ -770,7 +770,7 @@ CREATE TABLE `help_faq` (
   `sys_perm_group` varchar(5) DEFAULT NULL,
   `sys_perm_other` varchar(5) DEFAULT NULL,
   PRIMARY KEY (`hf_id`)
-)  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+)  DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
@@ -788,7 +788,7 @@ CREATE TABLE `help_faq_sections` (
   `sys_perm_group` varchar(5) DEFAULT NULL,
   `sys_perm_other` varchar(5) DEFAULT NULL,
   PRIMARY KEY (`hfs_id`)
-)  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+)  DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
@@ -831,7 +831,7 @@ CREATE TABLE `mail_access` (
   `active` enum('n','y') NOT NULL default 'y',
   PRIMARY KEY  (`access_id`),
   UNIQUE KEY `unique_source` (`server_id`,`source`,`type`)
-) DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
@@ -849,7 +849,7 @@ CREATE TABLE `mail_backup` (
   `filename` varchar(255) NOT NULL DEFAULT '',
   `filesize` VARCHAR(20) NOT NULL DEFAULT '',
   PRIMARY KEY (`backup_id`)
-) DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
@@ -871,7 +871,7 @@ CREATE TABLE `mail_content_filter` (
   `action` varchar(255) default NULL,
   `active` varchar(255) NOT NULL default 'y',
   PRIMARY KEY  (`content_filter_id`)
-) DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
@@ -900,7 +900,7 @@ CREATE TABLE `mail_domain` (
   PRIMARY KEY  (`domain_id`),
   KEY `server_id` (`server_id`,`domain`),
   KEY `domain_active` (`domain`,`active`)
-) DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
@@ -925,7 +925,7 @@ CREATE TABLE `mail_forwarding` (
   PRIMARY KEY  (`forwarding_id`),
   KEY `server_id` (`server_id`, `source`),
   KEY `type` (`type`)
-) DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
@@ -950,7 +950,7 @@ CREATE TABLE `mail_get` (
   `destination` varchar(255) default NULL,
   `active` varchar(255) NOT NULL default 'y',
   PRIMARY KEY  (`mailget_id`)
-) DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
@@ -971,7 +971,7 @@ CREATE TABLE `mail_mailinglist` (
   `email` varchar(255) NOT NULL DEFAULT '',
   `password` varchar(255) NOT NULL DEFAULT '',
   PRIMARY KEY  (`mailinglist_id`)
-) DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
@@ -992,7 +992,7 @@ CREATE TABLE IF NOT EXISTS `mail_relay_domain` (
   `active` varchar(255) NOT NULL DEFAULT 'y',
   PRIMARY KEY (`relay_domain_id`),
   UNIQUE KEY `domain` (`domain`, `server_id`)
-) DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
@@ -1012,7 +1012,7 @@ CREATE TABLE IF NOT EXISTS `mail_relay_recipient` (
   `access` varchar(255) NOT NULL DEFAULT 'OK',
   `active` varchar(255) NOT NULL DEFAULT 'y',
   PRIMARY KEY (`relay_recipient_id`)
-) DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
@@ -1027,7 +1027,7 @@ CREATE TABLE `mail_traffic` (
   `traffic` bigint(20) unsigned NOT NULL DEFAULT '0',
   PRIMARY KEY  (`traffic_id`),
   KEY `mailuser_id` (`mailuser_id`,`month`)
-) DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
@@ -1050,7 +1050,7 @@ CREATE TABLE `mail_transport` (
   PRIMARY KEY  (`transport_id`),
   KEY `server_id` (`server_id`,`transport`),
   UNIQUE KEY `server_id_2` (`server_id`, `domain`)
-) DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
@@ -1110,7 +1110,7 @@ CREATE TABLE `mail_user` (
   PRIMARY KEY  (`mailuser_id`),
   KEY `server_id` (`server_id`,`email`),
   KEY `email_access` (`email`,`access`)
-) DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
@@ -1134,7 +1134,7 @@ CREATE TABLE `mail_user_filter` (
   `target` varchar(255) default NULL,
   `active` enum('n','y') NOT NULL default 'y',
   PRIMARY KEY  (`filter_id`)
-) DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
@@ -1149,7 +1149,7 @@ CREATE TABLE `monitor_data` (
   `data` mediumtext,
   `state` enum('no_state','unknown','ok','info','warning','critical','error') NOT NULL DEFAULT 'unknown',
   PRIMARY KEY (`server_id`,`type`,`created`)
-) DEFAULT CHARSET=utf8 ;
+) DEFAULT CHARSET=utf8mb4 ;
 
 -- --------------------------------------------------------
 
@@ -1170,7 +1170,7 @@ CREATE TABLE IF NOT EXISTS `openvz_ip` (
   `reserved` varchar(255) NOT NULL DEFAULT 'n',
   `additional` varchar(255) NOT NULL DEFAULT 'n',
   PRIMARY KEY (`ip_address_id`)
-)  DEFAULT CHARSET=utf8 ;
+)  DEFAULT CHARSET=utf8mb4 ;
 
 --
 -- Dumping data for table `openvz_ip`
@@ -1196,7 +1196,7 @@ CREATE TABLE IF NOT EXISTS `openvz_ostemplate` (
   `active` varchar(255) NOT NULL DEFAULT 'y',
   `description` text,
   PRIMARY KEY (`ostemplate_id`)
-)  DEFAULT CHARSET=utf8 ;
+)  DEFAULT CHARSET=utf8mb4 ;
 
 --
 -- Dumping data for table `openvz_ostemplate`
@@ -1259,7 +1259,7 @@ CREATE TABLE IF NOT EXISTS `openvz_template` (
   `iptables` varchar(255) DEFAULT NULL,
   `custom` text,
   PRIMARY KEY (`template_id`)
-)  DEFAULT CHARSET=utf8 ;
+)  DEFAULT CHARSET=utf8mb4 ;
 
 --
 -- Dumping data for table `openvz_template`
@@ -1327,7 +1327,7 @@ CREATE TABLE IF NOT EXISTS `openvz_vm` (
   `config` mediumtext,
   `custom` text,
   PRIMARY KEY (`vm_id`)
-)  DEFAULT CHARSET=utf8 ;
+)  DEFAULT CHARSET=utf8mb4 ;
 
 --
 -- Dumping data for table `openvz_vm`
@@ -1347,7 +1347,7 @@ CREATE TABLE `remote_session` (
   `tstamp` int(10) unsigned NOT NULL DEFAULT '0',
   `remote_ip` varchar(39) NOT NULL DEFAULT '',
   PRIMARY KEY  (`remote_session`)
-) DEFAULT CHARSET=utf8 ;
+) DEFAULT CHARSET=utf8mb4 ;
 
 -- --------------------------------------------------------
 
@@ -1368,7 +1368,7 @@ CREATE TABLE `remote_user` (
   `remote_ips` TEXT,
   `remote_functions` text,
   PRIMARY KEY  (`remote_userid`)
-) DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
@@ -1399,7 +1399,7 @@ CREATE TABLE `server` (
   `dbversion` int(11) unsigned NOT NULL default '1',
   `active` tinyint(1) NOT NULL default '1',
   PRIMARY KEY  (`server_id`)
-) DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
@@ -1421,7 +1421,7 @@ CREATE TABLE `server_ip` (
   `virtualhost` enum('n','y') NOT NULL default 'y',
   `virtualhost_port` varchar(255) default '80,443',
   PRIMARY KEY  (`server_ip_id`)
-) DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
@@ -1441,7 +1441,7 @@ CREATE TABLE `server_ip_map` (
   `destination_ip` varchar(35) DEFAULT '',
   `active` enum('n','y') NOT NULL DEFAULT 'y',
   PRIMARY KEY (`server_ip_map_id`)
-) DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
@@ -1470,7 +1470,7 @@ CREATE TABLE `server_php` (
   `active` enum('n','y') NOT NULL DEFAULT 'y',
   `sortprio` int(20) NOT NULL DEFAULT 100,
   PRIMARY KEY (`server_php_id`)
-) DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
@@ -1499,7 +1499,7 @@ CREATE TABLE `shell_user` (
   `chroot` varchar(255) NOT NULL DEFAULT '',
   `ssh_rsa` text,
   PRIMARY KEY  (`shell_user_id`)
-) DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
@@ -1562,7 +1562,7 @@ CREATE TABLE `spamfilter_policy` (
   `rspamd_spam_tag_method` enum('add_header','rewrite_subject') NOT NULL DEFAULT 'rewrite_subject',
   `rspamd_spam_kill_level` decimal(5,2) DEFAULT NULL,
   PRIMARY KEY  (`id`)
-) DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
@@ -1585,7 +1585,7 @@ CREATE TABLE `spamfilter_users` (
   `local` varchar(1) default NULL,
   PRIMARY KEY  (`id`),
   UNIQUE KEY `email` (`email`)
-) DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
@@ -1607,7 +1607,7 @@ CREATE TABLE `spamfilter_wblist` (
   `priority` tinyint(3) unsigned NOT NULL DEFAULT '0',
   `active` enum('y','n') NOT NULL default 'y',
   PRIMARY KEY  (`wblist_id`)
-) DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
@@ -1628,7 +1628,7 @@ CREATE TABLE `support_message` (
   `message` text default NULL,
   `tstamp` int(11) NOT NULL default '0',
   PRIMARY KEY  (`support_message_id`)
-) DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
@@ -1679,7 +1679,7 @@ CREATE TABLE `sys_datalog` (
   `session_id` varchar(64) NOT NULL DEFAULT '',
   PRIMARY KEY  (`datalog_id`),
   KEY `server_id` (`server_id`,`status`)
-) DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
@@ -1703,7 +1703,7 @@ CREATE TABLE `sys_dbsync` (
   `last_datalog_id` int(11) unsigned NOT NULL default '0',
   PRIMARY KEY  (`id`),
   KEY `last_datalog_id` (`last_datalog_id`)
-) DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
@@ -1723,7 +1723,7 @@ CREATE TABLE `sys_filesync` (
   `wput_options` varchar(255) NOT NULL default '--timestamping --reupload --dont-continue',
   `active` tinyint(1) NOT NULL default '1',
   PRIMARY KEY  (`id`)
-) DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
@@ -1737,7 +1737,7 @@ CREATE TABLE `sys_group` (
   `description` text,
   `client_id` int(11) unsigned NOT NULL default '0',
   PRIMARY KEY  (`groupid`)
-) DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
@@ -1751,7 +1751,7 @@ CREATE TABLE `sys_ini` (
   `default_logo` text NULL,
   `custom_logo` text NULL,
   PRIMARY KEY  (`sysini_id`)
-) DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
@@ -1767,7 +1767,7 @@ CREATE TABLE `sys_log` (
   `tstamp` int(11) unsigned NOT NULL DEFAULT '0',
   `message` text,
   PRIMARY KEY  (`syslog_id`)
-) DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
@@ -1788,7 +1788,7 @@ CREATE TABLE IF NOT EXISTS `sys_message` (
   `relation` varchar(255) NULL DEFAULT NULL,
   `message` TEXT DEFAULT NULL,
   PRIMARY KEY (`message_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1;
 
 -- --------------------------------------------------------
 
@@ -1806,7 +1806,7 @@ CREATE TABLE `sys_remoteaction` (
   `response` mediumtext,
   PRIMARY KEY (`action_id`),
   KEY `server_id` (`server_id`)
-) DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
@@ -1822,7 +1822,7 @@ CREATE TABLE `sys_session` (
   `session_data` longtext,
   PRIMARY KEY (`session_id`),
   KEY `last_updated` (`last_updated`)
-) DEFAULT CHARSET=utf8 ;
+) DEFAULT CHARSET=utf8mb4 ;
 
 -- --------------------------------------------------------
 
@@ -1841,7 +1841,7 @@ CREATE TABLE IF NOT EXISTS `sys_theme` (
   `username` varchar(64) NOT NULL DEFAULT '',
   `logo_url` varchar(255) NOT NULL DEFAULT '',
   PRIMARY KEY (`var_id`)
-) DEFAULT CHARSET=utf8 ;
+) DEFAULT CHARSET=utf8mb4 ;
 
 -- --------------------------------------------------------
 
@@ -1877,7 +1877,7 @@ CREATE TABLE `sys_user` (
   `otp_recovery` varchar(64) DEFAULT NULL,
   `otp_attempts` tinyint(4) NOT NULL DEFAULT 0,
   PRIMARY KEY  (`userid`)
-) DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
@@ -1900,7 +1900,7 @@ CREATE TABLE `webdav_user` (
   `active` enum('n','y') NOT NULL DEFAULT 'y',
   `dir` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`webdav_user_id`)
-) DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
@@ -1920,7 +1920,7 @@ CREATE TABLE `web_backup` (
   `filesize` VARCHAR(20) NOT NULL DEFAULT '',
   `backup_password` VARCHAR(255) NOT NULL DEFAULT '',
   PRIMARY KEY (`backup_id`)
-) DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
@@ -1954,7 +1954,7 @@ CREATE TABLE `web_database` (
   PRIMARY KEY (`database_id`),
   KEY `database_user_id` (`database_user_id`),
   KEY `database_ro_user_id` (`database_ro_user_id`)
-) DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
@@ -1977,7 +1977,7 @@ CREATE TABLE IF NOT EXISTS `web_database_user` (
   `database_password_mongo` varchar(32) DEFAULT NULL,
   `database_password_postgres` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`database_user_id`)
-)  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+)  DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
@@ -2079,7 +2079,7 @@ CREATE TABLE `web_domain` (
   `disable_symlinknotowner` enum('n','y') NOT NULL default 'n',
   PRIMARY KEY  (`domain_id`),
   UNIQUE KEY `serverdomain` (  `server_id` , `ip_address`,  `domain` )
-) ENGINE=InnoDB ROW_FORMAT=DYNAMIC DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) ENGINE=InnoDB ROW_FORMAT=DYNAMIC DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
@@ -2099,7 +2099,7 @@ CREATE TABLE IF NOT EXISTS `web_folder` (
   `path` varchar(255) DEFAULT NULL,
   `active` varchar(255) NOT NULL DEFAULT 'y',
   PRIMARY KEY (`web_folder_id`)
-) DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1 ;
 
 --
 -- Dumping data for table `web_folder`
@@ -2125,7 +2125,7 @@ CREATE TABLE IF NOT EXISTS `web_folder_user` (
   `password` varchar(255) DEFAULT NULL,
   `active` varchar(255) NOT NULL DEFAULT 'y',
   PRIMARY KEY (`web_folder_user_id`)
-) DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1 ;
 
 --
 -- Dumping data for table `web_folder_user`
@@ -2142,7 +2142,7 @@ CREATE TABLE `web_traffic` (
   `traffic_date` date NULL DEFAULT NULL,
   `traffic_bytes` bigint(32) unsigned NOT NULL default '0',
   UNIQUE KEY  (`hostname`,`traffic_date`)
-) DEFAULT CHARSET=utf8 ;
+) DEFAULT CHARSET=utf8mb4 ;
 
 -- --------------------------------------------------------
 
@@ -2201,7 +2201,7 @@ CREATE TABLE `xmpp_domain` (
   PRIMARY KEY  (`domain_id`),
   KEY `server_id` (`server_id`,`domain`),
   KEY `domain_active` (`domain`,`active`)
-) DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
@@ -2223,7 +2223,7 @@ CREATE TABLE `xmpp_user` (
   PRIMARY KEY  (`xmppuser_id`),
   KEY `server_id` (`server_id`,`jid`),
   KEY `jid_active` (`jid`,`active`)
-) DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
