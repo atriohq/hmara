@@ -5,5 +5,6 @@ $wb['server_id_txt'] = 'Server';
 $wb['source_txt'] = 'Recipient address';
 $wb['recipient_txt'] = 'Recipient';
 $wb['add_new_record_txt'] = 'Add new relay recipient';
-$wb['access_txt'] = 'access';
+$wb['access_txt'] = 'Access';
+$wb['validation_server_txt'] = 'Validation server';
 ?>
