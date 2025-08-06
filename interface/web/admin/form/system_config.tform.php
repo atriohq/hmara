@@ -841,7 +841,19 @@ $form["tabs"]['misc'] = array (
 			'formtype' => 'SELECT',
 			'default' => '',
 			'value'  => array('' => 'None', '1' => 'strength_1', '2' => 'strength_2', '3' => 'strength_3', '4' => 'strength_4', '5' => 'strength_5')
-		)
+		),
+		'force_password_change_days' => array(
+			'datatype' => 'INTEGER',
+			'formtype' => 'TEXT',
+			'validators' => array ( 0 => array ( 'type' => 'REGEX',
+				'regex' => '/^[0-9]{0,5}$/',
+				'errmsg' => 'force_password_change_days_error_regex'),
+			),
+			'default' => '0',
+			'value'  => '',
+			'width'  => '30',
+			'maxlength' => '255'
+		),
 		//#################################
 		// END Datatable fields
 		//#################################

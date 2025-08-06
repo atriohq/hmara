@@ -41,4 +41,19 @@ $wb['otp_code_email_template_txt'] = 'Your One time login code is %s' . PHP_EOL 
 $wb['otp_code_resend_txt'] = 'Request new code';
 $wb['otp_code_email_sent_failed_txt'] = 'Failed sending an email to %s';
 $wb['otp_code_email_sent_wait_txt'] = 'Please wait, re-sending the code is only possible after %s seconds.';
+$wb['force_password_change_title'] = 'Perubahan Kata Sandi Diperlukan';
+$wb['force_password_change_message'] = 'Kata sandi Anda telah kedaluwarsa. Anda harus mengubahnya untuk melanjutkan.';
+$wb['new_password_txt'] = 'Kata Sandi Baru';
+$wb['confirm_password_txt'] = 'Konfirmasi Kata Sandi';
+$wb['change_password_button_txt'] = 'Ubah Kata Sandi';
+$wb['error_password_empty'] = 'Kata sandi tidak boleh kosong.';
+$wb['error_password_too_short'] = 'Kata sandi harus minimal 8 karakter.';
+$wb['error_passwords_do_not_match'] = 'Kata sandi tidak cocok.';
+$wb['error_password_same_as_current'] = 'Kata sandi baru harus berbeda dari yang sekarang.';
+$wb['error_password_change_failed'] = 'Gagal mengubah kata sandi. Silakan coba lagi.';
+$wb['generate_password_txt'] = 'Buat Kata Sandi';
+$wb['password_strength_txt'] = 'Kekuatan Kata Sandi';
+$wb['password_mismatch_txt'] = 'Kata sandi tidak cocok';
+$wb['password_match_txt'] = 'Kata sandi cocok';
+?>
 ?>

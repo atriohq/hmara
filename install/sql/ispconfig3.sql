@@ -1876,6 +1876,7 @@ CREATE TABLE `sys_user` (
   `otp_data` varchar(255) DEFAULT NULL,
   `otp_recovery` varchar(64) DEFAULT NULL,
   `otp_attempts` tinyint(4) NOT NULL DEFAULT 0,
+  `last_password_change` DATE NULL DEFAULT CURDATE(),
   PRIMARY KEY  (`userid`)
 ) DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 

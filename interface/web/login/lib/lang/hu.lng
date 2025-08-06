@@ -41,4 +41,19 @@ $wb['otp_code_email_template_txt'] = 'Your One time login code is %s' . PHP_EOL 
 $wb['otp_code_resend_txt'] = 'Request new code';
 $wb['otp_code_email_sent_failed_txt'] = 'Failed sending an email to %s';
 $wb['otp_code_email_sent_wait_txt'] = 'Please wait, re-sending the code is only possible after %s seconds.';
+$wb['force_password_change_title'] = 'Jelszó megváltoztatása szükséges';
+$wb['force_password_change_message'] = 'A jelszava lejárt. Meg kell változtatnia a folytatáshoz.';
+$wb['new_password_txt'] = 'Új jelszó';
+$wb['confirm_password_txt'] = 'Jelszó megerősítése';
+$wb['change_password_button_txt'] = 'Jelszó megváltoztatása';
+$wb['error_password_empty'] = 'A jelszó nem lehet üres.';
+$wb['error_password_too_short'] = 'A jelszónak legalább 8 karakterből kell állnia.';
+$wb['error_passwords_do_not_match'] = 'A jelszavak nem egyeznek.';
+$wb['error_password_same_as_current'] = 'Az új jelszónak különböznie kell a jelenlegitől.';
+$wb['error_password_change_failed'] = 'A jelszó megváltoztatása sikertelen. Kérjük, próbálja újra.';
+$wb['generate_password_txt'] = 'Jelszó generálása';
+$wb['password_strength_txt'] = 'Jelszó erőssége';
+$wb['password_mismatch_txt'] = 'A jelszavak nem egyeznek';
+$wb['password_match_txt'] = 'A jelszavak egyeznek';
+?>
 ?>

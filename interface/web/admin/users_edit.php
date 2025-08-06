@@ -127,6 +127,11 @@ class page_action extends tform_actions {
 			$password = $app->auth->crypt_password($password);
 			$sql = "UPDATE client SET password = ? WHERE client_id = ? AND username = ?";
 			$app->db->query($sql, $password, $client_id, $username);
+			
+			// Update last_password_change date in sys_user table
+			$current_date = date('Y-m-d');
+			$sql = "UPDATE sys_user SET last_password_change = ? WHERE userid = ?";
+			$app->db->query($sql, $current_date, $this->id);
 		}
 
 		// language changed

@@ -40,6 +40,20 @@ $wb['otp_code_email_subject_txt'] = 'ISPConfig Login authenticatie';
 $wb['otp_code_email_template_txt'] = 'Uw eenmalige login code is %s' . PHP_EOL . 'Deze code is geldig voor 10 minuten.' . PHP_EOL;
 $wb['otp_code_resend_txt'] = 'Aanvragen nieuwe code';
 $wb['otp_code_email_sent_failed_txt'] = 'Verzenden van email naar %s is mislukt.';
-$wb['otp_code_email_sent_wait_txt'] = 'Please wait, re-sending the code is only possible after %s seconds.';
+$wb['otp_code_email_sent_wait_txt'] = 'Even wachten, het opnieuw verzenden van de code is pas mogelijk na %s seconden.';
+$wb['force_password_change_title'] = 'Wachtwoord wijziging vereist';
+$wb['force_password_change_message'] = 'Uw wachtwoord is %d dagen oud en moet worden gewijzigd. Wachtwoorden moeten om veiligheidsredenen elke %d dagen worden gewijzigd.';
+$wb['new_password_txt'] = 'Nieuw wachtwoord';
+$wb['confirm_password_txt'] = 'Bevestig wachtwoord';
+$wb['change_password_button_txt'] = 'Wachtwoord wijzigen';
+$wb['error_password_empty'] = 'Wachtwoord mag niet leeg zijn.';
+$wb['error_password_too_short'] = 'Wachtwoord moet minimaal 8 tekens lang zijn.';
+$wb['error_passwords_do_not_match'] = 'Wachtwoorden komen niet overeen.';
+$wb['error_password_same_as_current'] = 'Nieuw wachtwoord moet verschillen van uw huidige wachtwoord.';
+$wb['error_password_change_failed'] = 'Wachtwoord wijzigen mislukt. Probeer het opnieuw.';
+$wb['generate_password_txt'] = 'Wachtwoord genereren';
+$wb['password_strength_txt'] = 'Wachtwoord sterkte';
+$wb['password_mismatch_txt'] = 'De wachtwoorden komen niet overeen';
+$wb['password_match_txt'] = 'De wachtwoorden komen overeen';
 
 ?>
