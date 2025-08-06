@@ -41,4 +41,19 @@ $wb['otp_code_email_template_txt'] = 'Your One time login code is %s' . PHP_EOL 
 $wb['otp_code_resend_txt'] = 'Request new code';
 $wb['otp_code_email_sent_failed_txt'] = 'Failed sending an email to %s';
 $wb['otp_code_email_sent_wait_txt'] = 'Please wait, re-sending the code is only possible after %s seconds.';
+$wb['force_password_change_title'] = 'パスワードの変更が必要です';
+$wb['force_password_change_message'] = 'パスワードの有効期限が切れています。継続するには変更してください。';
+$wb['new_password_txt'] = '新しいパスワード';
+$wb['confirm_password_txt'] = 'パスワードの確認';
+$wb['change_password_button_txt'] = 'パスワードを変更';
+$wb['error_password_empty'] = 'パスワードを空にすることはできません。';
+$wb['error_password_too_short'] = 'パスワードは8文字以上である必要があります。';
+$wb['error_passwords_do_not_match'] = 'パスワードが一致しません。';
+$wb['error_password_same_as_current'] = '新しいパスワードは現在のパスワードと異なる必要があります。';
+$wb['error_password_change_failed'] = 'パスワードの変更に失敗しました。もう一度お試しください。';
+$wb['generate_password_txt'] = 'パスワードを生成';
+$wb['password_strength_txt'] = 'パスワードの強度';
+$wb['password_mismatch_txt'] = 'パスワードが一致しません';
+$wb['password_match_txt'] = 'パスワードが一致します';
+?>
 ?>

@@ -41,4 +41,19 @@ $wb['otp_code_email_template_txt'] = 'Your One time login code is %s' . PHP_EOL 
 $wb['otp_code_resend_txt'] = 'Request new code';
 $wb['otp_code_email_sent_failed_txt'] = 'Failed sending an email to %s';
 $wb['otp_code_email_sent_wait_txt'] = 'Please wait, re-sending the code is only possible after %s seconds.';
+$wb['force_password_change_title'] = 'Canvi de contrasenya obligatori';
+$wb['force_password_change_message'] = 'La vostra contrasenya ha caducat. Heu de canviar-la per continuar.';
+$wb['new_password_txt'] = 'Nova contrasenya';
+$wb['confirm_password_txt'] = 'Confirmar contrasenya';
+$wb['change_password_button_txt'] = 'Canviar contrasenya';
+$wb['error_password_empty'] = 'La contrasenya no pot estar buida.';
+$wb['error_password_too_short'] = 'La contrasenya ha de tenir almenys 8 caràcters.';
+$wb['error_passwords_do_not_match'] = 'Les contrasenyes no coincideixen.';
+$wb['error_password_same_as_current'] = 'La nova contrasenya ha de ser diferent de l\'actual.';
+$wb['error_password_change_failed'] = 'Error en canviar la contrasenya. Torneu-ho a provar.';
+$wb['generate_password_txt'] = 'Generar contrasenya';
+$wb['password_strength_txt'] = 'Força de la contrasenya';
+$wb['password_mismatch_txt'] = 'Les contrasenyes no coincideixen';
+$wb['password_match_txt'] = 'Les contrasenyes coincideixen';
+?>
 ?>
