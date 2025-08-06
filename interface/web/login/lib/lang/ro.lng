@@ -41,4 +41,19 @@ $wb['otp_code_email_template_txt'] = 'Your One time login code is %s' . PHP_EOL 
 $wb['otp_code_resend_txt'] = 'Request new code';
 $wb['otp_code_email_sent_failed_txt'] = 'Failed sending an email to %s';
 $wb['otp_code_email_sent_wait_txt'] = 'Please wait, re-sending the code is only possible after %s seconds.';
+$wb['force_password_change_title'] = 'Este necesară schimbarea parolei';
+$wb['force_password_change_message'] = 'Parola dumneavoastră a expirat. Trebuie să o schimbați pentru a continua.';
+$wb['new_password_txt'] = 'Parolă nouă';
+$wb['confirm_password_txt'] = 'Confirmați parola';
+$wb['change_password_button_txt'] = 'Schimbă parola';
+$wb['error_password_empty'] = 'Parola nu poate fi goală.';
+$wb['error_password_too_short'] = 'Parola trebuie să aibă cel puțin 8 caractere.';
+$wb['error_passwords_do_not_match'] = 'Parolele nu se potrivesc.';
+$wb['error_password_same_as_current'] = 'Parola nouă trebuie să fie diferită de cea actuală.';
+$wb['error_password_change_failed'] = 'Eșec la schimbarea parolei. Vă rugăm încercați din nou.';
+$wb['generate_password_txt'] = 'Generează parolă';
+$wb['password_strength_txt'] = 'Puterea parolei';
+$wb['password_mismatch_txt'] = 'Parolele nu se potrivesc';
+$wb['password_match_txt'] = 'Parolele se potrivesc';
+?>
 ?>

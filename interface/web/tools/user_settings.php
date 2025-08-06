@@ -99,6 +99,11 @@ class page_action extends tform_actions {
 			$tmp_user = $app->db->queryOneRecord("SELECT passwort FROM sys_user WHERE userid = ?", $_SESSION['s']['user']['userid']);
 			$_SESSION['s']['user']['passwort'] = $tmp_user['passwort'];
 			unset($tmp_user);
+			
+			// Update last_password_change date in sys_user table
+			$current_date = date('Y-m-d');
+			$sql = "UPDATE sys_user SET last_password_change = ? WHERE userid = ?";
+			$app->db->query($sql, $current_date, $_SESSION['s']['user']['userid']);
 		}
 		$this->updateSessionTheme();
 

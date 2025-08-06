@@ -40,5 +40,19 @@ $wb['otp_code_email_subject_txt'] = 'ISPConfig Login Authentifizierung';
 $wb['otp_code_email_template_txt'] = 'Ihr einmaliger Anmeldecode lautet %s' . PHP_EOL . 'Dieser Code ist 10 Minuten lang gültig.' . PHP_EOL;
 $wb['otp_code_resend_txt'] = 'Neuen Code anfordern';
 $wb['otp_code_email_sent_failed_txt'] = 'Senden einer E-Mail an %s fehlgeschlagen';
-$wb['otp_code_email_sent_wait_txt'] = 'Bitte warten Sie, das erneute Senden des Codes ist erst nach %s Sekunden möglich';
-
+$wb['otp_code_email_sent_wait_txt'] = 'Bitte warten Sie, das erneute Senden des Codes ist erst nach %s Sekunden möglich.';
+$wb['force_password_change_title'] = 'Passwort-Änderung erforderlich';
+$wb['force_password_change_message'] = 'Ihr Passwort ist %d Tage alt und muss geändert werden. Passwörter müssen aus Sicherheitsgründen alle %d Tage geändert werden.';
+$wb['new_password_txt'] = 'Neues Passwort';
+$wb['confirm_password_txt'] = 'Passwort bestätigen';
+$wb['change_password_button_txt'] = 'Passwort ändern';
+$wb['error_password_empty'] = 'Passwort darf nicht leer sein.';
+$wb['error_password_too_short'] = 'Passwort muss mindestens 8 Zeichen lang sein.';
+$wb['error_passwords_do_not_match'] = 'Passwörter stimmen nicht überein.';
+$wb['error_password_same_as_current'] = 'Das neue Passwort muss sich vom aktuellen Passwort unterscheiden.';
+$wb['error_password_change_failed'] = 'Passwort konnte nicht geändert werden. Bitte versuchen Sie es erneut.';
+$wb['generate_password_txt'] = 'Passwort generieren';
+$wb['password_strength_txt'] = 'Passwort-Stärke';
+$wb['password_mismatch_txt'] = 'Die Passwörter stimmen nicht überein';
+$wb['password_match_txt'] = 'Die Passwörter stimmen überein';
+?>
