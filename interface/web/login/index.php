@@ -156,6 +156,11 @@ function process_login_request(app $app, &$error, $conf, $module)
 				header('Location: otp.php');
 				die();
 			} else {
+				// Check if password change is required before final login
+				if (is_password_change_required($app, $user['userid'])) {
+					redirect_to_password_change($app);
+				}
+				
 				$app->plugin->raiseEvent('login', $username);
 				$app->auth_log('Successful login for user \''. $username .'\' ' . $msg . ' from '. $_SERVER['REMOTE_ADDR'] .' at '. date('Y-m-d H:i:s') . ' with session ID ' .session_id());
 				header('Location: ../index.php');
@@ -428,6 +433,7 @@ function is_login_as(app $app, $username, $password)
 
 require_once '../../lib/config.inc.php';
 require_once '../../lib/app.inc.php';
+require_once 'lib/password_check.inc.php';
 
 include_once '../common.php';
 

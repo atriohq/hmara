@@ -30,6 +30,7 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 require_once '../../lib/config.inc.php';
 require_once '../../lib/app.inc.php';
+require_once 'lib/password_check.inc.php';
 
 // Check if we have an active users ession.
 if($_SESSION['s']['user']['active'] == 1) {
@@ -66,6 +67,12 @@ function finish_2fa_success($msg = '') {
 	if (!empty($msg)) {
 		$msg = ' ' . $msg;
 	}
+	
+	// Check if password change is required before final login
+	if (is_password_change_required($app, $_SESSION['s']['user']['userid'])) {
+		redirect_to_password_change($app);
+	}
+	
 	$app->auth_log('Successful login for user \''. $username .'\'' . $msg . ' from '. $_SERVER['REMOTE_ADDR'] .' at '. date('Y-m-d H:i:s') . ' with session ID ' .session_id());
 	$app->db->query('UPDATE `sys_user` SET otp_attempts=0 WHERE userid = ?', $_SESSION['s']['user']['userid']);
 	session_write_close();

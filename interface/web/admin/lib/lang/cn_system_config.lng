@@ -110,3 +110,5 @@ $wb['le_caa_autocreate_options_txt'] = '在颁发 LE 时启用 CAA 记录的自�
 $wb['dns_external_slave_server_txt'] = 'External DNS servers (comma separated)';
 $wb['mailbox_show_last_access_txt'] = 'Show last access time for mail accounts';
 $wb['postgresql_database_txt'] = 'PostgreSQL Database';
+$wb['force_password_change_days_txt'] = 'Force password change after X days';
+$wb['force_password_change_days_error_regex'] = 'Invalid value for force password change days';

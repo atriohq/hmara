@@ -41,4 +41,19 @@ $wb['otp_code_email_template_txt'] = 'Your One time login code is %s' . PHP_EOL 
 $wb['otp_code_resend_txt'] = 'Request new code';
 $wb['otp_code_email_sent_failed_txt'] = 'Failed sending an email to %s';
 $wb['otp_code_email_sent_wait_txt'] = 'Please wait, re-sending the code is only possible after %s seconds.';
+$wb['force_password_change_title'] = 'Απαιτείται αλλαγή κωδικού';
+$wb['force_password_change_message'] = 'Ο κωδικός σας έχει λήξει. Πρέπει να τον αλλάξετε για να συνεχίσετε.';
+$wb['new_password_txt'] = 'Νέος κωδικός';
+$wb['confirm_password_txt'] = 'Επιβεβαίωση κωδικού';
+$wb['change_password_button_txt'] = 'Αλλαγή κωδικού';
+$wb['error_password_empty'] = 'Ο κωδικός δεν μπορεί να είναι κενός.';
+$wb['error_password_too_short'] = 'Ο κωδικός πρέπει να έχει τουλάχιστον 8 χαρακτήρες.';
+$wb['error_passwords_do_not_match'] = 'Οι κωδικοί δεν ταιριάζουν.';
+$wb['error_password_same_as_current'] = 'Ο νέος κωδικός πρέπει να είναι διαφορετικός από τον τρέχοντα.';
+$wb['error_password_change_failed'] = 'Αποτυχία αλλαγής κωδικού. Παρακαλώ δοκιμάστε ξανά.';
+$wb['generate_password_txt'] = 'Δημιουργία κωδικού';
+$wb['password_strength_txt'] = 'Ισχύς κωδικού';
+$wb['password_mismatch_txt'] = 'Οι κωδικοί δεν ταιριάζουν';
+$wb['password_match_txt'] = 'Οι κωδικοί ταιριάζουν';
+?>
 ?>
