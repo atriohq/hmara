@@ -28,7 +28,7 @@ NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-//***  RHEL 9 derivatives default settings
+//***  RHEL 10 derivatives default settings
 
 //* Main
 $conf['language'] = 'en';

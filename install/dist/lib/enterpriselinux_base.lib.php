@@ -57,14 +57,6 @@ class installer_enterpriselinux extends installer_dist {
 			chmod($conf['amavis']['config_dir'].'/60-dkim', 0640);
 		}
 
-		// for CentOS 7.2 only
-		if($dist['confid'] == 'centos72') {
-			chmod($conf['amavis']['config_dir'].'/amavisd.conf', 0750);
-			chgrp($conf['amavis']['config_dir'].'/amavisd.conf', 'amavis');
-			chmod($conf['amavis']['config_dir'].'/60-dkim', 0750);
-			chgrp($conf['amavis']['config_dir'].'/60-dkim', 'amavis');
-		}
-
 
 		// Adding the amavisd commands to the postfix configuration
 		$postconf_commands = array (
