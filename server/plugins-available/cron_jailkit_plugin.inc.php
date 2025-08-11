@@ -35,8 +35,8 @@ class cron_jailkit_plugin {
 	var $plugin_name = 'cron_jailkit_plugin';
 	var $class_name = 'cron_jailkit_plugin';
 	var $parent_domain = array();
-    var $data = array();
-    var $jailkit_config = array();
+	var $data = array();
+	var $jailkit_config = array();
 
 
 	//* This function is called during ispconfig installation to determine

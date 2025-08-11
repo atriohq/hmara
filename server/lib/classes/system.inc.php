@@ -2938,12 +2938,27 @@ class system{
 			if(is_array($options['homedir_usernames']) && !empty($options['homedir_usernames'])) {
 				foreach($options['homedir_usernames'] as $homedir_username) {
 
+					if(preg_match('/^([^:]+):([^:]+)$/', $homedir_username, $matches)) {
+						$username = $matches[1];
+						$group = $matches[2];
+					}
+
 					if($used_os_type == "debian" || $used_os_type == "ubuntu") {
 						$php_binary = $home_dir . '/etc/alternatives/php';
 					} elseif ($used_os_type == "redhat") {
-						$php_binary = $home_dir . '/home/' . $homedir_username . '/.local/bin/php';
+						$php_binary = $home_dir . '/home/' . $username . '/.local/bin/php';
 					} else {
-						$php_binary = $home_dir . '/home/' . $homedir_username . '/.local/bin/php';
+						$php_binary = $home_dir . '/home/' . $username . '/.local/bin/php';
+					}
+
+					$homedir = $home_dir . '/home/' . $username;
+
+					if(!is_dir($homedir.'/.local/bin')){
+						$app->file->mkdirs($homedir.'/.local/bin', '0750');
+						$app->system->chown($homedir.'/.local', $username, false);
+						$app->system->chgrp($homedir.'/.local', $group, false);
+						$app->system->chown($homedir.'/.local/bin', $username, false);
+						$app->system->chgrp($homedir.'/.local/bin', $group, false);
 					}
 
 					if(!empty($options['php_cli_binary'])) {
@@ -2968,10 +2983,10 @@ class system{
 								}
 
 								if($used_os_type == "debian" || $used_os_type == "ubuntu") {
-									if(file_exists($home_dir . '/home/' . $homedir_username . '/.local/bin/php') && !file_exists($home_dir . '/home/' . $homedir_username . '/.local/bin/.lock_homephp')) {
-										unlink($home_dir . '/home/' . $homedir_username . '/.local/bin/php');
+									if(file_exists($home_dir . '/home/' . $username . '/.local/bin/php') && !file_exists($home_dir . '/home/' . $username . '/.local/bin/.lock_homephp')) {
+										unlink($home_dir . '/home/' . $username . '/.local/bin/php');
 									}/* else {
-										$app->log("Lock file .lock_homephp for PHP exists in " . $home_dir . '/home/' . $homedir_username . '/.local/bin/.lock_homephp', LOGLEVEL_DEBUG);
+										$app->log("Lock file .lock_homephp for PHP exists in " . $home_dir . '/home/' . $username . '/.local/bin/.lock_homephp', LOGLEVEL_DEBUG);
 									}*/
 								}
 								$app->log("update_jailkit_chroot: setting PHP to " . $options['php_cli_binary'], LOGLEVEL_DEBUG);

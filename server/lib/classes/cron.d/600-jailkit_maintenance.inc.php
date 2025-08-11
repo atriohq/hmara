@@ -94,7 +94,7 @@ class cronjob_jailkit_maintenance extends cronjob {
 				$options['homedir_usernames'] = array();
 
 				foreach($shelluser_list as $shelluser) {
-					$options['homedir_usernames'][] = $shelluser['username'];
+					$options['homedir_usernames'][] = $shelluser['username'] .':'. $shelluser['pgroup'];
 				}
 
 			} else {
