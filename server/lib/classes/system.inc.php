@@ -2045,7 +2045,7 @@ class system{
 		if (!$mounted) {
 			//* send email to admin that backup directory could not be mounted
 			$global_config = $app->getconf->get_global_config('mail');
-			if($global_config['admin_mail'] != ''){
+			if(isset($global_config['admin_mail']) && $global_config['admin_mail'] != ''){
 				$subject = 'Backup directory '.$backup_dir.' could not be mounted';
 				$message = "Backup directory ".$backup_dir." could not be mounted.\n\nThe command\n\n".$mount_cmd."\n\nfailed.";
 				mail($global_config['admin_mail'], $subject, $message);
@@ -2057,6 +2057,9 @@ class system{
 
 	function umount_backup_dir($backup_dir, $mount_cmd = '/usr/local/ispconfig/server/scripts/backup_dir_umount.sh'){
 		global $app, $conf;
+
+		//* Initialize $unmounted status variable with false
+		$unmounted = false;
 
 		if ( 	is_file($mount_cmd) &&
 				is_executable($mount_cmd) &&
@@ -2070,7 +2073,7 @@ class system{
 				if(!$unmounted) {
 					//* send email to admin that backup directory could not be unmounted
 					$global_config = $app->getconf->get_global_config('mail');
-					if($global_config['admin_mail'] != ''){
+					if(isset($global_config['admin_mail']) && $global_config['admin_mail'] != ''){
 						$subject = 'Backup directory '.$backup_dir.' could not be unmounted';
 						$message = "Backup directory ".$backup_dir." could not be unmounted.\n\nThe command\n\n".$mount_cmd."\n\nfailed.";
 						mail($global_config['admin_mail'], $subject, $message);
@@ -2949,28 +2952,30 @@ class system{
 							$app->log("update_jailkit_chroot: The PHP cli binary " . $options['php_cli_binary'] . " is not available in the jail of the web " . $options['domain'], LOGLEVEL_DEBUG);
 
 							$fallback_php = $app->system->get_newest_php_bin($home_dir . $php_bin_dir);
-							$fallback_php_bin = str_replace($home_dir, '', $fallback_php);
+							$fallback_php_bin = str_replace($home_dir, '', $fallback_php !== null ? $fallback_php : '');
 
 							if(!empty($fallback_php) && file_exists($fallback_php_bin)) {
-								if(is_link($php_binary) || is_file($php_binary) || !file_exists($php_binary)) {
+								if(file_exists($php_binary)) {
 									unlink($php_binary);
-									symlink($fallback_php_bin, $php_binary);
-									$app->log("update_jailkit_chroot: Found " . $fallback_php_bin . " as a fallback for PHP in the jail of " . $options['domain'], LOGLEVEL_DEBUG);
 								}
+								symlink($fallback_php_bin, $php_binary);
+								$app->log("update_jailkit_chroot: Found " . $fallback_php_bin . " as a fallback for PHP in the jail of " . $options['domain'], LOGLEVEL_DEBUG);
+
 							}
 						} else {
-								$app->log("update_jailkit_chroot: setting PHP to " . $options['php_cli_binary'], LOGLEVEL_DEBUG);
-								if(is_link($php_binary) || is_file($php_binary) || !file_exists($php_binary)) {
+								if(file_exists($php_binary) && $used_os_type != "debian" && $used_os_type != "ubuntu") {
 									unlink($php_binary);
-									symlink($options['php_cli_binary'], $php_binary);
-									if($used_os_type == "debian" || $$used_os_type == "ubuntu") {
-										if(file_exists($home_dir . '/home/' . $homedir_username . '/.local/bin/php') && !file_exists($home_dir . '/home/' . $homedir_username . '/.local/bin/.lock_homephp')) {
-											unlink($home_dir . '/home/' . $homedir_username . '/.local/bin/php');
-										}/* else {
-											$app->log("Lock file .lock_homephp for PHP exists in " . $home_dir . '/home/' . $homedir_username . '/.local/bin/.lock_homephp', LOGLEVEL_DEBUG);
-										}*/
-									}
 								}
+
+								if($used_os_type == "debian" || $used_os_type == "ubuntu") {
+									if(file_exists($home_dir . '/home/' . $homedir_username . '/.local/bin/php') && !file_exists($home_dir . '/home/' . $homedir_username . '/.local/bin/.lock_homephp')) {
+										unlink($home_dir . '/home/' . $homedir_username . '/.local/bin/php');
+									}/* else {
+										$app->log("Lock file .lock_homephp for PHP exists in " . $home_dir . '/home/' . $homedir_username . '/.local/bin/.lock_homephp', LOGLEVEL_DEBUG);
+									}*/
+								}
+								$app->log("update_jailkit_chroot: setting PHP to " . $options['php_cli_binary'], LOGLEVEL_DEBUG);
+								symlink($options['php_cli_binary'], $php_binary);
 						}
 					}
 				}

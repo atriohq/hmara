@@ -368,13 +368,11 @@ class shelluser_jailkit_plugin {
 	{
 		global $app, $conf;
 
+		$options = array();
+
 		if(isset($this->jailkit_config) && isset($this->jailkit_config['jailkit_hardlinks'])) {
 			if($this->jailkit_config['jailkit_hardlinks'] == 'yes') {
 				$options = array('hardlink');
-			} elseif($this->jailkit_config['jailkit_hardlinks'] == 'no') {
-				$options = array();
-			} else {
-				$options = array();
 			}
 		} else {
 			$options = array('allow_hardlink');
@@ -786,7 +784,9 @@ class shelluser_jailkit_plugin {
 		$tpl->setVar('domain', $this->web['domain']);
 		$tpl->setVar('home_dir', $this->_get_home_dir(""));
 
-		$php_bin_dir = dirname($this->web['php_cli_binary']);
+		//$php_bin_dir = dirname($this->web['php_cli_binary']);
+		$php_cli_binary = isset($this->web['php_cli_binary']) && $this->web['php_cli_binary'] ? $this->web['php_cli_binary'] : '/usr/bin/php';
+		$php_bin_dir = dirname($php_cli_binary);
 		$php_binary_path = $web_docroot . '/' . $this->web['php_cli_binary'];
 
 
@@ -832,7 +832,7 @@ class shelluser_jailkit_plugin {
 				$fallback_php_bin = str_replace($web_docroot, '', $fallback_php);
 
 				if(file_exists($fallback_php_bin)) {
-					if(is_link($home_php) || is_file($home_php) || !file_exists($home_php)) {
+					if(file_exists($home_php)) {
 						unlink($home_php);
 					}
 					symlink($fallback_php_bin, $home_php);
@@ -842,7 +842,7 @@ class shelluser_jailkit_plugin {
 
 		} else {
 			// Create symlink to PHP binary in jail
-			if(is_link($home_php) || is_file($home_php) || !file_exists($home_php)) {
+			if(file_exists($home_php)) {
 				unlink($home_php);
 			}
 			symlink($this->web['php_cli_binary'], $home_php);

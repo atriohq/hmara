@@ -468,7 +468,11 @@ class nginx_plugin {
 
 			//* Get the old client ID
 			$old_client = $app->dbmaster->queryOneRecord('SELECT client_id FROM sys_group WHERE sys_group.groupid = ?', $data['old']['sys_groupid']);
-			$old_client_id = intval($old_client['client_id']);
+
+			if(is_array($old_client) && isset($old_client['client_id'])) {
+				$old_client_id = intval($old_client['client_id']);
+			}
+
 			unset($old_client);
 
 			//* Remove the old symlinks

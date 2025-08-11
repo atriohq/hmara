@@ -35,6 +35,8 @@ class cron_jailkit_plugin {
 	var $plugin_name = 'cron_jailkit_plugin';
 	var $class_name = 'cron_jailkit_plugin';
 	var $parent_domain = array();
+    var $data = array();
+    var $jailkit_config = array();
 
 
 	//* This function is called during ispconfig installation to determine
@@ -267,12 +269,11 @@ class cron_jailkit_plugin {
 	{
 		global $app, $conf;
 
+		$options = array();
 
 		if(isset($this->jailkit_config) && isset($this->jailkit_config['jailkit_hardlinks'])) {
 			if($this->jailkit_config['jailkit_hardlinks'] == 'yes') {
 				$options = array('hardlink');
-			} elseif($this->jailkit_config['jailkit_hardlinks'] == 'no') {
-				$options = array();
 			}
 		} else {
 			$options = array('allow_hardlink');
@@ -438,6 +439,7 @@ class cron_jailkit_plugin {
 		}
 
 		$options = array();
+
 		$records = $app->db->queryAllRecords('SELECT web_folder FROM `web_domain` WHERE `parent_domain_id` = ? AND `document_root` = ? AND web_folder != \'\' AND web_folder IS NOT NULL AND `server_id` = ?', $parent_domain_id, $parent_domain['document_root'], $conf['server_id']);
 		foreach($records as $record) {
 			$options[] = 'skip='.$record['web_folder'];
