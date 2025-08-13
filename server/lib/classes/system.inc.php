@@ -2058,8 +2058,8 @@ class system{
 	function umount_backup_dir($backup_dir, $mount_cmd = '/usr/local/ispconfig/server/scripts/backup_dir_umount.sh'){
 		global $app, $conf;
 
-		//* Initialize $unmounted status variable with false
-		$unmounted = false;
+		//* Initialize $unmounted status variable
+		$unmounted = true;
 
 		if ( 	is_file($mount_cmd) &&
 				is_executable($mount_cmd) &&
