@@ -80,6 +80,7 @@ class cronjob_jailkit_maintenance extends cronjob {
 			$options = $global_options;
 
 			$options['domain'] = $rec['domain'];
+			$options['jk_php_maintenance_check'] = "no";
 
 			if(empty($rec['php_cli_binary'])) {
 				$options['php_cli_binary'] = "/usr/bin/php";
@@ -89,19 +90,24 @@ class cronjob_jailkit_maintenance extends cronjob {
 
 			$shelluser_list = $app->db->queryAllRecords("SELECT * FROM shell_user WHERE parent_domain_id = ? and chroot = 'jailkit' and active = 'y'", $rec['domain_id']);
 
+
 			if(is_array($shelluser_list) && !empty($shelluser_list)) {
 				$options['jk_php_maintenance_check'] = "yes";
 				$options['homedir_usernames'] = array();
 
 				foreach($shelluser_list as $shelluser) {
+
+					if(!isset($shelluser['username']) || !isset($shelluser['pgroup'])) {
+						$app->log('Skipping shell user with missing username or pgroup: '.print_r($shelluser, true), LOGLEVEL_DEBUG);
+						continue;
+					}
+
 					$options['homedir_usernames'][] = $shelluser['username'] .':'. $shelluser['pgroup'];
 				}
 
 			} else {
 				$options['jk_php_maintenance_check'] = "no";
-
 			}
-
 
 			//$app->log('Beginning jailkit maintenance for domain '.$rec['domain'].' at '.$rec['document_root'], LOGLEVEL_DEBUG);
 			print 'Beginning jailkit maintenance for domain '.$rec['domain'].' at '.$rec['document_root']."\n";

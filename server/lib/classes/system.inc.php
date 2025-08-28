@@ -2939,6 +2939,7 @@ class system{
 				foreach($options['homedir_usernames'] as $homedir_username) {
 
 					if(preg_match('/^([^:]+):([^:]+)$/', $homedir_username, $matches)) {
+
 						$username = $matches[1];
 						$group = $matches[2];
 					}
