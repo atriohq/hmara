@@ -263,6 +263,13 @@ function get_distname() {
 			$distid = 'debian60';
 			$distbaseid = 'debian';
 			swriteln("Operating System: Debian 12.0 (Bookworm) or compatible\n");
+		} elseif(substr(trim(file_get_contents('/etc/debian_version')),0,2) == '13') {
+			$distname = 'Debian';
+			$distver = 'Trixie';
+			$distconfid = 'debian130';
+			$distid = 'debian60';
+			$distbaseid = 'debian';
+			swriteln("Operating System: Debian 13.0 (Trixie) or compatible\n");
 		} elseif(strstr(trim(file_get_contents('/etc/debian_version')), '/sid')) {
 			$distname = 'Debian';
 			$distver = 'Testing';
