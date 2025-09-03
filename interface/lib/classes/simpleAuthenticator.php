@@ -19,8 +19,8 @@ use ValueError;
  */
 class SimpleAuthenticator
 {
-    private int $codeLength;
-    private string $alg;
+    private $codeLength;
+    private $alg;
 
     /**
      * @param int|null $codeLength
