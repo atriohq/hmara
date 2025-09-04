@@ -164,16 +164,16 @@
 		var $input = $('#globalsearch');
 		var $clear = $('#clear-search');
 		$input.on('input', function() {
-				if ($input.val().length > 0) {
+			if ($input.val().length > 0) {
 				$clear.show();
-				} else {
+			} else {
 				$clear.hide();
-				}
-				});
+			}
+		});
 		$clear.on('click', function() {
-				$input.val('').focus();
-				$clear.hide();
-				});
+			$input.val('').focus();
+			$clear.hide();
+		});
 
 
     ISPConfig.loadInitContent();
