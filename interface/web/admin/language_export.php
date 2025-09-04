@@ -38,6 +38,8 @@ $app->auth->check_security_permissions('admin_allow_langedit');
 if(!$app->auth->is_admin()) die('Allowed for administrators only.');
 if($conf['demo_mode'] == true) $app->error('This function is disabled in demo mode.');
 
+if(!$conf['language_file_import_enabled']) $app->error('Languge import and export functions are disabled in the interface config.inc.php file.');
+
 $app->uses('tpl');
 
 $app->tpl->newTemplate('form.tpl.htm');

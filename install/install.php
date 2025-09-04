@@ -190,7 +190,7 @@ $conf['timezone'] = get_system_timezone();
 
 //* Set default theme
 $conf['theme'] = 'default';
-$conf['language_file_import_enabled'] = true;
+$conf['language_file_import_enabled'] = false;
 
 //** Select installation mode
 $install_mode = $inst->simple_query('Installation mode', array('standard', 'expert'), 'standard','install_mode');

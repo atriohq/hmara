@@ -129,15 +129,17 @@ $items[] = array(   'title'  => 'Merge',
 	'link' => 'admin/language_complete.php',
 	'html_id'   => 'language_complete');
 
-$items[] = array(   'title'  => 'Export',
-	'target'  => 'content',
-	'link' => 'admin/language_export.php',
-	'html_id'   => 'language_export');
+if($conf['language_file_import_enabled']) {
+	$items[] = array(   'title'  => 'Export',
+		'target'  => 'content',
+		'link' => 'admin/language_export.php',
+		'html_id'   => 'language_export');
 
-$items[] = array(   'title'  => 'Import',
-	'target'  => 'content',
-	'link' => 'admin/language_import.php',
-	'html_id'   => 'language_import');
+	$items[] = array(   'title'  => 'Import',
+		'target'  => 'content',
+		'link' => 'admin/language_import.php',
+		'html_id'   => 'language_import');
+}
 
 $module['nav'][] = array(   'title'     => 'Language Editor',
 	'open'      => 1,
