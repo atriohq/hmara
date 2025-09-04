@@ -3,5 +3,5 @@ $wb['list_head_txt'] = 'Alias de email';
 $wb['active_txt'] = 'Ativo';
 $wb['source_txt'] = 'Origem';
 $wb['destination_txt'] = 'Destino';
-$wb['email_txt'] = 'eMail';
+$wb['email_txt'] = 'Email';
 $wb['add_new_record_txt'] = 'Adicionar novo alias de email';

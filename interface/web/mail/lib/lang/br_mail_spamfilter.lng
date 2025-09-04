@@ -1,5 +1,5 @@
 <?php
-$wb['email_txt'] = 'eMail';
+$wb['email_txt'] = 'Email';
 $wb['spam_rewrite_score_int_txt'] = 'Pontuação de reescrita';
 $wb['spam_redirect_score_int_txt'] = 'Redirecionar pontuação';
 $wb['spam_delete_score_int_txt'] = 'Remover pontuação';

@@ -2,7 +2,7 @@
 $wb['server_id_txt'] = 'Servidor';
 $wb['origin_txt'] = 'Zona (SOA)';
 $wb['ns_txt'] = 'NS';
-$wb['mbox_txt'] = 'eMail';
+$wb['mbox_txt'] = 'Email';
 $wb['serial_txt'] = 'Serial';
 $wb['refresh_txt'] = 'Atualizar';
 $wb['retry_txt'] = 'Repetir';

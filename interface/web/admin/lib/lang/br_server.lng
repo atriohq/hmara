@@ -1,7 +1,7 @@
 <?php
 $wb['config_txt'] = 'Configuração';
 $wb['server_name_txt'] = 'Nome do servidor';
-$wb['mail_server_txt'] = 'Servidor de eMails';
+$wb['mail_server_txt'] = 'Servidor de Emails';
 $wb['web_server_txt'] = 'Servidor Web';
 $wb['dns_server_txt'] = 'Servidor DNS';
 $wb['file_server_txt'] = 'Servidor FTP';
