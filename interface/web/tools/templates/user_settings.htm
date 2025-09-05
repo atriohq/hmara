@@ -37,7 +37,7 @@
 	  <input type="hidden" id="totp_secret" name="totp_secret" value="{tmpl_var name='totp_secret'}">
 	  <div id="qr_placeHolder"></div>
 	  <div id="url_placeHolder"></div>
-	  <label for="totp_verification_code">Load the QR code in an authenticator app and enter a verification code to Save it: </label>
+         <label for="totp_verification_code">{tmpl_var name='totp_verification_code_txt'}</label>
       <input type="text" name="totp_verification_code" id="totp_verification_code" class="form-control" style="width: 150px;" autocomplete="off" placeholder="000000"/>
     </div>
   </div>
@@ -137,7 +137,7 @@ function draw_new_totp_info() {
 	qr.addData(otpauth_url);
 	qr.make();
 	document.getElementById('qr_placeHolder').innerHTML = qr.createImgTag(5, 2, 'QR code');
-	document.getElementById('url_placeHolder').innerHTML = 'Secret: ' + jQuery('#totp_secret').val() + '<br / >URL: <a href=' + otpauth_url + '">' + otpauth_url + '</a>';
+       document.getElementById('url_placeHolder').innerHTML = '{tmpl_var name='secret_txt'}: ' + jQuery('#totp_secret').val() + '<br / >{tmpl_var name='url_txt'}: <a href=' + otpauth_url + '">' + otpauth_url + '</a>';
 }
 
 updateOtpPage();

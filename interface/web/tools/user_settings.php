@@ -138,7 +138,7 @@ class page_action extends tform_actions {
 
 				$data['totp_secret'] = $this->dataRecord['totp_secret'];
 				$app->db->query("UPDATE sys_user SET otp_data=? WHERE userid = ?", json_encode($data), $_SESSION['s']['user']['userid']);
-				$_SESSION['msg'] = 'TOTP secret validated and stored, Two Factor Authentication is now enabled.';
+				$_SESSION['msg'] = $app->tform->lng('totp_validated_stored');
 			}
 			else {
 				$app->tform->errorMessage = $app->tform->lng('totp_verification_code_incorrect');
