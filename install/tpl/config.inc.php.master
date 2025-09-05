@@ -27,6 +27,10 @@ NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+/**
+ *  WARNING, changes made in this file WILL BE OVERRIDDEN. Use config.inc.local.php for local overrides.
+ */
+
 //** Web-only
 if( !empty($_SERVER['DOCUMENT_ROOT']) ) {
 
