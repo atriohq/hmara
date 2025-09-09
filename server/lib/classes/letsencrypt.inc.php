@@ -883,22 +883,6 @@ class letsencrypt {
 		$now = new DateTime();
 		$is_valid = $valid_from <= $now && $now <= $valid_to;
 		$is_revoked = null;
-		// only do online revokation check when cert is valid and we got the required chain
-		if($is_valid && $cert_file && $this->is_readable_link_or_file($chain_file)) {
-			$ocsp_uri = $app->system->exec_safe('openssl x509 -noout -ocsp_uri -in ? 2>&1', $cert_file);
-			$ocsp_host = parse_url($ocsp_uri ?: '', PHP_URL_HOST);
-			if($ocsp_uri && $ocsp_host) {
-				$ocsp_response = $app->system->system_safe('openssl ocsp -issuer ? -cert ? -text -url ? -header HOST=? 2>&1', $chain_file, $cert_file, $ocsp_uri, $ocsp_host);
-				if($app->system->last_exec_retcode() == 0) {
-					$is_revoked = strpos($ocsp_response, 'Cert Status: good') === false;
-					if($is_revoked) {
-						$is_valid = false;
-					}
-				} else {
-					$app->log('extract_x509: ' . $cert_file . ' getting OCSP response from ' . $ocsp_uri . ' failed: ' . $ocsp_response, LOGLEVEL_WARN);
-				}
-			}
-		}
 		$signature_type = 'RSA';
 		$long_type = strtolower(isset($info['signatureTypeLN']) ? $info['signatureTypeLN'] : '?');
 		if(strpos($long_type, 'ecdsa') !== false) {
