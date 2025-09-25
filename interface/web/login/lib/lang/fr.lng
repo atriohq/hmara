@@ -25,6 +25,7 @@ $wb['theme_not_compatible'] = 'Le thème choisi n’est pas compatible avec la v
 $wb['back_txt'] = 'Retour';
 $wb['email_error'] = 'L’adresse e-mail contient des caractères non antorisés ou n’est pas dans le bon format.';
 $wb['stay_logged_in_txt'] = 'Keep me logged in';
+$wb['logging_in_from_txt'] = 'Logging in from';
 $wb['lost_password_function_disabled_txt'] = 'The lost password function is not available for this user.';
 $wb['pw_reset_act'] = 'You have been sent an activation link. Please visit the link to confirm your password request.';
 $wb['pw_reset_act_mail_title'] = 'Confirm ISPConfig 3 Control panel password reset';

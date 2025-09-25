@@ -25,6 +25,7 @@ $wb['theme_not_compatible'] = 'O tema escolhido não é compatível com a versã
 $wb['back_txt'] = 'Voltar';
 $wb['email_error'] = 'O email contém caracteres não permitidos ou formato é inválido.';
 $wb['stay_logged_in_txt'] = 'Manter-me conectado';
+$wb['logging_in_from_txt'] = 'Logging in from';
 $wb['lost_password_function_disabled_txt'] = 'Função "redefinir senha" indisponível para este usuário.';
 $wb['pw_reset_act'] = 'Você receberá um link de ativação. Por favor, acesse o link de ativação para confirmar sua nova senha.';
 $wb['pw_reset_act_mail_title'] = 'Confirmar nova senha para o painel de controle ISPConfig';

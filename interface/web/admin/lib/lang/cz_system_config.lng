@@ -69,6 +69,7 @@ $wb['customer_no_start_txt'] = 'Zákaznické číslo - počáteční hodnota';
 $wb['customer_no_counter_txt'] = 'Zákaznické číslo -  čítač';
 $wb['session_timeout_txt'] = 'Časový limit relace (minuty)';
 $wb['session_allow_endless_txt'] = 'Povolit - zůstat přihlášen';
+$wb['show_ip_on_login_form_txt'] = 'Show IP on login form';
 $wb['No'] = 'Ne';
 $wb['min_password_length_txt'] = 'Minimální délka hesla';
 $wb['min_password_strength_txt'] = 'Minimální síla hesla';

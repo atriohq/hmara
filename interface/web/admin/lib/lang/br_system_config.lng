@@ -72,6 +72,7 @@ $wb['customer_no_start_txt'] = 'Valor inicial do código de cliente';
 $wb['customer_no_counter_txt'] = 'Contador do código de cliente';
 $wb['session_timeout_txt'] = 'Duração da sessão (minutos)';
 $wb['session_allow_endless_txt'] = 'Habilitar "Manter-me conectado"';
+$wb['show_ip_on_login_form_txt'] = 'Show IP on login form';
 $wb['No'] = 'Não';
 $wb['min_password_length_txt'] = 'Comprimento mínimo da senha';
 $wb['min_password_strength_txt'] = 'Dificuldade mínima da senha';

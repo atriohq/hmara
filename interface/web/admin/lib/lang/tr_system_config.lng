@@ -72,6 +72,7 @@ $wb['customer_no_start_txt'] = 'Müşteri No Başlangıç Değeri';
 $wb['customer_no_counter_txt'] = 'Müşteri No Sayacı';
 $wb['session_timeout_txt'] = 'Oturum Zaman Aşımı (dakika)';
 $wb['session_allow_endless_txt'] = '"Oturum açık kalsın" kullanılabilsin';
+$wb['show_ip_on_login_form_txt'] = 'Show IP on login form';
 $wb['No'] = 'No';
 $wb['min_password_length_txt'] = 'En Az Parola Uzunluğu';
 $wb['min_password_strength_txt'] = 'En Az Parola Zorluğu';

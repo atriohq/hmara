@@ -73,6 +73,7 @@ $wb['customer_no_start_txt'] = 'Kundennummer Startwert';
 $wb['customer_no_counter_txt'] = 'Kundennummer Zähler';
 $wb['session_timeout_txt'] = 'Session-Timeout (Minuten)';
 $wb['session_allow_endless_txt'] = '&quot;Eingeloggt bleiben&quot; aktivieren';
+$wb['show_ip_on_login_form_txt'] = 'Show IP on login form';
 $wb['No'] = 'Nein';
 $wb['min_password_length_txt'] = 'Minimale Passwortlänge';
 $wb['min_password_strength_txt'] = 'Minimale Passwortstärke';

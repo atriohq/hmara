@@ -23,6 +23,7 @@ $wb['pw_reset_mail_msg'] = 'La contraseña de su cuenta de panel de control ISPC
 $wb['pw_reset_mail_title'] = 'La contraseña del panel de control ISPConfig 3 ha sido regenerada.';
 $wb['pw_reset_txt'] = 'Restablecer contraseña';
 $wb['stay_logged_in_txt'] = 'Permanecer conectado';
+$wb['logging_in_from_txt'] = 'Logging in from';
 $wb['theme_not_compatible'] = 'El tema elegido no es compatible con la versión actual. Por favor busca una nueva versión del tema.<br />Se ha activado el tema por defecto automáticamente.';
 $wb['user_regex_error'] = 'El nombre de usuario contiene caracteres no permitidos o tiene más de 64 caracteres.';
 $wb['username_txt'] = 'Nombre de usuario';

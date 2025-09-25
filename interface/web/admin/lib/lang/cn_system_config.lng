@@ -73,6 +73,7 @@ $wb['customer_no_start_txt'] = '客户编号起始值';
 $wb['customer_no_counter_txt'] = '客户编号计数器';
 $wb['session_timeout_txt'] = '会话超时时间（分钟）';
 $wb['session_allow_endless_txt'] = '启用“保持登录”';
+$wb['show_ip_on_login_form_txt'] = 'Show IP on login form';
 $wb['No'] = '否';
 $wb['min_password_length_txt'] = '最小密码长度';
 $wb['min_password_strength_txt'] = '最小密码强度';

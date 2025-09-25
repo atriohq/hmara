@@ -12,9 +12,11 @@
 			    		<div class="form-group">
 			    			<input class="form-control" placeholder="{tmpl_var name='password_txt'}" name="password" id="password" type="password" value="">
 			    		</div>
-						<div class="form-group">
-							Logging in from: {tmpl_var name='remote_address'}
-						</div>
+						<tmpl_if name="show_ip_on_login_form">
+							<div class="form-group">
+								{tmpl_var name='logging_in_from_txt'}: {tmpl_var name='remote_address'}
+							</div>
+						</tmpl_if>
 						<tmpl_if name="session_timeout" op=">" value="0">
 						<tmpl_if name="session_allow_endless" value="y">
 			    		<div class="checkbox">
