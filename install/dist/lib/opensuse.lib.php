@@ -967,7 +967,7 @@ class installer_dist extends installer_base {
 		//* Create the config file for ISPConfig server
 		$configfile = 'config.inc.php';
 		if(is_file($install_dir.'/server/lib/'.$configfile)){
-			copy("$install_dir/server/lib/$configfile", "$install_dir/interface/lib/$configfile~");
+			copy("$install_dir/server/lib/$configfile", "$install_dir/server/lib/$configfile~");
 		}
 		$content = rfsel($conf['ispconfig_install_dir'].'/server/conf-custom/install/'.$configfile.'.master', "tpl/$configfile.master");
 		$content = str_replace('{mysql_server_ispconfig_user}', $conf['mysql']['ispconfig_user'], $content);
