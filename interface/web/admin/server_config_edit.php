@@ -186,9 +186,18 @@ class page_action extends tform_actions {
 	function onAfterUpdate() {
 		global $app;
 		
+		$app->uses('ini_parser');
+		$old_config = $app->ini_parser->parse_ini_string(stripslashes($this->oldDataRecord['config']));
+
+		if (isset($this->dataRecord['monitor_system_updates'])
+			&& $this->dataRecord['monitor_system_updates'] == 'n'
+			&& $old_config['server']['monitor_system_updates'] != ($this->dataRecord['monitor_system_updates'])) {
+
+			$app->log('Turning off system update monitoring, and purging old monitor_data');
+			$app->db->query("DELETE FROM monitor_data WHERE type = ? and server_id = ?", 'system_update',  $this->dataRecord['id']);
+		}
+
 		if(isset($this->dataRecord['content_filter'])){
-			$app->uses('ini_parser');
-			$old_config = $app->ini_parser->parse_ini_string(stripslashes($this->oldDataRecord['config']));
 			if($this->dataRecord['content_filter'] == 'rspamd' && $old_config['mail']['content_filter'] != $this->dataRecord['content_filter']){
 			
 				$spamfilter_users = $app->db->queryAllRecords("SELECT * FROM spamfilter_users WHERE server_id = ?", intval($this->id));
