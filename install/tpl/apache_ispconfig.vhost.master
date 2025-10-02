@@ -15,10 +15,16 @@ NameVirtualHost *:<tmpl_var name="vhost_port">
     <FilesMatch "\.ph(p3?|tml)$">
       SetHandler None
     </FilesMatch>
+    <FilesMatch "\.lng$">
+        Require all denied
+    </FilesMatch>
   </Directory>
   <Directory /usr/local/ispconfig/interface/web/>
     <FilesMatch "\.ph(p3?|tml)$">
       SetHandler None
+    </FilesMatch>
+    <FilesMatch "\.lng$">
+        Require all denied
     </FilesMatch>
   </Directory>
 

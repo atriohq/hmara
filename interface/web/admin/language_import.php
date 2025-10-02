@@ -104,6 +104,12 @@ function validate_line($line) {
 	$safe_key = var_export($normalized_key, true);
 	$safe_text = var_export($normalized_text, true);
 
+	// safe_text or key may not contain any php tag
+	if(stristr($safe_text, '<?') || stristr($safe_text, '?>')) return false;
+	if(stristr($safe_text, '<%') || stristr($safe_text, '%>')) return false;
+	if(stristr($safe_key, '<?') || stristr($safe_key, '?>')) return false;
+	if(stristr($safe_key, '<%') || stristr($safe_key, '%>')) return false;
+
 	$new_line = '$wb[' . $safe_key . '] = ' . $safe_text . ';';
 
 	return $new_line;
@@ -166,7 +172,7 @@ if(isset($_FILES['file']['name']) && is_uploaded_file($_FILES['file']['tmp_name'
 					$file_name = trim($parts[3]);
 					if(!preg_match("/^[a-z]{2}$/i", $selected_language)) die("unallowed characters in selected language name: $selected_language");
 					if(!preg_match("/^[a-z_]+$/i", $module_name)) die('unallowed characters in module name.');
-					if(!preg_match("/^[a-z\._\-]+$/i", $file_name) || stristr($file_name, '..')) die("unallowed characters in language file name: '$file_name'");
+					if(!preg_match("/^[a-z\._\-]+\.lng$/i", $file_name) || stristr($file_name, '..')) die("unallowed characters in language file name: '$file_name'");
 					if($module_name == 'global') {
 						$langfile_path = trim(ISPC_LIB_PATH."/lang/".$selected_language.".lng");
 					} else {
