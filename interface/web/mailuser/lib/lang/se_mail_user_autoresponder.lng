@@ -7,6 +7,7 @@ $wb['autoresponder_start_date_txt'] = 'Starta den';
 $wb['autoresponder_start_date_isfuture'] = 'Startdatum kan inte vara i det förflutna.';
 $wb['autoresponder_end_date_txt'] = 'Sluta den';
 $wb['autoresponder_end_date_isgreater'] = 'Slutdatum måste vara efter startdatum';
+$wb['autoresponder_start_date_is_required'] = 'Start date must be set when Autoresponder is enabled.';
 $wb['autoresponder_active'] = 'Aktivera autosvaret';
 $wb['now_txt'] = 'Nu';
 $wb['autoresponder_subject_txt'] = 'Ämnesrad';
