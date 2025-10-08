@@ -4092,6 +4092,18 @@ class installer_base extends stdClass {
 		if(is_file('/usr/local/ispconfig/interface/lib/classes/db_firebird.inc.php')) unlink('/usr/local/ispconfig/interface/lib/classes/db_firebird.inc.php');
 		if(is_file('/usr/local/ispconfig/interface/lib/classes/form.inc.php')) unlink('/usr/local/ispconfig/interface/lib/classes/form.inc.php');
 
+		// Remove language editor in admin module
+		if(is_file('/usr/local/ispconfig/interface/web/admin/language_add.php')) unlink('/usr/local/ispconfig/interface/web/admin/language_add.php');
+		if(is_file('/usr/local/ispconfig/interface/web/admin/language_edit.php')) unlink('/usr/local/ispconfig/interface/web/admin/language_edit.php');
+		if(is_file('/usr/local/ispconfig/interface/web/admin/language_list.php')) unlink('/usr/local/ispconfig/interface/web/admin/language_list.php');
+		if(is_file('/usr/local/ispconfig/interface/web/admin/language_complete.php')) unlink('/usr/local/ispconfig/interface/web/admin/language_complete.php');
+		if(is_file('/usr/local/ispconfig/interface/web/admin/language_export.php')) unlink('/usr/local/ispconfig/interface/web/admin/language_export.php');
+		if(is_file('/usr/local/ispconfig/interface/web/admin/language_import.php')) unlink('/usr/local/ispconfig/interface/web/admin/language_import.php');
+		
+		// Remove language editor language files and html templates
+		exec('rm -f /usr/local/ispconfig/interface/web/admin/language_*.lng');
+		exec('rm -f /usr/local/ispconfig/interface/web/admin/templates/language_*.htm');
+
 		// Change mode of a few files from amavisd
 		if(is_file($conf['amavis']['config_dir'].'/conf.d/50-user')) chmod($conf['amavis']['config_dir'].'/conf.d/50-user', 0640);
 		if(is_file($conf['amavis']['config_dir'].'/50-user~')) chmod($conf['amavis']['config_dir'].'/50-user~', 0400);
