@@ -7,6 +7,7 @@ $wb['autoresponder_start_date_txt'] = 'Başlangıç';
 $wb['autoresponder_start_date_isfuture'] = 'Başlangıç tarihi geçmiş zamanda olamaz.';
 $wb['autoresponder_end_date_txt'] = 'Bitiş';
 $wb['autoresponder_end_date_isgreater'] = 'End date must be later than start date.';
+$wb['autoresponder_start_date_is_required'] = 'Start date must be set when Autoresponder is enabled.';
 $wb['autoresponder_active'] = 'Etkinleştir';
 $wb['now_txt'] = 'Şimdi';
 $wb['autoresponder_subject_txt'] = 'Otoyanıt';

@@ -7,6 +7,7 @@ $wb['autoresponder_start_date_txt'] = 'Start';
 $wb['autoresponder_start_date_isfuture'] = 'Data startu nie może być z przeszłości';
 $wb['autoresponder_end_date_txt'] = 'Koniec';
 $wb['autoresponder_end_date_isgreater'] = 'End date must be later than start date.';
+$wb['autoresponder_start_date_is_required'] = 'Start date must be set when Autoresponder is enabled.';
 $wb['autoresponder_active'] = 'Włącz autoresponder';
 $wb['now_txt'] = 'Teraz';
 $wb['autoresponder_subject_txt'] = 'Temat';
