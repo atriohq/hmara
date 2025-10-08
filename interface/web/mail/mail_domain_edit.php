@@ -337,9 +337,10 @@ class page_action extends tform_actions {
 			// Clients may not set the client_group_id, so we unset them if user is not a admin
 			if(!$app->auth->has_clients($_SESSION['s']['user']['userid'])) unset($this->dataRecord["client_group_id"]);
 		}
-
+		
 		//* make sure that the email domain is lowercase
 		if(isset($this->dataRecord["domain"])){
+			$_POST['domain'] = strtolower(strip_tags($_POST['domain']));
 			$this->dataRecord["domain"] = $app->functions->idn_encode($this->dataRecord["domain"]);
 			$this->dataRecord["domain"] = strtolower(strip_tags($this->dataRecord["domain"]));
 		}
