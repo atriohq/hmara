@@ -1,34 +1,34 @@
 <?php
 
 /*
-	Form Definition
+        Form Definition
 
-	Tabledefinition
+        Tabledefinition
 
-	Datatypes:
-	- INTEGER (Forces the input to Int)
-	- DOUBLE
-	- CURRENCY (Formats the values to currency notation)
-	- VARCHAR (no format check, maxlength: 255)
-	- TEXT (no format check)
-	- DATE (Dateformat, automatic conversion to timestamps)
+        Datatypes:
+        - INTEGER (Forces the input to Int)
+        - DOUBLE
+        - CURRENCY (Formats the values to currency notation)
+        - VARCHAR (no format check, maxlength: 255)
+        - TEXT (no format check)
+        - DATE (Dateformat, automatic conversion to timestamps)
 
-	Formtype:
-	- TEXT (Textfield)
-	- TEXTAREA (Textarea)
-	- PASSWORD (Password textfield, input is not shown when edited)
-	- SELECT (Select option field)
-	- RADIO
-	- CHECKBOX
-	- CHECKBOXARRAY
-	- FILE
+        Formtype:
+        - TEXT (Textfield)
+        - TEXTAREA (Textarea)
+        - PASSWORD (Password textfield, input is not shown when edited)
+        - SELECT (Select option field)
+        - RADIO
+        - CHECKBOX
+        - CHECKBOXARRAY
+        - FILE
 
-	VALUE:
-	- Wert oder Array
+        VALUE:
+        - Wert oder Array
 
-	Hint:
-	The ID field of the database table is not part of the datafield definition.
-	The ID field must be always auto incement (int or bigint).
+        Hint:
+        The ID field of the database table is not part of the datafield definition.
+        The ID field must be always auto incement (int or bigint).
 
 
 */
@@ -51,65 +51,89 @@ $form["auth_preset"]["perm_group"] = 'riud'; //r = read, i = insert, u = update,
 $form["auth_preset"]["perm_other"] = ''; //r = read, i = insert, u = update, d = delete
 
 $form["tabs"]['relay_recipient'] = array (
-	'title'  => "Relay recipient",
-	'width'  => 100,
-	'template'  => "templates/mail_relay_recipient_edit.htm",
-	'fields'  => array (
-		//#################################
-		// Begin Datatable fields
-		//#################################
-		'server_id' => array (
-			'datatype' => 'INTEGER',
-			'formtype' => 'SELECT',
-			'default' => '',
-			'datasource' => array (  'type' => 'SQL',
-				'querystring' => 'SELECT server_id,server_name FROM server WHERE mail_server = 1 AND mirror_server_id = 0 AND {AUTHSQL} ORDER BY server_name',
-				'keyfield'=> 'server_id',
-				'valuefield'=> 'server_name'
-			),
-			'value'  => ''
-		),
-		'source' => array (
-			'datatype' => 'VARCHAR',
-			'formtype' => 'TEXT',
-			'default' => '',
-			'validators' => array (  0 => array ( 'type' => 'NOTEMPTY',
-					'errmsg'=> 'source_error_notempty'),
-			),
-			'filters'   => array(
-					0 => array( 'event' => 'SAVE',
-					'type' => 'STRIPTAGS'),
-					1 => array( 'event' => 'SAVE',
-					'type' => 'STRIPNL')
-			),
-			'value'  => '',
-			'width'  => '30',
-			'maxlength' => '255'
-		),
-		'access' => array (
-			'datatype' => 'VARCHAR',
-			'formtype' => 'TEXT',
-			'filters'   => array(
-					0 => array( 'event' => 'SAVE',
-					'type' => 'STRIPTAGS'),
-					1 => array( 'event' => 'SAVE',
-					'type' => 'STRIPNL')
-			),
-			'default' => 'OK',
-			'value'  => 'OK',
-			'width'  => '30',
-			'maxlength' => '255'
-		),
-		'active' => array (
-			'datatype' => 'VARCHAR',
-			'formtype' => 'CHECKBOX',
-			'default' => 'y',
-			'value'  => array(0 => 'n', 1 => 'y')
-		),
-		//#################################
-		// END Datatable fields
-		//#################################
-	)
+        'title'  => "Relay recipient",
+        'width'  => 100,
+        'template'  => "templates/mail_relay_recipient_edit.htm",
+        'fields'  => array (
+                //#################################
+                // Begin Datatable fields
+                //#################################
+                'server_id' => array (
+                        'datatype' => 'INTEGER',
+                        'formtype' => 'SELECT',
+                        'default' => '',
+                        'datasource' => array (  'type' => 'SQL',
+                                'querystring' => 'SELECT server_id,server_name FROM server WHERE mail_server = 1 AND mirror_server_id = 0 AND {AUTHSQL} ORDER BY server_name',
+                                'keyfield'=> 'server_id',
+                                'valuefield'=> 'server_name'
+                        ),
+                        'value'  => ''
+                ),
+                'source' => array (
+                        'datatype' => 'VARCHAR',
+                        'formtype' => 'TEXT',
+                        'default' => '',
+                        'validators' => array (  0 => array ( 'type' => 'NOTEMPTY',
+                                        'errmsg'=> 'source_error_notempty'),
+                        ),
+                        'filters'   => array(
+                                        0 => array( 'event' => 'SAVE',
+                                        'type' => 'STRIPTAGS'),
+                                        1 => array( 'event' => 'SAVE',
+                                        'type' => 'STRIPNL')
+                        ),
+                        'value'  => '',
+                        'width'  => '30',
+                        'maxlength' => '255'
+                ),
+                'access' => array (
+                        'datatype' => 'VARCHAR',
+                        'formtype' => 'SELECT',
+                        'default' => 'OK',
+                        'value' => array(
+                                        'OK' => 'OK',
+                                        'reject_unverified_recipient' => 'Reject Unverified Recipient',
+                        ),
+                        'filters'   => array(
+                                        0 => array( 'event' => 'SAVE',
+                                        'type' => 'STRIPTAGS'),
+                                        1 => array( 'event' => 'SAVE',
+                                        'type' => 'STRIPNL')
+                        ),
+                        'width'  => '30',
+                        'maxlength' => '255'
+                ),
+                'validation_server' => array(
+                        'datatype' => 'VARCHAR',
+                        'formtype' => 'TEXT',
+                        'validators' => array(
+                                        0 => array(
+                                            'type' => 'CUSTOM',
+                                            'class' => 'validate_mail_relay_recipient',
+                                            'function' => 'check_validation_server',
+                                            'errmsg' => 'validation_server_invalid'
+                                        ),
+                        ),
+                        'filters'   => array(
+                                        0 => array( 'event' => 'SAVE',
+                                        'type' => 'STRIPTAGS'),
+                                        1 => array( 'event' => 'SAVE',
+                                        'type' => 'STRIPNL')
+                        ),
+                        'default' => '',
+                        'width' => '30',
+                        'maxlength' => '255'
+                ),
+                'active' => array (
+                        'datatype' => 'VARCHAR',
+                        'formtype' => 'CHECKBOX',
+                        'default' => 'y',
+                        'value'  => array(0 => 'n', 1 => 'y')
+                ),
+                //#################################
+                // END Datatable fields
+                //#################################
+        )
 );
 
 

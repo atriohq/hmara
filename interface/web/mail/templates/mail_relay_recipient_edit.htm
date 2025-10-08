@@ -6,19 +6,54 @@
             </div>
             <div class="form-group">
                 <label for="source" class="col-sm-3 control-label">{tmpl_var name='source_txt'}</label>
-                <div class="col-sm-9"><input type="text" name="source" id="source" value="{tmpl_var name='source'}" class="form-control" /></div></div>
+                <div class="col-sm-9"><input type="text" name="source" id="source" value="{tmpl_var name='source'}" class="form-control" /></div>
+            </div>
+            <div class="form-group">
+                <label for="access" class="col-sm-3 control-label">{tmpl_var name='access_txt'}</label>
+                <div class="col-sm-9">
+                    <select name="access" id="access" class="form-control">
+                        {tmpl_var name='access'}
+                    </select>
+                </div>
+            </div>
+            <div class="form-group" id="validation_server_group" style="display:none;">
+                    <label for="validation_server" class="col-sm-3 control-label">{tmpl_var name='validation_server_txt'}</label>
+                    <div class="col-sm-9">
+                            <input type="text" name="validation_server" id="validation_server" value="{tmpl_var name='validation_server'}" class="form-control" placeholder="smtp:server:port">
+                    </div>
+            </div>
             <div class="form-group">
                 <label class="col-sm-3 control-label">{tmpl_var name='active_txt'}</label>
                 <div class="col-sm-9">
                     {tmpl_var name='active'}
                 </div>
             </div>
-        
+
 
         <input type="hidden" name="id" value="{tmpl_var name='id'}">
-        <input type="hidden" name="access" value="OK">
 
         <div class="clear"><div class="right">
             <button class="btn btn-default formbutton-success" type="button" value="{tmpl_var name='btn_save_txt'}" data-submit-form="pageForm" data-form-action="mail/mail_relay_recipient_edit.php">{tmpl_var name='btn_save_txt'}</button>
             <button class="btn btn-default formbutton-default" type="button" value="{tmpl_var name='btn_cancel_txt'}" data-load-content="mail/mail_relay_recipient_list.php">{tmpl_var name='btn_cancel_txt'}</button>
         </div></div>
+        <script type="text/javascript">
+                jQuery(function($) {
+                        var $access = $('#access');
+                        var $validationGroup = $('#validation_server_group');
+
+                        function toggleValidationServer() {
+                                if ($access.val() === "reject_unverified_recipient") {
+                                        $validationGroup.show();
+                                } else {
+                                        $validationGroup.hide();
+                                }
+                        }
+
+                        // Initial state on page load
+                        toggleValidationServer();
+
+                        // On dropdown change
+                        $access.on('change', toggleValidationServer);
+                });
+        </script>
+

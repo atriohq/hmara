@@ -1010,6 +1010,7 @@ CREATE TABLE IF NOT EXISTS `mail_relay_recipient` (
   `server_id` int(11) NOT NULL DEFAULT '0',
   `source` varchar(255) DEFAULT NULL,
   `access` varchar(255) NOT NULL DEFAULT 'OK',
+	`validation_server` varchar(255) NOT NULL DEFAULT 'OK',
   `active` varchar(255) NOT NULL DEFAULT 'y',
   PRIMARY KEY (`relay_recipient_id`)
 ) DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
