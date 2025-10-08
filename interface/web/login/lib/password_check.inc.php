@@ -31,10 +31,16 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /**
  * Check if user password needs to be changed based on age
  * @param app $app
- * @param int $userid
+ * @param array $user
  * @return bool
  */
-function is_password_change_required($app, $userid) {
+function is_password_change_required($app, $user) {
+
+	// Mailusers don't have this field.
+	if (!isset($user['last_password_change'])) {
+		return;
+	}
+
 	// Get system configuration for password change days
 	$app->uses('getconf');
 	$system_config = $app->getconf->get_global_config('misc');
@@ -47,7 +53,7 @@ function is_password_change_required($app, $userid) {
 	$force_days = (int)$system_config['force_password_change_days'];
 	
 	// Get user's last password change date
-	$user_data = $app->db->queryOneRecord('SELECT `last_password_change` FROM `sys_user` WHERE `userid` = ?', $userid);
+	$user_data = $app->db->queryOneRecord('SELECT `last_password_change` FROM `sys_user` WHERE `userid` = ?', $user['userid']);
 	
 	if (!$user_data || !$user_data['last_password_change']) {
 		// If no last_password_change date, assume password change is required

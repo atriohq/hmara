@@ -281,6 +281,7 @@ class cron_plugin {
 				} else {
 
 					$web_root = '';
+					$web_docroot_client = '';
 					if($job['type'] == 'chrooted') {
 						if(substr($job['command'], 0, strlen($this->parent_domain['document_root'])) == $this->parent_domain['document_root']) {
 							//* delete the unneeded path part

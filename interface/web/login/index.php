@@ -157,7 +157,7 @@ function process_login_request(app $app, &$error, $conf, $module)
 				die();
 			} else {
 				// Check if password change is required before final login
-				if (is_password_change_required($app, $user['userid'])) {
+				if (is_password_change_required($app, $user)) {
 					redirect_to_password_change($app);
 				}
 				
