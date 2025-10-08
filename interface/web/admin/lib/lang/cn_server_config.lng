@@ -201,6 +201,7 @@ $wb['firewall_txt'] = '防火墙';
 $wb['mailbox_quota_stats_txt'] = '邮箱配额统计信息';
 $wb['enable_ip_wildcard_txt'] = '启用IP通配符（*）';
 $wb['web_folder_protection_txt'] = '使Web文件夹不可变（扩展属性）';
+$wb['web_folder_permission_txt'] = 'Default permission for the web folder';
 $wb['overtraffic_notify_admin_txt'] = '向管理员发送超流量通知';
 $wb['overtraffic_notify_reseller_txt'] = '向经销商发送超流量通知';
 $wb['overtraffic_notify_client_txt'] = '向客户发送超流量通知';

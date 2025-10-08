@@ -278,6 +278,7 @@ $wb['vhost_rewrite_v6_txt'] = 'Reescribir IPv6 en el espejo';
 $wb['vlogger_config_dir_error_empty'] = 'El directorio de configuración de vlogger está vacío.';
 $wb['vlogger_config_dir_error_regex'] = 'El directorio de configuración de vlogger es inválido.';
 $wb['web_folder_protection_txt'] = 'Hacer inalterables las carpetas web (atributos extendidos)';
+$wb['web_folder_permission_txt'] = 'Default permission for the web folder';
 $wb['web_group_txt'] = 'Grupo para Apache';
 $wb['web_settings_txt'] = 'Servidor Web';
 $wb['web_user_txt'] = 'Usuario para Apache';

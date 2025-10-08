@@ -198,6 +198,7 @@ $wb['firewall_txt'] = 'Firewall';
 $wb['mailbox_quota_stats_txt'] = 'E-Mailkonto Beschränkung Statistiken';
 $wb['enable_ip_wildcard_txt'] = 'IP Adressen Wildcard (*) aktivieren';
 $wb['web_folder_protection_txt'] = 'Webverzeichnis unveränderlich machen (erweiterte Attribute)';
+$wb['web_folder_permission_txt'] = 'Default permission for the web folder';
 $wb['overtraffic_notify_admin_txt'] = 'Überschreiten des Datentransfer Limits an den Administrator senden';
 $wb['overtraffic_notify_reseller_txt'] = 'Send overtraffic notification to reseller';
 $wb['overtraffic_notify_client_txt'] = 'Überschreiten des Datentransfer Limits an den Kunden senden';
