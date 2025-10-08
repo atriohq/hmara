@@ -114,42 +114,6 @@ $module['nav'][] = array(   'title'     => 'Extension Installer',
 // cleanup
 unset($items);
 
-$items[] = array(   'title'  => 'Languages',
-	'target'  => 'content',
-	'link' => 'admin/language_list.php',
-	'html_id'   => 'language_list');
-
-$items[] = array(   'title'  => 'New Language',
-	'target'  => 'content',
-	'link' => 'admin/language_add.php',
-	'html_id'   => 'language_add');
-
-$items[] = array(   'title'  => 'Merge',
-	'target'  => 'content',
-	'link' => 'admin/language_complete.php',
-	'html_id'   => 'language_complete');
-
-if($conf['language_file_import_enabled']) {
-	$items[] = array(   'title'  => 'Export',
-		'target'  => 'content',
-		'link' => 'admin/language_export.php',
-		'html_id'   => 'language_export');
-
-	$items[] = array(   'title'  => 'Import',
-		'target'  => 'content',
-		'link' => 'admin/language_import.php',
-		'html_id'   => 'language_import');
-}
-
-$module['nav'][] = array(   'title'     => 'Language Editor',
-	'open'      => 1,
-	'items'     => $items);
-
-
-// cleanup
-unset($items);
-
-
 $items[] = array(   'title'  => 'Do OS-Update',
 	'target'  => 'content',
 	'link' => 'admin/remote_action_osupdate.php',
