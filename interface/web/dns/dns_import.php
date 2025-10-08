@@ -64,6 +64,20 @@ if (isset($_POST['client_group_id'])) {
 	$sys_groupid = $_SESSION["s"]["user"]["default_group"];
 }
 $domain = (isset($_POST['domain'])&&!empty($_POST['domain']))?$_POST['domain']:NULL;
+
+// Sanitize and validate domain input
+if($domain !== NULL) {
+	// Strip any HTML tags
+	$domain = strip_tags($domain);
+	$domain = rtrim($domain, '.');
+	// Validate domain format using PHP's built-in filter
+	// This ensures only valid DNS domain characters are accepted
+	if(filter_var($domain, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME) === false) {
+		$domain = NULL;
+		$error[] = 'Invalid domain name format. Please enter a valid domain name.';
+	}
+}
+
 $settings = $app->getconf->get_global_config('dns');
 $external_slave_servers = $settings['dns_external_slave_fqdn'];
 
@@ -337,7 +351,7 @@ if(isset($_FILES['file']['name']) && is_uploaded_file($_FILES['file']['tmp_name'
 	$found_soa = FALSE;
 	foreach($lines as $line){
 
-		$parts = explode(' ', $line);
+		$parts = explode(' ', strip_tags($line));
 
 		// leading whitespace means same owner as previous record
 		if ($parts[0] == '') {
@@ -649,6 +663,32 @@ $error[] = print_r( $soa, true );
 	if ($settings['use_domain_module'] == 'y' && ! $app->tools_sites->checkDomainModuleDomain($tmp_domain_id['domain_id']) ) {
 		$valid_zone_file = false;
 		$error[] = $wb['zone_not_allowed'];
+	}
+
+	// Validate SOA origin domain
+	if(isset($soa['name']) && !empty($soa['name'])) {
+		$sanitized_origin = strip_tags($soa['name']);
+		// Validate using ISPConfig's DNS origin regex
+		if(!preg_match('/^[a-zA-Z0-9\.\-\/]{1,255}\.[a-zA-Z0-9\-]{2,63}[\.]{0,1}$/', $sanitized_origin)) {
+			$valid_zone_file = false;
+			$error[] = 'Invalid origin domain in zone file. Origin contains invalid characters.';
+		} else {
+			// Use sanitized version
+			$soa['name'] = $sanitized_origin;
+		}
+	}
+
+	// Validate SOA mbox (email)
+	if(isset($soa['mbox']) && !empty($soa['mbox'])) {
+		$sanitized_mbox = strip_tags($soa['mbox']);
+		// Validate using ISPConfig's DNS mbox regex
+		if(!preg_match('/^[a-zA-Z0-9\.\-\_\+]{0,255}\.$/', $sanitized_mbox)) {
+			$valid_zone_file = false;
+			$error[] = 'Invalid mbox (email) in zone file. Mbox contains invalid characters.';
+		} else {
+			// Use sanitized version
+			$soa['mbox'] = $sanitized_mbox;
+		}
 	}
 
 	// Insert the soa record
