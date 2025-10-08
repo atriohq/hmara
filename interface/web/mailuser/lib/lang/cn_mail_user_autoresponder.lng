@@ -7,6 +7,7 @@ $wb['autoresponder_start_date_txt'] = '开始时间';
 $wb['autoresponder_start_date_isfuture'] = '开始时间不能为过去时间。';
 $wb['autoresponder_end_date_txt'] = '结束时间';
 $wb['autoresponder_end_date_isgreater'] = '必须设置结束时间，并且结束时间必须晚于开始时间。';
+$wb['autoresponder_start_date_is_required'] = 'Start date must be set when Autoresponder is enabled.';
 $wb['autoresponder_active'] = '启用自动回复';
 $wb['now_txt'] = '立即';
 $wb['autoresponder_subject_txt'] = '主题';

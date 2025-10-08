@@ -199,6 +199,7 @@ $wb['firewall_txt'] = 'Güvenlik Duvarı';
 $wb['mailbox_quota_stats_txt'] = 'E-posta Kutusu Kota İstatistikleri';
 $wb['enable_ip_wildcard_txt'] = 'IP Genel Karakteri (*) Kullanılsın';
 $wb['web_folder_protection_txt'] = 'Web klasörleri ayarlanamasın (genişletilmiş öznitelikler)';
+$wb['web_folder_permission_txt'] = 'Default permission for the web folder';
 $wb['overtraffic_notify_admin_txt'] = 'Trafik Aşımı Bildirimi Yöneticiye Gönderilsin';
 $wb['overtraffic_notify_reseller_txt'] = 'Send overtraffic notification to reseller';
 $wb['overtraffic_notify_client_txt'] = 'Trafik Aşımı Bildirimi Müşteriye Gönderilsin';
