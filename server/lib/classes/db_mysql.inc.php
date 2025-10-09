@@ -48,7 +48,7 @@ class db
 	private $dbName = '';  // logical database name on that server
 	private $dbUser = '';  // database authorized user
 	private $dbPass = '';  // user's password
-	private $dbCharset = 'utf8';// Database charset
+	private $dbCharset = 'utf8mb4';// Database charset
 	private $dbClientFlags = 0; // MySQL Client falgs
 	/**#@-*/
 
