@@ -181,6 +181,7 @@ $wb['firewall_txt'] = 'Firewall';
 $wb['mailbox_quota_stats_txt'] = 'Postboks kvota statistik';
 $wb['enable_ip_wildcard_txt'] = 'Enable IP wildcard (*)';
 $wb['web_folder_protection_txt'] = 'Gør web mapper immume (udvidede attributter)';
+$wb['web_folder_permission_txt'] = 'Default permission for the web folder';
 $wb['overtraffic_notify_admin_txt'] = 'Send over-trafik meddelelse til admin';
 $wb['overtraffic_notify_reseller_txt'] = 'Send overtraffic notification to reseller';
 $wb['overtraffic_notify_client_txt'] = 'Send over-trafik meddelelse til kunde';

@@ -70,12 +70,12 @@ class page_action extends tform_actions {
 	function onShowEnd() {
 		global $app, $conf;
 
-		// Workaround for #5448, accessed via link on quota dashlet.
-		$app->tpl->setVar('app_module', 'mail');
+	// Workaround for #5448, accessed via link on quota dashlet.
+	$app->tpl->setVar('app_module', 'mail');
 
 		$email = $this->dataRecord["email"];
 		$email_parts = explode("@", $email);
-		$app->tpl->setVar("email_local_part", $email_parts[0]);
+		$app->tpl->setVar("email_local_part", $email_parts[0], true);
 		$email_parts[1] = $app->functions->idn_decode($email_parts[1]);
 
 		// Getting Domains of the user
@@ -260,7 +260,24 @@ class page_action extends tform_actions {
 
 		//* compose the email field
 		if(isset($_POST["email_local_part"]) && isset($_POST["email_domain"])) {
-			$this->dataRecord["email"] = strtolower($_POST["email_local_part"]."@".$app->functions->idn_encode($_POST["email_domain"]));
+			// Sanitize and validate email local part to prevent injection attacks
+			$email_local_part = trim($_POST["email_local_part"]);
+			
+			// Remove any HTML tags
+			$email_local_part = strip_tags($email_local_part);
+			
+			// Validate email local part format (RFC 5321 compliant)
+			// Allow: letters, numbers, and special chars: . _ - + (but not at start/end)
+			if(!preg_match('/^[a-zA-Z0-9]([a-zA-Z0-9._+-]*[a-zA-Z0-9])?$/', $email_local_part)) {
+				$email_local_part = '';
+			}
+			
+			$this->dataRecord["email"] = strtolower($email_local_part."@".$app->functions->idn_encode($_POST["email_domain"]));
+			
+			// Additional validation: verify the complete email address is valid
+			if(!filter_var($this->dataRecord["email"], FILTER_VALIDATE_EMAIL)) {				$app->tform->errorMessage .= $app->tform->lng("email_error_isemail")."<br>";
+				$this->dataRecord["email"] = '';
+			}
 
 			// Set the server id of the mailbox = server ID of mail domain.
 			$this->dataRecord["server_id"] = $domain["server_id"];
@@ -273,7 +290,7 @@ class page_action extends tform_actions {
 
 			// setting Maildir, Homedir, UID and GID
 			$maildir = str_replace("[domain]", $domain["domain"], $mail_config["maildir_path"]);
-			$maildir = str_replace("[localpart]", strtolower($_POST["email_local_part"]), $maildir);
+			$maildir = str_replace("[localpart]", strtolower($email_local_part), $maildir);
 			$this->dataRecord["maildir"] = $maildir;
 			$this->dataRecord["homedir"] = $mail_config["homedir_path"];
 

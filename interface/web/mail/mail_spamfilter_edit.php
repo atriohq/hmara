@@ -59,7 +59,7 @@ class page_action extends tform_actions {
 		// Getting email from data record
 		$email = $this->dataRecord["email"];
 		$email_parts = explode("@", $email);
-		$app->tpl->setVar("email_local_part", $email_parts[0]);
+		$app->tpl->setVar("email_local_part", $email_parts[0], true);
 
 		// Getting Domains of the user
 		$sql = "SELECT domain FROM mail_domain WHERE type = 'local' AND ".$app->tform->getAuthSQL('r');
@@ -95,9 +95,26 @@ class page_action extends tform_actions {
 
 		// compose the email field
 		if($_POST["email_local_part"] != '') {
-			$this->dataRecord["email"] = $_POST["email_local_part"]."@".$_POST["email_domain"];
+			// Sanitize and validate email local part to prevent injection attacks
+			$email_local_part = trim($_POST["email_local_part"]);
+			
+			// Remove any HTML tags
+			$email_local_part = strip_tags($email_local_part);
+			
+			// Validate email local part format (RFC 5321 compliant)
+			// Allow: letters, numbers, and special chars: . _ - + (but not at start/end)
+			if(!preg_match('/^[a-zA-Z0-9]([a-zA-Z0-9._+-]*[a-zA-Z0-9])?$/', $email_local_part)) {
+				$email_local_part = '';
+			}
+			
+			$this->dataRecord["email"] = strtolower($email_local_part."@".$app->functions->idn_encode($_POST["email_domain"]));
+			
+			// Additional validation: verify the complete email address is valid
+			if(!filter_var($this->dataRecord["email"], FILTER_VALIDATE_EMAIL)) {				$app->tform->errorMessage .= $app->tform->lng("email_error_isemail")."<br>";
+				$this->dataRecord["email"] = '';
+			}
 		} else {
-			$this->dataRecord["email"] = $_POST["email_domain"];
+			$this->dataRecord["email"] = $app->functions->idn_encode($_POST["email_domain"]);
 		}
 		// Set the server id of the mailbox = server ID of mail domain.
 		$this->dataRecord["server_id"] = $domain["server_id"];

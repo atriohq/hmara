@@ -73,7 +73,7 @@ function finish_2fa_success($msg = '') {
 	}
 	
 	// Check if password change is required before final login
-	if (is_password_change_required($app, $_SESSION['s']['user']['userid'])) {
+	if (is_password_change_required($app, $_SESSION['s']['user'])) {
 		redirect_to_password_change($app);
 	}
 	

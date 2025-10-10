@@ -791,6 +791,14 @@ class installer_base extends stdClass {
 					$this->warning('Unable to set rights of user in master database: '.$value['db']."\n Query: ".$query."\n Error: ".$this->dbmaster->errorMessage);
 				}
 
+				$query = "GRANT SELECT, UPDATE(`last_access`) ON ?? TO ?@?";
+				if ($verbose){
+					echo $query ."\n";
+				}
+				if(!$this->dbmaster->query($query, $value['db'] . '.mail_user', $value['user'], $host)) {
+					$this->warning('Unable to set rights of user in master database: '.$value['db']."\n Query: ".$query."\n Error: ".$this->dbmaster->errorMessage);
+				}
+
 				$query = "GRANT SELECT, INSERT, UPDATE ON ?? TO ?@?";
 				if ($verbose){
 					echo $query ."\n";
@@ -3515,7 +3523,7 @@ class installer_base extends stdClass {
 		//* Create the config file for ISPConfig server
 		$configfile = 'config.inc.php';
 		if(is_file($install_dir.'/server/lib/'.$configfile)) {
-			copy($install_dir.'/server/lib/'.$configfile, $install_dir.'/interface/lib/'.$configfile.'~');
+			copy($install_dir.'/server/lib/'.$configfile, $install_dir.'/server/lib/'.$configfile.'~');
 		}
 		$content = rfsel($conf['ispconfig_install_dir'].'/server/conf-custom/install/'.$configfile.'.master', 'tpl/'.$configfile.'.master');
 		$content = str_replace('{mysql_server_ispconfig_user}', $conf['mysql']['ispconfig_user'], $content);
@@ -4091,6 +4099,18 @@ class installer_base extends stdClass {
 		// Remove files
 		if(is_file('/usr/local/ispconfig/interface/lib/classes/db_firebird.inc.php')) unlink('/usr/local/ispconfig/interface/lib/classes/db_firebird.inc.php');
 		if(is_file('/usr/local/ispconfig/interface/lib/classes/form.inc.php')) unlink('/usr/local/ispconfig/interface/lib/classes/form.inc.php');
+
+		// Remove language editor in admin module
+		if(is_file('/usr/local/ispconfig/interface/web/admin/language_add.php')) unlink('/usr/local/ispconfig/interface/web/admin/language_add.php');
+		if(is_file('/usr/local/ispconfig/interface/web/admin/language_edit.php')) unlink('/usr/local/ispconfig/interface/web/admin/language_edit.php');
+		if(is_file('/usr/local/ispconfig/interface/web/admin/language_list.php')) unlink('/usr/local/ispconfig/interface/web/admin/language_list.php');
+		if(is_file('/usr/local/ispconfig/interface/web/admin/language_complete.php')) unlink('/usr/local/ispconfig/interface/web/admin/language_complete.php');
+		if(is_file('/usr/local/ispconfig/interface/web/admin/language_export.php')) unlink('/usr/local/ispconfig/interface/web/admin/language_export.php');
+		if(is_file('/usr/local/ispconfig/interface/web/admin/language_import.php')) unlink('/usr/local/ispconfig/interface/web/admin/language_import.php');
+		
+		// Remove language editor language files and html templates
+		exec('rm -f /usr/local/ispconfig/interface/web/admin/language_*.lng');
+		exec('rm -f /usr/local/ispconfig/interface/web/admin/templates/language_*.htm');
 
 		// Change mode of a few files from amavisd
 		if(is_file($conf['amavis']['config_dir'].'/conf.d/50-user')) chmod($conf['amavis']['config_dir'].'/conf.d/50-user', 0640);

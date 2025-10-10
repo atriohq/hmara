@@ -71,7 +71,7 @@ class page_action extends tform_actions {
 
 		$email = $this->dataRecord["source"];
 		$email_parts = explode("@", $email);
-		$app->tpl->setVar("email_local_part", $email_parts[0]);
+		$app->tpl->setVar("email_local_part", $email_parts[0], true);
 		$email_parts[1] = $app->functions->idn_decode($email_parts[1]);
 
 		// Getting Domains of the user
