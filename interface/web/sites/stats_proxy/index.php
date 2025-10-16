@@ -107,6 +107,7 @@ if ($passthroughdata === false) {
     if ($status_code != 200) {
         header("HTTP/1.1 $status_code");
         echo "Error: Sorry the backend site returned HTTP status code $status_code";
+        // This could mean that the site has not been updated yet, to store the passwordt in web/stats/.htpasswd_stats
         die();
     }
 
