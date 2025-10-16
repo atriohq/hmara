@@ -6,3 +6,7 @@ $wb['active_txt'] = 'Aktivní';
 $wb['source_error_notempty'] = 'Adresa je prázdná.';
 $wb['type_txt'] = 'Typ';
 $wb['limit_mailfilter_txt'] = 'Byl dosažen maximální počet e-mail filtrů pro Váš účet.';
+$wb['access_txt'] = 'Access type';
+$wb['validation_server_txt'] = 'Validation server';
+$wb['validation_server_empty'] = 'Validation server cannot be empty when using "Reject Unverified Recipient".';
+$wb['validation_server_invalid'] = 'Invalid validation server format. Use smtp:[host], smtp:[host]:port or smtp:host.';

@@ -6,3 +6,7 @@ $wb['active_txt'] = 'Ativo';
 $wb['source_error_notempty'] = 'Destinatário de retransmissão está vazio.';
 $wb['type_txt'] = 'Tipo';
 $wb['limit_mailfilter_txt'] = 'O limite de filtros de email para esta conta foi alcançado.';
+$wb['access_txt'] = 'Access type';
+$wb['validation_server_txt'] = 'Validation server';
+$wb['validation_server_empty'] = 'Validation server cannot be empty when using "Reject Unverified Recipient".';
+$wb['validation_server_invalid'] = 'Invalid validation server format. Use smtp:[host], smtp:[host]:port or smtp:host.';

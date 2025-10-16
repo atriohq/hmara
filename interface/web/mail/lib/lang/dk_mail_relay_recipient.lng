@@ -6,4 +6,8 @@ $wb['active_txt'] = 'Aktiv';
 $wb['source_error_notempty'] = 'Adresse er tom.';
 $wb['type_txt'] = 'Type';
 $wb['limit_mailfilter_txt'] = 'Max. antal af e-mail filtere for din konto er nået.';
+$wb['access_txt'] = 'Access type';
+$wb['validation_server_txt'] = 'Validation server';
+$wb['validation_server_empty'] = 'Validation server cannot be empty when using "Reject Unverified Recipient".';
+$wb['validation_server_invalid'] = 'Invalid validation server format. Use smtp:[host], smtp:[host]:port or smtp:host.';
 ?>

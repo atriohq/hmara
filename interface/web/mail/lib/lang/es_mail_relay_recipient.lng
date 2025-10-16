@@ -6,4 +6,8 @@ $wb['active_txt'] = 'Habilitado';
 $wb['source_error_notempty'] = 'La dirección está vacía.';
 $wb['type_txt'] = 'Tipo';
 $wb['limit_mailfilter_txt'] = 'Ha alcanzado el número máx. de filtros para correo permitidos para su cuenta.';
+$wb['access_txt'] = 'Access type';
+$wb['validation_server_txt'] = 'Validation server';
+$wb['validation_server_empty'] = 'Validation server cannot be empty when using "Reject Unverified Recipient".';
+$wb['validation_server_invalid'] = 'Invalid validation server format. Use smtp:[host], smtp:[host]:port or smtp:host.';
 ?>

@@ -6,4 +6,8 @@ $wb['active_txt'] = 'Attivo';
 $wb['source_error_notempty'] = 'Indirizzo vuoto.';
 $wb['type_txt'] = 'tipo';
 $wb['limit_mailfilter_txt'] = 'Raggiunto numero massimo filtri emai per il tuo profilo.';
+$wb['access_txt'] = 'Access type';
+$wb['validation_server_txt'] = 'Validation server';
+$wb['validation_server_empty'] = 'Validation server cannot be empty when using "Reject Unverified Recipient".';
+$wb['validation_server_invalid'] = 'Invalid validation server format. Use smtp:[host], smtp:[host]:port or smtp:host.';
 ?>

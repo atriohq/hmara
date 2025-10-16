@@ -6,4 +6,8 @@ $wb['active_txt'] = 'Aktív';
 $wb['source_error_notempty'] = 'A Cím üres.';
 $wb['type_txt'] = 'típus';
 $wb['limit_mailfilter_txt'] = 'The max. number of email filters for your account is reached.';
+$wb['access_txt'] = 'Access type';
+$wb['validation_server_txt'] = 'Validation server';
+$wb['validation_server_empty'] = 'Validation server cannot be empty when using "Reject Unverified Recipient".';
+$wb['validation_server_invalid'] = 'Invalid validation server format. Use smtp:[host], smtp:[host]:port or smtp:host.';
 ?>

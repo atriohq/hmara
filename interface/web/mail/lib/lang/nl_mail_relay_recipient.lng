@@ -6,4 +6,8 @@ $wb['active_txt'] = 'Actief';
 $wb['source_error_notempty'] = 'Adres is niet ingvuld.';
 $wb['type_txt'] = 'Type';
 $wb['limit_mailfilter_txt'] = 'Het max. aantal e-mail filters voor uw account is bereikt.';
+$wb['access_txt'] = 'Access type';
+$wb['validation_server_txt'] = 'Validation server';
+$wb['validation_server_empty'] = 'Validation server cannot be empty when using "Reject Unverified Recipient".';
+$wb['validation_server_invalid'] = 'Invalid validation server format. Use smtp:[host], smtp:[host]:port or smtp:host.';
 ?>

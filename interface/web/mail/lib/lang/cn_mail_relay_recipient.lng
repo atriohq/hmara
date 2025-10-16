@@ -6,4 +6,8 @@ $wb['active_txt'] = '激活';
 $wb['source_error_notempty'] = '地址不能为空。';
 $wb['type_txt'] = '类型';
 $wb['limit_mailfilter_txt'] = '已达到您的账户的电子邮件过滤器的最大数量。';
+$wb['access_txt'] = 'Access type';
+$wb['validation_server_txt'] = 'Validation server';
+$wb['validation_server_empty'] = 'Validation server cannot be empty when using "Reject Unverified Recipient".';
+$wb['validation_server_invalid'] = 'Invalid validation server format. Use smtp:[host], smtp:[host]:port or smtp:host.';
 ?>
