@@ -48,8 +48,8 @@ require_once '../../../lib/app.inc.php';
 $app->uses('tpl,tform,tform_actions');
 // Check if we have an active user session and redirect to login if that's not the case.
 if ($_SESSION['s']['user']['active'] != 1) {
-    header('Location: /login/');
-    die();
+	header('Location: /login/');
+	die();
 }
 
 // Base URL
@@ -69,18 +69,18 @@ $relative_path = '/' . implode('/', array_slice($relative_path_parts, 1));
 $domain_pattern = '/^(\*\.)?[\w\.\-]{1,255}\.[a-zA-Z0-9\-]{2,63}$/';
 
 if (empty($domain_name) || !preg_match($domain_pattern, $domain_name)) {
-    header('HTTP/1.1 400 Bad Request');
-    echo "Invalid domain name.";
-    die();
+	header('HTTP/1.1 400 Bad Request');
+	echo "Invalid domain name.";
+	die();
 }
 
 // Check if the current user is allowed to access the domain
 $domain_access = $app->db->queryOneRecord("SELECT `domain`, `ssl` FROM web_domain WHERE domain = ? AND " . $app->tform->getAuthSQL('r'), $domain_name);
 
 if (!$domain_access) {
-    header('HTTP/1.1 403 Forbidden');
-    echo "You are not authorized to access this domain.";
-    die();
+	header('HTTP/1.1 403 Forbidden');
+	echo "You are not authorized to access this domain.";
+	die();
 }
 
 // Construct the full URL for the backend
@@ -99,23 +99,23 @@ curl_setopt($passthrough, CURLOPT_USERPWD, $conf['stats_proxy_username'] . ':' .
 $passthroughdata = curl_exec($passthrough);
 
 if ($passthroughdata === false) {
-    echo 'Curl error: ' . curl_error($passthrough);
+	echo 'Curl error: ' . curl_error($passthrough);
 } else {
-    // Get the content type from the backend response
-    $content_type = curl_getinfo($passthrough, CURLINFO_CONTENT_TYPE);
-    $status_code = curl_getinfo($passthrough, CURLINFO_HTTP_CODE);
-    if ($status_code != 200) {
-        header("HTTP/1.1 $status_code");
-        echo "Error: Sorry the backend site returned HTTP status code $status_code";
-        // This could mean that the site has not been updated yet, to store the passwordt in web/stats/.htpasswd_stats
-        die();
-    }
+	// Get the content type from the backend response
+	$content_type = curl_getinfo($passthrough, CURLINFO_CONTENT_TYPE);
+	$status_code = curl_getinfo($passthrough, CURLINFO_HTTP_CODE);
+	if ($status_code != 200) {
+		header("HTTP/1.1 $status_code");
+		echo "Error: Sorry the backend site returned HTTP status code $status_code";
+		// This could mean that the site has not been updated yet, to store the passwordt in web/stats/.htpasswd_stats
+		die();
+	}
 
-    if ($content_type) {
-        header("Content-Type: " . $content_type);
-    } else {
-        header("Content-Type: text/html; charset=utf-8"); // Default fallback
-    }
+	if ($content_type) {
+		header("Content-Type: " . $content_type);
+	} else {
+		header("Content-Type: text/html; charset=utf-8"); // Default fallback
+	}
 }
 
 curl_close($passthrough);
