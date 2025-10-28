@@ -1151,6 +1151,9 @@ class installer_base extends stdClass {
 			$this->process_postfix_config( basename($filename, '.master') );
 		}
 
+		// Cleanup deprecated option, replaced by smtpd_tls_security_level.
+		exec("postconf -X smtpd_use_tls");
+
 		//* mysql-verify_recipients.cf
 		$this->process_postfix_config('mysql-verify_recipients.cf');
 
