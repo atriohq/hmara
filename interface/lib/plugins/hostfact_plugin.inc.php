@@ -47,6 +47,8 @@
   *    $conf['hostfact_url'] = 'https://your_hostfact_url/';
   * 3. Ensure that the HostFact API is accessible from your ISPConfig server.
   * 4. Re-login as admin on the ISPConfig web interface to load the plugin.
+  *
+  * Api docs: https://www.hostfact.nl/developer/api/
   */
 class hostfact_plugin
 {
