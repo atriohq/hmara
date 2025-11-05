@@ -138,7 +138,7 @@ var ISPConfig = {
 		$('[data-toggle="tooltip"]').tooltip({
 		});
 
-		$('input[autofocus]').focus();
+		$('.form-control[autofocus]').focus();
 
 		// grab all password fields and set the readonly prop to prevent password managers to fill in new password
 		$('input[type="password"]').each(function() {
