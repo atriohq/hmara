@@ -130,10 +130,6 @@ class page_action extends tform_actions {
 			$rec2 = $app->db->queryOneRecord($sql, $rec['zone']);
 			$domain_name = rtrim($rec2['origin'], '.');
 		}
-		else {
-			// Default to active.
-			$app->tpl->setVar("active", '<input name="active" id="active" value="1" type="checkbox" checked="">');
-		}
 
 		//set html-values
 		$app->tpl->setVar('domain', $domain_name, true);
