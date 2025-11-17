@@ -76,3 +76,14 @@ END$$
 DELIMITER ;
 CALL convert_utf8_columns();
 DROP PROCEDURE convert_utf8_columns;
+
+-- Login links
+CREATE TABLE IF NOT EXISTS `autologin_tokens` (
+                `token` varchar(128) NOT NULL PRIMARY KEY,
+                `sys_userid` int NOT NULL,
+                `expires` datetime NULL,
+                `created_by` varchar(20) NULL,
+                `ip` varchar(45) NULL,
+                `used` tinyint(1) NOT NULL DEFAULT 0,
+                `created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
