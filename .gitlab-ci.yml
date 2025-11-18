@@ -12,7 +12,7 @@ stages:
 # run syntax check across multiple PHP versions using a matrix
 syntax:lint:
   stage: syntax
-  image: edbizarro/gitlab-ci-pipeline-php:${PHP_VERSION}
+  image: php:${PHP_VERSION}
   allow_failure: false
   only:
     - schedules
@@ -29,7 +29,7 @@ syntax:lint:
 
 syntax_diff:lint:
   stage: syntax
-  image: edbizarro/gitlab-ci-pipeline-php:${PHP_VERSION}
+  image: php:${PHP_VERSION}
   allow_failure: false
   only:
     - web
