@@ -213,7 +213,7 @@ class db
 					mysqli_free_result($res);
 					$ok = true;
 				}
-			} catch (mysqli_sql_exception) {
+			} catch (mysqli_sql_exception $e) {
 				$ok = false;
 			}
 

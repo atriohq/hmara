@@ -127,7 +127,7 @@ class db
 		if(mysqli_connect_errno()) {
 			return false;
 		}
-		return (boolean)(is_object($this->_iConnId) && mysqli_query($this->_iConnId, 'SELECT 1')));
+		return (boolean)(is_object($this->_iConnId) && mysqli_query($this->_iConnId, 'SELECT 1'));
 	}
 
 	/* This allows our private variables to be "read" out side of the class */
@@ -276,7 +276,7 @@ class db
 					mysqli_free_result($res);
 					$ok = true;
 				}
-			} catch (mysqli_sql_exception) {
+			} catch (mysqli_sql_exception $e) {
 				$ok = false;
 			}
 
