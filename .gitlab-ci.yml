@@ -9,18 +9,21 @@ stages:
 ### Stage syntax
 #
 
+# run syntax check across multiple PHP versions using a matrix
 syntax:lint:
   stage: syntax
-  image: edbizarro/gitlab-ci-pipeline-php:7.2
+  image: edbizarro/gitlab-ci-pipeline-php:${PHP_VERSION}
   allow_failure: false
   only:
     - schedules
     - web
     - merge_requests
     - /^\d+\.\d+\.\d+([p|b]\d+)?$/
-
+  parallel:
+    matrix:
+      - PHP_VERSION: ["7.2", "7.4", "8.0", "8.1", "8.2", "8.3", "8.4"]
   script:
-    - echo "Syntax checking PHP files"
+    - echo "Syntax checking PHP files (PHP ${PHP_VERSION})"
     - bash ./.git-scripts/syntax.sh
 
 
