@@ -1,9 +1,5 @@
 #!/bin/bash
 
-# bash strict mode
-set -euo pipefail
-trap 's=$?; echo >&2 "$0: Error on line "$LINENO": $BASH_COMMAND"; exit $s' ERR
-
 IFS=$'\n'
 EX=0
 ERRS="" ;
