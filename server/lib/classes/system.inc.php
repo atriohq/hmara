@@ -2083,7 +2083,7 @@ class system{
 
 	}
 
-	function _getinitcommand($servicename, $action, $init_script_directory = '', $check_service) {
+	function _getinitcommand($servicename, $action, $init_script_directory, $check_service) {
 		global $conf, $app;
 
 		// upstart
