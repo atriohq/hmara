@@ -56,7 +56,7 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-error_reporting(E_ALL|E_STRICT);
+error_reporting(E_ALL);
 
 define('INSTALLER_RUN', true);
 

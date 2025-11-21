@@ -31,7 +31,7 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	ISPConfig 3 Set Rights. Tries to correct the rights of the clients if they are wrong
 */
 
-error_reporting(E_ALL|E_STRICT);
+error_reporting(E_ALL);
 
 //** The banner on the command line
 echo "\n\n".str_repeat('-', 80)."\n";
