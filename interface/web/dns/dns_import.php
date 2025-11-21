@@ -245,12 +245,12 @@ function origin_name( $owner, $origin ) {
 		}
 	}
 	if ($origin == ".") {
-		return "${owner}.";
+		return $owner . '.';
 	}
 	if (substr($origin, -1) != ".") {
 		// should be an erorr,
 		// only "." terminated $origin can be handled determinately
-		return "${owner}.${origin}";
+		return $owner . '.' . $origin;
 	}
 	return $owner;
 

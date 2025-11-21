@@ -99,7 +99,7 @@ class page_action extends tform_actions {
 			$tmp = explode('@', $this->dataRecord["source"]);
 			$domain = trim( array_pop($tmp) );
 			$AUTHSQL = $app->tform->getAuthSQL('r');
-			$rec = $app->db->queryOneRecord("SELECT domain_id from mail_domain WHERE ${AUTHSQL} AND domain = ?", $domain);
+			$rec = $app->db->queryOneRecord("SELECT domain_id from mail_domain WHERE $AUTHSQL AND domain = ?", $domain);
 			if(! (is_array($rec) && isset($rec['domain_id']) && is_numeric($rec['domain_id']))) {
 				$app->tform->errorMessage .= $app->lng('Invalid address: you have no permission for this domain.');
 			}
@@ -110,7 +110,7 @@ class page_action extends tform_actions {
 			$client = $app->db->queryOneRecord("SELECT limit_mail_wblist FROM sys_group, client WHERE sys_group.client_id = client.client_id and sys_group.groupid = ?", $client_group_id);
 			if($this->id == 0 && $client["limit_mail_wblist"] >= 0) {
 				$TYPES_LIST = "('" . join("', '", $this->client_allowed_types) . "')";
-				$tmp = $app->db->queryOneRecord("SELECT count(access_id) as number FROM mail_access WHERE ${AUTHSQL} AND type in ${TYPES_LIST}");
+				$tmp = $app->db->queryOneRecord("SELECT count(access_id) as number FROM mail_access WHERE $AUTHSQL AND type in $TYPES_LIST");
 				if($tmp["number"] >= $client["limit_mail_wblist"]) {
 					$app->tform->errorMessage .= $app->tform->wordbook["limit_mail_wblist_txt"]."<br>";
 				}
