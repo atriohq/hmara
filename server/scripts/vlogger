@@ -34,7 +34,6 @@
 # 1.4p3 implemented stronger anonymization
 # 1.4p4 implemented re-opening on externally rotated error.log
 # 1.4p5 backported old ISPConfig changes (improved DBI error handling, naming)
-# 1.4p6 implement umask 077 when using -u option, 027 when using -g
 #
 # 
 # TODO:
@@ -210,7 +209,6 @@ if ( $> == "0" ) {
         if ( $) != $guid and $) != ( $guid - 2**32 ) ) {
             die "fatal: setgid to gid $guid failed\n";
         }
-        umask 027;
     }
 
     if ( $OPTS{'u'} ) {
@@ -226,7 +224,6 @@ if ( $> == "0" ) {
         if ( $> != $uuid and $> != ( $uuid - 2**32 ) ) {
             die "fatal: setuid to uid $uuid failed\n";
         }
-        umask 077;
     }
 }
 
