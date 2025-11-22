@@ -488,6 +488,20 @@ else {
             open $vhost, ">>".$filename
               or die ( "can't open $filename" );
 
+            # Attempt to set the file's group to match /var/www/<vhost>/web/ if it exists.
+            # The earlier umask call should ensure that the file is group-readable, and not for others.
+            my $webdir = "/var/www/$vhost/web/";
+            if ( -d $webdir ) {
+                my @st = stat($webdir);
+                my $gid = $st[5];
+                if ( defined $gid ) {
+                    my $uid = 0;
+                    unless ( chown $uid, $gid, $filename ) {
+                        warn "[vlogger] failed to chown $filename to gid $gid: $!\n";
+                    }
+                }
+            }
+
             # autoflush the handle unless -a
             if ( !$OPTS{'a'} ) {
                 $vhost->autoflush(1);

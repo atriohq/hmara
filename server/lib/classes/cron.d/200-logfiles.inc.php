@@ -69,7 +69,7 @@ class cronjob_logfiles extends cronjob {
 		// Manage and compress web logfiles and create traffic statistics
 		//######################################################################################################
 
-		$sql = "SELECT domain_id, domain, type, document_root, web_folder, parent_domain_id, log_retention FROM web_domain WHERE (type = 'vhost' or type = 'vhostsubdomain' or type = 'vhostalias') AND server_id = ?";
+		$sql = "SELECT domain_id, domain, type, document_root, web_folder, system_group, parent_domain_id, log_retention FROM web_domain WHERE (type = 'vhost' or type = 'vhostsubdomain' or type = 'vhostalias') AND server_id = ?";
 		$records = $app->db->queryAllRecords($sql, $conf['server_id']);
 		foreach($records as $rec) {
 
@@ -137,6 +137,8 @@ class cronjob_logfiles extends cronjob {
 				if(is_file($cron_logfile)) {
 					$app->system->exec_safe("gzip -c ? > ?", $cron_logfile, $cron_logfile . '.1.gz');
 					$app->system->exec_safe("cat /dev/null > ?", $cron_logfile);
+					$app->system->chown($cron_logfile, $rec['system_group']);
+
 				}
 				// remove older logs
 				$num = $log_retention;
@@ -159,6 +161,7 @@ class cronjob_logfiles extends cronjob {
 				$app->system->exec_safe("gzip ?", $error_logfile);
 				rename($error_logfile . '.gz', $error_logfile . '.1.gz');
 				$app->system->exec_safe("cat /dev/null > ?", $error_logfile);
+				$app->system->chown($cron_logfile, $rec['system_group']);
 			}
 
 			// delete logfiles after x days (default 10)
