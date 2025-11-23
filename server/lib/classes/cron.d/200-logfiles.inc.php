@@ -122,6 +122,7 @@ class cronjob_logfiles extends cronjob {
 				unlink($logfile);
 			}
 
+			// Rotate logfiles in the user's 'private' folder.
 			$cron_logfiles = array('cron.log', 'cron_error.log', 'cron_wget.log');
 			foreach($cron_logfiles as $cron_logfile) {
 				$cron_logfile = $rec['document_root'].'/private/' . $cron_logfile;
@@ -137,7 +138,8 @@ class cronjob_logfiles extends cronjob {
 				if(is_file($cron_logfile)) {
 					$app->system->exec_safe("gzip -c ? > ?", $cron_logfile, $cron_logfile . '.1.gz');
 					$app->system->exec_safe("cat /dev/null > ?", $cron_logfile);
-					$app->system->chown($cron_logfile, $rec['system_group']);
+					$app->system->chgrp($cron_logfile, $rec['system_group']);
+					$app->system->chmod($cron_logfile, 0640);
 
 				}
 				// remove older logs
@@ -161,7 +163,8 @@ class cronjob_logfiles extends cronjob {
 				$app->system->exec_safe("gzip ?", $error_logfile);
 				rename($error_logfile . '.gz', $error_logfile . '.1.gz');
 				$app->system->exec_safe("cat /dev/null > ?", $error_logfile);
-				$app->system->chown($cron_logfile, $rec['system_group']);
+				$app->system->chgrp($error_logfile, $rec['system_group']);
+				$app->system->chmod($error_logfile, 0640);
 			}
 
 			// delete logfiles after x days (default 10)
