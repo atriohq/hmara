@@ -227,6 +227,8 @@ if ( $> == "0" ) {
     }
 }
 
+umask 027;
+
 # set up dbi stuffs
 
 my $DBI_DSN;
