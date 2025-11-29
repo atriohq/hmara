@@ -29,11 +29,10 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 //* Installer patch stub class
 class installer_patch_update {
-	public function onBeforeSQL() {
-	}
 
-	public function onAfterSQL() {
-	}
+	//public function onBeforeSQL() { }
+
+	//public function onAfterSQL() { }
 
 }
 
@@ -205,7 +204,7 @@ function updateDbAndIni() {
 				//* Exec onBeforeSQL function
 				if(isset($php_patch) && is_object($php_patch) && method_exists($php_patch, 'onBeforeSQL')) {
 					$php_patch->onBeforeSQL();
-					swriteln($inst->lng('Executing PHP patch file').': '.$php_patch_filename);
+					swriteln($inst->lng('Executed PHP patch file onBeforeSQL()').': '.$php_patch_filename);
 				}
 
 				//* Load patch file into database
@@ -227,6 +226,7 @@ function updateDbAndIni() {
 				//* Exec onAfterSQL function
 				if(isset($php_patch) && is_object($php_patch) && method_exists($php_patch, 'onAfterSQL')) {
 					$php_patch->onAfterSQL();
+					swriteln($inst->lng('Executed PHP patch file onAfterSQL()').': '.$php_patch_filename);
 				}
 
 				if($dev_patch == false) $current_db_version = $next_db_version;
