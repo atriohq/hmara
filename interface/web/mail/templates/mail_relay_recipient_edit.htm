@@ -40,12 +40,17 @@
                 jQuery(function($) {
                         var $access = $('#access');
                         var $validationGroup = $('#validation_server_group');
+                        var $validationInput = $('#validation_server');
 
                         function toggleValidationServer() {
                                 if ($access.val() === "reject_unverified_recipient") {
                                         $validationGroup.show();
                                 } else {
+                                        // Hide and clear the value when not required
                                         $validationGroup.hide();
+                                        if ($validationInput.length) {
+                                                $validationInput.val('');
+                                        }                        
                                 }
                         }
 
@@ -56,4 +61,5 @@
                         $access.on('change', toggleValidationServer);
                 });
         </script>
+
 
