@@ -68,3 +68,4 @@ address_verify_map = btree:$data_directory/verify_cache
 address_verify_cache_cleanup_interval = 3d
 address_verify_negative_expire_time = 30m
 address_verify_sender = recipient-vrfy@$myhostname
+unverified_recipient_reject_code = 550
