@@ -1,6 +1,6 @@
 <?php
 $wb['custom_mailfilter_txt'] = 'Modelo de filtro de email personalizado';
-$wb['email_txt'] = 'eMail';
+$wb['email_txt'] = 'Email';
 $wb['cryptpwd_txt'] = 'Senha';
 $wb['password_strength_txt'] = 'Dificuldade da senha';
 $wb['active_txt'] = 'Ativo';
