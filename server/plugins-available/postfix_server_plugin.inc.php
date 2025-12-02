@@ -350,8 +350,15 @@ class postfix_server_plugin {
 				if ($new_options[$i] == 'reject_unlisted_recipient') {
 					array_splice($new_options, $i+1, 0, array("check_recipient_access proxy:mysql:{$quoted_postfix_config_dir}/mysql-verify_recipients.cf"));
 
+					// Set address_verify_virtual_transport as fallback (for recipients without specific validation_server)
+					// This ensures verification goes through amavis (port 10025) when no per-recipient server is configured
+					// This matches the original fix from MR #1511: address verification must follow the same path as real mail
 					$app->system->exec_safe("postconf -e ?", 'address_verify_virtual_transport = smtp:[127.0.0.1]:10025');
-					$app->system->exec_safe("postconf -e ?", 'address_verify_transport_maps = static:smtp:[127.0.0.1]:10025');
+					
+					// Use MySQL lookup for per-recipient verification servers
+					// Postfix will automatically fall back to address_verify_virtual_transport if no validation_server is found
+					// This allows per-recipient verification servers while preserving amavis fallback behavior
+					$app->system->exec_safe("postconf -e ?", 'address_verify_transport_maps = mysql:'.$quoted_postfix_config_dir.'/mysql-virtual_relay_recipient_validationserver.cf');
 
 					break;
 				}
@@ -369,8 +376,13 @@ class postfix_server_plugin {
 		if($mail_config['content_filter'] == 'rspamd'){
 			exec("postconf -X 'receive_override_options'");
 			exec("postconf -X 'content_filter'");
+			
+			// Unset address_verify_virtual_transport so Postfix uses default $virtual_transport as fallback
 			exec("postconf -X address_verify_virtual_transport");
-			exec("postconf -X address_verify_transport_maps");
+			
+			// Use MySQL lookup for per-recipient verification servers
+			// Postfix will automatically fall back to $virtual_transport if no validation_server is found
+			$app->system->exec_safe("postconf -e ?", 'address_verify_transport_maps = mysql:'.$quoted_postfix_config_dir.'/mysql-virtual_relay_recipient_validationserver.cf');
 
 			exec("postconf -e 'smtpd_milters = inet:localhost:11332'");
 			exec("postconf -e 'non_smtpd_milters = inet:localhost:11332'");
