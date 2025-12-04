@@ -14,6 +14,8 @@ stages:
 syntax:lint:
   stage: syntax
   image: php:${PHP_VERSION}
+  before_script:
+    - apt-get update && apt-get --yes install git
   allow_failure: false
   only:
     - schedules
@@ -49,7 +51,7 @@ syntax_diff:lint:
     - /^\d+\.\d+\.\d+([p|b]\d+)?$/
 
   script:
-    - echo "Syntax checking PHP files (PHP ${PHP_VERSION})"
+    - echo "Syntax checking PHP files (PHP 8.4)"
     - bash ./.git-scripts/syntax.sh commit
 
 #syntax:lint:
