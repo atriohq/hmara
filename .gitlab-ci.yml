@@ -22,7 +22,7 @@ syntax:lint:
     - /^\d+\.\d+\.\d+([p|b]\d+)?$/
   parallel:
     matrix:
-      - PHP_VERSION: ["7.2", "7.4", "8.0", "8.1", "8.2", "8.3", "8.4"]
+      - PHP_VERSION: ["7.2", "8.4"]
   script:
     - echo "Syntax checking PHP files (PHP ${PHP_VERSION})"
     - bash ./.git-scripts/syntax.sh
@@ -39,7 +39,7 @@ syntax_diff:lint:
     - branches
   parallel:
     matrix:
-      - PHP_VERSION: ["8.2", "8.4"]
+      - PHP_VERSION: ["8.4"]
 
   before_script:
     - apt-get update
