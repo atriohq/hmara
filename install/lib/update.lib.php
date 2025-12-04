@@ -30,9 +30,13 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //* Installer patch stub class
 class installer_patch_update {
 
-	//public function onBeforeSQL() { }
+	public function onBeforeSQL() {
 
-	//public function onAfterSQL() { }
+	}
+
+	public function onAfterSQL() {
+		
+	}
 
 }
 
