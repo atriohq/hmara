@@ -31,15 +31,12 @@ syntax:lint:
 # Scan just the changed files in the latest commit
 syntax_diff:lint:
   stage: syntax
-  image: php:${PHP_VERSION}
+  image: php:8.4
   allow_failure: false
   only:
     - web
     - pushes
     - branches
-  parallel:
-    matrix:
-      - PHP_VERSION: ["8.4"]
 
   before_script:
     - apt-get update
