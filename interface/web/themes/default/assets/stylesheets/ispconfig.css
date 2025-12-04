@@ -103,7 +103,7 @@ max-width: 1260px; }
 
 	#clear-search {
 		position: absolute;
-		right: 45px; /* adjust as needed for your layout */
+		right: 45px;
 		top: 50%;
 		transform: translateY(-50%);
 		z-index: 2;
