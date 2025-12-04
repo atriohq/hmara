@@ -34,6 +34,7 @@ class user_cli extends cli {
         $cmd_opt = [];
         $cmd_opt['user'] = 'showHelp';
         $cmd_opt['user:set-password'] = 'setPassword';
+        $cmd_opt['user:login'] = 'login';
         $this->addCmdOpt($cmd_opt);
     }
 
@@ -111,6 +112,90 @@ class user_cli extends cli {
       }
     }
 
+    /**
+     * Generate a one-time autologin token for a user.
+     *
+     * Usage:
+     *   ispc user login <username> [ttl_minutes]
+     *
+     * ttl_minutes = 0 -> no expiry (not recommended). Default = 60.
+     */
+    public function login($arg) {
+        global $app, $conf;
+
+        $username = $arg[0] ?? '';
+        $ttl = isset($arg[1]) ? intval($arg[1]) : 60;
+
+        if (empty($username)) {
+            $this->swriteln();
+            $this->swriteln('Error: Username may not be empty.');
+            $this->swriteln();
+            $this->showHelp($arg);
+            die();
+        }
+
+        // Validate username chars (same pattern as setPassword)
+        if(!preg_match('/^[\w\.\-\_]{1,64}$/', $username)) {
+          $this->swriteln();
+          $this->swriteln('Error: Username contains invalid characters.');
+          $this->swriteln();
+          $this->showHelp($arg);
+          die();
+        }
+
+        // fetch user
+        $user = $app->db->queryOneRecord("SELECT * FROM `sys_user` WHERE `username` = ?", $username);
+        if (empty($user)) {
+            $this->swriteln();
+            $this->swriteln('Error: Username does not exist.');
+            $this->swriteln();
+            $this->showHelp($arg);
+            die();
+        }
+
+        if ($user['active'] != 1) {
+            $this->swriteln();
+            $this->swriteln('Error: User is not active.');
+            $this->swriteln();
+            die();
+        }
+
+        // generate token
+        try {
+            $token = bin2hex(random_bytes(32));
+        } catch (\Exception $e) {
+            // fallback
+            $token = sha1(uniqid((string)mt_rand(), true));
+        }
+
+        $expires = null;
+        if ($ttl > 0) {
+            $expires = date('Y-m-d H:i:s', time() + $ttl * 60);
+        }
+
+        $created_by = 'CLI';
+
+        // insert token
+        $app->db->query(
+            "INSERT INTO autologin_tokens (token, sys_userid, expires, created_by, ip, used) VALUES (?, ?, ?, ?, ?, 0)",
+            $token,
+            intval($user['userid']),
+            $expires,
+            $created_by,
+            null
+        );
+
+        $this->swriteln();
+        $this->swriteln('Autologin token created for user: '.$username);
+        $this->swriteln('Token: '.$token);
+        $this->swriteln('Expires: '. ($expires ?? 'never'));
+        $this->swriteln();
+        $server = $app->db->queryOneRecord("SELECT server_name FROM server WHERE server_id = ?", $conf['server_id']);
+        $ispconfig_panel_url = "https://" . $server['server_name'];
+        $this->swriteln($ispconfig_panel_url. '/login/index.php?authtoken=' . $token);
+        $this->swriteln();
+    }
+
     public function showHelp($arg) {
       global $conf;
 
@@ -118,6 +203,7 @@ class user_cli extends cli {
       $this->swriteln("- Available commandline options -");
       $this->swriteln("---------------------------------");
       $this->swriteln("ispc user set-password <username> - Set a new password for the ISPConfig user <username>.");
+      $this->swriteln("ispc user login <username> [ttl_minutes] - Generate a one-time autologin token for the ISPConfig user <username>.");
       $this->swriteln("---------------------------------");
       $this->swriteln();
     }
