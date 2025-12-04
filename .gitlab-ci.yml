@@ -9,29 +9,40 @@ stages:
 ### Stage syntax
 #
 
+# run syntax check across multiple PHP versions using a matrix
+# This scans the whole codebase
 syntax:lint:
   stage: syntax
-  image: edbizarro/gitlab-ci-pipeline-php:7.2
+  image: php:${PHP_VERSION}
+  before_script:
+    - apt-get update && apt-get --yes install git
   allow_failure: false
   only:
     - schedules
     - web
     - merge_requests
     - /^\d+\.\d+\.\d+([p|b]\d+)?$/
-
+  parallel:
+    matrix:
+      - PHP_VERSION: ["7.2", "8.4"]
   script:
-    - echo "Syntax checking PHP files"
+    - echo "Syntax checking PHP files (PHP ${PHP_VERSION})"
     - bash ./.git-scripts/syntax.sh
 
 
+# Scan just the changed files in the latest commit
 syntax_diff:lint:
   stage: syntax
-  image: edbizarro/gitlab-ci-pipeline-php:7.2
+  image: php:8.4
   allow_failure: false
   only:
     - web
     - pushes
     - branches
+
+  before_script:
+    - apt-get update
+    - apt-get --yes install git
 
   except:
     - schedules
@@ -40,7 +51,7 @@ syntax_diff:lint:
     - /^\d+\.\d+\.\d+([p|b]\d+)?$/
 
   script:
-    - echo "Syntax checking PHP files"
+    - echo "Syntax checking PHP files (PHP 8.4)"
     - bash ./.git-scripts/syntax.sh commit
 
 #syntax:lint:
