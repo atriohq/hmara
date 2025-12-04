@@ -70,23 +70,16 @@ class page_action extends tform_actions {
 		}
 
 		parent::onShowNew();
+	}
 
-        $soa = $app->db->queryOneRecord("SELECT * FROM dns_soa WHERE id = ? AND " . $app->tform->getAuthSQL('r'), $_GET['zone']);
-        $sql=$app->db->queryOneRecord("SELECT domain, dkim_public, dkim_selector, dkim FROM mail_domain WHERE domain = ? AND " . $app->tform->getAuthSQL('r'), substr_replace($soa['origin'],'',-1));
-		if(isset($sql['domain']) && $sql['domain'] != '') {
-			if($sql['dkim'] == 'y') {
-		        $public_key=str_replace(array('-----BEGIN PUBLIC KEY-----','-----END PUBLIC KEY-----',"\r","\n"),'',$sql['dkim_public']);
-				$app->tpl->setVar('public_key', $public_key, true);
-				$app->tpl->setVar('selector', $sql['dkim_selector'], true);
-			} else {
-			//TODO: show warning - use mail_domain for dkim and enabled dkim
-			}
-			$app->tpl->setVar('edit_disabled', 1);
-		} else {
-			$app->tpl->setVar('edit_disabled', 0);
-		}
-		$app->tpl->setVar('name', $soa['origin'], true);
+	function onShowEnd() {
+		global $app, $conf;
 
+		$soa = $app->db->queryOneRecord("SELECT origin FROM dns_soa WHERE id = ? AND " . $app->tform->getAuthSQL('r'), $this->dataRecord['zone']);
+		$app->tpl->setVar("selector", $this->dataRecord['name'], true);
+		$app->tpl->setVar("public_key", str_replace('v=DKIM1; t=s; p=', '', $this->dataRecord['data']), true);
+
+		parent::onShowEnd();
 	}
 
 	function onSubmit() {
@@ -117,7 +110,11 @@ class page_action extends tform_actions {
 		// add dkim-settings to the public-key in the txt-record
 		if (!empty($this->dataRecord['data'])) {
 			$this->dataRecord['data']='v=DKIM1; t=s; p='.$this->dataRecord['data'];
-			$this->dataRecord['name']=$this->dataRecord['selector'].'._domainkey.'.$this->dataRecord['name'];
+			$this->dataRecord['name'] = $this->dataRecord['selector'];
+			if (!preg_match('/\._domainkey/', $this->dataRecord['selector'])) {
+				$this->dataRecord['name'] .= '._domainkey';
+			}
+
 //			$this->dataRecord['ttl']=60;
 		}
 		// Update the serial number  and timestamp of the RR record
@@ -127,7 +124,7 @@ class page_action extends tform_actions {
 
 		// check for duplicate entry
 		// Should NOT include data in this check?  it must be unique for zone/name (selector)/type, regardless of data
-		$check=$app->db->queryOneRecord("SELECT * FROM dns_rr WHERE zone = ? AND type = ? AND data = ? AND name = ?", $this->dataRecord["zone"], $this->dataRecord["type"], $this->dataRecord["data"], $this->dataRecord['name']);
+		$check=$app->db->queryOneRecord("SELECT * FROM dns_rr WHERE zone = ? AND type = ? AND data = ? AND name = ? AND id != ?", $this->dataRecord["zone"], $this->dataRecord["type"], $this->dataRecord["data"], $this->dataRecord['name'], $this->dataRecord['id']);
 		if ($check!='') $app->tform->errorMessage .= $app->tform->wordbook["record_exists_txt"];
 		if (empty($this->dataRecord['data'])) $app->tform->errorMessage .= $app->tform->wordbook["dkim_disabled_txt"];
 

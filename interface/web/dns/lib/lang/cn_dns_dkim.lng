@@ -7,7 +7,8 @@ $wb['dkim_disabled_txt'] = '此邮件域名未启用 DKIM';
 $wb['limit_dns_record_txt'] = '您的帐户已达到最大 DNS 记录数';
 $wb['no_zone_perm'] = '您没有权限向此 DNS 区域添加记录';
 $wb['ttl_range_error'] = '最小 TTL 时间为 60 秒';
-$wb['selector_txt'] = 'DKIM 选择器';
+$wb['selector_txt'] = 'DKIM-Selector / Name';
 $wb['data_error_empty'] = '公钥缺失';
 $wb['dkim_selector_empty_txt'] = 'DKIM 选择器为空';
+$wb['btn_edit_as_txt_record_txt'] = '作为TXT记录编辑';
 ?>

@@ -6,8 +6,9 @@ $wb['record_exists_txt'] = 'L\'enregistrement DNS exist dé';
 $wb['limit_dns_record_txt'] = 'Le nombre max. d\'enregistrement DNS pour votre compte àtétteint.';
 $wb['no_zone_perm'] = 'Vous n\'avez pas la permission d\'ajouter un enregistrement àette Zone DNS.';
 $wb['ttl_range_error'] = 'Le temps minimum TTL est de 60 secondes.';
-$wb['selector_txt'] = 'Selecteur DKIM';
+$wb['selector_txt'] = 'DKIM-Selector / Name';
 $wb['dkim_disabled_txt'] = 'DKIM disabled for this mail-domain';
 $wb['data_error_empty'] = 'Public-Key missing';
 $wb['dkim_selector_empty_txt'] = 'DKIM-Selector is empty';
+$wb['btn_edit_as_txt_record_txt'] = 'Edit as TXT record';
 ?>

@@ -757,7 +757,14 @@ class page_action extends tform_actions {
 			}
 		}
 
-		$new_rr['name'] = $dataRecord['dkim_selector'].'._domainkey.'.$dataRecord['domain'].'.';
+		$zone = $app->db->queryOneRecord("SELECT origin FROM dns_soa WHERE id = ?", $new_rr['zone']);
+		$_host_part = trim(str_replace($zone['origin'], '', $dataRecord['domain'] . '.'), '.');
+
+		$new_rr['name'] = $dataRecord['dkim_selector'].'._domainkey';
+		if (!empty($_host_part)) {
+			$new_rr['name'] .= '.' . $_host_part;
+		}
+
 		$new_rr['type'] = 'TXT';
 		$new_rr['data'] = 'v=DKIM1; t=s; p='.str_replace(array('-----BEGIN PUBLIC KEY-----','-----END PUBLIC KEY-----',"\r","\n"), '', $this->dataRecord['dkim_public']);
 		$new_rr['aux'] = 0;
