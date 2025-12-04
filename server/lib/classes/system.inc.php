@@ -2946,7 +2946,7 @@ class system{
 					if(!empty($options['php_cli_binary'])) {
 						$php_bin_dir = dirname($options['php_cli_binary']);
 						if(!file_exists($home_dir . '/' . $options['php_cli_binary'])) {
-							$app->log("update_jailkit_chroot: The PHP cli binary " . $options['php_cli_binary'] . " is not available in the jail of the web " . $options['domain'], LOGLEVEL_DEBUG);
+							$app->log("update_jailkit_chroot: The PHP cli binary " . $options['php_cli_binary'] . " is not available in the jail of the web " . $options['domain'], LOGLEVEL_WARN);
 
 							$fallback_php = $app->system->get_newest_php_bin($home_dir . $php_bin_dir);
 							$fallback_php_bin = str_replace($home_dir, '', $fallback_php);
