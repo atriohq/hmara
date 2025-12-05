@@ -120,6 +120,7 @@ class installer extends installer_base {
 			if(version_compare($dovecot_version,2.1) < 0) {
 				removeLine($config_dir.'/'.$configfile, 'ssl_protocols =');
 			}
+
 			if(version_compare($dovecot_version,2.2) >= 0) {
 				// Dovecot > 2.2 does not recognize !SSLv2 anymore on Debian 9
 				$content = file_get_contents($config_dir.'/'.$configfile);
@@ -127,7 +128,30 @@ class installer extends installer_base {
 				file_put_contents($config_dir.'/'.$configfile,$content);
 				unset($content);
 			}
-			if(version_compare($dovecot_version,2.3) >= 0) {
+
+			if(version_compare($dovecot_version, 2.4) >= 0) {
+			# Debian 13 ships with Dovecot 2.4
+				if(is_file($conf['ispconfig_install_dir'].'/server/conf-custom/install/debian6_dovecot2.4.conf.master')) {
+					copy($conf['ispconfig_install_dir'].'/server/conf-custom/install/debian6_dovecot2.4.conf.master', $config_dir.'/'.$configfile);
+				} else {
+					copy('tpl/debian6_dovecot2.4.conf.master', $config_dir.'/'.$configfile);
+				}
+				// Copy custom config file
+				if(is_file($conf['ispconfig_install_dir'].'/server/conf-custom/install/dovecot_custom.conf.master')) {
+					if(!@is_dir($config_dir . '/conf.d')) {
+						mkdir($config_dir . '/conf.d');
+					}
+
+					copy($conf['ispconfig_install_dir'].'/server/conf-custom/install/dovecot_custom.conf.master', $config_dir.'/conf.d/99-ispconfig-custom-config.conf');
+				}
+				replaceLine($config_dir.'/'.$configfile, 'postmaster_address = postmaster@example.com', 'postmaster_address = postmaster@'.$conf['hostname'], 1, 0);
+				replaceLine($config_dir.'/'.$configfile, 'postmaster_address = webmaster@localhost', 'postmaster_address = postmaster@'.$conf['hostname'], 1, 0);
+
+				## Self generating dhparams is deprecated, Debian ships with a good one.
+
+				unset($content);
+
+			} elseif(version_compare($dovecot_version,2.3) >= 0) {
 				// Remove deprecated setting(s)
 				removeLine($config_dir.'/'.$configfile, 'ssl_protocols =');
 
@@ -187,7 +211,11 @@ class installer extends installer_base {
 			copy($config_dir.'/'.$configfile, $config_dir.'/'.$configfile.'~');
 			chmod($config_dir.'/'.$configfile.'~', 0400);
 		}
-		$content = rfsel($conf['ispconfig_install_dir'].'/server/conf-custom/install/debian6_dovecot-sql.conf.master', 'tpl/debian6_dovecot-sql.conf.master');
+		if(version_compare($dovecot_version, 2.4) >= 0) {
+			$content = rfsel($conf['ispconfig_install_dir'].'/server/conf-custom/install/debian6_dovecot2.4-sql.conf.master', 'tpl/debian6_dovecot2.4-sql.conf.master');
+		} else {
+			$content = rfsel($conf['ispconfig_install_dir'].'/server/conf-custom/install/debian6_dovecot-sql.conf.master', 'tpl/debian6_dovecot-sql.conf.master');
+		}
 		$content = str_replace('{mysql_server_ispconfig_user}', $conf['mysql']['ispconfig_user'], $content);
 		$content = str_replace('{mysql_server_ispconfig_password}', $conf['mysql']['ispconfig_password'], $content);
 		$content = str_replace('{mysql_server_database}', $conf['mysql']['database'], $content);
