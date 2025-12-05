@@ -34,6 +34,6 @@ $wb['username_error_collision'] = 'Le nom d\'utilisateur ne peut pas commencer p
 $wb['client_not_admin_err'] = 'Un utilisateur affilié à un client ne peut pas être changé en type admin';
 $wb['lost_password_function_txt'] = 'La fonction mot de passe oublié est disponible';
 $wb['no_user_insert'] = 'CP-Users of type -user- get added and updated automatically when you add a client or reseller.';
-$wb['admin_totp_setup_not_suported'] = 'Setting up a TOTP secret is currently only supported for the user himself.';
+$wb['admin_totp_setup_not_supported'] = 'Setting up a TOTP secret is currently only supported for the user himself.';
 $wb['otp_auth_txt'] = '2-Factor Authentication';
 ?>

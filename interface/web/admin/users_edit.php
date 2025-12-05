@@ -98,7 +98,7 @@ class page_action extends tform_actions {
 
 		//* TOTP setup is only supported from the user's form in tools/user_settings.php
 		if(isset($this->dataRecord['otp_type']) && $this->dataRecord['otp_type'] != $this->oldDataRecord['otp_type'] && $this->dataRecord['otp_type'] == 'totp') {
-			$app->tform->errorMessage .= $app->tform->lng('admin_totp_setup_not_suported');
+			$app->tform->errorMessage .= $app->tform->lng('admin_totp_setup_not_supported');
 		}
 
 	}
