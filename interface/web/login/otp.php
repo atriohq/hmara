@@ -94,7 +94,7 @@ if(isset($_POST['code']) && strlen($_POST['code']) == $otp_recovery_code_length)
 
 	//* We allow one more try to enter recovery code
 	if($user['otp_attempts'] > $max_global_code_retry + 1) {
-		# TODO document what the adin can do.
+		# TODO document what the admin can do.
 		die("Sorry, contact your administrator.");
 	}
 
