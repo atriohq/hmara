@@ -85,6 +85,10 @@ class page_action extends tform_actions {
 		$app->uses('ini_parser,getconf');
 		$settings = $app->getconf->get_global_config('domains');
 
+		//* Force module context to dns
+		//* Workaround to fix tab links when redirected from the datalog viewer
+		$app->tpl->setVar('app_module', 'dns');
+
 		//* TODO: store dnssec-keys in the database - see below for non-admin-users
 		//* hide dnssec if we found dns-mirror-servers
 		if($this->id > 0) {
@@ -124,7 +128,7 @@ class page_action extends tform_actions {
 				$client_group_id = intval($_SESSION["s"]["user"]["default_group"]);
 				$client = $app->db->queryOneRecord("SELECT client.client_id, client.contact_name, CONCAT(IF(client.company_name != '', CONCAT(client.company_name, ' :: '), ''), client.contact_name, ' (', client.username, IF(client.customer_no != '', CONCAT(', ', client.customer_no), ''), ')') as contactname, sys_group.name FROM sys_group, client WHERE sys_group.client_id = client.client_id and sys_group.groupid = ?", $client_group_id);
 				$client = $app->functions->htmlentities($client);
-				
+
 				// Fill the client select field
 				$sql = "SELECT sys_group.groupid, sys_group.name, CONCAT(IF(client.company_name != '', CONCAT(client.company_name, ' :: '), ''), client.contact_name, ' (', client.username, IF(client.customer_no != '', CONCAT(', ', client.customer_no), ''), ')') as contactname FROM sys_group, client WHERE sys_group.client_id = client.client_id AND client.parent_client_id = ? ORDER BY client.company_name, client.contact_name, sys_group.name";
 				$clients = $app->db->queryAllRecords($sql, $client['client_id']);
@@ -304,7 +308,7 @@ function onSubmit() {
 
 		$this->dataRecord["xfer"] = preg_replace('/\s+/', '', $this->dataRecord["xfer"]);
 		$this->dataRecord["also_notify"] = preg_replace('/\s+/', '', $this->dataRecord["also_notify"]);
-		
+
 		if(isset($this->dataRecord['dnssec_wanted']) && $this->dataRecord['dnssec_wanted'] == 'Y' && $this->dataRecord['dnssec_algo'] == '') $this->dataRecord['dnssec_algo'] = 'ECDSAP256SHA256';
 
 		//* Check if a secondary zone with the same name already exists
@@ -312,7 +316,7 @@ function onSubmit() {
 		if($tmp["number"] > 0) {
 			$app->error($app->tform->wordbook["origin_error_unique"]);
 		}
-		
+
 		//* server_id must be > 0
 		if(isset($this->dataRecord["server_id"]) && $this->dataRecord["server_id"] < 1) $app->tform->errorMessage .= $app->lng("server_id_0_error_txt");
 	}

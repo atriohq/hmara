@@ -299,7 +299,7 @@ class cron_plugin {
 						$app->log("PHP CLI binary not set for the website\'s selected PHP version or Default was selected. Fall back to \"/usr/bin/php\" for cronjob id " . $job['id'], LOGLEVEL_DEBUG);
 						if($job['type'] == 'chrooted') {
 							if(!file_exists($this->parent_domain['document_root'] . $web_php_cli)) {
-								$app->log("The PHP cli binary " . $web_php_cli . " is not available in the jail of the web " . $web_domain . " / cronjob_id: " . $job['id']  . ". Check your Jailkit setup!", LOGLEVEL_DEBUG);
+								$app->log("The PHP cli binary " . $web_php_cli . " is not available in the jail of the web " . $web_domain . " / cronjob_id: " . $job['id']  . ". Check your Jailkit setup!", LOGLEVEL_WARN);
 							}
 						}
 					} else {

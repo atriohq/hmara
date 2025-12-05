@@ -1,7 +1,7 @@
 <?php
 
 /*
-Copyright (c) 2007, Till Brehm, projektfarm Gmbh
+Copyright (c) 2014, Till Brehm, ISPConfig UG
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
@@ -28,9 +28,13 @@ NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-error_reporting(E_ALL);
+require_once realpath(dirname(__FILE__)) . '/enterpriselinux_base.lib.php';
 
-require_once '../lib/config.inc.php';
-require_once '../lib/app.inc.php';
+class installer extends installer_enterpriselinux {
+
+	protected $clamav_socket = '/var/run/clamd.amavisd/clamd.sock';
+
+	// everything else is inherited from installer_enterpriselinux class
+}
 
 ?>

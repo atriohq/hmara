@@ -32,7 +32,7 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	ISPConfig 3 uninstaller for fedora core.
 */
 
-error_reporting(E_ALL|E_STRICT);
+error_reporting(E_ALL);
 
 require "/usr/local/ispconfig/server/lib/config.inc.php";
 require "/usr/local/ispconfig/server/lib/app.inc.php";

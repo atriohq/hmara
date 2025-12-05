@@ -27,6 +27,10 @@ NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+/**
+ *  WARNING, changes made in this file WILL BE OVERRIDDEN. Use config.inc.local.php for local overrides.
+ */
+
 //** Web-only
 if( !empty($_SERVER['DOCUMENT_ROOT']) ) {
 
@@ -66,7 +70,7 @@ $conf['db_port'] = '{mysql_server_port}';
 $conf['db_database'] = '{mysql_server_database}';
 $conf['db_user'] = '{mysql_server_ispconfig_user}';
 $conf['db_password'] = '{mysql_server_ispconfig_password}';
-$conf['db_charset'] = 'utf8'; // same charset as html-charset - (HTML --> MYSQL: "utf-8" --> "utf8", "iso-8859-1" --> "latin1")
+$conf['db_charset'] = 'utf8mb4'; // same charset as html-charset - (HTML --> MYSQL: "utf-8" --> "utf8mb4", "iso-8859-1" --> "latin1")
 $conf['db_new_link'] = false;
 $conf['db_client_flags'] = 0;
 

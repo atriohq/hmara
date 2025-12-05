@@ -823,7 +823,7 @@ class shelluser_jailkit_plugin {
 
 		// Check if the web's used PHP binary exists in jail
 		if(!file_exists($php_binary_path)) {
-			$app->log("The PHP cli binary " . $this->web['php_cli_binary'] . " is not available in the jail of the web " . $this->web['domain'] . " / SSH/SFTP user: " . $this->data['new']['username'] . ". Check your Jailkit setup!", LOGLEVEL_DEBUG);
+			$app->log("The PHP cli binary " . $this->web['php_cli_binary'] . " is not available in the jail of the web " . $this->web['domain'] . " / SSH/SFTP user: " . $this->data['new']['username'] . ". Check your Jailkit setup!", LOGLEVEL_WARN);
 
 			// Check if any PHP binary is available in the jail and use the most recent version as fallback
 			$fallback_php = $app->system->get_newest_php_bin($web_docroot . $php_bin_dir);

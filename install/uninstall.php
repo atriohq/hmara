@@ -32,7 +32,7 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	ISPConfig 3 uninstaller.
 */
 
-error_reporting(E_ALL|E_STRICT);
+error_reporting(E_ALL);
 
 require_once "/usr/local/ispconfig/server/lib/config.inc.php";
 require_once "/usr/local/ispconfig/server/lib/app.inc.php";

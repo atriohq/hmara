@@ -309,7 +309,7 @@ class monitor_tools {
 			$distver = '33';
 			$distid = 'fedora33';
 			$distbaseid = 'fedora';
-        //** RHEL 7 and compatible clones 
+        //** RHEL 7 and compatible clones
 		} elseif(preg_match('/^(?:7|7\.[0-9]{1,2})$/', $versionid[0])) {
 			preg_match_all('/([0-9]{1,2})\.?([0-9]{0,2})\.?([0-9]*)/', file_get_contents('/etc/redhat-release'), $centos7_version);
 			$distname = $name[0];
@@ -328,50 +328,59 @@ class monitor_tools {
 			$distver = $version[0];
 			$distid = 'centos90';
 			$distbaseid = 'fedora';
+		//** RHEL 10 and compatible clones
+		} elseif(preg_match('/^(?:10|10\.[0-9]{1,2})$/', $versionid[0])) {
+			$distname = $name[0];
+			$distver = $version[0];
+			$distid = 'enterpriselinux10';
+			$distbaseid = 'fedora';
 		} else {
 			$distname = 'Redhat';
 			$distver = 'Unknown';
 			$distid = 'fedora9';
 			$distbaseid = 'fedora';
 		}
-        //** CentOS 6
-		} elseif(file_exists('/etc/redhat-release') && !file_exists('/etc/os-release') && !file_exists('/etc/els-release')) {
+	//** CentOS 6
+	} elseif(file_exists('/etc/redhat-release') && !file_exists('/etc/os-release') && !file_exists('/etc/els-release')) {
 
-			$content = file_get_contents('/etc/redhat-release');
+		$content = file_get_contents('/etc/redhat-release');
 
-			if(stristr($content, 'CentOS Linux release 6') || stristr($content, 'CentOS release 6')) {
-				preg_match_all('/(6\.?([0-9]{0,2})\.?(\s)?([a-zA-Z()]+))$/', $content, $centos6_version);
-				$distname = 'CentOS Linux';
-				$distver = $centos6_version[0][0] ? $centos6_version[0][0] : '6';
-				$distid = 'centos53';
-				$distbaseid = 'fedora';
-			} else {
-				$distname = 'Redhat';
-				$distver = 'Unknown';
-				$distid = 'fedora9';
-				$distbaseid = 'fedora';
-			}
-        //** CentOS 6 Extended Lifecycle Support by CloudLinux
-        } elseif(file_exists('/etc/redhat-release') && file_exists('/etc/els-release') && !file_exists('/etc/os-release')) {
+		if(stristr($content, 'CentOS Linux release 6') || stristr($content, 'CentOS release 6')) {
+			preg_match_all('/(6\.?([0-9]{0,2})\.?(\s)?([a-zA-Z()]+))$/', $content, $centos6_version);
+			$distname = 'CentOS Linux';
+			$distver = $centos6_version[0][0] ? $centos6_version[0][0] : '6';
+			$distid = 'centos53';
+			$distbaseid = 'fedora';
+			swriteln("Operating System: " . $distname . " " .  $distver . "\n");
+        } else {
+			$distname = 'Redhat';
+			$distver = 'Unknown';
+			$distid = 'fedora9';
+			$distbaseid = 'fedora';
+			swriteln("Operating System: Redhat or compatible\n");
+		}
+	//** CentOS 6 Extended Lifecycle Support by Tuxcare/CloudLinux
+	} elseif(file_exists('/etc/redhat-release') && file_exists('/etc/els-release') && !file_exists('/etc/os-release')) {
 
-			$content = file_get_contents('/etc/els-release');
+		$content = file_get_contents('/etc/els-release');
 
-			if(stristr($content, 'CentOS Linux release 6') || stristr($content, 'CentOS release 6')) {
-				preg_match_all('/(6)\.?([0-9]{0,2})?\.?\s([a-zA-Z(), ]+)?$/', $content, $centos6_version);
-				$distname = 'CentOS Linux';
-				$distver = $centos6_version[0][0] ? $centos6_version[0][0] : '6';
-				$distid = 'centos53';
-				$distbaseid = 'fedora';
-			} else {
-				$distname = 'Redhat';
-				$distver = 'Unknown';
-				$distid = 'fedora9';
-				$distbaseid = 'fedora';
-			}
+		if(stristr($content, 'CentOS Linux release 6') || stristr($content, 'CentOS release 6')) {
+			preg_match_all('/(6)\.?([0-9]{0,2})?\.?\s([a-zA-Z(), ]+)?$/', $content, $centos6_version);
+			$distname = 'CentOS Linux';
+			$distver = $centos6_version[0][0] ? $centos6_version[0][0] : '6';
+			$distid = 'centos53';
+			$distbaseid = 'fedora';
+			swriteln("Operating System: " . $distname . " " .  $distver . "\n");
+		} else {
+			$distname = 'Redhat';
+			$distver = 'Unknown';
+			$distid = 'fedora9';
+			$distbaseid = 'fedora';
+			swriteln("Operating System: Redhat or compatible\n");
 		}
 
 	//** Gentoo
-	elseif(file_exists('/etc/gentoo-release')) {
+	} elseif(file_exists('/etc/gentoo-release')) {
 
 		$content = file_get_contents('/etc/gentoo-release');
 
@@ -502,7 +511,7 @@ class monitor_tools {
             }
             mysqli_close($ispcDB);  // we can ignore the result (gwyneth 20220605)
         }
-		
+
 /*
 		$data['mongodbserver'] = -1;
 		if ($this->_checkTcp('localhost', 27017)) {

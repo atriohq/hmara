@@ -28,11 +28,11 @@ NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-//***  Fedora 9 default settings
+//***  RHEL 10 derivatives default settings
 
 //* Main
 $conf['language'] = 'en';
-$conf['distname'] = 'centos52';
+$conf['distname'] = 'enterpriselinux10';
 $conf['hostname'] = 'server1.domain.tld'; // Full hostname
 $conf['ispconfig_install_dir'] = '/usr/local/ispconfig';
 $conf['ispconfig_config_dir'] = '/usr/local/ispconfig';
@@ -43,7 +43,7 @@ $conf['init_scripts'] = '/etc/init.d';
 $conf['runlevel'] = '/etc';
 $conf['shells'] = '/etc/shells';
 $conf['pam'] = '/etc/pam.d';
-$conf['default_php'] = "5.4";
+$conf['default_php'] = "8.3";
 
 //* Services provided by this server, this selection will be overridden by the expert mode
 $conf['services']['mail'] = true;
@@ -62,9 +62,9 @@ $conf['mysql']['port'] = '3306';
 $conf['mysql']['database'] = 'dbispconfig';
 $conf['mysql']['admin_user'] = 'root';
 $conf['mysql']['admin_password'] = '';
-$conf['mysql']['charset'] = 'utf8mb4';
+$conf['mysql']['charset'] = 'utf8';
 $conf['mysql']['ispconfig_user'] = 'ispconfig';
-$conf['mysql']['ispconfig_password'] = md5(uniqid(rand()));
+$conf['mysql']['ispconfig_password'] = md5(random_bytes(20));
 $conf['mysql']['master_slave_setup'] = 'n';
 $conf['mysql']['master_host'] = '';
 $conf['mysql']['master_port'] = '3306';
@@ -72,7 +72,7 @@ $conf['mysql']['master_database'] = 'dbispconfig';
 $conf['mysql']['master_admin_user'] = 'root';
 $conf['mysql']['master_admin_password'] = '';
 $conf['mysql']['master_ispconfig_user'] = '';
-$conf['mysql']['master_ispconfig_password'] = md5(uniqid(rand()));
+$conf['mysql']['master_ispconfig_password'] = md5(random_bytes(20));
 
 //* Apache
 $conf['apache']['installed'] = false; // will be detected automatically during installation
@@ -97,6 +97,9 @@ $conf['web']['apps_vhost_port'] = '8081';
 $conf['web']['apps_vhost_servername'] = '';
 $conf['web']['apps_vhost_user'] = 'ispapps';
 $conf['web']['apps_vhost_group'] = 'ispapps';
+
+//* AWStats settings
+$conf['awstats']['pl'] = '/usr/share/awstats/wwwroot/cgi-bin/awstats.pl';
 
 //* Fastcgi
 $conf['fastcgi']['fastcgi_phpini_path'] = '/etc/';
@@ -136,7 +139,7 @@ $conf['courier']['courier-pop-ssl'] = '';
 
 //* Dovecot
 $conf['dovecot']['installed'] = false; // will be detected automatically during installation
-$conf['dovecot']['config_dir'] = '/etc';
+$conf['dovecot']['config_dir'] = '/etc/dovecot';
 $conf['dovecot']['init_script'] = 'dovecot';
 
 //* SASL

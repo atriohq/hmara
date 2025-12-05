@@ -9,24 +9,44 @@ EOD
 )
 
 if [ -z "$1" ]; then
-  echo "Usage: $0 <files>"
+  echo "Usage: $0 [seek_pattern] <files>"
+	echo
+	echo "Add a hard coded set of new lines to a number of language files."
+	echo "When the first argument is not a file it's treated as a string to search for, adding the new lines directly below it. This only supports adding a single new line though."
   exit 1
 fi
 
-for f in $*; do
-	# Preserve a php close tag as the last line.
-	close='?>'
-	if [ "$(tail -n 1 $f)" == "$close" ]; then
-		(	
-			head -n -1 $f;
-			echo "$new";
-			echo "?>";
-		) > ${f}.new
+if [ ! -f "$1" ]; then
+  seek_pattern=$1;
+  shift;
+fi
 
-		mv ${f}.new $f
-			
-			
-	else
-		echo "$new" >> $f
-	fi
+for f in $*; do
+  if [ "$(grep --fixed-strings "$new" $f)" ]; then
+    echo "Skipping file[$f] already matches"
+    continue
+  fi
+
+  if [ -n "$seek_pattern" ]; then
+    # Add inplace, only a single line is supported.
+    sed -i "/$seek_pattern/a\
+			$new" $f
+  else
+    # Add at the end
+
+    # Preserve a php close tag as the last line.
+    close='?>'
+    if [ "$(tail -n 1 $f)" == "$close" ]; then
+      (
+        head -n -1 $f;
+        echo "$new";
+        echo "?>";
+      ) > ${f}.new
+
+      mv ${f}.new $f
+
+    else
+      echo "$new" >> $f
+    fi
+  fi
 done

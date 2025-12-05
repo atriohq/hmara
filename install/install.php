@@ -56,7 +56,7 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-error_reporting(E_ALL|E_STRICT);
+error_reporting(E_ALL);
 
 define('INSTALLER_RUN', true);
 
@@ -140,6 +140,9 @@ if(is_file('dist/lib/'.$dist['baseid'].'.lib.php')) include_once 'dist/lib/'.$di
 include_once 'dist/lib/'.$dist['id'].'.lib.php';
 include_once 'dist/conf/'.$dist['confid'].'.conf.php';
 
+define('ISPC_LOG_FILE', $conf['ispconfig_log_dir'] . '/install.log');
+
+
 //****************************************************************************************************
 //** Installer Interface
 //****************************************************************************************************
@@ -161,7 +164,7 @@ if(!is_writable(dirname($conf['ispconfig_log_dir']))){
 if(!is_dir($conf['ispconfig_log_dir'])) {
 	mkdir($conf['ispconfig_log_dir'], 0755, true);
 }
-define('ISPC_LOG_FILE', $conf['ispconfig_log_dir'] . '/install.log');
+
 
 //** Check for ISPConfig 2.x versions
 if(is_dir('/root/ispconfig') || is_dir('/home/admispconfig')) {
@@ -668,7 +671,7 @@ if($conf['bind']['installed'] == true && isset($conf['bind']['init_script']) && 
 //if($conf['squid']['installed'] == true && isset($conf['squid']['init_script']) && $conf['squid']['init_script'] != '' && is_file($conf['init_scripts'].'/'.$conf['squid']['init_script']))     system($conf['init_scripts'].'/'.$conf['squid']['init_script'].' restart &> /dev/null');
 if($conf['nginx']['installed'] == true && isset($conf['nginx']['init_script']) && $conf['nginx']['init_script'] != '') system($inst->getinitcommand($conf['nginx']['init_script'], 'restart').' &> /dev/null');
 if(isset($conf['ufw']['installed']) && $conf['ufw']['installed'] == true && isset($conf['ufw']['init_script']) && $conf['ufw']['init_script'] != '') system($inst->getinitcommand($conf['ufw']['init_script'], 'restart').' &> /dev/null');
-if($conf['xmpp']['installed'] == true && isset($conf['xmpp']['init_script']) && $conf['xmpp']['init_script'] != '') system($inst->getinitcommand($conf['xmpp']['init_script'], 'restart').' &> /dev/null');
+if(isset($conf['xmpp']['installed']) && $conf['xmpp']['installed'] == true && isset($conf['xmpp']['init_script']) && $conf['xmpp']['init_script'] != '') system($inst->getinitcommand($conf['xmpp']['init_script'], 'restart').' &> /dev/null');
 
 
 $inst->create_mount_script();

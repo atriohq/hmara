@@ -227,6 +227,7 @@ class letsencrypt {
 			$this->install_acme();
 			$script = $this->get_acme_script();
 			if($script) {
+				shell_exec($script . ' --set-default-ca --server letsencrypt');
 				return true;
 			} else {
 				$app->log("Unable to install acme.sh.  Cannot proceed, no Let's Encrypt client found.", LOGLEVEL_WARN);

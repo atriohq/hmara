@@ -8,5 +8,5 @@ $wb['ispconfig_tools_note'] = 'Este módulo permite modificar a senha e idioma e
 $wb['Sync Tools'] = 'Sincronização';
 $wb['Resync'] = 'Sincronizar';
 $wb['Import'] = 'Importar';
-$wb['ISPConfig 3 mail'] = 'eMails do ISPConfig';
+$wb['ISPConfig 3 mail'] = 'Emails do ISPConfig';
 $wb['PDNS Tupa'] = 'PowerDNS';

@@ -1,5 +1,5 @@
 <?php
-$wb['email_txt'] = 'eMail';
+$wb['email_txt'] = 'Email';
 $wb['destination_txt'] = 'Endereço email de destino';
 $wb['active_txt'] = 'Ativo';
 $wb['limit_mailforward_txt'] = 'O limite de encaminhamentos de email para esta conta foi alcançado.';
