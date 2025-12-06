@@ -73,10 +73,13 @@ class page_action extends tform_actions {
 		global $app, $conf;
 
 		$zone = $app->functions->intval($_GET['zone']);
-		// get domain-name
-		$sql = "SELECT * FROM dns_soa WHERE id = ? AND " . $app->tform->getAuthSQL('r');
-		$rec = $app->db->queryOneRecord($sql, $zone);
-		$domain_name = rtrim($rec['origin'], '.');
+		$domain_name = '';
+		if (!empty($zone)) {
+			// Get domain-name for a new rr.
+			$sql = "SELECT origin FROM dns_soa WHERE id = ? AND " . $app->tform->getAuthSQL('r');
+			$rec = $app->db->queryOneRecord($sql, $zone);
+			$domain_name = rtrim($rec['origin'], '.');
+		}
 
 		// set defaults
 		$dmarc_policy = 'none';
@@ -86,15 +89,17 @@ class page_action extends tform_actions {
 		$dmarc_pct = 100;
 		$dmarc_ri = 86400;
 		$dmarc_sp = 'same';
+		$id = $app->functions->intval($_GET['id']);
 
 		//* check for an existing dmarc-record
-		$sql = "SELECT data, active FROM dns_rr WHERE data LIKE 'v=DMARC1%' AND zone = ? AND name LIKE ? AND " . $app->tform->getAuthSQL('r') . " ORDER BY (name = ?) DESC";
-		$rec = $app->db->queryOneRecord($sql, $zone, '_dmarc%', '_dmarc.'.$domain_name.'.');
+		$sql = "SELECT zone, data, active FROM dns_rr WHERE data LIKE 'v=DMARC1%' AND ((zone = ? AND name LIKE ?) OR id = ?) AND " . $app->tform->getAuthSQL('r') . " ORDER BY (name = ?) DESC";
+		$rec = $app->db->queryOneRecord($sql, $zone, '_dmarc%', $id, '_dmarc.'.$domain_name.'.');
 		if (isset($rec) && !empty($rec) ) {
 			$this->id = 1;
 			$old_data = strtolower($rec['data']);
 			$app->tpl->setVar("data", $old_data, true);
 			if ($rec['active'] == 'Y') $app->tpl->setVar("active", '<input name="active" id="active" value="" type="checkbox" CHECKED>'); else $app->tpl->setVar("active", '<input name="active" id="active" value="" type="checkbox">');
+			$zone = $rec['zone'];
 			$dmarc_rua = '';
 			$dmarc_ruf = '';
 			$dmac_rf = '';
@@ -120,6 +125,10 @@ class page_action extends tform_actions {
 				if (preg_match("/^pct=/", $part)) $dmarc_pct = str_replace('pct=', '', $part);
 				if (preg_match("/^ri=/", $part)) $dmarc_ri = str_replace('ri=', '', $part);
 			}
+			// Get domain-name for an existing rr.
+			$sql = "SELECT origin FROM dns_soa WHERE id = ? AND " . $app->tform->getAuthSQL('r');
+			$rec2 = $app->db->queryOneRecord($sql, $rec['zone']);
+			$domain_name = rtrim($rec2['origin'], '.');
 		}
 
 		//set html-values
@@ -342,7 +351,7 @@ class page_action extends tform_actions {
 		$this->dataRecord["stamp"] = date('Y-m-d H:i:s');
 
 		// always update an existing entry
-		$check=$app->db->queryOneRecord("SELECT * FROM dns_rr WHERE zone = ? AND type = ? AND data LIKE 'v=DMARC1%' AND name = ?", $this->dataRecord['zone'], $this->dataRecord['type'], $this->dataRecord['name']);
+		$check = $app->db->queryOneRecord("SELECT * FROM dns_rr WHERE zone = ? AND type = ? AND data LIKE 'v=DMARC1%' AND (name = ? OR name = ?)", $this->dataRecord['zone'], $this->dataRecord['type'], $this->dataRecord['name'], '_dmarc');
 		$this->id = $check['id'];
 		if (!isset($this->dataRecord['active'])) $this->dataRecord['active'] = 'N';
 
