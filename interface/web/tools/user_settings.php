@@ -133,7 +133,6 @@ class page_action extends tform_actions {
 			$auth = new SimpleAuthenticator($code_length, 'SHA1');
 
 			if($auth->verifyCode($this->dataRecord['totp_secret'], $this->dataRecord['totp_verification_code'], 2)) {
-				$sys_user = $app->db->queryOneRecord('SELECT otp_data FROM sys_user WHERE userid = ?', $_SESSION['s']['user']['userid']);
 				$data = json_decode($sys_user['otp_data'], TRUE);
 
 				$data['totp_secret'] = $this->dataRecord['totp_secret'];

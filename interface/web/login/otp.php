@@ -192,9 +192,6 @@ if($_SESSION['otp']['type'] == 'email') {
 				$app->ispcmail->setOptions($mail_config);
 			}
 
-			$sys_user = $app->db->queryOneRecord('SELECT otp_data FROM sys_user WHERE userid = ?', $_SESSION['s_pending']['user']['userid']);
-			$data = json_decode($sys_user['otp_data'], TRUE);
-
 			if (!empty($data['otp_email_override'] )) {
 				// Handle otp_email_override.
 				$email_to = $data['otp_email_override'];
