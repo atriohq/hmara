@@ -108,7 +108,6 @@ if(isset($_POST['code']) && strlen($_POST['code']) == $otp_recovery_code_length)
 
 if ($sys_user['otp_attempts'] > $max_global_code_retry) {
 	$app->error('OTP max attempts reached. Contact your administrator.', 'index.php');
-	die();
 }
 
 // Begin 2fa via Email.
