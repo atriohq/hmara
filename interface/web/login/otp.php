@@ -229,7 +229,9 @@ if($_SESSION['otp']['type'] == 'email') {
 					$_SESSION['otp']['sent']++;
 				}
 
-				$token_sent_message = $wb['otp_code_email_sent_txt'] . ' ' . $email_to;
+				// Inform user that the code was sent.
+				// Email adress wil be masked, 'info@example.com' would look like 'i***@e******.c**'
+				$token_sent_message = $wb['otp_code_email_sent_txt'] . ' ' . preg_replace('/\B[^@.]/', '*', $email_to);
 			}
 			else {
 				$token_sent_message = sprintf($wb['otp_code_email_sent_failed_txt'], $email_to);
