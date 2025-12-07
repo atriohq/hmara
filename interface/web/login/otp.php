@@ -248,25 +248,31 @@ if($_SESSION['otp']['type'] == 'email') {
 
 	$code_length = 6;
 
-	if (isset($_POST['code']) && strlen($_POST['code']) == $code_length && is_numeric($_POST['code'])
-		&& isset($data['totp_secret'])) {
+	if (isset($_POST['code']) && isset($data['totp_secret'])) {
+		if (strlen($_POST['code']) == $code_length && is_numeric($_POST['code'])) {
 
-		$auth = new SimpleAuthenticator($code_length, 'SHA1');
+			$auth = new SimpleAuthenticator($code_length, 'SHA1');
 
-		//* Check if we reached limits
-		if (
-			$_SESSION['otp']['session_attempts'] > $max_session_code_retry
-			|| $sys_user['otp_attempts'] > $max_global_code_retry
-			|| time() > $_SESSION['otp']['starttime'] + $max_time
-			) {
-			unset($_SESSION['otp']);
-			unset($_SESSION['s_pending']);
-			$app->error('2FA failed, please try again. ','index.php');
-		}
+			//* Check if we reached limits
+			if (
+				$_SESSION['otp']['session_attempts'] > $max_session_code_retry
+				|| $sys_user['otp_attempts'] > $max_global_code_retry
+				|| time() > $_SESSION['otp']['starttime'] + $max_time
+				) {
+				unset($_SESSION['otp']);
+				unset($_SESSION['s_pending']);
+				$app->error('2FA failed, please try again. ','index.php');
+			}
 
-		if ($auth->verifyCode($data['totp_secret'], $_POST['code'], 2)) {
-			// 2fa success
-			finish_2fa_success('with totp-2fa');
+			if ($auth->verifyCode($data['totp_secret'], $_POST['code'], 2)) {
+				// 2fa success
+				finish_2fa_success('with totp-2fa');
+			} else {
+				// Wrong 2FA code
+				$_SESSION['otp']['session_attempts']++;
+				$app->db->query('UPDATE `sys_user` SET otp_attempts=otp_attempts + 1 WHERE userid = ?', $_SESSION['s_pending']['user']['userid']);
+				$error = $wb['otp_error_code_incorrect'];
+			}
 		} else {
 			// Wrong 2FA code - incorrect format
 			$_SESSION['otp']['session_attempts']++;
@@ -277,7 +283,6 @@ if($_SESSION['otp']['type'] == 'email') {
 	}
 	else {
 		$_SESSION['otp']['starttime'] = time();
-		$error = $wb['otp_error_code_incorrect'];
 
 		// JUST FOR DEBUGGING - provide a sample totp code.
 		#$auth = new SimpleAuthenticator($code_length, 'SHA1');
