@@ -41,6 +41,7 @@ $wb['otp_code_email_template_txt'] = 'Your One time login code is %s' . PHP_EOL 
 $wb['otp_code_resend_txt'] = 'Request new code';
 $wb['otp_code_email_sent_failed_txt'] = 'Failed sending an email to %s';
 $wb['otp_code_email_sent_wait_txt'] = 'Vent venligst, gensendelse af koden er kun mulig efter %s sekunder.';
+$wb['otp_error_code_incorrect'] = 'OTP code incorrect';
 $wb['force_password_change_title'] = 'Adgangskodeændring påkrævet';
 $wb['force_password_change_message'] = 'Din adgangskode er %d dage gammel og skal ændres. Adgangskoder skal ændres hver %d dag af sikkerhedsmæssige årsager.';
 $wb['new_password_txt'] = 'Ny adgangskode';

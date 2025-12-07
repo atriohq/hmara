@@ -140,6 +140,7 @@ if($_SESSION['otp']['type'] == 'email') {
 			//* 2fa wrong code
 			$_SESSION['otp']['session_attempts']++;
 			$app->db->query('UPDATE `sys_user` SET otp_attempts=otp_attempts + 1 WHERE userid = ?', $_SESSION['s_pending']['user']['userid']);
+			$error = $wb['otp_error_code_incorrect'];
 		}
 	}
 
@@ -267,10 +268,13 @@ if($_SESSION['otp']['type'] == 'email') {
 			// Wrong 2FA code
 			$_SESSION['otp']['session_attempts']++;
 			$app->db->query('UPDATE `sys_user` SET otp_attempts=otp_attempts + 1 WHERE userid = ?', $_SESSION['s_pending']['user']['userid']);
+			$error = $wb['otp_error_code_incorrect'];
 		}
+
 	}
 	else {
 		$_SESSION['otp']['starttime'] = time();
+		$error = $wb['otp_error_code_incorrect'];
 
 		// JUST FOR DEBUGGING - provide a sample totp code.
 		#$auth = new SimpleAuthenticator($code_length, 'SHA1');
@@ -306,6 +310,8 @@ $csrf_token = $app->auth->csrf_token_get('otp');
 $app->tpl->setVar('_csrf_id',$csrf_token['csrf_id']);
 $app->tpl->setVar('_csrf_key',$csrf_token['csrf_key']);
 //$app->tpl->setVar('msg', print_r($_SESSION['otp'], 1)); // For DEBUG only.
+
+$app->tpl->setVar('error', $error);
 
 $app->tpl->setVar($wb);
 
