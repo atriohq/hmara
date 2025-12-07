@@ -107,7 +107,7 @@ if(isset($_POST['code']) && strlen($_POST['code']) == $otp_recovery_code_length)
 }
 
 if ($sys_user['otp_attempts'] > $max_global_code_retry) {
-	$app->error('Otp max attemptys reached', 'index.php');
+	$app->error('OTP max attempts reached. Contact your administrator.', 'index.php');
 	die();
 }
 
@@ -130,7 +130,7 @@ if($_SESSION['otp']['type'] == 'email') {
 			) {
 			unset($_SESSION['otp']);
 			unset($_SESSION['s_pending']);
-			$app->error('2FA failed','index.php');
+			$app->error('2FA failed, please try again. ','index.php');
 		}
 
 		if(password_verify($_POST['code'], $_SESSION['otp']['code_hash'])) {
@@ -142,6 +142,9 @@ if($_SESSION['otp']['type'] == 'email') {
 			$app->db->query('UPDATE `sys_user` SET otp_attempts=otp_attempts + 1 WHERE userid = ?', $_SESSION['s_pending']['user']['userid']);
 			$error = $wb['otp_error_code_incorrect'];
 		}
+	}
+	elseif(isset($_POST['code'])) {
+		$error = $wb['otp_error_code_incorrect'];
 	}
 
 	// Send code via email.
@@ -258,14 +261,14 @@ if($_SESSION['otp']['type'] == 'email') {
 			) {
 			unset($_SESSION['otp']);
 			unset($_SESSION['s_pending']);
-			$app->error('2FA failed','index.php');
+			$app->error('2FA failed, please try again. ','index.php');
 		}
 
 		if ($auth->verifyCode($data['totp_secret'], $_POST['code'], 2)) {
 			// 2fa success
 			finish_2fa_success('with totp-2fa');
 		} else {
-			// Wrong 2FA code
+			// Wrong 2FA code - incorrect format
 			$_SESSION['otp']['session_attempts']++;
 			$app->db->query('UPDATE `sys_user` SET otp_attempts=otp_attempts + 1 WHERE userid = ?', $_SESSION['s_pending']['user']['userid']);
 			$error = $wb['otp_error_code_incorrect'];
@@ -282,7 +285,7 @@ if($_SESSION['otp']['type'] == 'email') {
 		#$_SESSION['otp']['sample_code'] = $auth->getCode($data['totp_secret']);
 	}
 } else {
-	$app->error('Otp method unknown', 'index.php');
+	$app->error('OTP method unknown', 'index.php');
 }
 
 
