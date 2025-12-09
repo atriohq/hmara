@@ -50,24 +50,6 @@ $app->load('tform_actions');
 
 class page_action extends tform_actions {
 
-    function check_validation_server($field_name, $field_value, $validator) {
-        global $app;
-
-        $access_type = isset($_POST['access']) ? $_POST['access'] : '';
-
-        if($access_type === 'reject_unverified_recipient') {
-            $valServer = trim($field_value);
-
-            // Only check format here — empty check done in tform action
-            $pattern = '/^smtp:(?:\[[^\]]+\](?::\d+)?|[^:\[\]]+(?::\d+)?)$/i';
-            if(!preg_match($pattern, $valServer)) {
-                return $app->tform->errorMessage .= $app->tform->wordbook["validation_server_invalid"]."<br>";
-            }
-        }
-
-        return ''; // No error
-    }
-
 }
 
 $app->tform_actions = new page_action;
