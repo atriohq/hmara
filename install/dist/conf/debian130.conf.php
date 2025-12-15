@@ -28,7 +28,7 @@ NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-//***  Debian 11 default settings
+//***  Debian 13 default settings
 
 //* Main
 $conf['language'] = 'en';
@@ -64,7 +64,7 @@ $conf['mysql']['port'] = '3306';
 $conf['mysql']['database'] = 'dbispconfig';
 $conf['mysql']['admin_user'] = 'root';
 $conf['mysql']['admin_password'] = '';
-$conf['mysql']['charset'] = 'utf8';
+$conf['mysql']['charset'] = 'utf8mb4';
 $conf['mysql']['ispconfig_user'] = 'ispconfig';
 $conf['mysql']['ispconfig_password'] = md5(random_bytes(20));
 $conf['mysql']['master_slave_setup'] = 'n';

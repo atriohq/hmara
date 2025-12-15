@@ -6,7 +6,8 @@ dovecot_config_version = 2.4.1
 dovecot_storage_version = 2.4.1
 
 listen = *,[::]
-protocols = imap pop3 lmtp
+# Note: lmtp and sieve protocols are added dynamically by the installer when installed
+protocols = imap pop3
 auth_mechanisms = plain login
 #auth_allow_cleartext = no
 log_timestamp = "%Y-%m-%d %H:%M:%S "
@@ -33,8 +34,8 @@ passdb sql {
 	FROM mail_user \
 	WHERE (login = '%{user}' OR email = '%{user}') \
 		AND `disable%{protocol | lower}` = 'n' \
-		AND server_id = '2' \
-		AND NOT EXISTS (SELECT domain_id FROM mail_domain WHERE domain = '%{user | domain }' AND active = 'n' AND server_id = 2)
+		AND server_id = '{server_id}' \
+		AND NOT EXISTS (SELECT domain_id FROM mail_domain WHERE domain = '%{user | domain }' AND active = 'n' AND server_id = {server_id})
 
 }
 userdb sql {
@@ -45,24 +46,32 @@ userdb sql {
 	FROM mail_user \
 	WHERE (login = '%{user}' OR email = '%{user}') \
 		AND `disable%{protocol | lower}` = 'n' \
-		AND server_id = '2'
+		AND server_id = '{server_id}'
 
-  userdb_sql_iterate_query = SELECT email as user FROM mail_user WHERE disabledoveadm='n' AND server_id = '2'
+  userdb_sql_iterate_query = SELECT email as user FROM mail_user WHERE disabledoveadm='n' AND server_id = '{server_id}'
 }
 
-# TODO: Some of these have become global vars, but I don't see e.g. sieve_before being referenced anymore.
-#plugin {
-#  quota = dict:user::file:/var/vmail/%{user | domain }/%{user | username }/.quotausage
-#
-#  # no longer needed, as 'sieve' is in userdb extra fields:
-#  sieve=/var/vmail/%{user | domain }/%{user | username }/.sieve
-#
-#  sieve_before=/var/vmail/%{user | domain }/%{user | username }/.ispconfig-before.sieve
-#  sieve_after=/var/vmail/%{user | domain }/%{user | username }/.ispconfig.sieve
-#  sieve_max_script_size = 2M
-#  sieve_max_actions = 100
-#  sieve_max_redirects = 25
-#}
+# Sieve script storages (Dovecot 2.4 syntax)
+sieve_script personal {
+  path = /var/vmail/%{user | domain}/%{user | localpart}/.sieve
+}
+sieve_script ispconfig_before {
+  type = before
+  path = /var/vmail/%{user | domain}/%{user | localpart}/.ispconfig-before.sieve
+}
+sieve_script ispconfig_after {
+  type = after
+  path = /var/vmail/%{user | domain}/%{user | localpart}/.ispconfig.sieve
+}
+
+# Sieve settings
+sieve_max_script_size = 2M
+sieve_max_actions = 100
+sieve_max_redirects = 25
+
+plugin {
+  quota = dict:user::file:/var/vmail/%{user | domain}/%{user | localpart}/.quotausage
+}
 service auth {
   unix_listener /var/spool/postfix/private/auth {
     group = postfix
@@ -133,12 +142,10 @@ service quota-status {
   client_limit = 1
 }
 
-# TODO: These have become global vars, but maybe just revert to the defaults? Which are: 'OK', 'REJECT Unknown user' and '554 5.2.2 %{error}'
-#plugin {
-#  quota_status_success = DUNNO
-#  quota_status_nouser = DUNNO
-#  quota_status_overquota = "552 5.2.2 Mailbox is full"
-#}
+# Quota status service settings (global in Dovecot 2.4)
+quota_status_success = DUNNO
+quota_status_nouser = DUNNO
+quota_status_overquota = "552 5.2.2 Mailbox is full"
 
 imap_capability=+SPECIAL-USE XLIST
 namespace inbox {
