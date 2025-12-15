@@ -30,7 +30,7 @@ passdb sql {
  
   passdb_sql_query = SELECT email as user, password, maildir as userdb_home, CONCAT( maildir_format, ':', maildir, '/', \
 		IF(maildir_format='maildir','Maildir',maildir_format)) as userdb_mail, uid as userdb_uid, gid as userdb_gid, \
-		CONCAT('*:storage=', quota, 'B') AS userdb_quota_rule, CONCAT(maildir, '/.sieve') as userdb_sieve, NULLIF(imap_prefix, '') as "userdb_namespace/inbox/prefix" \
+		CONCAT(quota, 'B') AS userdb_quota_storage_size, CONCAT(maildir, '/.sieve') as userdb_sieve, NULLIF(imap_prefix, '') as "userdb_namespace/inbox/prefix" \
 	FROM mail_user \
 	WHERE (login = '%{user}' OR email = '%{user}') \
 		AND `disable%{protocol | lower}` = 'n' \
@@ -42,7 +42,7 @@ userdb sql {
   sql_driver = mysql
 
   userdb_sql_query = SELECT email as user, maildir as home, CONCAT( maildir_format, ':', maildir, '/', IF(maildir_format='maildir','Maildir',maildir_format)) as mail, \
-		uid, gid, CONCAT('*:storage=', quota, 'B') AS quota_rule, CONCAT(maildir, '/.sieve') as sieve, NULLIF(imap_prefix, '') as "namespace/inbox/prefix" \
+		uid, gid, CONCAT(quota, 'B') AS quota_storage_size, CONCAT(maildir, '/.sieve') as sieve, NULLIF(imap_prefix, '') as "namespace/inbox/prefix" \
 	FROM mail_user \
 	WHERE (login = '%{user}' OR email = '%{user}') \
 		AND `disable%{protocol | lower}` = 'n' \
@@ -69,9 +69,11 @@ sieve_max_script_size = 2M
 sieve_max_actions = 100
 sieve_max_redirects = 25
 
-plugin {
-  quota = dict:user::file:/var/vmail/%{user | domain}/%{user | localpart}/.quotausage
-}
+# Quota configuration (Dovecot 2.4 syntax)
+mail_plugins = quota
+quota_driver = count
+mailbox_list_index = yes
+
 service auth {
   unix_listener /var/spool/postfix/private/auth {
     group = postfix

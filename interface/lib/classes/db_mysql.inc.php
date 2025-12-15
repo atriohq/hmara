@@ -127,7 +127,19 @@ class db
 		if(mysqli_connect_errno()) {
 			return false;
 		}
-		return (boolean)(is_object($this->_iConnId) && mysqli_query($this->_iConnId, 'SELECT 1'));
+		if (!is_object($this->_iConnId)) {
+			return false;
+		}
+		try {
+			$res = mysqli_query($this->_iConnId, 'SELECT 1');
+			if ($res !== false) {
+				mysqli_free_result($res);
+				return true;
+			}
+		} catch (mysqli_sql_exception $e) {
+			// Connection lost or query failed
+		}
+		return false;
 	}
 
 	/* This allows our private variables to be "read" out side of the class */
@@ -270,14 +282,16 @@ class db
 		do {
 			$try++;
 			$ok = false;
-			try {
-				$res = mysqli_query($this->_iConnId, 'SELECT 1');
-				if ($res !== false) {
-					mysqli_free_result($res);
-					$ok = true;
+			if (is_object($this->_iConnId)) {
+				try {
+					$res = mysqli_query($this->_iConnId, 'SELECT 1');
+					if ($res !== false) {
+						mysqli_free_result($res);
+						$ok = true;
+					}
+				} catch (mysqli_sql_exception $e) {
+					$ok = false;
 				}
-			} catch (mysqli_sql_exception $e) {
-				$ok = false;
 			}
 
 			if(!$ok) {
