@@ -49,7 +49,27 @@ if($conf['demo_mode'] == true) $app->error('This function is disabled in demo mo
 
 if(!$app->auth->is_admin()) die('Allowed for administrators only.');
 
-$app->uses("tform_actions");
-$app->tform_actions->onDelete();
+// Loading classes
+$app->uses('tpl,tform,tform_actions');
+$app->load('tform_actions');
+
+class page_action extends tform_actions {
+
+	function onAfterDelete() {
+		global $app;
+
+		//* Delete related records from server_ip table
+		$app->db->query("DELETE FROM server_ip WHERE server_id = ?", $this->id);
+
+		//* Delete related records from monitor_data table
+		$app->db->query("DELETE FROM monitor_data WHERE server_id = ?", $this->id);
+
+		parent::onAfterDelete();
+	}
+
+}
+
+$page = new page_action;
+$page->onDelete();
 
 ?>
