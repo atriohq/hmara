@@ -71,8 +71,12 @@ sieve_max_redirects = 25
 
 # Quota configuration (Dovecot 2.4 syntax)
 mail_plugins = quota
-quota_driver = count
 mailbox_list_index = yes
+
+quota "User quota" {
+  driver = count
+  # quota_storage_size is set via userdb
+}
 
 service auth {
   unix_listener /var/spool/postfix/private/auth {
