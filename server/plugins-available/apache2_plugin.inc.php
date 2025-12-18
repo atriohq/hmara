@@ -1831,7 +1831,7 @@ class apache2_plugin {
 			unset($tmp_vhost_arr, $ipv4_ssl_alias_seo_redirects);
 			$app->log('Enable SSL for: '.$domain, LOGLEVEL_DEBUG);
 
-			$ocsp_uri = $app->system->exec_safe('openssl x509 -noout -ocsp_uri -in ? 2>&1', $vhost_data['ssl_crt_file']);
+			$ocsp_uri = $app->system->exec_safe('openssl x509 -noout -ocsp_uri -in ?', $vhost_data['ssl_crt_file']);
 			if (!empty($ocsp_uri) && $data['new']['ssl'] == 'y') {
 				$tpl->setVar('ssl_ocsp_supported', 'y');
 			}
