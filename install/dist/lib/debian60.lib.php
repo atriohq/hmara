@@ -131,11 +131,10 @@ class installer extends installer_base {
 
 			if(version_compare($dovecot_version, 2.4) >= 0) {
 				// Debian 13 ships with Dovecot 2.4
-				if(is_file($conf['ispconfig_install_dir'].'/server/conf-custom/install/debian6_dovecot2.4.conf.master')) {
-					copy($conf['ispconfig_install_dir'].'/server/conf-custom/install/debian6_dovecot2.4.conf.master', $config_dir.'/'.$configfile);
-				} else {
-					copy('tpl/debian6_dovecot2.4.conf.master', $config_dir.'/'.$configfile);
-				}
+				$content = rfsel($conf['ispconfig_install_dir'].'/server/conf-custom/install/debian6_dovecot2.4.conf.master', 'tpl/debian6_dovecot2.4.conf.master');
+				$content = str_replace('{server_id}', $conf['server_id'], $content);
+				wf($config_dir.'/'.$configfile, $content);
+				
 				// Copy custom config file
 				if(is_file($conf['ispconfig_install_dir'].'/server/conf-custom/install/dovecot_custom.conf.master')) {
 					if(!@is_dir($config_dir . '/conf.d')) {
