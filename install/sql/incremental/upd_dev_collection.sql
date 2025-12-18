@@ -76,3 +76,5 @@ END$$
 DELIMITER ;
 CALL convert_utf8_columns();
 DROP PROCEDURE convert_utf8_columns;
+
+ALTER TABLE mail_user ADD COLUMN disablereplicator CHAR(1) NOT NULL DEFAULT 'n';
