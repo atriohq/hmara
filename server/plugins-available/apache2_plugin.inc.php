@@ -1958,6 +1958,8 @@ class apache2_plugin {
 			$ht_file = "AuthType Basic\nAuthName \"Members Only\"\nAuthUserFile ".$data['new']['document_root']."/".$web_folder."/stats/.htpasswd_stats\nrequire valid-user\nDirectoryIndex index.html index.php\nHeader set Content-Security-Policy \"default-src * 'self' 'unsafe-inline' 'unsafe-eval' data:;\"\n<Files \"goaindex.html\">\nAddDefaultCharset UTF-8\n</Files>\n";
 			$app->system->file_put_contents($data['new']['document_root'].'/' . $web_folder . '/stats/.htaccess', $ht_file);
 			$app->system->chmod($data['new']['document_root'].'/' . $web_folder . '/stats/.htaccess', 0640);
+			$app->system->chown($data['new']['document_root'].'/' . $web_folder . '/stats/.htaccess', $data['new']['system_user']);
+			$app->system->chgrp($data['new']['document_root'].'/' . $web_folder . '/stats/.htaccess', $data['new']['system_group']);
 			unset($ht_file);
 
 			if(!is_file($data['new']['document_root'].'/'.$web_folder.'/stats/.htpasswd_stats') || $data['new']['stats_password'] != $data['old']['stats_password']) {
