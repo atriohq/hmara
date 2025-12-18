@@ -262,7 +262,7 @@ class webserver_plugin {
 			return;
 		}
 
-		$hardlink_mode_changed = (boolean)(($old['jailkit_hardlinks'] != $new['jailkit_hardlinks']) && $new['jailkit_hardlinks'] != 'allow');
+		$hardlink_mode_changed = (bool)(($old['jailkit_hardlinks'] != $new['jailkit_hardlinks']) && $new['jailkit_hardlinks'] != 'allow');
 
 		if (($old['jailkit_chroot_app_sections'] != $new['jailkit_chroot_app_sections']) ||
 		    ($old['jailkit_chroot_app_programs'] != $new['jailkit_chroot_app_programs']) ||
