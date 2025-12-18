@@ -68,6 +68,8 @@ class mail_plugin_dkim {
 		$app->plugins->registerEvent('mail_domain_delete', $this->plugin_name, 'domain_dkim_delete');
 		$app->plugins->registerEvent('mail_domain_insert', $this->plugin_name, 'domain_dkim_insert');
 		$app->plugins->registerEvent('mail_domain_update', $this->plugin_name, 'domain_dkim_update');
+
+		$app->services->registerService('amavis', 'mail_module', 'restartAmavis');
 	}
 
 	/**
@@ -184,16 +186,11 @@ class mail_plugin_dkim {
 	/**
 	 * This function restarts amavis
 	 */
-    private function restart_amavis() {
-        global $app;
-		$output = null;
-		$initcommand = $app->system->getinitcommand(array('amavis', 'amavisd'), 'restart');
-		$app->log('Restarting amavis: '.$initcommand.'.', LOGLEVEL_DEBUG);
-		exec($initcommand, $output);
-		foreach($output as $logline) {
-			$app->log($logline, LOGLEVEL_DEBUG);
-		}
-    }
+	private function restart_amavis() {
+		global $app;
+
+		$app->services->restartServiceDelayed('amavis', 'restart');
+	}
 
 	/**
 	 * This function writes the keyfiles (public and private)
