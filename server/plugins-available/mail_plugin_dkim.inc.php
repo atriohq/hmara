@@ -308,7 +308,8 @@ class mail_plugin_dkim {
 		$amavis_configfile = $this->get_amavis_config();
 		$amavis_config = $app->system->file_get_contents($amavis_configfile, true);
 
-		$search_regex = "/(\n|\r)?dkim_key\('".$key_domain."', '.*?', '.*?'\);(\n|\r)?/";
+		$escaped_domain = preg_quote($key_domain, '/');
+		$search_regex = "/(\n|\r)?dkim_key\('".$escaped_domain."', '.*?', '.*?'\);(\n|\r)?/";
 
 		if (preg_match($search_regex, $amavis_config)) {
 			$amavis_config = preg_replace($search_regex, "\n", $amavis_config);
@@ -323,7 +324,7 @@ class mail_plugin_dkim {
 			if(file_exists($temp_configfile)) {
 				$temp_config = $app->system->file_get_contents($temp_configfile, true);
 				if (preg_match($search_regex, $temp_config)) {
-					$temp_config = preg_replace($search_regex, '', $temp_config);
+					$temp_config = preg_replace($search_regex, "\n", $temp_config);
 					$app->system->file_put_contents($temp_configfile, $temp_config, true);
 					$restart = true;
 				}
