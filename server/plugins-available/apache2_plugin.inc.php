@@ -1957,7 +1957,7 @@ class apache2_plugin {
 			if(!is_dir($data['new']['document_root'].'/' . $web_folder . '/stats')) $app->system->mkdir($data['new']['document_root'].'/' . $web_folder . '/stats');
 			$ht_file = "AuthType Basic\nAuthName \"Members Only\"\nAuthUserFile ".$data['new']['document_root']."/".$web_folder."/stats/.htpasswd_stats\nrequire valid-user\nDirectoryIndex index.html index.php\nHeader set Content-Security-Policy \"default-src * 'self' 'unsafe-inline' 'unsafe-eval' data:;\"\n<Files \"goaindex.html\">\nAddDefaultCharset UTF-8\n</Files>\n";
 			$app->system->file_put_contents($data['new']['document_root'].'/' . $web_folder . '/stats/.htaccess', $ht_file);
-			$app->system->chmod($data['new']['document_root'].'/' . $web_folder . '/stats/.htaccess', 0755);
+			$app->system->chmod($data['new']['document_root'].'/' . $web_folder . '/stats/.htaccess', 0640);
 			unset($ht_file);
 
 			if(!is_file($data['new']['document_root'].'/'.$web_folder.'/stats/.htpasswd_stats') || $data['new']['stats_password'] != $data['old']['stats_password']) {
@@ -1966,7 +1966,7 @@ class apache2_plugin {
 					$app->system->web_folder_protection($data['new']['document_root'], false);
 					$app->system->file_put_contents($data['new']['document_root'].'/'.$web_folder.'/stats/.htpasswd_stats', $htp_file);
 					$app->system->web_folder_protection($data['new']['document_root'], true);
-					$app->system->chmod($data['new']['document_root'].'/'.$web_folder.'/stats/.htpasswd_stats', 0755);
+					$app->system->chmod($data['new']['document_root'].'/'.$web_folder.'/stats/.htpasswd_stats', 0640);
 					unset($htp_file);
 				}
 			}
