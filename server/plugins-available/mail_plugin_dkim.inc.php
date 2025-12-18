@@ -308,10 +308,10 @@ class mail_plugin_dkim {
 		$amavis_configfile = $this->get_amavis_config();
 		$amavis_config = $app->system->file_get_contents($amavis_configfile, true);
 
-		$search_regex = "/(\n|\r)?dkim_key.*".$key_domain.".*(\n|\r)?/";
+		$search_regex = "/(\n|\r)?dkim_key\('".$key_domain."', '.*?', '.*?'\);(\n|\r)?/";
 
 		if (preg_match($search_regex, $amavis_config)) {
-			$amavis_config = preg_replace($search_regex, '', $amavis_config);
+			$amavis_config = preg_replace($search_regex, "\n", $amavis_config);
 			$app->system->file_put_contents($amavis_configfile, $amavis_config, true);
 			$app->log('Deleted the DKIM settings from amavis-config for '.$key_domain.'.', LOGLEVEL_DEBUG);
 			$restart = true;
