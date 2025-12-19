@@ -68,8 +68,6 @@ class mail_plugin_dkim {
 		$app->plugins->registerEvent('mail_domain_delete', $this->plugin_name, 'domain_dkim_delete');
 		$app->plugins->registerEvent('mail_domain_insert', $this->plugin_name, 'domain_dkim_insert');
 		$app->plugins->registerEvent('mail_domain_update', $this->plugin_name, 'domain_dkim_update');
-
-		$app->services->registerService('amavis', $this->plugin_name, 'restartAmavis');
 	}
 
 	/**
@@ -181,25 +179,6 @@ class mail_plugin_dkim {
 			$check=false;
 		}
 		return $check;
-	}
-
-	/**
-	 * This function restarts amavis
-	 */
-	function restartAmavis($action = 'reload') {
-		global $app;
-
-		$app->uses('system');
-
-		$daemon = 'amavis';
-
-		$retval = array('output' => '', 'retval' => 0);
-		if($action == 'restart') {
-			exec($app->system->getinitcommand($daemon, 'restart').' 2>&1', $retval['output'], $retval['retval']);
-		} else {
-			exec($app->system->getinitcommand($daemon, 'reload').' 2>&1', $retval['output'], $retval['retval']);
-		}
-		return $retval;
 	}
 
 	/**
