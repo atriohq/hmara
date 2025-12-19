@@ -2938,10 +2938,18 @@ class system{
 			if(is_array($options['homedir_usernames']) && !empty($options['homedir_usernames'])) {
 				foreach($options['homedir_usernames'] as $homedir_username) {
 
-					if(preg_match('/^([^:]+):([^:]+)$/', $homedir_username, $matches)) {
+					if(!preg_match('/^([^:]+):([^:]+)$/', $homedir_username, $matches)) {
+						$app->log('Invalid homedir_username format: '.$homedir_username, LOGLEVEL_WARN);
+						continue;
+					}
 
-						$username = $matches[1];
-						$group = $matches[2];
+					$username = $matches[1];
+					$group = $matches[2];
+
+					// Validate username and group to prevent path traversal
+					if(!preg_match('/^[a-z0-9_][a-z0-9_-]*$/i', $username) || !preg_match('/^[a-z0-9_][a-z0-9_-]*$/i', $group)) {
+						$app->log('Invalid username or group format: '.$username.':'.$group, LOGLEVEL_WARN);
+						continue;
 					}
 
 					if($used_os_type == "debian" || $used_os_type == "ubuntu") {
@@ -2970,11 +2978,13 @@ class system{
 							$fallback_php = $app->system->get_newest_php_bin($home_dir . $php_bin_dir);
 							$fallback_php_bin = str_replace($home_dir, '', $fallback_php !== null ? $fallback_php : '');
 
-							if(!empty($fallback_php) && file_exists($fallback_php_bin)) {
-								if(file_exists($php_binary)) {
+							if(!empty($fallback_php) && file_exists($fallback_php)) {
+								if(file_exists($php_binary) || is_link($php_binary)) {
 									unlink($php_binary);
 								}
-								symlink($fallback_php_bin, $php_binary);
+								if(!file_exists($php_binary) && !is_link($php_binary)) {
+									symlink($fallback_php_bin, $php_binary);
+								}
 								$app->log("update_jailkit_chroot: Found " . $fallback_php_bin . " as a fallback for PHP in the jail of " . $options['domain'], LOGLEVEL_DEBUG);
 
 							}
