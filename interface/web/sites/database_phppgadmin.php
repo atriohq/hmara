@@ -1,5 +1,4 @@
 <?php
-
 /*
 Copyright (c) 2008, Till Brehm, projektfarm Gmbh
 All rights reserved.
@@ -28,80 +27,50 @@ NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+
 require_once '../../lib/config.inc.php';
 require_once '../../lib/app.inc.php';
-
-/******************************************
-* Begin Form configuration
-******************************************/
-
-$list_def_file = "list/database.list.php";
-
-/******************************************
-* End Form configuration
-******************************************/
 
 //* Check permissions for module
 $app->auth->check_module_permissions('sites');
 
-$app->load('listform_actions');
+/*
+ *  get the id of the database (must be int!)
+ */
+if (!isset($_GET['id'])){
+	die ("No DB selected!");
+}
+$databaseId = $app->functions->intval($_GET['id']);
 
+/*
+ * Get the data to connect to the database
+ */
+$dbData = $app->db->queryOneRecord("SELECT server_id, database_name, type FROM web_database WHERE database_id = ?", $databaseId);
 
-class list_action extends listform_actions {
-
-	private $global_config;
-
-	function onLoad() {
-		global $app;
-
-		$app->uses('getconf');
-		$this->global_config = $app->getconf->get_global_config('sites');
-
-		parent::onLoad();
-	}
-
-	function onShow() {
-		global $app, $conf;
-
-		if($this->global_config['dblist_phpmyadmin_link'] == 'y') {
-			$app->tpl->setVar('dblist_phpmyadmin_link', 1);
-		} else {
-			$app->tpl->setVar('dblist_phpmyadmin_link', 0);
-		}
-
-		parent::onShow();
-	}
-
-	function prepareDataRow($rec) {
-		global $app;
-
-		$rec = parent::prepareDataRow($rec);
-
-		//* Set flags for showing phpMyAdmin or phpPgAdmin links based on database type
-		$db_type = isset($rec['type']) ? $rec['type'] : 'mysql';
-
-		//* Show phpMyAdmin link only for MySQL/MariaDB databases
-		if($db_type == 'mysql' && $this->global_config['dblist_phpmyadmin_link'] == 'y') {
-			$rec['show_phpmyadmin_link'] = 1;
-		} else {
-			$rec['show_phpmyadmin_link'] = 0;
-		}
-
-		//* Show phpPgAdmin link only for PostgreSQL databases and only if URL is configured
-		if($db_type == 'pgsql' && !empty($this->global_config['phppgadmin_url'])) {
-			$rec['show_phppgadmin_link'] = 1;
-		} else {
-			$rec['show_phppgadmin_link'] = 0;
-		}
-
-		return $rec;
-	}
-
+//* Check if this is a PostgreSQL database
+if($dbData['type'] != 'pgsql') {
+	die ("This is not a PostgreSQL database!");
 }
 
-$list = new list_action;
-$list->SQLOrderBy = 'ORDER BY web_database.database_name';
-$list->onLoad();
+$serverId = $app->functions->intval($dbData['server_id']);
+if ($serverId == 0){
+	die ("No DB-Server found!");
+}
+$serverData = $app->db->queryOneRecord("SELECT server_name FROM server WHERE server_id = ?", $serverId);
 
+$app->uses('getconf');
+$global_config = $app->getconf->get_global_config('sites');
 
+/*
+ * We only redirect to the login-form, so there is no need, to check any rights
+ */
+
+if(!empty($global_config['phppgadmin_url'])) {
+	$phppgadmin_url = $global_config['phppgadmin_url'];
+	$phppgadmin_url = str_replace(array('[SERVERNAME]', '[DATABASENAME]'), array($serverData['server_name'], $dbData['database_name']), $phppgadmin_url);
+	header('Location: '.$phppgadmin_url);
+} else {
+	die ("phpPgAdmin URL not configured!");
+}
+exit;
 ?>
