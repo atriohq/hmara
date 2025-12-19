@@ -181,7 +181,11 @@ class db
 					$iPos = $iPos2;
 				} else {
 					if(is_int($sValue) || is_float($sValue)) {
-						$sTxt = $sValue;
+						if(is_float($sValue) && floor($sValue) == $sValue) {
+							$sTxt = (int)$sValue;
+						} else {
+							$sTxt = $sValue;
+						}
 					} elseif(is_null($sValue) || (is_string($sValue) && (strcmp($sValue, '#NULL#') == 0))) {
 						$sTxt = 'NULL';
 					} elseif(is_array($sValue)) {
