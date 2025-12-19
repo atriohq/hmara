@@ -53,6 +53,7 @@ class system_config_dns_ca_plugin {
 			$host=str_replace($zone['origin'], '', $page_form->dataRecord['name']);
 			$host=rtrim($host,'.');
 			$page_form->dataRecord['additional']=str_replace($host, '', $page_form->dataRecord['additional']);
+			$page_form->dataRecord['additional']=str_replace(".".$zone['origin'], '', $page_form->dataRecord['additional']);
 			$additional=explode(',', $page_form->dataRecord['additional']);
 			foreach($additional as $new) {
 				if($new != '') {
@@ -62,11 +63,11 @@ class system_config_dns_ca_plugin {
 				}
 			}
 		}
-	} 
+	}
 
 	function web_vhost_domain_edit($event_name, $page_form) {
 		global $app, $conf;
-		
+
 		$global_config = $app->getconf->get_global_config('sites');
 
 		if(($page_form->dataRecord['ssl_letsencrypt'] == 'y') && ($global_config['le_caa_autocreate_options'] != 'n')) {
