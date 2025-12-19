@@ -48,6 +48,7 @@ $autoinstall['install_ispconfig_web_interface'] = 'y'; // y (default), n
 $autoupdate['do_backup'] = 'yes'; // yes (default), no
 $autoupdate['mysql_root_password'] = 'howtoforge';
 $autoupdate['mysql_master_hostname'] = 'master.example.com';
+$autoupdate['mysql_master_port'] = '3306'; // default: 3306
 $autoupdate['mysql_master_root_user'] = 'root';
 $autoupdate['mysql_master_root_password'] = 'howtoforge';
 $autoupdate['mysql_master_database'] = 'dbispconfig'; // default: dbispconfig

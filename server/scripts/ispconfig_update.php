@@ -74,6 +74,8 @@ function simple_query($query, $answers, $default)
 
 require_once '/usr/local/ispconfig/server/lib/config.inc.php';
 
+//** Get commandline options
+$cmd_opt = getopt('', array('autoinstall::', 'force'));
 
 echo "\n\n".str_repeat('-', 80)."\n";
 echo " _____ ___________   _____              __ _
@@ -101,5 +103,10 @@ if($method == 'stable') {
 	}
 }
 
-passthru('/usr/local/ispconfig/server/scripts/update_runner.sh ' . escapeshellarg($method));
+$extra_args = '';
+if(isset($cmd_opt['autoinstall']) && $cmd_opt['autoinstall'] != '') {
+	$extra_args .= ' --autoinstall=' . escapeshellarg($cmd_opt['autoinstall']);
+}
+
+passthru('/usr/local/ispconfig/server/scripts/update_runner.sh ' . escapeshellarg($method) . $extra_args);
 exit;
