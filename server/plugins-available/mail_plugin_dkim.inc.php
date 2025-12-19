@@ -68,6 +68,8 @@ class mail_plugin_dkim {
 		$app->plugins->registerEvent('mail_domain_delete', $this->plugin_name, 'domain_dkim_delete');
 		$app->plugins->registerEvent('mail_domain_insert', $this->plugin_name, 'domain_dkim_insert');
 		$app->plugins->registerEvent('mail_domain_update', $this->plugin_name, 'domain_dkim_update');
+
+		$app->services->registerService('amavis', $this->plugin_name, 'restartAmavis');
 	}
 
 	/**
@@ -184,16 +186,21 @@ class mail_plugin_dkim {
 	/**
 	 * This function restarts amavis
 	 */
-    private function restart_amavis() {
-        global $app;
-		$output = null;
-		$initcommand = $app->system->getinitcommand(array('amavis', 'amavisd'), 'restart');
-		$app->log('Restarting amavis: '.$initcommand.'.', LOGLEVEL_DEBUG);
-		exec($initcommand, $output);
-		foreach($output as $logline) {
-			$app->log($logline, LOGLEVEL_DEBUG);
+	function restartAmavis($action = 'reload') {
+		global $app;
+
+		$app->uses('system');
+
+		$daemon = 'amavis';
+
+		$retval = array('output' => '', 'retval' => 0);
+		if($action == 'restart') {
+			exec($app->system->getinitcommand($daemon, 'restart').' 2>&1', $retval['output'], $retval['retval']);
+		} else {
+			exec($app->system->getinitcommand($daemon, 'reload').' 2>&1', $retval['output'], $retval['retval']);
 		}
-    }
+		return $retval;
+	}
 
 	/**
 	 * This function writes the keyfiles (public and private)
@@ -354,7 +361,7 @@ class mail_plugin_dkim {
 					
 					$app->services->restartServiceDelayed('rspamd', 'reload');
 				} elseif ($this->add_to_amavis($data['new']['domain'], $data['new']['dkim_selector'], $data['old']['dkim_selector'] )) {
-					$this->restart_amavis();
+					$app->services->restartServiceDelayed('amavis', 'restart');
 				} else {
 					$this->remove_dkim_key($mail_config['dkim_path']."/".$data['new']['domain'], $data['new']['domain']);
 				}
@@ -382,7 +389,7 @@ class mail_plugin_dkim {
 			$app->system->removeLine('/etc/rspamd/local.d/dkim_selectors.map', 'REGEX:/^' . preg_quote($_data['domain'], '/') . ' /');
 			$app->services->restartServiceDelayed('rspamd', 'reload');
 		} elseif ($this->remove_from_amavis($_data['domain'])) {
-			$this->restart_amavis();
+			$app->services->restartServiceDelayed('amavis', 'restart');
 		}
 	}
 
