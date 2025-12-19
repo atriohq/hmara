@@ -71,6 +71,10 @@ class z_php_fpm_incron_reload_plugin {
 
 	private function setup($data)
 	{
+		if ($data['server_php_id'] == 0) {
+			return;
+		}
+
 		$triggerFile = $this->getTriggerFilePath($data['document_root']);
 
 		$this->createTriggerFile($triggerFile, $data['system_user'], $data['system_group']);
@@ -109,10 +113,10 @@ class z_php_fpm_incron_reload_plugin {
 		return (isset($serverConfig['php_fpm_incron_reload']) && $serverConfig['php_fpm_incron_reload'] === 'y');
 	}
 
-	private function createIncronConfiguration($triggerFile, $systemUser, $fastcgiPhpVersion) {
+	private function createIncronConfiguration($triggerFile, $systemUser, $additionalPhpVersion) {
 		global $app;
 
-		$phpService = $this->getPhpService($fastcgiPhpVersion);
+		$phpService = $this->getPhpService($additionalPhpVersion);
 		$configFile = $this->getIncronConfigurationFilePath($systemUser);
 
 		$content = sprintf(
@@ -172,10 +176,10 @@ class z_php_fpm_incron_reload_plugin {
 		return sprintf('/etc/incron.d/%s.conf', $systemUser);
 	}
 
-	private function getPhpService($fastcgiPhpVersion) {
+	private function getPhpService($additionalPhpVersion) {
 		global $app;
 
-		$phpInfo = $app->db->queryOneRecord('SELECT * FROM server_php WHERE server_php_id = ?', $fastcgiPhpVersion);
+		$phpInfo = $app->db->queryOneRecord('SELECT * FROM server_php WHERE server_php_id = ?', $additionalPhpVersion);
 		if (empty($phpInfo)) {
 			return null;
 		}
