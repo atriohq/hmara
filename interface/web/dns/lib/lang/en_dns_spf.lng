@@ -29,4 +29,5 @@ $wb['no_zone_perm'] = 'You do not have the permission to add a record to this DN
 $wb['ttl_range_error'] = 'Min. TTL time is 60 seconds.';
 $wb['name_error_regex'] = 'The hostname has the wrong format.';
 $wb['btn_edit_as_txt_record_txt'] = 'Edit as TXT record';
+$wb['cname_conflict_txt'] = 'A CNAME record already exists for this hostname. CNAME records cannot coexist with other record types at the same hostname.';
 ?>

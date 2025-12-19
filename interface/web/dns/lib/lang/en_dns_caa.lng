@@ -15,5 +15,6 @@ $wb['limit_dns_record_txt'] = 'The max. number of DNS records for your account i
 $wb['ca_error_txt'] = 'No Certification Authority selected';
 $wb['caa_exists_error'] = 'CAA Record already exists';
 $wb['ca_option_error'] = 'Invalid format for additional options; OPTION=VALUE';
+$wb['cname_conflict_txt'] = 'A CNAME record already exists for this hostname. CNAME records cannot coexist with other record types at the same hostname.';
 $wb['ttl_range_error'] = 'Min. TTL time is 60 seconds.';
 ?>
