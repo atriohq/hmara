@@ -50,7 +50,7 @@ server {
 </tmpl_if>
 </tmpl_if>
 
-        server_name <tmpl_var name='domain'> <tmpl_var name='alias'>;
+        server_name <tmpl_var name='domain'><tmpl_if name='alias'> <tmpl_var name='alias'></tmpl_if>;
 
         root   <tmpl_var name='web_document_root_www'>;
 		<tmpl_if name='disable_symlinknotowner' op='==' value='n'>
