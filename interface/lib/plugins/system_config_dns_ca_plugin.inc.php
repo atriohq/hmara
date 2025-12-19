@@ -46,14 +46,18 @@ class system_config_dns_ca_plugin {
 	function caa_update($event_name, $page_form) {
 		global $app;
 
-		if(trim($page_form->dataRecord['additional'] != '')) {
+		if(trim($page_form->dataRecord['additional']) != '') {
 			$rec = $app->db->queryOneRecord("SELECT * FROM dns_rr WHERE id = ?", $page_form->id);
+			if(!$rec) return;
 			unset($rec['id']);
 			$zone = $app->db->queryOneRecord("SELECT origin FROM dns_soa WHERE id = ?", $rec['zone']);
+			if(!$zone) return;
 			$host=str_replace($zone['origin'], '', $page_form->dataRecord['name']);
 			$host=rtrim($host,'.');
-			$page_form->dataRecord['additional']=str_replace($host, '', $page_form->dataRecord['additional']);
-			$page_form->dataRecord['additional']=str_replace(".".$zone['origin'], '', $page_form->dataRecord['additional']);
+			if($host !== '') {
+				$page_form->dataRecord['additional']=preg_replace('/(?:^|,)' . preg_quote($host, '/') . '(?=,|$)/', '', $page_form->dataRecord['additional']);
+			}
+			$page_form->dataRecord['additional']=preg_replace('/\.?' . preg_quote($zone['origin'], '/') . '/', '', $page_form->dataRecord['additional']);
 			$additional=explode(',', $page_form->dataRecord['additional']);
 			foreach($additional as $new) {
 				if($new != '') {
