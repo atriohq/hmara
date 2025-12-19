@@ -595,9 +595,11 @@
 
 <tmpl_if name='apache_version' op='>=' value='2.4' format='version'>
 <tmpl_if name='ssl_enabled'>
+<tmpl_if name='ssl_ocsp_supported'>
 <IfModule mod_ssl.c>
         SSLStaplingCache shmcb:/var/run/ocsp(128000)
 </IfModule>
+</tmpl_if>
 </tmpl_if>
 </tmpl_if>
 
