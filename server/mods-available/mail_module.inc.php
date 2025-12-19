@@ -209,7 +209,6 @@ class mail_module {
 		}
 		return $retval;
 	}
-
 } // end class
 
 ?>

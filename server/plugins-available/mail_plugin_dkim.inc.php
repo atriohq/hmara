@@ -69,7 +69,7 @@ class mail_plugin_dkim {
 		$app->plugins->registerEvent('mail_domain_insert', $this->plugin_name, 'domain_dkim_insert');
 		$app->plugins->registerEvent('mail_domain_update', $this->plugin_name, 'domain_dkim_update');
 
-               $app->services->registerService('amavis', $this->plugin_name, 'restartAmavis');
+		$app->services->registerService('amavis', $this->plugin_name, 'restartAmavis');
 	}
 
 	/**
@@ -360,7 +360,7 @@ class mail_plugin_dkim {
 					
 					$app->services->restartServiceDelayed('rspamd', 'reload');
 				} elseif ($this->add_to_amavis($data['new']['domain'], $data['new']['dkim_selector'], $data['old']['dkim_selector'] )) {
-                                       $app->services->restartServiceDelayed('amavis', 'restart');
+					$app->services->restartServiceDelayed('amavis', 'restart');
 				} else {
 					$this->remove_dkim_key($mail_config['dkim_path']."/".$data['new']['domain'], $data['new']['domain']);
 				}
@@ -388,7 +388,7 @@ class mail_plugin_dkim {
 			$app->system->removeLine('/etc/rspamd/local.d/dkim_selectors.map', 'REGEX:/^' . preg_quote($_data['domain'], '/') . ' /');
 			$app->services->restartServiceDelayed('rspamd', 'reload');
 		} elseif ($this->remove_from_amavis($_data['domain'])) {
-                       $app->services->restartServiceDelayed('amavis', 'restart');
+			$app->services->restartServiceDelayed('amavis', 'restart');
 		}
 	}
 
