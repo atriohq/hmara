@@ -71,7 +71,10 @@ class z_php_fpm_incron_reload_plugin {
 
 	private function setup($data)
 	{
-		if ($data['server_php_id'] == 0) {
+		global $app;
+
+		if ((int)$data['server_php_id'] === 0) {
+			$app->log('Skipping incron setup: using default PHP', LOGLEVEL_DEBUG);
 			return;
 		}
 
@@ -117,6 +120,11 @@ class z_php_fpm_incron_reload_plugin {
 		global $app;
 
 		$phpService = $this->getPhpService($additionalPhpVersion);
+		if ($phpService === null) {
+			$app->log('Cannot create incron config: PHP service not found for server_php_id ' . $additionalPhpVersion, LOGLEVEL_WARN);
+			return;
+		}
+
 		$configFile = $this->getIncronConfigurationFilePath($systemUser);
 
 		$content = sprintf(
@@ -135,10 +143,10 @@ class z_php_fpm_incron_reload_plugin {
 		global $app;
 
 		if (!file_exists($triggerFile)) {
-			exec(sprintf('touch %s', $triggerFile));
+			exec(sprintf('touch %s', escapeshellarg($triggerFile)));
 		}
 
-		exec(sprintf('chown %s:%s %s', $systemUser, $systemGroup, $triggerFile));
+		exec(sprintf('chown %s:%s %s', escapeshellarg($systemUser), escapeshellarg($systemGroup), escapeshellarg($triggerFile)));
 
 		$app->log(sprintf('Ensured incron trigger file "%s"', $triggerFile), LOGLEVEL_DEBUG);
 	}
