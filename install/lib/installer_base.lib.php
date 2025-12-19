@@ -1152,7 +1152,8 @@ class installer_base extends stdClass {
 		}
 
 		// Cleanup deprecated option, replaced by smtpd_tls_security_level.
-		exec("postconf -X smtpd_use_tls");
+		$command = 'postconf -X smtpd_use_tls';
+		caselog($command.' &> /dev/null', __FILE__, __LINE__, "EXECUTED: $command", "Failed to execute the command $command");
 
 		//* mysql-verify_recipients.cf
 		$this->process_postfix_config('mysql-verify_recipients.cf');
