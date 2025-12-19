@@ -7,7 +7,15 @@
                 <div class="col-sm-9" style="margin-bottom:10px"><select id="source" name="source" class="form-control">{tmpl_var name='source'}</select></div>
                 <div class="col-sm-3"></div><div class="col-sm-9" style="margin-bottom:10px"><select id="op" name="op" class="form-control">{tmpl_var name='op'}</select></div>
 				<div class="col-sm-3"></div><div class="col-sm-9"><input type="text" id="searchterm" name="searchterm" value="{tmpl_var name='searchterm'}" class="form-control"></div>
+				<div class="col-sm-3"></div><div class="col-sm-9"><small id="regex_hint" class="text-muted" style="display:none;">{tmpl_var name='regex_hint_txt'}</small></div>
             </div>
+            <script>
+            $(function() {
+                $('#op').on('change', function() {
+                    $('#regex_hint').toggle($(this).val() === 'regex');
+                }).trigger('change');
+            });
+            </script>
             <div class="form-group">
                 <label for="action" class="col-sm-3 control-label">{tmpl_var name='action_txt'}</label>
                 <div class="col-sm-9" style="margin-bottom:10px"><select id="action" name="action" class="form-control">{tmpl_var name='action'}</select></div>
