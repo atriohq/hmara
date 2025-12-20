@@ -69,7 +69,7 @@ class cronjob_logfiles extends cronjob {
 		// Manage and compress web logfiles and create traffic statistics
 		//######################################################################################################
 
-		$sql = "SELECT domain_id, domain, type, document_root, web_folder, parent_domain_id, log_retention FROM web_domain WHERE (type = 'vhost' or type = 'vhostsubdomain' or type = 'vhostalias') AND server_id = ?";
+		$sql = "SELECT domain_id, domain, type, document_root, web_folder, system_group, parent_domain_id, log_retention FROM web_domain WHERE (type = 'vhost' or type = 'vhostsubdomain' or type = 'vhostalias') AND server_id = ?";
 		$records = $app->db->queryAllRecords($sql, $conf['server_id']);
 		foreach($records as $rec) {
 
@@ -118,10 +118,11 @@ class cronjob_logfiles extends cronjob {
 			//* Compress logfile
 			if(@is_file($logfile)) {
 				// Compress yesterdays logfile
-				$app->system->exec_safe("gzip -c ? > ?", $logfile, $logfile . '.gz');
+				$app->system->exec_safe("gzip ?", $logfile);
 				unlink($logfile);
 			}
 
+			// Rotate logfiles in the user's 'private' folder.
 			$cron_logfiles = array('cron.log', 'cron_error.log', 'cron_wget.log');
 			foreach($cron_logfiles as $cron_logfile) {
 				$cron_logfile = $rec['document_root'].'/private/' . $cron_logfile;
@@ -137,6 +138,9 @@ class cronjob_logfiles extends cronjob {
 				if(is_file($cron_logfile)) {
 					$app->system->exec_safe("gzip -c ? > ?", $cron_logfile, $cron_logfile . '.1.gz');
 					$app->system->exec_safe("cat /dev/null > ?", $cron_logfile);
+					$app->system->chgrp($cron_logfile, $rec['system_group']);
+					$app->system->chmod($cron_logfile, 0640);
+
 				}
 				// remove older logs
 				$num = $log_retention;
@@ -156,8 +160,11 @@ class cronjob_logfiles extends cronjob {
 			}
 			// compress current logfile
 			if(is_file($error_logfile)) {
-				$app->system->exec_safe("gzip -c ? > ?", $error_logfile, $error_logfile . '.1.gz');
+				$app->system->exec_safe("gzip ?", $error_logfile);
+				rename($error_logfile . '.gz', $error_logfile . '.1.gz');
 				$app->system->exec_safe("cat /dev/null > ?", $error_logfile);
+				$app->system->chgrp($error_logfile, $rec['system_group']);
+				$app->system->chmod($error_logfile, 0640);
 			}
 
 			// delete logfiles after x days (default 10)
