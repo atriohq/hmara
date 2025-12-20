@@ -75,7 +75,7 @@ function simple_query($query, $answers, $default)
 require_once '/usr/local/ispconfig/server/lib/config.inc.php';
 
 //** Get commandline options
-$cmd_opt = getopt('', array('autoinstall::', 'force'));
+$cmd_opt = getopt('', array('autoinstall::', 'update-method:', 'force'));
 
 echo "\n\n".str_repeat('-', 80)."\n";
 echo " _____ ___________   _____              __ _
@@ -88,18 +88,23 @@ echo " _____ ___________   _____              __ _
                                              |___/ ";
 echo "\n".str_repeat('-', 80)."\n";
 echo "\n\n>> Update  \n\n";
-echo "Please choose the update method. For production systems select 'stable'. \nWARNING: The update from GIT is only for development systems and may break your current setup. Do not use the GIT version on servers that host any live websites!\nNote: On Multiserver systems, enable maintenance mode and update your master server first. Then update all slave servers, and disable maintenance mode when all servers are updated.\n\n";
 
-$method = simple_query('Select update method', array('stable', 'nightly', 'git-develop'), 'stable');
+if (isset($cmd_opt['update-method'])) {
+    $method = $cmd_opt['update-method'];
+} else {
+    echo "Please choose the update method. For production systems select 'stable'. \nWARNING: The update from GIT is only for development systems and may break your current setup. Do not use the GIT version on servers that host any live websites!\nNote: On Multiserver systems, enable maintenance mode and update your master server first. Then update all slave servers, and disable maintenance mode when all servers are updated.\n\n";
 
-if($method == 'stable') {
-	$new_version = @file_get_contents('https://www.ispconfig.org/downloads/ispconfig3_version.txt') or die('Unable to retrieve version file.');
-	$new_version = trim($new_version);
-	if(version_compare($new_version, ISPC_APP_VERSION, '<=') && !in_array('--force', $argv, true)) {
-		echo "There are no updates available for ISPConfig ".ISPC_APP_VERSION."\n";
-		echo "If you are sure you want to update to stable anyway, please use --force parameter\n";
-		echo "DOWNGRADING MAY CAUSE ISSUES!\n";
-		exit(1);
+    $method = simple_query('Select update method', array('stable', 'nightly', 'git-develop'), 'stable');
+
+    if($method == 'stable') {
+        $new_version = @file_get_contents('https://www.ispconfig.org/downloads/ispconfig3_version.txt') or die('Unable to retrieve version file.');
+        $new_version = trim($new_version);
+        if(version_compare($new_version, ISPC_APP_VERSION, '<=') && !in_array('--force', $argv, true)) {
+            echo "There are no updates available for ISPConfig ".ISPC_APP_VERSION."\n";
+            echo "If you are sure you want to update to stable anyway, please use --force parameter\n";
+            echo "DOWNGRADING MAY CAUSE ISSUES!\n";
+            exit(1);
+        }
 	}
 }
 

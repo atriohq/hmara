@@ -94,23 +94,23 @@ echo ""
 if [ "$IS_MULTISERVER" = "y" ]; then
     echo ""
     echo "--- Master Server Settings ---"
-    
+
     echo -n "Master MySQL hostname [$DBMASTER_HOST]: "
     read -r master_hostname
     master_hostname=${master_hostname:-$DBMASTER_HOST}
-    
+
     echo -n "Master MySQL port [$DBMASTER_PORT]: "
     read -r master_port
     master_port=${master_port:-$DBMASTER_PORT}
-    
+
     echo -n "Master MySQL root username [root]: "
     read -r master_root_user
     master_root_user=${master_root_user:-root}
-    
+
     echo -n "Master MySQL root password: "
     read -rs master_root_password
     echo ""
-    
+
     echo -n "Master MySQL database [dbispconfig]: "
     read -r master_database
     master_database=${master_database:-dbispconfig}
@@ -149,7 +149,7 @@ cat > "$OUTPUT_FILE" << EOF
 /**
  * ISPConfig Autoinstall/Autoupdate Configuration
  * Generated on: $(date)
- * 
+ *
  * Usage:
  *   ispconfig_update.sh --autoinstall=$OUTPUT_FILE
  *   or
@@ -210,7 +210,7 @@ chown root:root "$OUTPUT_FILE"
 echo ""
 echo -e "${GREEN}=============================================="
 echo " Configuration file created successfully!"
-echo "==============================================${NC}"
+echo -e "==============================================${NC}"
 echo ""
 echo "File: $OUTPUT_FILE"
 echo "Permissions: 600 (root only)"
