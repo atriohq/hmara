@@ -16,9 +16,11 @@ class upd_0103 extends installer_patch_update {
 
 			$log_folder = 'log';
 			$site_logdir = $rec['document_root'].'/' . $log_folder;
-			$this->exec_safe("chgrp -R ? ?", $rec['system_group'], $site_logdir);
-			$this->exec_safe("chmod -R o-rwx ?", $site_logdir);
-			ilog('Updated log file permissions for '. $rec['domain']);
+			if(is_dir($site_logdir)) {
+				$this->exec_safe("chgrp -R ? ?", $rec['system_group'], $site_logdir);
+				$this->exec_safe("chmod -R o-rwx ?", $site_logdir);
+				ilog('Updated log file permissions for '. $rec['domain']);
+			}
 		}
 	}
 
