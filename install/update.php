@@ -125,7 +125,7 @@ $cmd_opt = getopt('', array('autoinstall::'));
 if(isset($cmd_opt['autoinstall'])) {
 	if (empty($cmd_opt['autoinstall'])) { // Meaning --autoinstall was passed without a value.
 		// Set default
-		$cmd_opt['autoinstall'] = "server/lib/autoinstall.conf.php";
+		$cmd_opt['autoinstall'] = "/usr/local/ispconfig/server/lib/autoinstall.conf.php";
 	}
 	if (!is_file($cmd_opt['autoinstall'])) {
 		die("Autoinstall config file not found. (default is /usr/local/ispconfig/server/lib/autoinstall.conf.php)");
