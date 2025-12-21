@@ -109,8 +109,12 @@ if (isset($cmd_opt['update-method'])) {
 }
 
 $extra_args = '';
-if(isset($cmd_opt['autoinstall']) && $cmd_opt['autoinstall'] != '') {
-	$extra_args .= ' --autoinstall=' . escapeshellarg($cmd_opt['autoinstall']);
+if(isset($cmd_opt['autoinstall'])) {
+	if (empty($cmd_opt['autoinstall'])) {
+		$extra_args .= ' --autoinstall';
+	} else {
+		$extra_args .= ' --autoinstall=' . escapeshellarg($cmd_opt['autoinstall']);
+	}
 }
 
 passthru('/usr/local/ispconfig/server/scripts/update_runner.sh ' . escapeshellarg($method) . $extra_args);

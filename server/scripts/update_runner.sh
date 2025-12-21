@@ -28,7 +28,7 @@ URL=""
 shift
 while [[ $# -gt 0 ]]; do
 	case $1 in
-		--autoinstall=*)
+		--autoinstall*)
 			AUTOINSTALL_ARG="$1"
 			shift
 			;;

@@ -46,7 +46,7 @@ class update_cli extends cli {
         //  --autoinstall=/path/to/file.php
         //  --update-method=METHOD
         foreach($arg as $a) {
-            if(strpos($a, '--autoinstall=') === 0 || strpos($a, '--update-method=') === 0) {
+            if(strpos($a, '--autoinstall') === 0 || strpos($a, '--update-method=') === 0) {
                 $cmd .= ' ' . escapeshellarg($a);
             }
         }

@@ -128,7 +128,7 @@ if(isset($cmd_opt['autoinstall'])) {
 		$cmd_opt['autoinstall'] = "server/scripts/autoinstall.conf.php";
 	}
 	if (!is_file($cmd_opt['autoinstall'])) {
-		die("Autoinstall config file not found. (default is server/scripts/autoinstall.conf.php)");
+		die("Autoinstall config file not found. (default is /usr/local/ispconfig/server/scripts/autoinstall.conf.php)");
 	}
 	$path_parts = pathinfo($cmd_opt['autoinstall']);
 	if($path_parts['extension'] == 'php') {
