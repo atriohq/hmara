@@ -151,9 +151,9 @@ cat > "$OUTPUT_FILE" << EOF
  * Generated on: $(date)
  *
  * Usage:
- *   ispconfig_update.sh --autoinstall=$OUTPUT_FILE [--update-method=git-develop]
+ *   ispconfig_update.sh --autoinstall=$OUTPUT_FILE [--update-source=git-develop]
  *   or
- *   ispc update --autoinstall=$OUTPUT_FILE [--update-method=git-develop]
+ *   ispc update --autoinstall=$OUTPUT_FILE [--update-source=git-develop]
  */
 
 /* Backup settings */
