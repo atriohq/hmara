@@ -13,7 +13,7 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 # Default output path
-OUTPUT_FILE="/usr/local/ispconfig/server/scripts/autoinstall.conf.php"
+OUTPUT_FILE="/usr/local/ispconfig/server/lib/autoinstall.conf.php"
 SAMPLE_FILE="/usr/local/ispconfig/server/lib/config.inc.php"
 
 echo ""
