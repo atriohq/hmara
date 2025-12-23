@@ -241,6 +241,12 @@ class monitor_tools {
 			$distconfid = 'debian120';
 			$distid = 'debian60';
 			$distbaseid = 'debian';
+		} elseif(substr(trim(file_get_contents('/etc/debian_version')),0,2) == '13') {
+			$distname = 'Debian';
+			$distver = 'Trixie';
+			$distconfid = 'debian130';
+			$distid = 'debian60';
+			$distbaseid = 'debian';
 		} elseif(strstr(trim(file_get_contents('/etc/debian_version')), '/sid')) {
 			$distname = 'Debian';
 			$distver = 'Testing';
