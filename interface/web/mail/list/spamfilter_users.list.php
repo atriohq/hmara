@@ -64,7 +64,7 @@ $liste["item"][] = array( 'field'  => "server_id",
 	'prefix' => "",
 	'suffix' => "",
 	'datasource' => array (  'type' => 'SQL',
-		'querystring' => 'SELECT UNIQUE a.server_id, a.server_name FROM server a, spamfilter_users b WHERE (a.server_id = b.server_id) AND ({AUTHSQL-B}) ORDER BY a.server_name',
+		'querystring' => 'SELECT DISTINCT a.server_id, a.server_name FROM server a, spamfilter_users b WHERE (a.server_id = b.server_id) AND ({AUTHSQL-B}) ORDER BY a.server_name',
 		'keyfield'=> 'server_id',
 		'valuefield'=> 'server_name'
 	),
