@@ -89,8 +89,13 @@ echo " _____ ___________   _____              __ _
 echo "\n".str_repeat('-', 80)."\n";
 echo "\n\n>> Update  \n\n";
 
+$valid_sources = array('stable', 'nightly', 'git-develop');
+
 if (isset($cmd_opt['update-source'])) {
 	$method = $cmd_opt['update-source'];
+	if (!in_array($method, $valid_sources)) {
+		die("Invalid update source '$method'. Valid options are: " . implode(', ', $valid_sources) . "\n");
+	}
 } else {
 	echo "Please choose the update source. For production systems select 'stable'. \nWARNING: The update from GIT is only for development systems and may break your current setup. Do not use the GIT version on servers that host any live websites!\nNote: On Multiserver systems, enable maintenance mode and update your master server first. Then update all slave servers, and disable maintenance mode when all servers are updated.\n\n";
 
