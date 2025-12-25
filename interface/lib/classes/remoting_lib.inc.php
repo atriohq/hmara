@@ -329,7 +329,7 @@ class remoting_lib extends tform_base {
 		$groupid = $app->db->datalogInsert('sys_group', array("name" => $username, "description" => "", "client_id" => $insert_id), 'groupid');
 		$groups = $groupid;
 		if(!isset($params['_ispconfig_pw_crypted']) || $params['_ispconfig_pw_crypted'] != 1) $password = $app->auth->crypt_password(stripslashes($password));
-		$sql1 = "INSERT INTO sys_user (username,passwort,modules,startmodule,app_theme,typ,active,language,groups,default_group,client_id)
+		$sql1 = "INSERT INTO sys_user (`username`, `passwort`, `modules`, `startmodule`, `app_theme`, `typ`, `active`, `language`, `groups`, `default_group`, `client_id`)
 			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 		$app->db->query($sql1, $username,$password,$modules,$startmodule,$usertheme,$type,$active,$language,$groups,$groupid,$insert_id);
 	}

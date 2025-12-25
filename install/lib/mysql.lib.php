@@ -206,7 +206,19 @@ class db
 		$try = 0;
 		do {
 			$try++;
-			$ok = mysqli_ping($this->_iConnId);
+			$ok = false;
+			if (is_object($this->_iConnId)) {
+				try {
+					$res = mysqli_query($this->_iConnId, 'SELECT 1');
+					if ($res !== false) {
+						mysqli_free_result($res);
+						$ok = true;
+					}
+				} catch (mysqli_sql_exception $e) {
+					$ok = false;
+				}
+			}
+
 			if(!$ok) {
 				if(!mysqli_connect($this->dbHost, $this->dbUser, $this->dbPass, $this->dbName, (int)$this->dbPort)) {
 					if($this->errorNumber == '111') {

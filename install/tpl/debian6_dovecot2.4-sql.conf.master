@@ -1,0 +1,8 @@
+sql_driver = mysql
+
+mysql {mysql_server_host} {
+  user = {mysql_server_ispconfig_user}
+  password = {mysql_server_ispconfig_password}
+  dbname = {mysql_server_database}
+  port = {mysql_server_port}
+}

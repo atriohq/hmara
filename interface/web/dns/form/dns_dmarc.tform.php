@@ -136,6 +136,7 @@ $form["tabs"]['dns'] = array (
 			'datatype' => 'VARCHAR',
 			'formtype' => 'CHECKBOX',
 			'default' => 'Y',
+			'value'  => array(0 => 'N', 1 => 'Y')
 		),
 		'stamp' => array (
 			'datatype' => 'VARCHAR',

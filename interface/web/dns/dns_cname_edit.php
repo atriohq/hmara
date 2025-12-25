@@ -57,6 +57,13 @@ class page_action extends dns_page_action {
 		global $app, $conf;
 		// Get the parent soa record of the domain
 		$soa = $app->db->queryOneRecord("SELECT * FROM dns_soa WHERE id = ? AND " . $app->tform->getAuthSQL('r'), $_POST["zone"]);
+
+		// Check if CNAME is at apex (empty hostname or @ or zone origin) - RFC 1912 prohibits this
+		$hostname = trim($this->dataRecord["name"]);
+		if($hostname === '' || $hostname === '@' || $hostname === $soa['origin'] || $hostname === rtrim($soa['origin'], '.')) {
+			$app->tform->errorMessage .= $app->tform->wordbook['cname_apex_not_allowed'] . '<br/>';
+		}
+
 		// Replace @ to example.com. in data field
 		if($this->dataRecord["data"] === '@') {
 			$this->dataRecord["data"] = $soa['origin'];

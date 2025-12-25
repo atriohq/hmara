@@ -74,6 +74,8 @@ function simple_query($query, $answers, $default)
 
 require_once '/usr/local/ispconfig/server/lib/config.inc.php';
 
+//** Get commandline options
+$cmd_opt = getopt('', array('autoinstall::', 'update-source:', 'force'));
 
 echo "\n\n".str_repeat('-', 80)."\n";
 echo " _____ ___________   _____              __ _
@@ -86,9 +88,19 @@ echo " _____ ___________   _____              __ _
                                              |___/ ";
 echo "\n".str_repeat('-', 80)."\n";
 echo "\n\n>> Update  \n\n";
-echo "Please choose the update method. For production systems select 'stable'. \nWARNING: The update from GIT is only for development systems and may break your current setup. Do not use the GIT version on servers that host any live websites!\nNote: On Multiserver systems, enable maintenance mode and update your master server first. Then update all slave servers, and disable maintenance mode when all servers are updated.\n\n";
 
-$method = simple_query('Select update method', array('stable', 'nightly', 'git-develop'), 'stable');
+$valid_sources = array('stable', 'nightly', 'git-develop');
+
+if (isset($cmd_opt['update-source'])) {
+	$method = $cmd_opt['update-source'];
+	if (!in_array($method, $valid_sources)) {
+		die("Invalid update source '$method'. Valid options are: " . implode(', ', $valid_sources) . "\n");
+	}
+} else {
+	echo "Please choose the update source. For production systems select 'stable'. \nWARNING: The update from GIT is only for development systems and may break your current setup. Do not use the GIT version on servers that host any live websites!\nNote: On Multiserver systems, enable maintenance mode and update your master server first. Then update all slave servers, and disable maintenance mode when all servers are updated.\n\n";
+
+	$method = simple_query('Select update source', array('stable', 'nightly', 'git-develop'), 'stable');
+}
 
 if($method == 'stable') {
 	$new_version = @file_get_contents('https://www.ispconfig.org/downloads/ispconfig3_version.txt') or die('Unable to retrieve version file.');
@@ -101,5 +113,14 @@ if($method == 'stable') {
 	}
 }
 
-passthru('/usr/local/ispconfig/server/scripts/update_runner.sh ' . escapeshellarg($method));
+$extra_args = '';
+if(isset($cmd_opt['autoinstall'])) {
+	if (empty($cmd_opt['autoinstall'])) {
+		$extra_args .= ' --autoinstall';
+	} else {
+		$extra_args .= ' --autoinstall=' . escapeshellarg($cmd_opt['autoinstall']);
+	}
+}
+
+passthru('/usr/local/ispconfig/server/scripts/update_runner.sh ' . escapeshellarg($method) . $extra_args);
 exit;

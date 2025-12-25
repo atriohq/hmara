@@ -155,7 +155,13 @@ class page_action extends tform_actions {
 				}
 			}
 		} // end if user is not admin
-		
+
+		// Check for CNAME conflict - CNAME records cannot coexist with other record types (RFC 1034)
+		$cname_check = $app->db->queryOneRecord("SELECT count(dns_rr.id) as number FROM dns_rr LEFT JOIN dns_soa ON dns_rr.zone = dns_soa.id WHERE (type = 'CNAME' AND ( name = replace(?, concat('.', dns_soa.origin), '') or name = ? or name = concat(?,'.',dns_soa.origin) ) AND zone = ? and dns_rr.id != ?)", $_POST['name'], $_POST['name'], $_POST['name'], $_POST['zone'], $this->id);
+		if($cname_check['number'] > 0) {
+			$app->tform->errorMessage .= $app->tform->wordbook['cname_conflict_txt'] . '<br>';
+		}
+
 		// Check that the record does not yet exist
 		$existing_records = $app->db->queryAllRecords("SELECT id FROM dns_rr WHERE zone = ? AND name = ? AND type = 'TXT' AND data LIKE 'v=spf1%'", $_POST['zone'], $_POST['name']);
 		if (!empty($existing_records)) {

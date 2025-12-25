@@ -14,5 +14,6 @@ $wb['data_error_empty'] = 'Target hostname empty';
 $wb['data_error_regex'] = 'Target hostname format invalid';
 $wb['data_error_not_found'] = 'Target hostname not found in the current zone. It should end in a . when it\'s external.';
 $wb['data_error_duplicate'] = 'Duplicate A, AAAA, ALIAS, CNAME, or DNAME record';
+$wb['cname_apex_not_allowed'] = 'CNAME records are not allowed at the zone apex (empty hostname). Use an ALIAS record instead, or specify a subdomain hostname.';
 $wb['ttl_range_error'] = 'Min. TTL time is 60 seconds.';
 ?>

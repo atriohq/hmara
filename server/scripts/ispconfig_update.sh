@@ -32,6 +32,7 @@ then
             -d disable_functions= \
             -d open_basedir= \
             /usr/local/ispconfig/server/scripts/ispconfig_update.php "$@"
+        # Note: "$@" passes all arguments including --autoinstall=/path/to/autoinstall.conf.php
 
     fi
 fi

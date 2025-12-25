@@ -262,7 +262,7 @@ class webserver_plugin {
 			return;
 		}
 
-		$hardlink_mode_changed = (boolean)(($old['jailkit_hardlinks'] != $new['jailkit_hardlinks']) && $new['jailkit_hardlinks'] != 'allow');
+		$hardlink_mode_changed = (bool)(($old['jailkit_hardlinks'] != $new['jailkit_hardlinks']) && $new['jailkit_hardlinks'] != 'allow');
 
 		if (($old['jailkit_chroot_app_sections'] != $new['jailkit_chroot_app_sections']) ||
 		    ($old['jailkit_chroot_app_programs'] != $new['jailkit_chroot_app_programs']) ||
@@ -318,7 +318,7 @@ class webserver_plugin {
 					//
 					// but to mitigate disk contention, will just queue "update needed"
 					// for jailkit maintenance cronjob via last_jailkit_update timestamp
-					$app->db->query("UPDATE `web_domain` SET `last_jailkit_update` = FROM_UNIXTIME(0) WHERE `document_root` = ?", $web['document_root']);
+					$app->db->query("UPDATE `web_domain` SET `last_jailkit_update` = '1970-01-01 00:00:00' WHERE `document_root` = ?", $web['document_root']);
 				}
 			}
 		}

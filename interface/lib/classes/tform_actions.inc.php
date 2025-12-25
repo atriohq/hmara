@@ -594,6 +594,7 @@ class tform_actions {
 	function onShowEnd() {
 		global $app, $conf;
 
+		$app->plugin->raiseEvent($_SESSION['s']['module']['name'].':'.$app->tform->formDef['name'].':'.'on_after_onShowEnd', $this);
 		// Template parsen
 		$app->tpl->pparse();
 	}

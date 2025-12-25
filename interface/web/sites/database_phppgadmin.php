@@ -1,7 +1,6 @@
 <?php
-
 /*
-Copyright (c) 2005, Till Brehm, projektfarm Gmbh
+Copyright (c) 2008, Till Brehm, projektfarm Gmbh
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
@@ -28,48 +27,50 @@ NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/******************************************
-* Begin Form configuration
-******************************************/
-
-$list_def_file = "list/server.list.php";
-$tform_def_file = "form/server.tform.php";
-
-/******************************************
-* End Form configuration
-******************************************/
 
 require_once '../../lib/config.inc.php';
 require_once '../../lib/app.inc.php';
 
 //* Check permissions for module
-$app->auth->check_module_permissions('admin');
-$app->auth->check_security_permissions('admin_allow_server_services');
-if($conf['demo_mode'] == true) $app->error('This function is disabled in demo mode.');
+$app->auth->check_module_permissions('sites');
 
-if(!$app->auth->is_admin()) die('Allowed for administrators only.');
+/*
+ *  get the id of the database (must be int!)
+ */
+if (!isset($_GET['id'])){
+	die ("No DB selected!");
+}
+$databaseId = $app->functions->intval($_GET['id']);
 
-// Loading classes
-$app->uses('tpl,tform,tform_actions');
-$app->load('tform_actions');
+/*
+ * Get the data to connect to the database
+ */
+$dbData = $app->db->queryOneRecord("SELECT server_id, database_name, type FROM web_database WHERE database_id = ?", $databaseId);
 
-class page_action extends tform_actions {
-
-	function onAfterDelete() {
-		global $app;
-
-		//* Delete related records from server_ip table
-		$app->db->query("DELETE FROM server_ip WHERE server_id = ?", $this->id);
-
-		//* Delete related records from monitor_data table
-		$app->db->query("DELETE FROM monitor_data WHERE server_id = ?", $this->id);
-
-		parent::onAfterDelete();
-	}
-
+//* Check if this is a PostgreSQL database
+if($dbData['type'] != 'pgsql') {
+	die ("This is not a PostgreSQL database!");
 }
 
-$page = new page_action;
-$page->onDelete();
+$serverId = $app->functions->intval($dbData['server_id']);
+if ($serverId == 0){
+	die ("No DB-Server found!");
+}
+$serverData = $app->db->queryOneRecord("SELECT server_name FROM server WHERE server_id = ?", $serverId);
 
+$app->uses('getconf');
+$global_config = $app->getconf->get_global_config('sites');
+
+/*
+ * We only redirect to the login-form, so there is no need, to check any rights
+ */
+
+if(!empty($global_config['phppgadmin_url'])) {
+	$phppgadmin_url = $global_config['phppgadmin_url'];
+	$phppgadmin_url = str_replace(array('[SERVERNAME]', '[DATABASENAME]'), array($serverData['server_name'], $dbData['database_name']), $phppgadmin_url);
+	header('Location: '.$phppgadmin_url);
+} else {
+	die ("phpPgAdmin URL not configured!");
+}
+exit;
 ?>

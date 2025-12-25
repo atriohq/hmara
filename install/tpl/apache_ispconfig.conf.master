@@ -144,12 +144,6 @@ Alias /awstats-icon "/usr/share/awstats/icon"
   </tmpl_loop>
 </tmpl_if>
 
-<tmpl_if name='apache_version' op='>=' value='2.3.3' format='version'>
-<IfModule mod_ssl.c>
-  <tmpl_var name="ssl_comment">SSLStaplingCache shmcb:/var/run/ocsp(128000)
-</IfModule>
-</tmpl_if>
-
 <Directory /var/www/php-cgi-scripts>
   AllowOverride None
   <tmpl_if name='apache_version' op='>' value='2.2' format='version'>

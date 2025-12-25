@@ -156,58 +156,36 @@ class mail_user_filter_plugin {
 				}
 				$content .= 'if size :over '.intval($page_form->dataRecord["searchterm"]).$unit.' {'."\n";
 			} else {
-			
-				$content .= 'if header :regex    "'.strtolower($page_form->dataRecord["source"]).'" ["';
-
-				# special chars in sieve regex must be escaped with double-backslash
+				// Escape double quotes in searchterm for sieve string
+				$searchterm_escaped = str_replace('"', '\\"', $page_form->dataRecord["searchterm"]);
+				
 				if($page_form->dataRecord["op"] == 'regex') {
+					// Use :regex match type for regex operations
+					// Note: Dovecot uses POSIX ERE which does not support inline flags like (?i)
+					// For case-insensitive regex, use character classes like [aA][bB][cC]
 					# if providing a regex, special chars must already be quoted as intended;
 					# we will simply try to check for an obviously unquoted double-quote and handle that.
 					$patterns = array( '/([^\\\\]{2})"/', '/([^\\\\])\\\\"/' );
 					$replace  = array( '${1}\\\\\\\\"', '${1}\\\\\\\\"' );
 					$searchterm = preg_replace( $patterns, $replace, $page_form->dataRecord["searchterm"] );
-				} else {
-					$sieve_regex_escape = array(
-						'\\' => '\\\\\\',
-						'+' => '\\\\+',
-						'*' => '\\\\*',
-						'?' => '\\\\?',
-						'[' => '\\\\[',
-						'^' => '\\\\^',
-						']' => '\\\\]',
-						'$' => '\\\\$',
-						'(' => '\\\\(',
-						')' => '\\\\)',
-						'{' => '\\\\{',
-						'}' => '\\\\}',
-						'|' => '\\\\|',
-						'.' => '\\\\.',
-						# these (from preg_quote) should not be needed
-						#'=' => '\\\\=',
-						#'!' => '\\\\!',
-						#'<' => '\\\\<',
-						#'>' => '\\\\>',
-						#':' => '\\\\:',
-						#'-' => '\\\\-',
-						#'#' => '\\\\#',
-						);
-					$searchterm = strtr( $page_form->dataRecord["searchterm"], $sieve_regex_escape );
-
-				}
-
-				if($page_form->dataRecord["op"] == 'contains') {
-					$content .= ".*".$searchterm;
+					$content .= 'if header :regex "'.strtolower($page_form->dataRecord["source"]).'" ["'.$searchterm.'"] {'."\n";
+				} elseif($page_form->dataRecord["op"] == 'contains') {
+					// Use native :contains which is case-insensitive by default
+					$content .= 'if header :contains "'.strtolower($page_form->dataRecord["source"]).'" "'.$searchterm_escaped.'" {'."\n";
 				} elseif ($page_form->dataRecord["op"] == 'is') {
-					$content .= "^".$searchterm."$";
-				} elseif ($page_form->dataRecord["op"] == 'regex') {
-					$content .= $searchterm;
+					// Use native :is which is case-insensitive by default
+					$content .= 'if header :is "'.strtolower($page_form->dataRecord["source"]).'" "'.$searchterm_escaped.'" {'."\n";
 				} elseif ($page_form->dataRecord["op"] == 'begins') {
-					$content .= "^".$searchterm."";
+					// Use :matches with wildcard for begins-with (case-insensitive by default)
+					// Escape glob wildcards in searchterm
+					$searchterm_glob = str_replace(array('*', '?', '\\'), array('\\*', '\\?', '\\\\'), $searchterm_escaped);
+					$content .= 'if header :matches "'.strtolower($page_form->dataRecord["source"]).'" "'.$searchterm_glob.'*" {'."\n";
 				} elseif ($page_form->dataRecord["op"] == 'ends') {
-					$content .= ".*".$searchterm."$";
+					// Use :matches with wildcard for ends-with (case-insensitive by default)
+					// Escape glob wildcards in searchterm
+					$searchterm_glob = str_replace(array('*', '?', '\\'), array('\\*', '\\?', '\\\\'), $searchterm_escaped);
+					$content .= 'if header :matches "'.strtolower($page_form->dataRecord["source"]).'" "*'.$searchterm_glob.'" {'."\n";
 				}
-
-				$content .= '"] {'."\n";
 			}
 
 			if($page_form->dataRecord["action"] == 'move') {

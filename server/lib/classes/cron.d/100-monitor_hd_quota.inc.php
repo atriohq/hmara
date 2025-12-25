@@ -71,7 +71,7 @@ class cronjob_monitor_hd_quota extends cronjob {
 		$state = 'ok';
 
 		if(!$app->system->is_installed('setquota')) {
-			//* No Quota on this System ... 
+			//* No Quota on this System ...
 
 			//* Get Limits for Calculation
 			$records = $app->db->queryAllRecords('SELECT hd_quota, system_user, system_group FROM `web_domain`  WHERE `server_id` = ?', $conf['server_id']);
@@ -107,8 +107,8 @@ class cronjob_monitor_hd_quota extends cronjob {
 						}
 					}
 				}
-			}		
-			
+			}
+
 			//* Loop over all the output lines, for users.
 			for ($i = 0; $i <= sizeof($df); $i++) {
 				if (isset($df[$i]) && $df[$i] != '') {
@@ -131,12 +131,12 @@ class cronjob_monitor_hd_quota extends cronjob {
 					}
 				}
 			}
-		}else{		
+		}else{
 			//* Fetch the data for all users
 			$dfData = shell_exec('repquota -au 2>/dev/null');
 
 			//* Split into array
-			$df = explode("\n", $dfData);
+			$df = explode("\n", $dfData !== null ? $dfData : '');
 
 			//* ignore the first 5 lines, process the rest
 			for ($i = 5; $i <= sizeof($df); $i++) {
@@ -164,7 +164,7 @@ class cronjob_monitor_hd_quota extends cronjob {
 			$dfData = shell_exec('repquota -ag 2>/dev/null');
 
 			//* split into array
-			$df = explode("\n", $dfData);
+			$df = explode("\n", $dfData !== null ? $dfData : '');
 
 			//* ignore the first 5 lines, process the rest
 			for ($i = 5; $i <= sizeof($df); $i++) {
@@ -185,7 +185,7 @@ class cronjob_monitor_hd_quota extends cronjob {
 					}
 				}
 			}
-		}			
+		}
 		$res = array();
 		$res['server_id'] = $server_id;
 		$res['type'] = $type;

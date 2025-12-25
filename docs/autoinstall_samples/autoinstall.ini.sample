@@ -47,6 +47,7 @@ install_ispconfig_web_interface=y
 do_backup=yes
 mysql_root_password=ispconfig
 mysql_master_hostname=master.example.com
+mysql_master_port=3306
 mysql_master_root_user=root
 mysql_master_root_password=ispconfig
 mysql_master_database=dbispconfig

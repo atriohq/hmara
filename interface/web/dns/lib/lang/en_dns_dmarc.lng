@@ -47,4 +47,5 @@ $wb['record_exists_txt'] = 'DNS-Record already exists';
 $wb['limit_dns_record_txt'] = 'The max. number of DNS records for your account is reached.';
 $wb['no_zone_perm'] = 'You do not have the permission to add a record to this DNS zone.';
 $wb['ttl_range_error'] = 'Min. TTL time is 60 seconds.';
+$wb['cname_conflict_txt'] = 'A CNAME record already exists for this hostname. CNAME records cannot coexist with other record types at the same hostname.';
 ?>

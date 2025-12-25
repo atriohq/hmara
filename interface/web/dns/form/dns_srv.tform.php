@@ -119,6 +119,10 @@ $form["tabs"]['dns'] = array (
 		'aux' => array (
 			'datatype' => 'INTEGER',
 			'formtype' => 'TEXT',
+			'validators' => array (  0 => array ( 'type' => 'RANGE',
+					'range' => '0:65535',
+					'errmsg'=> 'srv_priority_range_txt'),
+			),
 			'default' => '0',
 			'value'  => '',
 			'width'  => '10',

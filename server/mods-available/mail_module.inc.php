@@ -114,6 +114,7 @@ class mail_module {
 
 		$app->services->registerService('rspamd', 'mail_module', 'restartRspamd');
 		$app->services->registerService('postfix', 'mail_module', 'restartPostfix');
+		$app->services->registerService('amavis', 'mail_module', 'restartAmavis');
 	}
 
 	/*
@@ -206,6 +207,20 @@ class mail_module {
 			exec($app->system->getinitcommand($daemon, 'restart').' 2>&1', $retval['output'], $retval['retval']);
 		} else {
 			exec($app->system->getinitcommand($daemon, 'reload').' 2>&1', $retval['output'], $retval['retval']);
+		}
+		return $retval;
+	}
+
+	function restartAmavis($action = 'reload') {
+		global $app;
+
+		$app->uses('system');
+
+		$retval = array('output' => '', 'retval' => 0);
+		if($action == 'restart') {
+			exec($app->system->getinitcommand(array('amavis', 'amavisd'), 'restart').' 2>&1', $retval['output'], $retval['retval']);
+		} else {
+			exec($app->system->getinitcommand(array('amavis', 'amavisd'), 'reload').' 2>&1', $retval['output'], $retval['retval']);
 		}
 		return $retval;
 	}

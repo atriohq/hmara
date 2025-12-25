@@ -12,5 +12,6 @@ $wb['name_error_empty'] = 'The hostname is empty.';
 $wb['name_error_regex'] = 'The hostname has the wrong format. Correct: _&lt;port&gt;._(tcp|udp).&lt;hostname&gt;';
 $wb['data_error_empty'] = 'TLSA-Data empty';
 $wb['data_error_regex'] = 'TLSA dataformat is wrong. Correct: n n n HASH';
+$wb['cname_conflict_txt'] = 'A CNAME record already exists for this hostname. CNAME records cannot coexist with other record types at the same hostname.';
 $wb['ttl_range_error'] = 'Min. TTL time is 60 seconds.';
 ?>

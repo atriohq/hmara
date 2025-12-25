@@ -623,7 +623,10 @@ class apache2_plugin {
 
 			//* Get the old client ID
 			$old_client = $app->dbmaster->queryOneRecord('SELECT client_id FROM sys_group WHERE sys_group.groupid = ?', $data['old']['sys_groupid']);
-			$old_client_id = intval($old_client['client_id']);
+
+			$old_client_id = (is_array($old_client) && isset($old_client['client_id'])) ? intval($old_client['client_id']) : 0;
+
+
 			unset($old_client);
 
 			//* Remove the old symlinks
@@ -834,10 +837,12 @@ class apache2_plugin {
 		if(!is_dir($data['new']['document_root'].'/'.$log_folder) || !is_dir('/var/log/ispconfig/httpd/'.$data['new']['domain']) || is_link($data['new']['document_root'].'/'.$log_folder)) {
 			if(is_link($data['new']['document_root'].'/'.$log_folder)) unlink($data['new']['document_root'].'/'.$log_folder);
 			if(!is_dir('/var/log/ispconfig/httpd/'.$data['new']['domain'])) $app->system->exec_safe('mkdir -p ?', '/var/log/ispconfig/httpd/'.$data['new']['domain']);
+			$app->system->chgrp('/var/log/ispconfig/httpd/'.$data['new']['domain'], $data['new']['system_group'] );
+			$app->system->chmod('/var/log/ispconfig/httpd/'.$data['new']['domain'], 0750);
 			$app->system->mkdirpath($data['new']['document_root'].'/'.$log_folder);
 			$app->system->chown($data['new']['document_root'].'/'.$log_folder, 'root');
-			$app->system->chgrp($data['new']['document_root'].'/'.$log_folder, 'root');
-			$app->system->chmod($data['new']['document_root'].'/'.$log_folder, 0755);
+			$app->system->chgrp($data['new']['document_root'].'/'.$log_folder, $data['new']['system_group'] );
+			$app->system->chmod($data['new']['document_root'].'/'.$log_folder, 0750);
 			$app->system->exec_safe('mount --bind ? ?', '/var/log/ispconfig/httpd/'.$data['new']['domain'], $data['new']['document_root'].'/'.$log_folder);
 			//* add mountpoint to fstab
 			$fstab_line = '/var/log/ispconfig/httpd/'.$data['new']['domain'].' '.$data['new']['document_root'].'/'.$log_folder.'    none    bind,nofail';
@@ -1026,18 +1031,18 @@ class apache2_plugin {
 
 			if($web_config['security_level'] == 20) {
 				$web_folder_permission = (isset($web_config['web_folder_permission']))?octdec($web_config['web_folder_permission']):0711;
-				$app->system->chmod($data['new']['document_root'], 0755);
+				$app->system->chmod($data['new']['document_root'], 0755);  # With a chown to client_group this could be 750
 				$app->system->chmod($data['new']['document_root'].'/web', $web_folder_permission);
 				$app->system->chmod($data['new']['document_root'].'/webdav', 0710);
 				$app->system->chmod($data['new']['document_root'].'/private', 0710);
-				$app->system->chmod($data['new']['document_root'].'/ssl', 0755);
+				$app->system->chmod($data['new']['document_root'].'/ssl', 0755); # With a chown to client_group this could be 750
 
 				// make tmp directory writable for Apache and the website users
 				$app->system->chmod($data['new']['document_root'].'/tmp', 0770);
 
-				// Set Log directory to 755 to make the logs accessible by the FTP user
+				// Set Log directory to 750 to make the logs accessible by the FTP user via the client group
 				if(realpath($data['new']['document_root'].'/'.$log_folder . '/error.log') == '/var/log/ispconfig/httpd/'.$data['new']['domain'].'/error.log') {
-					$app->system->chmod($data['new']['document_root'].'/'.$log_folder, 0755);
+					$app->system->chmod($data['new']['document_root'].'/'.$log_folder, 0750);
 				}
 
 				if($web_config['add_web_users_to_sshusers_group'] == 'y') {
@@ -1156,12 +1161,13 @@ class apache2_plugin {
 		$app->system->web_folder_protection($data['new']['document_root'], true);
 
 		if($data['new']['type'] == 'vhost') {
-			// Change the ownership of the error log to the root user
+			// Change the ownership of the error log to the root user, with the client group.
 			if(!@is_file('/var/log/ispconfig/httpd/'.$data['new']['domain'].'/error.log')) {
 				$app->system->exec_safe('touch ?', '/var/log/ispconfig/httpd/'.$data['new']['domain'].'/error.log');
 			}
 			$app->system->chown('/var/log/ispconfig/httpd/'.$data['new']['domain'].'/error.log', 'root');
-			$app->system->chgrp('/var/log/ispconfig/httpd/'.$data['new']['domain'].'/error.log', 'root');
+			$app->system->chgrp('/var/log/ispconfig/httpd/'.$data['new']['domain'].'/error.log', $groupname);
+			$app->system->chmod('/var/log/ispconfig/httpd/'.$data['new']['domain'].'/error.log', 0640);
 		}
 
 		//* Write the custom php.ini file, if custom_php_ini field is not empty
@@ -1808,6 +1814,14 @@ class apache2_plugin {
 
 		unset($tmp_vhost_arr);
 
+		//* Check OCSP support once for all vhosts
+		if($data['new']['ssl_domain'] != '' && $data['new']['ssl'] == 'y' && @is_file($crt_file)) {
+			$ocsp_uri = trim($app->system->exec_safe('openssl x509 -noout -ocsp_uri -in ?', $crt_file));
+			if (!empty($ocsp_uri)) {
+				$tpl->setVar('ssl_ocsp_supported', 'y');
+			}
+		}
+
 		//* Add vhost for ipv4 IP with SSL
 		if($data['new']['ssl_domain'] != '' && $data['new']['ssl'] == 'y' && @is_file($crt_file) && @is_file($key_file) && (@filesize($crt_file)>0)  && (@filesize($key_file)>0)) {
 			$tmp_vhost_arr = array('ip_address' => $data['new']['ip_address'], 'ssl_enabled' => 1, 'port' => '443');
@@ -1957,7 +1971,9 @@ class apache2_plugin {
 			if(!is_dir($data['new']['document_root'].'/' . $web_folder . '/stats')) $app->system->mkdir($data['new']['document_root'].'/' . $web_folder . '/stats');
 			$ht_file = "AuthType Basic\nAuthName \"Members Only\"\nAuthUserFile ".$data['new']['document_root']."/".$web_folder."/stats/.htpasswd_stats\nrequire valid-user\nDirectoryIndex index.html index.php\nHeader set Content-Security-Policy \"default-src * 'self' 'unsafe-inline' 'unsafe-eval' data:;\"\n<Files \"goaindex.html\">\nAddDefaultCharset UTF-8\n</Files>\n";
 			$app->system->file_put_contents($data['new']['document_root'].'/' . $web_folder . '/stats/.htaccess', $ht_file);
-			$app->system->chmod($data['new']['document_root'].'/' . $web_folder . '/stats/.htaccess', 0755);
+			$app->system->chmod($data['new']['document_root'].'/' . $web_folder . '/stats/.htaccess', 0640);
+			$app->system->chown($data['new']['document_root'].'/' . $web_folder . '/stats/.htaccess', $data['new']['system_user']);
+			$app->system->chgrp($data['new']['document_root'].'/' . $web_folder . '/stats/.htaccess', $data['new']['system_group']);
 			unset($ht_file);
 
 			if(!is_file($data['new']['document_root'].'/'.$web_folder.'/stats/.htpasswd_stats') || $data['new']['stats_password'] != $data['old']['stats_password']) {
@@ -1966,7 +1982,7 @@ class apache2_plugin {
 					$app->system->web_folder_protection($data['new']['document_root'], false);
 					$app->system->file_put_contents($data['new']['document_root'].'/'.$web_folder.'/stats/.htpasswd_stats', $htp_file);
 					$app->system->web_folder_protection($data['new']['document_root'], true);
-					$app->system->chmod($data['new']['document_root'].'/'.$web_folder.'/stats/.htpasswd_stats', 0755);
+					$app->system->chmod($data['new']['document_root'].'/'.$web_folder.'/stats/.htpasswd_stats', 0640);
 					unset($htp_file);
 				}
 			}

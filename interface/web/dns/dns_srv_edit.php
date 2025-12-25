@@ -58,6 +58,40 @@ class page_action extends dns_page_action {
 		parent::onShowEnd();
 	}
 
+	function onSubmit() {
+		global $app, $conf;
+
+		// Validate SRV record fields
+		$priority = $app->functions->intval($this->dataRecord['aux']);
+		$weight = $app->functions->intval($this->dataRecord['weight']);
+		$port = $app->functions->intval($this->dataRecord['port']);
+		$target = trim($this->dataRecord['target']);
+
+		// Priority validation (0-65535)
+		if($priority < 0 || $priority > 65535) {
+			$app->tform->errorMessage .= $app->tform->wordbook['srv_priority_range_txt'] . '<br/>';
+		}
+
+		// Weight validation (0-65535)
+		if($weight < 0 || $weight > 65535) {
+			$app->tform->errorMessage .= $app->tform->wordbook['srv_weight_range_txt'] . '<br/>';
+		}
+
+		// Port validation (0-65535)
+		if($port < 0 || $port > 65535) {
+			$app->tform->errorMessage .= $app->tform->wordbook['srv_port_range_txt'] . '<br/>';
+		}
+
+		// Target validation - must not be empty and must be a valid hostname
+		if(empty($target)) {
+			$app->tform->errorMessage .= $app->tform->wordbook['srv_target_empty_txt'] . '<br/>';
+		} elseif(!preg_match('/^[a-zA-Z0-9\.\-\_]{1,255}$/', $target)) {
+			$app->tform->errorMessage .= $app->tform->wordbook['srv_target_invalid_txt'] . '<br/>';
+		}
+
+		parent::onSubmit();
+	}
+
 	function onBeforeInsert() {
 		$this->dataRecord['data'] = $this->dataRecord['weight'] .' '. $this->dataRecord['port'] .' '. $this->dataRecord['target'];
 	}

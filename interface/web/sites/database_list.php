@@ -49,19 +49,52 @@ $app->load('listform_actions');
 
 class list_action extends listform_actions {
 
+	private $global_config;
+
+	function onLoad() {
+		global $app;
+
+		$app->uses('getconf');
+		$this->global_config = $app->getconf->get_global_config('sites');
+
+		parent::onLoad();
+	}
+
 	function onShow() {
 		global $app, $conf;
 
-		$app->uses('getconf');
-		$global_config = $app->getconf->get_global_config('sites');
-
-		if($global_config['dblist_phpmyadmin_link'] == 'y') {
+		if($this->global_config['dblist_phpmyadmin_link'] == 'y') {
 			$app->tpl->setVar('dblist_phpmyadmin_link', 1);
 		} else {
 			$app->tpl->setVar('dblist_phpmyadmin_link', 0);
 		}
 
 		parent::onShow();
+	}
+
+	function prepareDataRow($rec) {
+		global $app;
+
+		$rec = parent::prepareDataRow($rec);
+
+		//* Set flags for showing phpMyAdmin or phpPgAdmin links based on database type
+		$db_type = isset($rec['type']) ? $rec['type'] : 'mysql';
+
+		//* Show phpMyAdmin link only for MySQL/MariaDB databases
+		if($db_type == 'mysql' && $this->global_config['dblist_phpmyadmin_link'] == 'y') {
+			$rec['show_phpmyadmin_link'] = 1;
+		} else {
+			$rec['show_phpmyadmin_link'] = 0;
+		}
+
+		//* Show phpPgAdmin link only for PostgreSQL databases and only if URL is configured
+		if($db_type == 'pgsql' && !empty($this->global_config['phppgadmin_url'])) {
+			$rec['show_phppgadmin_link'] = 1;
+		} else {
+			$rec['show_phppgadmin_link'] = 0;
+		}
+
+		return $rec;
 	}
 
 }

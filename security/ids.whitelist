@@ -58,3 +58,4 @@ user:/mail/mail_domain_edit.php:POST.dns_record
 admin:/mail/mail_user_filter_edit.php:POST.searchterm
 user:/mail/mail_user_filter_edit.php:POST.searchterm
 admin:/mail/mail_user_edit.php:POST.custom_mailfilter
+admin:/admin/directive_snippets_edit.php:POST.snippet

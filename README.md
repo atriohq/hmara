@@ -26,9 +26,11 @@ Development branch: [![pipeline status](https://git.ispconfig.org/ispconfig/ispc
 [^1]: not actively tested
 
 ## Supported operating systems
-- Debian 9 - 12, and testing
-- Ubuntu 16.04 - 22.04
+- Debian 10 - 13, and testing
+- Ubuntu 20.04 - 24.04
 - CentOS 7 and 8
+- AlmaLinux 10
+- Rocky Linux 10
 
 ## Auto-install script
 You can install the "Perfect Server" with ISPConfig using [our official autoinstaller](https://www.howtoforge.com/ispconfig-autoinstall-debian-ubuntu/)
