@@ -117,7 +117,7 @@ This script will:
 1. **Protect the configuration file** - It contains sensitive passwords:
    ```bash
    chmod 600 /usr/local/ispconfig/server/lib/autoinstall.conf.php
-   chown root:root /usr/local/ispconfig/lib/scripts/autoinstall.conf.php
+   chown root:root /usr/local/ispconfig/server/lib/autoinstall.conf.php
    ```
 
 2. **Consider using environment variables** for passwords in the PHP config:

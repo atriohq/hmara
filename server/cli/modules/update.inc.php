@@ -50,7 +50,6 @@ class update_cli extends cli {
                 $cmd .= ' ' . escapeshellarg($a);
             }
         }
-        echo $cmd; "\n";
         passthru($cmd);
     }
 
