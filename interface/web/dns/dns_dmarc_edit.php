@@ -309,6 +309,7 @@ class page_action extends tform_actions {
 			if ($rec != 'fo=0') $dmarc_record[] = 'fo='.implode(':', $fo_rec);
 			unset($rec);
 		}
+		unset($fo_rec);
 
 		if ($this->dataRecord['dmarc_adkim'] != 'r' )
 			$dmarc_record[] = 'adkim='.$this->dataRecord['dmarc_adkim'];
@@ -319,7 +320,6 @@ class page_action extends tform_actions {
 		if ($this->dataRecord['dmarc_rf'] == 'iodef') {
 			$dmarc_record[] = 'rf=iodef';
 		}
-		unset($fo_rec);
 
 		if (!empty($this->dataRecord['dmarc_pct']) && $this->dataRecord['dmarc_pct'] != 100)
 			$dmarc_record[] = 'pct='.$this->dataRecord['dmarc_pct'];
