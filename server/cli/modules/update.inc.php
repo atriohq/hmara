@@ -41,15 +41,15 @@ class update_cli extends cli {
         
         // Build command with optional --autoinstall argument
         $cmd = '/usr/local/bin/ispconfig_update.sh';
-        
-        // Check for --autoinstall argument (e.g., ispc update --autoinstall=/path/to/file.php)
+
+        // Check for optional arguments:
+        //  --autoinstall=/path/to/file.php
+        //  --update-source=source
         foreach($arg as $a) {
-            if(strpos($a, '--autoinstall=') === 0) {
+            if(strpos($a, '--autoinstall') === 0 || strpos($a, '--update-source=') === 0) {
                 $cmd .= ' ' . escapeshellarg($a);
-                break;
             }
         }
-        
         passthru($cmd);
     }
 
@@ -61,6 +61,7 @@ class update_cli extends cli {
       $this->swriteln("---------------------------------");
       $this->swriteln("ispc update - Start ISPConfig update.");
       $this->swriteln("ispc update --autoinstall=/path/to/autoinstall.conf.php - Unattended update.");
+      $this->swriteln("ispc update --update-source=SOURCE - Choose update source (e.g. stable, nightly or git-develop).");
       $this->swriteln("---------------------------------");
       $this->swriteln();
     }

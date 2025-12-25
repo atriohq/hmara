@@ -13,7 +13,7 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 # Default output path
-OUTPUT_FILE="/usr/local/ispconfig/server/scripts/autoinstall.conf.php"
+OUTPUT_FILE="/usr/local/ispconfig/server/lib/autoinstall.conf.php"
 SAMPLE_FILE="/usr/local/ispconfig/server/lib/config.inc.php"
 
 echo ""
@@ -94,23 +94,23 @@ echo ""
 if [ "$IS_MULTISERVER" = "y" ]; then
     echo ""
     echo "--- Master Server Settings ---"
-    
+
     echo -n "Master MySQL hostname [$DBMASTER_HOST]: "
     read -r master_hostname
     master_hostname=${master_hostname:-$DBMASTER_HOST}
-    
+
     echo -n "Master MySQL port [$DBMASTER_PORT]: "
     read -r master_port
     master_port=${master_port:-$DBMASTER_PORT}
-    
+
     echo -n "Master MySQL root username [root]: "
     read -r master_root_user
     master_root_user=${master_root_user:-root}
-    
+
     echo -n "Master MySQL root password: "
     read -rs master_root_password
     echo ""
-    
+
     echo -n "Master MySQL database [dbispconfig]: "
     read -r master_database
     master_database=${master_database:-dbispconfig}
@@ -149,11 +149,11 @@ cat > "$OUTPUT_FILE" << EOF
 /**
  * ISPConfig Autoinstall/Autoupdate Configuration
  * Generated on: $(date)
- * 
+ *
  * Usage:
- *   ispconfig_update.sh --autoinstall=$OUTPUT_FILE
+ *   ispconfig_update.sh --autoinstall=$OUTPUT_FILE [--update-source=git-develop]
  *   or
- *   ispc update --autoinstall=$OUTPUT_FILE
+ *   ispc update --autoinstall=$OUTPUT_FILE [--update-source=git-develop]
  */
 
 /* Backup settings */
@@ -210,7 +210,7 @@ chown root:root "$OUTPUT_FILE"
 echo ""
 echo -e "${GREEN}=============================================="
 echo " Configuration file created successfully!"
-echo "==============================================${NC}"
+echo -e "==============================================${NC}"
 echo ""
 echo "File: $OUTPUT_FILE"
 echo "Permissions: 600 (root only)"

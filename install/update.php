@@ -122,7 +122,14 @@ error_reporting(E_ALL ^ E_NOTICE);
 $cmd_opt = getopt('', array('autoinstall::'));
 
 //** Load autoinstall file
-if(isset($cmd_opt['autoinstall']) && is_file($cmd_opt['autoinstall'])) {
+if(isset($cmd_opt['autoinstall'])) {
+	if (empty($cmd_opt['autoinstall'])) { // Meaning --autoinstall was passed without a value.
+		// Set default
+		$cmd_opt['autoinstall'] = "/usr/local/ispconfig/server/lib/autoinstall.conf.php";
+	}
+	if (!is_file($cmd_opt['autoinstall'])) {
+		die("Autoinstall config file not found. (default is /usr/local/ispconfig/server/lib/autoinstall.conf.php)");
+	}
 	$path_parts = pathinfo($cmd_opt['autoinstall']);
 	if($path_parts['extension'] == 'php') {
 		include_once $cmd_opt['autoinstall'];

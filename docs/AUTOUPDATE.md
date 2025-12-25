@@ -15,19 +15,19 @@ ISPConfig supports unattended updates using a configuration file that pre-answer
 
 1. **Create the autoinstall configuration file:**
    ```bash
-   cp /usr/local/ispconfig/server/scripts/autoinstall.conf.php.sample /usr/local/ispconfig/server/scripts/autoinstall.conf.php
+   cp /usr/local/ispconfig/docs/autoinstall_samples/autoinstall.conf_sample.php /usr/local/ispconfig/server/lib/autoinstall.conf.php
    ```
 
 2. **Edit the configuration file** with your settings (see Configuration section below)
 
 3. **Run the update:**
    ```bash
-   ispconfig_update.sh --autoinstall=/usr/local/ispconfig/server/scripts/autoinstall.conf.php
+   ispconfig_update.sh --autoinstall=/usr/local/ispconfig/server/lib/autoinstall.conf.php
    ```
    
    Or using the CLI:
    ```bash
-   ispc update --autoinstall=/usr/local/ispconfig/server/scripts/autoinstall.conf.php
+   ispc update --autoinstall=/usr/local/ispconfig/server/lib/autoinstall.conf.php
    ```
 
 ## Configuration File
@@ -116,8 +116,8 @@ This script will:
 
 1. **Protect the configuration file** - It contains sensitive passwords:
    ```bash
-   chmod 600 /usr/local/ispconfig/server/scripts/autoinstall.conf.php
-   chown root:root /usr/local/ispconfig/server/scripts/autoinstall.conf.php
+   chmod 600 /usr/local/ispconfig/server/lib/autoinstall.conf.php
+   chown root:root /usr/local/ispconfig/server/lib/autoinstall.conf.php
    ```
 
 2. **Consider using environment variables** for passwords in the PHP config:
@@ -149,7 +149,7 @@ To schedule automatic updates (use with caution):
 crontab -e
 
 # Add weekly update on Sunday at 3 AM
-0 3 * * 0 /usr/local/bin/ispconfig_update.sh --autoinstall=/usr/local/ispconfig/server/scripts/autoinstall.conf.php >> /var/log/ispconfig_update.log 2>&1
+0 3 * * 0 /usr/local/bin/ispconfig_update.sh --autoinstall=/usr/local/ispconfig/server/lib/autoinstall.conf.php >> /var/log/ispconfig/update_cron.log 2>&1
 ```
 
 **Recommendation:** Only use automated cron updates if you have:
