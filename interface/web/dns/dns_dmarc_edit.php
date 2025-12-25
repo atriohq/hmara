@@ -119,6 +119,11 @@ class page_action extends tform_actions {
 				if (preg_match("/^pct=/", $part)) $dmarc_pct = str_replace('pct=', '', $part);
 				if (preg_match("/^ri=/", $part)) $dmarc_ri = str_replace('ri=', '', $part);
 			}
+			// After parsing rf= value
+			if (strpos($dmarc_rf, ':') !== false) {
+				// Legacy combined value - default to afrf (RFC default)
+				$dmarc_rf = 'afrf';
+			}
 		}
 
 		//set html-values
