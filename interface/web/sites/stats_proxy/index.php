@@ -45,7 +45,7 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 require_once '../../../lib/config.inc.php';
 require_once '../../../lib/app.inc.php';
 
-$app->uses('tpl,tform,tform_actions');
+$app->uses('tpl,tform');
 // Check if we have an active user session and redirect to login if that's not the case.
 if ($_SESSION['s']['user']['active'] != 1) {
 	header('Location: /login/');
