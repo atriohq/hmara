@@ -53,15 +53,15 @@ userdb sql {
 
 # Sieve script storages (Dovecot 2.4 syntax)
 sieve_script personal {
-  path = /var/vmail/%{user | domain}/%{user | localpart}/.sieve
+  path = /var/vmail/%{user | domain}/%{user | username}/.sieve
 }
 sieve_script ispconfig_before {
   type = before
-  path = /var/vmail/%{user | domain}/%{user | localpart}/.ispconfig-before.sieve
+  path = /var/vmail/%{user | domain}/%{user | username}/.ispconfig-before.sieve
 }
 sieve_script ispconfig_after {
   type = after
-  path = /var/vmail/%{user | domain}/%{user | localpart}/.ispconfig.sieve
+  path = /var/vmail/%{user | domain}/%{user | username}/.ispconfig.sieve
 }
 
 # Sieve settings

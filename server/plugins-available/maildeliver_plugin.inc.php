@@ -228,11 +228,13 @@ class maildeliver_plugin {
 
 				file_put_contents($sieve_file_isp, $tpl->grab()) or $app->log("Unable to write sieve filter file " . $sieve_file_isp, LOGLEVEL_WARN);
 				if ( is_file($sieve_file_isp) ) {
+					$app->system->chmod($sieve_file_isp, 0600);
 					$app->system->chown($sieve_file_isp,$mail_config['mailuser_name'],false);
 					$app->system->chgrp($sieve_file_isp,$mail_config['mailuser_group'],false);
 
 					$app->system->exec_safe("sievec ?", "$sieve_file_isp");
 					if ( is_file($sieve_file_isp_svbin) ) {
+						$app->system->chmod($sieve_file_isp_svbin, 0600);
 						$app->system->chown($sieve_file_isp_svbin,$mail_config['mailuser_name'],false);
 						$app->system->chgrp($sieve_file_isp_svbin,$mail_config['mailuser_group'],false);
 					}
