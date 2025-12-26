@@ -56,14 +56,75 @@ if ($_SESSION['s']['user']['active'] != 1) {
 $base_url = "/sites/stats_proxy"; // Adjust this to match your script's base path
 
 
-// Extract the path and query string from REQUEST_URI
-$request_uri = $_SERVER['REQUEST_URI'];
-$relative_path = str_replace($base_url, '', $request_uri);
+// Extract the path and query string from REQUEST_URI and normalize
+$request_uri = $_SERVER['REQUEST_URI'] ?? '';
 
-// Get the first path component as the domain name
-$relative_path_parts = explode('/', ltrim($relative_path, '/'));
-$domain_name = $relative_path_parts[0];
-$relative_path = '/' . implode('/', array_slice($relative_path_parts, 1));
+// Ensure the request starts with the expected base URL
+if (strpos($request_uri, $base_url) !== 0) {
+	header('HTTP/1.1 400 Bad Request');
+	echo "Invalid request path.";
+	die();
+}
+
+// Remove the base URL prefix and split path/query
+$relative_uri = substr($request_uri, strlen($base_url));
+$path = parse_url($relative_uri, PHP_URL_PATH) ?: '/';
+$query = parse_url($relative_uri, PHP_URL_QUERY) ?: '';
+
+// Decode once and reject null bytes
+$decoded_path = rawurldecode($path);
+if (strpos($decoded_path, "\0") !== false) {
+	header('HTTP/1.1 400 Bad Request');
+	echo "Invalid path.";
+	die();
+}
+
+// Normalize path segments to remove '.' and '..' and prevent traversal
+$parts = explode('/', ltrim($decoded_path, '/'));
+$normalized = [];
+foreach ($parts as $seg) {
+	if ($seg === '' || $seg === '.') {
+		continue;
+	}
+	if ($seg === '..') {
+		// Trying to go above the root => reject
+		if (empty($normalized)) {
+			header('HTTP/1.1 400 Bad Request');
+			echo "Path traversal attempt detected.";
+			die();
+		}
+		array_pop($normalized);
+		continue;
+	}
+	// reject control characters or other suspicious characters in segments
+	if (preg_match('/[\x00-\x1F\x7F]/', $seg)) {
+		header('HTTP/1.1 400 Bad Request');
+		echo "Invalid path segment.";
+		die();
+	}
+	$normalized[] = $seg;
+}
+
+if (count($normalized) === 0) {
+	header('HTTP/1.1 400 Bad Request');
+	echo "Missing domain name in path.";
+	die();
+}
+
+// Extract domain name (first segment) and rebuild relative path (rest)
+$domain_name = rawurldecode($normalized[0]);
+$remaining = array_slice($normalized, 1);
+$relative_path = '/' . implode('/', $remaining);
+if ($relative_path === '/') {
+	// keep as single slash
+	$relative_path = '/';
+}
+
+// Re-add sanitized query if present
+if ($query !== '') {
+	parse_str($query, $query_params);
+	$relative_path .= (strpos($relative_path, '?') === false ? '?' : '&') . http_build_query($query_params, '', '&', PHP_QUERY_RFC3986);
+}
 
 // Check if the domain name is valid, based on the regex from validate_domain::_regex_validate()
 $domain_pattern = '/^(\*\.)?[\w\.\-]{1,255}\.[a-zA-Z0-9\-]{2,63}$/';
@@ -89,9 +150,19 @@ $url = $backend_url . $relative_path;
 
 $passthrough = curl_init();
 curl_setopt($passthrough, CURLOPT_RETURNTRANSFER, true);
+// Follow redirects but only for http/https and limit redirects
 curl_setopt($passthrough, CURLOPT_FOLLOWLOCATION, true);
+curl_setopt($passthrough, CURLOPT_MAXREDIRS, 5);
+curl_setopt($passthrough, CURLOPT_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS);
+curl_setopt($passthrough, CURLOPT_REDIR_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS);
+// Do not allow credentials to be sent to other hosts during redirects
+curl_setopt($passthrough, CURLOPT_UNRESTRICTED_AUTH, false);
 curl_setopt($passthrough, CURLOPT_USERAGENT, "ISPconfig panel");
 curl_setopt($passthrough, CURLOPT_URL, $url);
+// Timeouts and SSL checks
+curl_setopt($passthrough, CURLOPT_TIMEOUT, 15);
+curl_setopt($passthrough, CURLOPT_SSL_VERIFYPEER, true);
+curl_setopt($passthrough, CURLOPT_SSL_VERIFYHOST, 2);
 
 // Apply Basic Authentication
 curl_setopt($passthrough, CURLOPT_USERPWD, $conf['stats_proxy_username'] . ':' . $conf['stats_proxy_password']);
@@ -100,9 +171,20 @@ $passthroughdata = curl_exec($passthrough);
 
 if ($passthroughdata === false) {
 	echo 'Curl error: ' . curl_error($passthrough);
-} else {
-	// Get the content type from the backend response
-	$content_type = curl_getinfo($passthrough, CURLINFO_CONTENT_TYPE);
+}
+elseif ($passthroughdata !== false) {
+	// Ensure redirects did not lead us to a different host
+	$effective_url = curl_getinfo($passthrough, CURLINFO_EFFECTIVE_URL);
+	if ($effective_url) {
+		$effective_host = parse_url($effective_url, PHP_URL_HOST);
+		if ($effective_host && strtolower($effective_host) !== strtolower($domain_name)) {
+			header('HTTP/1.1 502 Bad Gateway');
+			echo "Backend redirected to unexpected host.";
+			curl_close($passthrough);
+			die();
+		}
+	}
+
 	$status_code = curl_getinfo($passthrough, CURLINFO_HTTP_CODE);
 	if ($status_code != 200) {
 		header("HTTP/1.1 $status_code");
@@ -111,6 +193,8 @@ if ($passthroughdata === false) {
 		die();
 	}
 
+	// Get the content type from the backend response
+	$content_type = curl_getinfo($passthrough, CURLINFO_CONTENT_TYPE);
 	if ($content_type) {
 		header("Content-Type: " . $content_type);
 	} else {
