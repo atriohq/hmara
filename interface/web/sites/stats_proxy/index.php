@@ -53,8 +53,7 @@ if ($_SESSION['s']['user']['active'] != 1) {
 }
 
 // Base URL
-$base_url = "/sites/stats_proxy"; // Adjust this to match your script's base path
-
+$base_url = "/sites/stats_proxy";
 
 // Extract the path and query string from REQUEST_URI and normalize
 $request_uri = $_SERVER['REQUEST_URI'] ?? '';
