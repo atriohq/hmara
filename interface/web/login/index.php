@@ -487,9 +487,12 @@ $app->tpl->setVar('session_timeout', $server_config_array['session_timeout']);
 $app->tpl->setVar('session_allow_endless', $server_config_array['session_allow_endless']);
 //$app->tpl->setInclude('content_tpl', 'login/templates/index.htm');
 $app->tpl->setVar('current_theme', isset($_SESSION['s']['theme']) ? $_SESSION['s']['theme'] : 'default', true);
-$app->tpl->setVar('show_ip_on_login_form', $server_config_array['show_ip_on_login_form']);
-$app->tpl->setVar('logging_in_from_txt', $app->lng('logging_in_from_txt'));
-$app->tpl->setVar('remote_address', $app->functions->htmlentities($_SERVER['REMOTE_ADDR']), true);
+$show_ip = $server_config_array['show_ip_on_login_form'] ?? 'n';
+$app->tpl->setVar('show_ip_on_login_form', $show_ip);
+if ($show_ip == 'y') {
+	$app->tpl->setVar('logging_in_from_txt', $app->lng('logging_in_from_txt'));
+	$app->tpl->setVar('remote_address', $app->functions->htmlentities($_SERVER['REMOTE_ADDR']), true);
+}
 //die(isset($_SESSION['s']['theme']) ? $_SESSION['s']['theme'] : 'default');
 
 // Logo

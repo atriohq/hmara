@@ -12,7 +12,7 @@
 			    		<div class="form-group">
 			    			<input class="form-control" placeholder="{tmpl_var name='password_txt'}" name="password" id="password" type="password" value="">
 			    		</div>
-						<tmpl_if name="show_ip_on_login_form">
+						<tmpl_if name="show_ip_on_login_form" value="y">
 							<div class="form-group">
 								{tmpl_var name='logging_in_from_txt'}: {tmpl_var name='remote_address'}
 							</div>
