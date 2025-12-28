@@ -152,7 +152,6 @@ quota_status_success = DUNNO
 quota_status_nouser = DUNNO
 quota_status_overquota = "552 5.2.2 Mailbox is full"
 
-imap_capability=+SPECIAL-USE XLIST
 namespace inbox {
   inbox = yes
   separator = .
