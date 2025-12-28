@@ -1071,7 +1071,7 @@ class installer_base extends stdClass {
 			return true;
 		}
 
-		$postfix_version = `postconf -d mail_version 2>/dev/null`;
+		$postfix_version = shell_exec("postconf -d mail_version 2>/dev/null");
 		$postfix_version = preg_replace( '/mail_version\s*=\s*(.*)\s*/', '$1', $postfix_version );
 
 		if ( version_compare( $postfix_version, '2.11', '>=' ) ) {
