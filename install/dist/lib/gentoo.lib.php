@@ -390,7 +390,7 @@ class installer extends installer_base
 
 		$config_dir = $conf['postfix']['config_dir'];
 		$quoted_config_dir = preg_quote($config_dir, '|');
-		$postfix_version = `postconf -d mail_version 2>/dev/null`;
+		$postfix_version = shell_exec("postconf -d mail_version 2>/dev/null");
 		$postfix_version = preg_replace( '/mail_version\s*=\s*(.*)\s*/', '$1', $postfix_version );
 
 		//* Configure master.cf and add a line for deliver
