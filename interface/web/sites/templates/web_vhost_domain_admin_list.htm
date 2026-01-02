@@ -46,7 +46,7 @@
                         <td><a href="#" data-load-content="sites/web_vhost_domain_edit.php?id={tmpl_var name='id'}&type={tmpl_var name='vhostdomain_type'}" data-toggle="tooltip" data-placement="bottom" title="{tmpl_var name='domain'}">{tmpl_var name="domain"}</a></td>
                         <td class="text-right">
 							<a href="http://{tmpl_var name="domain"}" target="_blank" class="btn btn-default formbutton-default formbutton-narrow"><span class="icon icon-link"></span></a>
-							<a href="<tmpl_if name="stats_proxy_username">sites/stats_proxy/{tmpl_var name="domain"}/<tmpl_else>http://{tmpl_var name="domain"}/stats/</tmpl_if>" name="domain"}/stats/" target="_blank" class="btn btn-default formbutton-default formbutton-narrow"<tmpl_if name='stats_type' op='==' value=''> disabled</tmpl_if>><span class="glyphicon glyphicon-signal"></span></a>
+							<a href="<tmpl_if name="stats_proxy_username">sites/stats_proxy/{tmpl_var name="domain"}/<tmpl_else>http://{tmpl_var name="domain"}/stats/</tmpl_if>" target="_blank" class="btn btn-default formbutton-default formbutton-narrow"<tmpl_if name='stats_type' op='==' value=''> disabled</tmpl_if>><span class="glyphicon glyphicon-signal"></span></a>
                             <a class="btn btn-default formbutton-danger formbutton-narrow" href="javascript: ISPConfig.confirm_action('sites/web_vhost_domain_del.php?id={tmpl_var name='id'}&_csrf_id={tmpl_var name='csrf_id'}&_csrf_key={tmpl_var name='csrf_key'}&phpsessid={tmpl_var name='phpsessid'}','{tmpl_var name='delete_confirmation'}');"><span class="icon icon-delete"></span></a>
                         </td>
                     </tr>
