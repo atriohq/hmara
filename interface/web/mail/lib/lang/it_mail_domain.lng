@@ -22,6 +22,7 @@ $wb['error_not_allowed_server_id'] = 'Non sei abilitato a operare su questo serv
 $wb['dkim_selector_txt'] = 'Selettore di chiave DKIM';
 $wb['dkim_selector_error'] = 'Selettore di chiave DKIM invalido. Usare solo caratteri minuscoli e cifre (a-z or 0-9) fino a max 63 caratteri.';
 $wb['relayhost_txt'] = 'Relayhost';
+$wb['dependent_mail_addresses_txt'] = 'Dependant Addresses';
 $wb['relayhost_user_txt'] = 'Utente Relayhost';
 $wb['relayhost_password_txt'] = 'Relayhost Password';
 $wb['dkim_auto_dns_txt'] = 'Managed zone, dns updated automatically';
