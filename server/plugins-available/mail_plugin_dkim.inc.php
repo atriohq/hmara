@@ -182,20 +182,6 @@ class mail_plugin_dkim {
 	}
 
 	/**
-	 * This function restarts amavis
-	 */
-    private function restart_amavis() {
-        global $app;
-		$output = null;
-		$initcommand = $app->system->getinitcommand(array('amavis', 'amavisd'), 'restart');
-		$app->log('Restarting amavis: '.$initcommand.'.', LOGLEVEL_DEBUG);
-		exec($initcommand, $output);
-		foreach($output as $logline) {
-			$app->log($logline, LOGLEVEL_DEBUG);
-		}
-    }
-
-	/**
 	 * This function writes the keyfiles (public and private)
 	 * @param string $key_file full path to the key-file
 	 * @param string $key_value private-key
@@ -308,10 +294,11 @@ class mail_plugin_dkim {
 		$amavis_configfile = $this->get_amavis_config();
 		$amavis_config = $app->system->file_get_contents($amavis_configfile, true);
 
-		$search_regex = "/(\n|\r)?dkim_key.*".$key_domain.".*(\n|\r)?/";
+		$escaped_domain = preg_quote($key_domain, '/');
+		$search_regex = "/(\n|\r)?dkim_key\('".$escaped_domain."', '.*?', '.*?'\);(\n|\r)?/";
 
 		if (preg_match($search_regex, $amavis_config)) {
-			$amavis_config = preg_replace($search_regex, '', $amavis_config);
+			$amavis_config = preg_replace($search_regex, "\n", $amavis_config);
 			$app->system->file_put_contents($amavis_configfile, $amavis_config, true);
 			$app->log('Deleted the DKIM settings from amavis-config for '.$key_domain.'.', LOGLEVEL_DEBUG);
 			$restart = true;
@@ -323,7 +310,7 @@ class mail_plugin_dkim {
 			if(file_exists($temp_configfile)) {
 				$temp_config = $app->system->file_get_contents($temp_configfile, true);
 				if (preg_match($search_regex, $temp_config)) {
-					$temp_config = preg_replace($search_regex, '', $temp_config);
+					$temp_config = preg_replace($search_regex, "\n", $temp_config);
 					$app->system->file_put_contents($temp_configfile, $temp_config, true);
 					$restart = true;
 				}
@@ -353,7 +340,7 @@ class mail_plugin_dkim {
 					
 					$app->services->restartServiceDelayed('rspamd', 'reload');
 				} elseif ($this->add_to_amavis($data['new']['domain'], $data['new']['dkim_selector'], $data['old']['dkim_selector'] )) {
-					$this->restart_amavis();
+					$app->services->restartServiceDelayed('amavis', 'restart');
 				} else {
 					$this->remove_dkim_key($mail_config['dkim_path']."/".$data['new']['domain'], $data['new']['domain']);
 				}
@@ -381,7 +368,7 @@ class mail_plugin_dkim {
 			$app->system->removeLine('/etc/rspamd/local.d/dkim_selectors.map', 'REGEX:/^' . preg_quote($_data['domain'], '/') . ' /');
 			$app->services->restartServiceDelayed('rspamd', 'reload');
 		} elseif ($this->remove_from_amavis($_data['domain'])) {
-			$this->restart_amavis();
+			$app->services->restartServiceDelayed('amavis', 'restart');
 		}
 	}
 

@@ -45,6 +45,7 @@ class resync_cli extends cli {
         $cmd_opt['resync:mail'] = 'mail';
         $cmd_opt['resync:mailfilter'] = 'mailfilter';
         $cmd_opt['resync:client'] = 'client';
+        $cmd_opt['resync:dns'] = 'dns';
         $this->addCmdOpt($cmd_opt);
     }
 
@@ -64,6 +65,7 @@ class resync_cli extends cli {
         $this->swriteln("ispc resync mail - Resync mail services.");
         $this->swriteln("ispc resync mailfilter - Resync mailfilter services.");
         $this->swriteln("ispc resync client - Resync client services.");
+        $this->swriteln("ispc resync dns - Resync DNS zones.");
         $this->swriteln("---------------------------------");
         $this->swriteln();
     }
@@ -81,6 +83,7 @@ class resync_cli extends cli {
         $this->db($arg);
         $this->mail($arg);
         $this->mailfilter($arg);
+        $this->dns($arg);
         $this->client($arg);
         
         $this->swriteln("All services resynced successfully.");
@@ -236,6 +239,52 @@ class resync_cli extends cli {
         $this->do_resync('client', 'client_id', 'client', $server_id, '', 'Clients');
         
         $this->swriteln("Client services resynced successfully.");
+    }
+    
+    /**
+     * Resync DNS zones
+     */
+    public function dns($arg) {
+        global $app, $conf;
+
+        // if server_id is 1 and we have multiple servers, use provided server_id
+        if ($conf['server_id'] == 1 && $this->is_multiserver_primary()) {
+            $server_id = (isset($arg[0])) ? intval($arg[0]) : $conf['mirror_server_id'];
+        } else {
+            $server_id = $conf['server_id'];
+        }
+        
+        $this->swriteln("Resyncing DNS zones...");
+        
+        $rec = $this->query_server('dns_soa', $server_id, 'dns');
+        $soa_records = $rec[0];
+        $server_name = $rec[1];
+        
+        if(is_array($soa_records) && !empty($soa_records)) {
+            foreach($soa_records as $soa_rec) {
+                // Get DNS resource records for this zone
+                $rr_records = $app->db->queryAllRecords("SELECT * FROM dns_rr WHERE zone = ? AND active = 'y'", $soa_rec['id']);
+                
+                if(!empty($rr_records)) {
+                    foreach($rr_records as $rr_rec) {
+                        $new_serial = $app->validate_dns->increase_serial($rr_rec['serial']);
+                        $app->db->datalogUpdate('dns_rr', array("serial" => $new_serial), 'id', $rr_rec['id']);
+                    }
+                }
+                
+                // Update SOA record with new serial
+                $new_serial = $app->validate_dns->increase_serial($soa_rec['serial']);
+                $app->db->datalogUpdate('dns_soa', array("serial" => $new_serial), 'id', $soa_rec['id']);
+                
+                $rr_count = is_array($rr_records) ? count($rr_records) : 0;
+                $this->swriteln("  [" . $server_name[$soa_rec['server_id']] . "] " . $soa_rec['origin'] . " (" . $rr_count . " RR)");
+            }
+            $this->swriteln("  " . count($soa_records) . " DNS zones resynced.");
+        } else {
+            $this->swriteln("  No DNS zones found to resync.");
+        }
+        
+        $this->swriteln("DNS zones resynced successfully.");
     }
     
     /**

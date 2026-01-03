@@ -468,7 +468,9 @@ class nginx_plugin {
 
 			//* Get the old client ID
 			$old_client = $app->dbmaster->queryOneRecord('SELECT client_id FROM sys_group WHERE sys_group.groupid = ?', $data['old']['sys_groupid']);
-			$old_client_id = intval($old_client['client_id']);
+
+			$old_client_id = (is_array($old_client) && isset($old_client['client_id'])) ? intval($old_client['client_id']) : 0;
+
 			unset($old_client);
 
 			//* Remove the old symlinks
@@ -679,10 +681,12 @@ class nginx_plugin {
 		if(!is_dir($data['new']['document_root'].'/'.$log_folder) || !is_dir('/var/log/ispconfig/httpd/'.$data['new']['domain']) || is_link($data['new']['document_root'].'/'.$log_folder)) {
 			if(is_link($data['new']['document_root'].'/'.$log_folder)) unlink($data['new']['document_root'].'/'.$log_folder);
 			if(!is_dir('/var/log/ispconfig/httpd/'.$data['new']['domain'])) $app->system->exec_safe('mkdir -p ?', '/var/log/ispconfig/httpd/'.$data['new']['domain']);
+			$app->system->chgrp('/var/log/ispconfig/httpd/'.$data['new']['domain'], $data['new']['system_group']);
+			$app->system->chmod('/var/log/ispconfig/httpd/'.$data['new']['domain'], 0750);
 			$app->system->mkdirpath($data['new']['document_root'].'/'.$log_folder);
 			$app->system->chown($data['new']['document_root'].'/'.$log_folder, 'root');
-			$app->system->chgrp($data['new']['document_root'].'/'.$log_folder, 'root');
-			$app->system->chmod($data['new']['document_root'].'/'.$log_folder, 0755);
+			$app->system->chgrp($data['new']['document_root'].'/'.$log_folder, $data['new']['system_group']);
+			$app->system->chmod($data['new']['document_root'].'/'.$log_folder, 0750);
 			$app->system->exec_safe('mount --bind ? ?', '/var/log/ispconfig/httpd/'.$data['new']['domain'], $data['new']['document_root'].'/'.$log_folder);
 			//* add mountpoint to fstab
 			$fstab_line = '/var/log/ispconfig/httpd/'.$data['new']['domain'].' '.$data['new']['document_root'].'/'.$log_folder.'    none    bind,nofail';
@@ -888,9 +892,9 @@ class nginx_plugin {
 				// make tmp directory writable for nginx and the website users
 				$app->system->chmod($data['new']['document_root'].'/tmp', 0770);
 
-				// Set Log directory to 755 to make the logs accessible by the FTP user
+				// Set Log directory to 750 to make the logs accessible by the FTP user via the client group
 				if(realpath($data['new']['document_root'].'/'.$log_folder . '/error.log') == '/var/log/ispconfig/httpd/'.$data['new']['domain'].'/error.log') {
-					$app->system->chmod($data['new']['document_root'].'/'.$log_folder, 0755);
+					$app->system->chmod($data['new']['document_root'].'/'.$log_folder, 0750);
 				}
 
 				if($web_config['add_web_users_to_sshusers_group'] == 'y') {
@@ -956,9 +960,9 @@ class nginx_plugin {
 				// make temp directory writable for nginx and the website users
 				$app->system->chmod($data['new']['document_root'].'/tmp', 0770);
 
-				// Set Log directory to 755 to make the logs accessible by the FTP user
+				// Set Log directory to 750 to make the logs accessible by the FTP user via the client group
 				if(realpath($data['new']['document_root'].'/'.$log_folder . '/error.log') == '/var/log/ispconfig/httpd/'.$data['new']['domain'].'/error.log') {
-					$app->system->chmod($data['new']['document_root'].'/'.$log_folder, 0755);
+					$app->system->chmod($data['new']['document_root'].'/'.$log_folder, 0750);
 				}
 
 				$app->system->chown($data['new']['document_root'], 'root');
@@ -1020,10 +1024,13 @@ class nginx_plugin {
 		$app->system->web_folder_protection($data['new']['document_root'], true);
 
 		if($data['new']['type'] == 'vhost') {
-			// Change the ownership of the error log to the root user
-			if(!@is_file('/var/log/ispconfig/httpd/'.$data['new']['domain'].'/error.log')) $app->system->exec_safe('touch ?', '/var/log/ispconfig/httpd/'.$data['new']['domain'].'/error.log');
+			// Change the ownership of the error log to the root user, with the client group.
+			if(!@is_file('/var/log/ispconfig/httpd/'.$data['new']['domain'].'/error.log')) {
+				$app->system->exec_safe('touch ?', '/var/log/ispconfig/httpd/'.$data['new']['domain'].'/error.log');
+			}
 			$app->system->chown('/var/log/ispconfig/httpd/'.$data['new']['domain'].'/error.log', 'root');
-			$app->system->chgrp('/var/log/ispconfig/httpd/'.$data['new']['domain'].'/error.log', 'root');
+			$app->system->chgrp('/var/log/ispconfig/httpd/'.$data['new']['domain'].'/error.log', $groupname);
+			$app->system->chmod('/var/log/ispconfig/httpd/'.$data['new']['domain'].'/error.log', 0640);
 		}
 
 
@@ -1984,7 +1991,7 @@ class nginx_plugin {
 			if(isset($data['new']['stats_password']) && !is_null($data['new']['stats_password']) && trim($data['new']['stats_password']) != '') {
 				$htp_file = 'admin:'.trim($data['new']['stats_password']);
 				$app->system->file_put_contents($data['new']['document_root'].'/' . $stats_web_folder . '/stats/.htpasswd_stats', $htp_file);
-				$app->system->chmod($data['new']['document_root'].'/' . $stats_web_folder . '/stats/.htpasswd_stats', 0755);
+				$app->system->chmod($data['new']['document_root'].'/' . $stats_web_folder . '/stats/.htpasswd_stats', 0640);
 				unset($htp_file);
 			}
 		}

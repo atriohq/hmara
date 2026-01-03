@@ -106,7 +106,14 @@ function checkDbHealth() {
 	$notok = array();
 
 	echo "Checking ISPConfig database .. ";
-	exec("mysqlcheck -h ".escapeshellarg($conf['mysql']['host'])." -u ".escapeshellarg($conf['mysql']['admin_user'])." -p".escapeshellarg($conf['mysql']['admin_password'])." -P ".escapeshellarg($conf['mysql']['port'])." --auto-repair ".escapeshellarg($conf["mysql"]["database"]), $result);
+	
+	//* Determine the correct check command (mysqlcheck or mariadb-check)
+	$check_cmd = 'mysqlcheck';
+	if(!file_exists('/usr/bin/mysqlcheck') && file_exists('/usr/bin/mariadb-check')) {
+		$check_cmd = 'mariadb-check';
+	}
+	
+	exec($check_cmd." -h ".escapeshellarg($conf['mysql']['host'])." -u ".escapeshellarg($conf['mysql']['admin_user'])." -p".escapeshellarg($conf['mysql']['admin_password'])." -P ".escapeshellarg($conf['mysql']['port'])." --auto-repair ".escapeshellarg($conf["mysql"]["database"]), $result);
 	for( $i=0; $i<sizeof($result);$i++) {
 		if ( substr($result[$i], -2) != "OK" ) {
 			$notok[] = $result[$i];

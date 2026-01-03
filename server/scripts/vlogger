@@ -227,6 +227,8 @@ if ( $> == "0" ) {
     }
 }
 
+umask 027;
+
 # set up dbi stuffs
 
 my $DBI_DSN;
@@ -484,6 +486,20 @@ else {
             # open the file using the template
             open $vhost, ">>".$filename
               or die ( "can't open $filename" );
+
+            # Attempt to set the file's group to match the log directory.
+            # The earlier umask call should ensure that the file is group-readable, and not for others.
+            my $logdir = "/var/log/ispconfig/httpd/$vhost/";
+            if ( -d $logdir ) {
+                my @st = stat($logdir);
+                my $gid = $st[5];
+                if ( defined $gid ) {
+                    my $uid = 0;
+                    unless ( chown $uid, $gid, $filename ) {
+                        warn "[vlogger] failed to chown $filename to gid $gid: $!\n";
+                    }
+                }
+            }
 
             # autoflush the handle unless -a
             if ( !$OPTS{'a'} ) {

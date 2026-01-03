@@ -38,7 +38,19 @@ class update_cli extends cli {
 
     public function ispconfigUpdate($arg) {
         global $conf;
-        passthru('/usr/local/bin/ispconfig_update.sh');
+        
+        // Build command with optional --autoinstall argument
+        $cmd = '/usr/local/bin/ispconfig_update.sh';
+
+        // Check for optional arguments:
+        //  --autoinstall=/path/to/file.php
+        //  --update-source=source
+        foreach($arg as $a) {
+            if(strpos($a, '--autoinstall') === 0 || strpos($a, '--update-source=') === 0) {
+                $cmd .= ' ' . escapeshellarg($a);
+            }
+        }
+        passthru($cmd);
     }
 
     public function showHelp($arg) {
@@ -48,6 +60,8 @@ class update_cli extends cli {
       $this->swriteln("- Available commandline options -");
       $this->swriteln("---------------------------------");
       $this->swriteln("ispc update - Start ISPConfig update.");
+      $this->swriteln("ispc update --autoinstall=/path/to/autoinstall.conf.php - Unattended update.");
+      $this->swriteln("ispc update --update-source=SOURCE - Choose update source (e.g. stable, nightly or git-develop).");
       $this->swriteln("---------------------------------");
       $this->swriteln();
     }

@@ -71,6 +71,13 @@ class z_php_fpm_incron_reload_plugin {
 
 	private function setup($data)
 	{
+		global $app;
+
+		if ((int)$data['server_php_id'] === 0) {
+			$app->log('Skipping incron setup: using default PHP', LOGLEVEL_DEBUG);
+			return;
+		}
+
 		$triggerFile = $this->getTriggerFilePath($data['document_root']);
 
 		$this->createTriggerFile($triggerFile, $data['system_user'], $data['system_group']);
@@ -109,10 +116,15 @@ class z_php_fpm_incron_reload_plugin {
 		return (isset($serverConfig['php_fpm_incron_reload']) && $serverConfig['php_fpm_incron_reload'] === 'y');
 	}
 
-	private function createIncronConfiguration($triggerFile, $systemUser, $fastcgiPhpVersion) {
+	private function createIncronConfiguration($triggerFile, $systemUser, $additionalPhpVersion) {
 		global $app;
 
-		$phpService = $this->getPhpService($fastcgiPhpVersion);
+		$phpService = $this->getPhpService($additionalPhpVersion);
+		if ($phpService === null) {
+			$app->log('Cannot create incron config: PHP service not found for server_php_id ' . $additionalPhpVersion, LOGLEVEL_WARN);
+			return;
+		}
+
 		$configFile = $this->getIncronConfigurationFilePath($systemUser);
 
 		$content = sprintf(
@@ -131,10 +143,10 @@ class z_php_fpm_incron_reload_plugin {
 		global $app;
 
 		if (!file_exists($triggerFile)) {
-			exec(sprintf('touch %s', $triggerFile));
+			exec(sprintf('touch %s', escapeshellarg($triggerFile)));
 		}
 
-		exec(sprintf('chown %s:%s %s', $systemUser, $systemGroup, $triggerFile));
+		exec(sprintf('chown %s:%s %s', escapeshellarg($systemUser), escapeshellarg($systemGroup), escapeshellarg($triggerFile)));
 
 		$app->log(sprintf('Ensured incron trigger file "%s"', $triggerFile), LOGLEVEL_DEBUG);
 	}
@@ -172,10 +184,10 @@ class z_php_fpm_incron_reload_plugin {
 		return sprintf('/etc/incron.d/%s.conf', $systemUser);
 	}
 
-	private function getPhpService($fastcgiPhpVersion) {
+	private function getPhpService($additionalPhpVersion) {
 		global $app;
 
-		$phpInfo = $app->db->queryOneRecord('SELECT * FROM server_php WHERE server_php_id = ?', $fastcgiPhpVersion);
+		$phpInfo = $app->db->queryOneRecord('SELECT * FROM server_php WHERE server_php_id = ?', $additionalPhpVersion);
 		if (empty($phpInfo)) {
 			return null;
 		}

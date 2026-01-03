@@ -21,7 +21,22 @@ _UPD=1
 ##################################################
 
 SOURCE=$1
+AUTOINSTALL_ARG=""
 URL=""
+
+# Parse additional arguments
+shift
+while [[ $# -gt 0 ]]; do
+	case $1 in
+		--autoinstall*)
+			AUTOINSTALL_ARG="$1"
+			shift
+			;;
+		*)
+			shift
+			;;
+	esac
+done
 
 if [[ "$SOURCE" == "stable" ]] ; then
 	URL="https://www.ispconfig.org/downloads/ISPConfig-3-stable.tar.gz"
@@ -64,7 +79,7 @@ then
             -d disable_classes= \
             -d disable_functions= \
             -d open_basedir= \
-            update.php
+            update.php ${AUTOINSTALL_ARG}
         cd /tmp
         rm -rf "${tmpdir}"
     else

@@ -18,4 +18,5 @@ $wb['data_error_empty'] = 'NAPTR record is empty.';
 $wb['naptr_error_regex'] = 'Invalid NAPTR record.  The NAPTR record must include Order, Pref and either Regex or Replacement.';
 $wb['ttl_range_error'] = 'Min. TTL time is 60 seconds.';
 $wb['record_parse_error'] = 'Could not parse the record found in database.';
+$wb['cname_conflict_txt'] = 'A CNAME record already exists for this hostname. CNAME records cannot coexist with other record types at the same hostname.';
 ?>

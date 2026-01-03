@@ -263,11 +263,23 @@ class rspamd_plugin {
 					$policy = $app->db->queryOneRecord("SELECT p.* FROM spamfilter_users as u INNER JOIN spamfilter_policy as p ON (p.id = u.policy_id) WHERE u.server_id = ? AND u.email = ?", $conf['server_id'], $domain);
 				}
 
-				$check = $app->db->queryOneRecord('SELECT `greylisting` FROM `mail_user` WHERE `server_id` = ? AND `email` = ? UNION SELECT `greylisting` FROM `mail_forwarding` WHERE `server_id` = ? AND `source` = ? ORDER BY (`greylisting` = ?) DESC', $conf['server_id'], $email_address, $conf['server_id'], $email_address, 'y');
-				if($check) {
-					$greylisting = $check['greylisting'];
+				if($is_domain) {
+					// For domains, use the policy's rspamd_greylisting setting directly
+					$greylisting = isset($policy['rspamd_greylisting']) ? $policy['rspamd_greylisting'] : 'n';
 				} else {
-					$greylisting = 'n';
+					// For individual addresses, check mail_user/mail_forwarding greylisting setting
+					$check = $app->db->queryOneRecord('SELECT `greylisting` FROM `mail_user` WHERE `server_id` = ? AND `email` = ? UNION SELECT `greylisting` FROM `mail_forwarding` WHERE `server_id` = ? AND `source` = ? ORDER BY (`greylisting` = ?) DESC', $conf['server_id'], $email_address, $conf['server_id'], $email_address, 'y');
+					if($check) {
+						// Use explicit setting if greylisting is enabled, otherwise inherit from policy
+						if($check['greylisting'] === 'y') {
+							$greylisting = 'y';
+						} else {
+							// Inherit from policy when not explicitly enabled
+							$greylisting = isset($policy['rspamd_greylisting']) ? $policy['rspamd_greylisting'] : 'n';
+						}
+					} else {
+						$greylisting = isset($policy['rspamd_greylisting']) ? $policy['rspamd_greylisting'] : 'n';
+					}
 				}
 			} else {
 				$search_for_policy[] = $email_address;
@@ -275,7 +287,14 @@ class rspamd_plugin {
 
 				$policy = $app->db->queryOneRecord("SELECT p.* FROM spamfilter_users as u INNER JOIN spamfilter_policy as p ON (p.id = u.policy_id) WHERE u.server_id = ? AND u.email IN ? ORDER BY u.priority DESC", $conf['server_id'], $search_for_policy);
 
-				$greylisting = $data[$use_data]['greylisting'];
+				// Use explicit greylisting setting if enabled, otherwise inherit from policy
+				if($data[$use_data]['greylisting'] === 'y') {
+					$greylisting = 'y';
+				} elseif(isset($policy['rspamd_greylisting'])) {
+					$greylisting = $policy['rspamd_greylisting'];
+				} else {
+					$greylisting = 'n';
+				}
 			}
 
 			if(!is_dir($this->users_config_dir)){

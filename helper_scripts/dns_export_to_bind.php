@@ -10,7 +10,7 @@ function hostname2ipfunktion($tmp1, $timeout = 1)
 {
 	if ($tmp1 == 0)
 	{
-		$query = `nslookup -timeout=$timeout -retry=0 $tmp1`;
+		$query = shell_exec("nslookup -timeout=$timeout -retry=0 $tmp1");
 		if(preg_match('/\nAddress: (.*)\n/', $query, $matches))
 			return trim($matches[1]);
 		return $tmp1;

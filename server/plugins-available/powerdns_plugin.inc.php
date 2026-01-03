@@ -280,6 +280,8 @@ class powerdns_plugin {
 		$zone = $app->db->queryOneRecord("SELECT * FROM dns_soa WHERE id = ?", $data["new"]["zone"]);
 		$origin = substr($zone["origin"], 0, -1);
 		$powerdns_zone = $app->db->queryOneRecord("SELECT * FROM powerdns.domains WHERE ispconfig_id = ? AND type = 'MASTER'", $data["new"]["zone"]);
+		//* If PowerDNS domain doesn't exist yet (SOA not active), skip - records will be created when SOA is activated
+		if(!is_array($powerdns_zone)) return;
 		$zone_id = $powerdns_zone["id"];
 
 		$type = $data["new"]["type"];

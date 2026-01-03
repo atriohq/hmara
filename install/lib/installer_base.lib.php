@@ -1071,7 +1071,7 @@ class installer_base extends stdClass {
 			return true;
 		}
 
-		$postfix_version = `postconf -d mail_version 2>/dev/null`;
+		$postfix_version = shell_exec("postconf -d mail_version 2>/dev/null");
 		$postfix_version = preg_replace( '/mail_version\s*=\s*(.*)\s*/', '$1', $postfix_version );
 
 		if ( version_compare( $postfix_version, '2.11', '>=' ) ) {
@@ -1150,6 +1150,10 @@ class installer_base extends stdClass {
 		foreach (glob('tpl/mysql-virtual_*.master') as $filename) {
 			$this->process_postfix_config( basename($filename, '.master') );
 		}
+
+		// Cleanup deprecated option, replaced by smtpd_tls_security_level.
+		$command = 'postconf -X smtpd_use_tls';
+		caselog($command.' &> /dev/null', __FILE__, __LINE__, "EXECUTED: $command", "Failed to execute the command $command");
 
 		//* mysql-verify_recipients.cf
 		$this->process_postfix_config('mysql-verify_recipients.cf');
@@ -1278,8 +1282,11 @@ class installer_base extends stdClass {
 			$postconf_commands = array_merge($postconf_commands, array_filter(explode("\n", $content)));
 		}
 
-		// Remove comment lines, these would give fatal errors when passed to postconf.
-		$postconf_commands = array_filter($postconf_commands, function($line) { return preg_match('/^[^#]/', $line); });
+		// Remove comment lines and empty/whitespace-only lines, these would give fatal errors when passed to postconf.
+		$postconf_commands = array_filter($postconf_commands, function($line) {
+			$line = trim($line);
+			return $line !== '' && preg_match('/^[^#]/', $line);
+		});
 
 		//* These postconf commands will be executed on installation only
 		if($this->is_update == false) {

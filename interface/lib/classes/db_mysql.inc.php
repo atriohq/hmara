@@ -127,7 +127,19 @@ class db
 		if(mysqli_connect_errno()) {
 			return false;
 		}
-		return (boolean)(is_object($this->_iConnId) && mysqli_ping($this->_iConnId));
+		if (!is_object($this->_iConnId)) {
+			return false;
+		}
+		try {
+			$res = mysqli_query($this->_iConnId, 'SELECT 1');
+			if ($res !== false) {
+				mysqli_free_result($res);
+				return true;
+			}
+		} catch (mysqli_sql_exception $e) {
+			// Connection lost or query failed
+		}
+		return false;
 	}
 
 	/* This allows our private variables to be "read" out side of the class */
@@ -169,7 +181,11 @@ class db
 					$iPos = $iPos2;
 				} else {
 					if(is_int($sValue) || is_float($sValue)) {
-						$sTxt = $sValue;
+						if(is_float($sValue) && floor($sValue) == $sValue) {
+							$sTxt = (int)$sValue;
+						} else {
+							$sTxt = $sValue;
+						}
 					} elseif(is_null($sValue) || (is_string($sValue) && (strcmp($sValue, '#NULL#') == 0))) {
 						$sTxt = 'NULL';
 					} elseif(is_array($sValue)) {
@@ -269,7 +285,19 @@ class db
 		$try = 0;
 		do {
 			$try++;
-			$ok = (is_object($this->_iConnId)) ? mysqli_ping($this->_iConnId) : false;
+			$ok = false;
+			if (is_object($this->_iConnId)) {
+				try {
+					$res = mysqli_query($this->_iConnId, 'SELECT 1');
+					if ($res !== false) {
+						mysqli_free_result($res);
+						$ok = true;
+					}
+				} catch (mysqli_sql_exception $e) {
+					$ok = false;
+				}
+			}
+
 			if(!$ok) {
 				if(!is_object($this->_iConnId)) {
 					$this->_iConnId = mysqli_init();
