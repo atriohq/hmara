@@ -131,7 +131,7 @@ function process_login_request(app $app, &$error, $conf, $module)
 		* We need LOGIN_REDIRECT instead of HEADER_REDIRECT to load the
 		* new theme, if the logged-in user has another
 		*/
-
+		$msg = '';
 		if ($loginAs) {
 			echo 'LOGIN_REDIRECT:'.$_SESSION['s']['module']['startpage'];
 			$app->plugin->raiseEvent('login', $username);
@@ -162,6 +162,7 @@ function process_login_request(app $app, &$error, $conf, $module)
 					die();
 				} else {
 					// OK, IP is whitelisted
+					$msg = "(OTP bypassed for whitelisted IP)";
 				}
 			}
 			$app->plugin->raiseEvent('login', $username);
