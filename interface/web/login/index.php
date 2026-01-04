@@ -142,7 +142,11 @@ function process_login_request(app $app, &$error, $conf, $module)
 			//* Do 2FA authentication
 			if(isset($user['otp_type']) && $user['otp_type'] != 'none') {
 
-				if (empty($conf['otp_whitelist']) || !is_ip_in_list($_SERVER['REMOTE_ADDR'], $conf['otp_whitelist']))  {
+				$skip_otp = !empty($conf['otp_ip_whitelist_file'])
+					&& file_exists($conf['otp_ip_whitelist_file'])
+					&& is_ip_in_list($_SERVER['REMOTE_ADDR'], file($conf['otp_ip_whitelist_file']));
+
+				if (!$skip_otp) {
 					//* Save session in pending state and destroy original session
 					$_SESSION['s_pending'] = $_SESSION['s'];
 					unset($_SESSION['s']);
@@ -215,6 +219,10 @@ function is_ip_in_list($ip, $whitelist)
 
 		// exclude empty lines and comments
 		if ($line === '' || $line[0] === '#') return false;
+
+		// Strip trailing comments, anything after a space.
+		$line_parts = preg_split('/\s+/', $line);
+		$line = $line_parts[0];
 
 		return ipv6_matches_cidr($ip, $line) || ipv4_matches_cidr($ip, $line);
 	});
