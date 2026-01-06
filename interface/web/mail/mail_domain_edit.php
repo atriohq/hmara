@@ -276,19 +276,19 @@ class page_action extends tform_actions {
 		parent::onShowEnd();
 	 }
 
-         function onShowEdit() {
-                global $app;
-                $sql = "SELECT domain FROM mail_domain WHERE domain_id = ?";
-                $domainInfo = $app->db->queryOneRecord($sql, $this->id);
-                $domain = $domainInfo["domain"];
+	function onShowEdit() {
+		global $app;
+		$sql = "SELECT domain FROM mail_domain WHERE domain_id = ?";
+		$domainInfo = $app->db->queryOneRecord($sql, $this->id);
+		$domain = $domainInfo["domain"];
 
-                $sql = "SELECT concat(source,' (',type,')') as pretty FROM mail_forwarding WHERE source LIKE ? OR destination LIKE ?";
-                $sql .= "UNION ALL ";
-                $sql .= "SELECT concat(email,' (box)') as pretty FROM mail_user WHERE email LIKE ?";
-                $subs = $app->db->queryAllRecords($sql, '%@'.$domain, '%@'.$domain, '%@'.$domain);
-                $app->tpl->setLoop('mail_forward_and_boxes_info', $subs);
-                parent::onShowEdit();
-        }
+		$sql = "SELECT concat(source,' (',type,')') as pretty FROM mail_forwarding WHERE source LIKE ? OR destination LIKE ?";
+		$sql .= "UNION ALL ";
+		$sql .= "SELECT concat(email,' (box)') as pretty FROM mail_user WHERE email LIKE ?";
+		$subs = $app->db->queryAllRecords($sql, '%@'.$domain, '%@'.$domain, '%@'.$domain);
+		$app->tpl->setLoop('mail_forward_and_boxes_info', $subs);
+		parent::onShowEdit();
+	}
 
 	function onSubmit() {
 		global $app, $conf;
