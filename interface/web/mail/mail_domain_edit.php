@@ -282,9 +282,9 @@ class page_action extends tform_actions {
 		$domainInfo = $app->db->queryOneRecord($sql, $this->id);
 		$domain = $domainInfo["domain"];
 
-		$sql = "SELECT concat(source,' (',type,')') as pretty FROM mail_forwarding WHERE source LIKE ? OR destination LIKE ?";
-		$sql .= "UNION ALL ";
-		$sql .= "SELECT concat(email,' (box)') as pretty FROM mail_user WHERE email LIKE ?";
+		$sql = "SELECT concat(source,' (',type,')') as pretty FROM mail_forwarding WHERE source LIKE ? OR destination LIKE ? AND " . $app->tform->getAuthSQL('r');
+		$sql .= " UNION ALL ";
+		$sql .= "SELECT concat(email,' (box)') as pretty FROM mail_user WHERE email LIKE ? AND " . $app->tform->getAuthSQL('r');
 		$subs = $app->db->queryAllRecords($sql, '%@'.$domain, '%@'.$domain, '%@'.$domain);
 		$app->tpl->setLoop('mail_forward_and_boxes_info', $subs);
 		parent::onShowEdit();
