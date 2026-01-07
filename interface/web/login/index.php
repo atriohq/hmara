@@ -180,6 +180,10 @@ function process_login_request(app $app, &$error, $conf, $module)
  */
 function process_token_login_request(app $app, &$error, $conf, $module, $authtoken) {
 
+	// Cleanup old tokens.
+	$sql = "DELETE FROM autologin_tokens WHERE used = 1 OR expires < NOW()";
+	$app->db->query($sql);
+
 	$token = $app->db->queryOneRecord(
 		"SELECT * FROM autologin_tokens WHERE token = ? AND (expires IS NULL OR expires > NOW()) AND used = 0 LIMIT 1",
 		$authtoken
