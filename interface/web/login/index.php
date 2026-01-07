@@ -168,15 +168,9 @@ function process_login_request(app $app, &$error, $conf, $module)
 			}
 		}
 	} else {
-		if (!$alreadyfailed['times']) {
-			//* user login the first time wrong
-			$sql = "INSERT INTO `attempts_login` (`ip`, `times`, `login_time`) VALUES (?, 1, NOW())";
-			$app->db->query($sql, $ip);
-		} elseif ($alreadyfailed['times'] >= 1) {
-			//* update times wrong
-			$sql = "UPDATE `attempts_login` SET `times`=`times`+1, `login_time`=NOW() WHERE `ip` = ? AND `login_time` < NOW() ORDER BY `login_time` DESC LIMIT 1";
-			$app->db->query($sql, $ip);
-		}
+		$sql = "INSERT INTO `attempts_login` (`ip`, `times`, `login_time`) VALUES (?, 1, NOW()) ON DUPLICATE KEY UPDATE times=times+1";
+		$app->db->query($sql, $ip);
+
 		//* Incorrect login - Username and password incorrect
 		$error = $app->lng('error_user_password_incorrect');
 		if ($app->db->errorMessage != '') $error .= '<br />'.$app->db->errorMessage != '';

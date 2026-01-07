@@ -87,3 +87,5 @@ CREATE TABLE IF NOT EXISTS `autologin_tokens` (
                 `used` tinyint(1) NOT NULL DEFAULT 0,
                 `created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+ALTER TABLE `attempts_login` ADD PRIMARY KEY(`ip`);
