@@ -437,6 +437,29 @@ require_once 'lib/password_check.inc.php';
 
 include_once '../common.php';
 
+// Check if we have an active users session and no login_as.
+if ($_SESSION['s']['user']['active'] == 1 && @$_POST['login_as'] != 1) {
+	header('Location: /index.php');
+	die();
+}
+
+$app->uses('tpl');
+$app->tpl->newTemplate('main_login.tpl.htm');
+$app->tpl->setInclude('content_tpl', 'templates/index.htm');
+
+$error = '';
+
+$app->load_language_file('web/login/lib/lang/'.$conf["language"].'.lng');
+
+// Maintenance mode
+$maintenance_mode = false;
+$maintenance_mode_error = '';
+$server_config_array = $app->getconf->get_global_config('misc');
+if ($app->is_under_maintenance()) {
+	$maintenance_mode = true;
+	$maintenance_mode_error = $app->lng('error_maintenance_mode');
+}
+
 // --- START: autologin token handling (commandline-generated one-time links) ---
 $authtoken = trim((string)($_GET['authtoken'] ?? ''));
 if ($authtoken !== '') {
@@ -485,29 +508,6 @@ if ($authtoken !== '') {
     }
 }
 // --- END: autologin token handling ---
-
-// Check if we have an active users session and no login_as.
-if ($_SESSION['s']['user']['active'] == 1 && @$_POST['login_as'] != 1) {
-	header('Location: /index.php');
-	die();
-}
-
-$app->uses('tpl');
-$app->tpl->newTemplate('main_login.tpl.htm');
-$app->tpl->setInclude('content_tpl', 'templates/index.htm');
-
-$error = '';
-
-$app->load_language_file('web/login/lib/lang/'.$conf["language"].'.lng');
-
-// Maintenance mode
-$maintenance_mode = false;
-$maintenance_mode_error = '';
-$server_config_array = $app->getconf->get_global_config('misc');
-if ($app->is_under_maintenance()) {
-	$maintenance_mode = true;
-	$maintenance_mode_error = $app->lng('error_maintenance_mode');
-}
 
 //* Login Form was sent
 if (count($_POST) > 0) {
