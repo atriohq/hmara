@@ -186,6 +186,7 @@ class user_cli extends cli {
         $this->swriteln('Expires: '. ($expires ?? 'never'));
         $this->swriteln();
         $server = $app->db->queryOneRecord("SELECT server_name FROM server WHERE server_id = ?", $conf['server_id']);
+        // Default to https as safe default.
         $ispconfig_panel_url = "https://" . $server['server_name'];
         $this->swriteln($ispconfig_panel_url. '/login/index.php?authtoken=' . $token);
         $this->swriteln();
