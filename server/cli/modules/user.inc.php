@@ -161,12 +161,7 @@ class user_cli extends cli {
         }
 
         // generate token
-        try {
-            $token = bin2hex(random_bytes(32));
-        } catch (\Exception $e) {
-            // fallback
-            $token = sha1(uniqid((string)mt_rand(), true));
-        }
+        $token = bin2hex(random_bytes(32));
 
         $expires = null;
         if ($ttl > 0) {
