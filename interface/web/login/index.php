@@ -206,13 +206,6 @@ function process_token_login_request(app $app, &$error, $conf, $module, $authtok
 			$_SESSION['s']['language'] = $app->functions->check_language($user['language']);
 			$_SESSION["s"]['theme'] = $_SESSION['s']['user']['theme'];
 
-			// load user startmodule menu if present
-			if (is_file(ISPC_WEB_PATH.'/'.$_SESSION['s']['user']['startmodule'].'/lib/module.conf.php')) {
-				include_once $app->functions->check_include_path(ISPC_WEB_PATH.'/'.$_SESSION['s']['user']['startmodule'].'/lib/module.conf.php');
-				$menu_dir = ISPC_WEB_PATH.'/'.$_SESSION['s']['user']['startmodule'].'/lib/menu.d';
-				if (is_dir($menu_dir)) include_menu_dir_files($menu_dir);
-			}
-
 			// finalise and redirect to UI
 			$app->plugin->raiseEvent('login', $user['username']);
 			$app->auth_log('Autologin successful for user \''. $user['username'] .'\'' . $msg . ' from '. $_SERVER['REMOTE_ADDR'] .' at '. date('Y-m-d H:i:s'));
