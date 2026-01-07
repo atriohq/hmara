@@ -57,16 +57,6 @@ function process_login_request(app $app, &$error, $conf, $module)
 
 	$loginAs = is_login_as($app, $username, $password);
 
-	//* Check if there are already wrong logins
-	$sql = "SELECT * FROM `attempts_login` WHERE `ip`= ? AND  `login_time` > (NOW() - INTERVAL 1 MINUTE) LIMIT 1";
-	$alreadyfailed = $app->db->queryOneRecord($sql, $ip);
-
-	//* too many failed logins
-	if ($alreadyfailed['times'] > 5) {
-		$error = $app->lng('error_user_too_many_logins');
-		return;
-	}
-
 	$user = validate_and_fetch_user($app, $username, $password, $loginAs, $conf);
 
 	if ($user) {
@@ -177,6 +167,62 @@ function process_login_request(app $app, &$error, $conf, $module)
 
 		$app->plugin->raiseEvent('login_failed', $username);
 		$app->auth_log('Failed login for user \''. $username .'\' from '. $_SERVER['REMOTE_ADDR'] .' at '. date('Y-m-d H:i:s'));
+	}
+}
+
+/**
+ * autologin token handling (commandline-generated one-time links)
+ * @param app $app
+ * @param $error
+ * @param $conf
+ * @param $module
+ * @return void
+ */
+function process_token_login_request(app $app, &$error, $conf, $module, $authtoken) {
+
+	$token = $app->db->queryOneRecord(
+		"SELECT * FROM autologin_tokens WHERE token = ? AND (expires IS NULL OR expires > NOW()) AND used = 0 LIMIT 1",
+		$authtoken
+	);
+	if ($token && !empty($token['sys_userid'])) {
+		$user = $app->db->queryOneRecord("SELECT * FROM sys_user WHERE userid = ?", intval($token['sys_userid']));
+		if ($user && $user['active'] == 1) {
+			// consume token
+			$app->db->query("UPDATE autologin_tokens SET used = 1 WHERE token = ?", $authtoken);
+
+			// create session for user (minimal, similar to process_login_request)
+			$app->uses('getconf');
+			$security_config = $app->getconf->get_security_config('permissions');
+			if (isset($security_config['session_regenerate_id']) && $security_config['session_regenerate_id'] == 'yes') {
+				session_regenerate_id(true);
+			}
+			$_SESSION = array();
+			$_SESSION['s']['user'] = $app->db->toLower($user);
+			$_SESSION['s']['user']['theme'] = isset($user['app_theme']) ? $user['app_theme'] : 'default';
+			$_SESSION['s']['language'] = $app->functions->check_language($user['language']);
+			$_SESSION["s"]['theme'] = $_SESSION['s']['user']['theme'];
+
+			// load user startmodule menu if present
+			if (is_file(ISPC_WEB_PATH.'/'.$_SESSION['s']['user']['startmodule'].'/lib/module.conf.php')) {
+				include_once $app->functions->check_include_path(ISPC_WEB_PATH.'/'.$_SESSION['s']['user']['startmodule'].'/lib/module.conf.php');
+				$menu_dir = ISPC_WEB_PATH.'/'.$_SESSION['s']['user']['startmodule'].'/lib/menu.d';
+				if (is_dir($menu_dir)) include_menu_dir_files($menu_dir);
+			}
+
+			// finalise and redirect to UI
+			$app->plugin->raiseEvent('login', $user['username']);
+			$app->auth_log('Autologin successful for user \''. $user['username'] .'\' from '. $_SERVER['REMOTE_ADDR'] .' at '. date('Y-m-d H:i:s'));
+			header('Location: ../index.php');
+			exit;
+		} else {
+			// invalid user or inactive
+			$app->db->query("UPDATE autologin_tokens SET used = 1 WHERE token = ?", $authtoken);
+			$error = $app->lng('error_user_blocked');
+		}
+	} else {
+		$error = 'Invalid or expired autologin token.';
+		$sql = "INSERT INTO `attempts_login` (`ip`, `times`, `login_time`) VALUES (?, 1, NOW()) ON DUPLICATE KEY UPDATE times=times+1";
+		$app->db->query($sql, $ip);
 	}
 }
 
@@ -454,57 +500,23 @@ if ($app->is_under_maintenance()) {
 	$maintenance_mode_error = $app->lng('error_maintenance_mode');
 }
 
-// --- START: autologin token handling (commandline-generated one-time links) ---
-$authtoken = trim((string)($_GET['authtoken'] ?? ''));
-if ($authtoken !== '') {
+//* Check if there are already wrong logins from this IP.
+$sql = "SELECT * FROM `attempts_login` WHERE `ip`= ? AND  `login_time` > (NOW() - INTERVAL 1 MINUTE) LIMIT 1";
+$ip = md5($_SERVER['REMOTE_ADDR']);
+$alreadyfailed = $app->db->queryOneRecord($sql, $ip);
 
-    $token = $app->db->queryOneRecord(
-        "SELECT * FROM autologin_tokens WHERE token = ? AND (expires IS NULL OR expires > NOW()) AND used = 0 LIMIT 1",
-        $authtoken
-    );
-    if ($token && !empty($token['sys_userid'])) {
-        $user = $app->db->queryOneRecord("SELECT * FROM sys_user WHERE userid = ?", intval($token['sys_userid']));
-        if ($user && $user['active'] == 1) {
-            // consume token
-            $app->db->query("UPDATE autologin_tokens SET used = 1 WHERE token = ?", $authtoken);
-
-            // create session for user (minimal, similar to process_login_request)
-            $app->uses('getconf');
-            $security_config = $app->getconf->get_security_config('permissions');
-            if (isset($security_config['session_regenerate_id']) && $security_config['session_regenerate_id'] == 'yes') {
-                session_regenerate_id(true);
-            }
-            $_SESSION = array();
-            $_SESSION['s']['user'] = $app->db->toLower($user);
-            $_SESSION['s']['user']['theme'] = isset($user['app_theme']) ? $user['app_theme'] : 'default';
-            $_SESSION['s']['language'] = $app->functions->check_language($user['language']);
-            $_SESSION["s"]['theme'] = $_SESSION['s']['user']['theme'];
-
-            // load user startmodule menu if present
-            if (is_file(ISPC_WEB_PATH.'/'.$_SESSION['s']['user']['startmodule'].'/lib/module.conf.php')) {
-                include_once $app->functions->check_include_path(ISPC_WEB_PATH.'/'.$_SESSION['s']['user']['startmodule'].'/lib/module.conf.php');
-                $menu_dir = ISPC_WEB_PATH.'/'.$_SESSION['s']['user']['startmodule'].'/lib/menu.d';
-                if (is_dir($menu_dir)) include_menu_dir_files($menu_dir);
-            }
-
-            // finalise and redirect to UI
-            $app->plugin->raiseEvent('login', $user['username']);
-            $app->auth_log('Autologin successful for user \''. $user['username'] .'\' from '. $_SERVER['REMOTE_ADDR'] .' at '. date('Y-m-d H:i:s'));
-            header('Location: ../index.php');
-            exit;
-        } else {
-            // invalid user or inactive
-            $app->db->query("UPDATE autologin_tokens SET used = 1 WHERE token = ?", $authtoken);
-            $error = $app->lng('error_user_blocked');
-        }
-    } else {
-        $error = 'Invalid or expired autologin token.';
-    }
+//* too many failed logins
+if ($alreadyfailed['times'] > 5) {
+	$error = $app->lng('error_user_too_many_logins');
 }
-// --- END: autologin token handling ---
+
+$authtoken = trim((string)($_GET['authtoken'] ?? ''));
+if (empty($error) && !empty($authtoken)) {
+	process_token_login_request($app, $error, $conf, $module, $authtoken);
+}
 
 //* Login Form was sent
-if (count($_POST) > 0) {
+if (empty($error) && count($_POST) > 0) {
 	process_login_request($app, $error, $conf, $module);
 }
 
