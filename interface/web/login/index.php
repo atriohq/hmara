@@ -215,7 +215,7 @@ function process_token_login_request(app $app, &$error, $conf, $module, $authtok
 
 			// finalise and redirect to UI
 			$app->plugin->raiseEvent('login', $user['username']);
-			$app->auth_log('Autologin successful for user \''. $user['username'] .'\' from '. $_SERVER['REMOTE_ADDR'] .' at '. date('Y-m-d H:i:s'));
+			$app->auth_log('Autologin successful for user \''. $user['username'] .'\'' . $msg . ' from '. $_SERVER['REMOTE_ADDR'] .' at '. date('Y-m-d H:i:s'));
 			header('Location: ../index.php');
 			exit;
 		} else {
