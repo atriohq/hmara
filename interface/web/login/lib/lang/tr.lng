@@ -32,6 +32,7 @@ $wb['lost_password_function_disabled_txt'] = 'Bu kullanıcı parolamı unuttum �
 $wb['lost_password_function_wait_txt'] = 'Henüz yeni parola isteğinde bulunamazsınız. Lütfen bir kaç dakika bekleyin.';
 $wb['lost_password_function_expired_txt'] = 'Bu etkinleştirme bağlantısının süresi geçmiş. Lütfen yeni bir parola sıfırlama isteğinde bulunun.';
 $wb['lost_password_function_denied_txt'] = 'Bu etkinleştirme bağlantısı geçersiz.';
+$wb['invalid_autologin_token'] = 'Invalid or expired autologin token.';
 $wb['otp_code_txt'] = 'Two Factor Authentication';
 $wb['otp_code_desc_txt'] = 'Enter the code you got from your authenticator app or via email.';
 $wb['otp_code_placeholder_txt'] = 'OTP code';

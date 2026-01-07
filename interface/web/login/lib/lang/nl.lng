@@ -32,6 +32,7 @@ $wb['pw_reset_act_mail_msg'] = 'Er is een nieuw wachtwoord aangevraag voor uw ac
 $wb['lost_password_function_wait_txt'] = 'U kunt op dit moment geen nieuw wachtwoord aanvragen, probeer het later nog eens.';
 $wb['lost_password_function_expired_txt'] = 'De wachtwoordherstel link is verlopen. U kunt een nieuwe aanvragen.';
 $wb['lost_password_function_denied_txt'] = 'Deze link is niet (meer) geldig.';
+$wb['invalid_autologin_token'] = 'Invalid or expired autologin token.';
 $wb['otp_code_txt'] = 'Twee-factor authenticatie';
 $wb['otp_code_desc_txt'] = 'Enter the code you got from your authenticator app or via email.';
 $wb['otp_code_placeholder_txt'] = 'OTP code';

@@ -32,6 +32,7 @@ $wb['lost_password_function_disabled_txt'] = '此用户不可用于找回密码�
 $wb['lost_password_function_wait_txt'] = '您还不能请求新密码。请等待几分钟。';
 $wb['lost_password_function_expired_txt'] = '此激活链接已过期。请请求新的链接。';
 $wb['lost_password_function_denied_txt'] = '此激活链接无效。';
+$wb['invalid_autologin_token'] = 'Invalid or expired autologin token.';
 $wb['otp_code_txt'] = '双因素身份验证';
 $wb['otp_code_desc_txt'] = '输入您从身份验证器应用或通过电子邮件获得的代码。';
 $wb['otp_code_placeholder_txt'] = 'OTP代码';

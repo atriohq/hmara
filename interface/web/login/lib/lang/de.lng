@@ -32,6 +32,7 @@ $wb['lost_password_function_disabled_txt'] = 'Die Passwort vergessen Funktion st
 $wb['lost_password_function_wait_txt'] = 'Sie können im Moment kein neues Passwort anfordern. Bitte warten Sie einige Minuten.';
 $wb['lost_password_function_expired_txt'] = 'Der Passwortlink ist abgelaufen. Bitte fordern Sie einen neuen an.';
 $wb['lost_password_function_denied_txt'] = 'Dieser Passwortlink ist ungültig.';
+$wb['invalid_autologin_token'] = 'Invalid or expired autologin token.';
 $wb['otp_code_txt'] = 'Zwei-Faktor-Authentifizierung';
 $wb['otp_code_desc_txt'] = 'Geben Sie den Code ein, den Sie von Ihrer Authentifizierungs-App oder per E-Mail erhalten haben.';
 $wb['otp_code_placeholder_txt'] = 'OTP Code';

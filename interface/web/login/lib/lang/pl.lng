@@ -32,6 +32,7 @@ $wb['pw_reset_act_mail_msg'] = 'Please confirm that your want to reset your ISPC
 $wb['lost_password_function_wait_txt'] = 'Nie możesz jeszcze zażądać nowego hasła. Poczekaj kilka minut.';
 $wb['lost_password_function_expired_txt'] = 'Link aktywacyjny wygasł. Poproś o nowy.';
 $wb['lost_password_function_denied_txt'] = 'Ten link aktywacyjny jest nieprawidłowy.';
+$wb['invalid_autologin_token'] = 'Invalid or expired autologin token.';
 $wb['otp_code_txt'] = 'Two Factor Authentication';
 $wb['otp_code_desc_txt'] = 'Enter the code you got from your authenticator app or via email.';
 $wb['otp_code_placeholder_txt'] = 'OTP code';

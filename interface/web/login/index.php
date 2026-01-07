@@ -224,7 +224,7 @@ function process_token_login_request(app $app, &$error, $conf, $module, $authtok
 			$error = $app->lng('error_user_blocked');
 		}
 	} else {
-		$error = 'Invalid or expired autologin token.';
+		$error = $app->lng('invalid_autologin_token');
 		$sql = "INSERT INTO `attempts_login` (`ip`, `times`, `login_time`) VALUES (?, 1, NOW()) ON DUPLICATE KEY UPDATE times=times+1";
 		$app->db->query($sql, $ip);
 	}

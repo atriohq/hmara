@@ -32,6 +32,7 @@ $wb['pw_reset_act_mail_msg'] = 'Por favor confirme que desea restablecer la cont
 $wb['lost_password_function_wait_txt'] = 'No puede solicitar una nueva contraseña todavía. Por favor, espere unos minutos.';
 $wb['lost_password_function_expired_txt'] = 'Este enlace de activación ha caducado. Por favor, solicite uno nuevo.';
 $wb['lost_password_function_denied_txt'] = 'Este enlace de activación no es válido.';
+$wb['invalid_autologin_token'] = 'Invalid or expired autologin token.';
 $wb['otp_code_txt'] = 'Two Factor Authentication';
 $wb['otp_code_desc_txt'] = 'Enter the code you got from your authenticator app or via email.';
 $wb['otp_code_placeholder_txt'] = 'OTP code';
