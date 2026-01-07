@@ -501,7 +501,7 @@ if ($app->is_under_maintenance()) {
 }
 
 //* Check if there are already wrong logins from this IP.
-$sql = "SELECT * FROM `attempts_login` WHERE `ip`= ? AND  `login_time` > (NOW() - INTERVAL 1 MINUTE) LIMIT 1";
+$sql = "SELECT * FROM `attempts_login` WHERE `ip`= ? AND  `login_time` > (NOW() - INTERVAL 15 MINUTE) LIMIT 1";
 $ip = md5($_SERVER['REMOTE_ADDR']);
 $alreadyfailed = $app->db->queryOneRecord($sql, $ip);
 
