@@ -123,6 +123,54 @@ class installer_enterpriselinux extends installer_dist {
 
 	}
 
+	public function install_ispconfig() {
+		parent::install_ispconfig();
+
+		// Set SELinux contexts for ISPConfig directories
+		$this->set_selinux_contexts();
+	}
+
+	public function set_selinux_contexts() {
+		global $conf;
+
+		$install_dir = $conf['ispconfig_install_dir'];
+
+		// Check if SELinux is installed and enforcing
+		$selinux_status = @exec('getenforce 2>/dev/null');
+		if($selinux_status != 'Enforcing' && $selinux_status != 'Permissive') {
+			return;
+		}
+
+		// Check if required SELinux tools are available
+		if(!is_executable('/usr/sbin/semanage') && !is_executable('/sbin/semanage')) {
+			swriteln('SELinux is enabled but semanage tool is not available. Please install policycoreutils-python-utils package.');
+			return;
+		}
+
+		swriteln('Configuring SELinux contexts for ISPConfig...');
+
+		// Directories that need httpd write access
+		$writable_dirs = array(
+			$install_dir.'/interface/temp',
+			$install_dir.'/interface/web/temp'
+		);
+
+		foreach($writable_dirs as $dir) {
+			if(is_dir($dir)) {
+				// Set the context immediately
+				$command = 'chcon -R -t httpd_sys_rw_content_t '.escapeshellarg($dir);
+				caselog($command.' &> /dev/null', __FILE__, __LINE__, "EXECUTED: $command", "Failed to execute the command $command");
+
+				// Make the context persistent across relabels
+				$command = 'semanage fcontext -a -t httpd_sys_rw_content_t '.escapeshellarg($dir.'(/.*)?').' 2>/dev/null || semanage fcontext -m -t httpd_sys_rw_content_t '.escapeshellarg($dir.'(/.*)?');
+				caselog($command.' &> /dev/null', __FILE__, __LINE__, "EXECUTED: $command", "Failed to execute the command $command");
+
+				// Apply the persistent context
+				$command = 'restorecon -Rv '.escapeshellarg($dir);
+				caselog($command.' &> /dev/null', __FILE__, __LINE__, "EXECUTED: $command", "Failed to execute the command $command");
+			}
+		}
+	}
 
 }
 

@@ -26,11 +26,16 @@ Development branch: [![pipeline status](https://git.ispconfig.org/ispconfig/ispc
 [^1]: not actively tested
 
 ## Supported operating systems
-- Debian 10 - 13, and testing
-- Ubuntu 20.04 - 24.04
-- CentOS 7 and 8
-- AlmaLinux 10
-- Rocky Linux 10
+- Debian 11 - 13, and testing
+- Ubuntu 22.04 - 24.04
+- CentOS 8
+- AlmaLinux 8 - 10
+- Rocky Linux 8 - 10
+
+## Supported PHP versions
+Multiple PHP versions are supported on the same server for hosted sites. But for the panel itself it's advised to stay with the version that comes with the OS.
+
+In general the ISPConfig panel supports PHP 7.4 - 8.4
 
 ## Auto-install script
 You can install the "Perfect Server" with ISPConfig using [our official autoinstaller](https://www.howtoforge.com/ispconfig-autoinstall-debian-ubuntu/)

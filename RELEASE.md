@@ -79,7 +79,7 @@ You can report bugs at https://git.ispconfig.org/ispconfig/ispconfig3/issues
 - Ubuntu 22.04 LTS – 24.04 LTS (recommended)
 - AlmaLinux 8 – 10
 - RockyLinux 8 – 10
-- CentOS 7
+- CentOS 8
 
 ## Download ISPConfig 3.3.1 Beta 1
 
