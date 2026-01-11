@@ -64,6 +64,9 @@ class remoting_mail extends remoting {
 		// set default value for dkim selector if not set in $params array
 		if(!isset($params['dkim_selector'])) $params['dkim_selector'] = 'default';
 
+		// set default value for local_delivery if not set in $params array
+		if(!isset($params['local_delivery'])) $params['local_delivery'] = 'y';
+
 		$primary_id = $this->insertQuery('../mail/form/mail_domain.tform.php', $client_id, $params, 'mail:mail_domain:on_after_insert');
 		return $primary_id;
 	}
