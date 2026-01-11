@@ -242,11 +242,18 @@ $form["tabs"]['address'] = array (
 		'usertheme' => array (
 			'datatype' => 'VARCHAR',
 			'formtype' => 'SELECT',
+			'validators' => array (
+				0 => array (
+					'type' => 'REGEX',
+					'regex' => '/^[a-zA-Z0-9_-]{1,32}$/',
+					'errmsg' => 'usertheme_snytax_incorrect'
+				),
+			),
 			'default' => $conf["theme"],
 			'value'  => $themes_list,
 			'separator' => '',
 			'width'  => '30',
-			'maxlength' => '255',
+			'maxlength' => '32',
 			'rows'  => '',
 			'cols'  => ''
 		),

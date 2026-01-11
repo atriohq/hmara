@@ -223,13 +223,22 @@ $form['tabs']['users'] = array (
 		'app_theme' => array (
 			'datatype' => 'VARCHAR',
 			'formtype' => 'RADIO',
-			'regex'  => '',
-			'errmsg' => '',
+			'validators' => array (
+				0 => array (
+					'type' => 'NOTEMPTY',
+					'errmsg' => 'app_theme_empty'
+				),
+				1 => array (
+					'type' => 'REGEX',
+					'regex' => '/^[a-zA-Z0-9_-]{1,32}$/',
+					'errmsg' => 'app_theme_regex'
+				),
+			),
 			'default' => 'default',
 			'value'  => $themes_list,
 			'separator' => '',
 			'width'  => '30',
-			'maxlength' => '255',
+			'maxlength' => '32',
 			'rows'  => '',
 			'cols'  => ''
 		),

@@ -313,6 +313,10 @@ class page_action extends tform_actions {
 		if(isset($this->dataRecord["limit_client"]) && $this->dataRecord["limit_client"] > 0) $modules .= ',client';
 		$startmodule = (stristr($modules, 'dashboard'))?'dashboard':'client';
 		$usertheme = (isset($this->dataRecord["usertheme"]) && $this->dataRecord["usertheme"] != ''? $this->dataRecord["usertheme"] : 'default');
+		// Validate theme name to prevent path traversal attacks
+		if(!preg_match('/^[a-zA-Z0-9_-]{1,32}$/', $usertheme)) {
+			$usertheme = 'default';
+		}
 		$type = 'user';
 		$active = 1;
 		$language = $this->dataRecord["language"];
