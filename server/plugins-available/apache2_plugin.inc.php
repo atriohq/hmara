@@ -720,7 +720,7 @@ class apache2_plugin {
 		if(!is_dir($data['new']['document_root'].'/cgi-bin')) $app->system->mkdirpath($data['new']['document_root'].'/cgi-bin');
 		if(!is_dir($data['new']['document_root'].'/tmp')) $app->system->mkdirpath($data['new']['document_root'].'/tmp', 0770);
 		if(!is_dir($data['new']['document_root'].'/webdav')) $app->system->mkdirpath($data['new']['document_root'].'/webdav');
-		if(!is_dir($data['new']['document_root'].'/backup')) $app->system->mkdirpath($data['new']['document_root'].'/backup', 0755, $username, $groupname);
+		if(!is_dir($data['new']['document_root'].'/backup')) $app->system->mkdirpath($data['new']['document_root'].'/backup', 0750, 'root', $groupname);
 		if(!is_dir($data['new']['document_root'].'/.composer')) $app->system->mkdirpath($data['new']['document_root'].'/.composer', 0750, $username, $groupname);
 
 		if(!is_dir($data['new']['document_root'].'/.ssh')) {

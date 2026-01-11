@@ -106,6 +106,187 @@ class backup
     }
 
     /**
+     * Secures the backup directory for a website by setting proper ownership and permissions.
+     * This prevents web users from creating symlinks in the backup directory (security fix).
+     * The backup directory should be owned by root with the client group, permissions 750.
+     * @param string $backup_path Full path to the backup directory
+     * @param string $group The group name (client group)
+     * @return bool true on success
+     */
+    protected static function secureBackupDir($backup_path, $group)
+    {
+        global $app;
+
+        if (empty($backup_path) || !is_dir($backup_path)) {
+            return false;
+        }
+
+        $current_owner = fileowner($backup_path);
+        $current_perms = fileperms($backup_path) & 0777;
+
+        if ($current_owner !== 0 || $current_perms !== 0750) {
+            $app->system->web_folder_protection(dirname($backup_path), false);
+            $app->log('Securing backup directory ' . $backup_path . ' (owner: root, group: ' . $group . ', perms: 750)', LOGLEVEL_DEBUG);
+            chown($backup_path, 'root');
+            chgrp($backup_path, $group);
+            chmod($backup_path, 0750);
+            $app->system->web_folder_protection(dirname($backup_path), true);
+        }
+
+        return true;
+    }
+
+    /**
+     * Safely removes a file or symlink from the backup directory.
+     * This is used before copying a backup file to ensure no symlink attack is possible.
+     * @param string $filepath Full path to the file to remove
+     * @return bool true if file was removed or didn't exist
+     */
+    protected static function safeRemoveBackupFile($filepath)
+    {
+        global $app;
+
+        if (is_link($filepath)) {
+            $app->log('Removing symlink in backup directory: ' . $filepath, LOGLEVEL_WARN);
+            return unlink($filepath);
+        } elseif (file_exists($filepath)) {
+            return unlink($filepath);
+        }
+        return true;
+    }
+
+    /**
+     * Gets the current quota limits for a user.
+     * Returns an array with soft and hard block limits, or null if quota is not enabled/available.
+     * @param string $username The system username
+     * @param string $web_root The web root path to determine filesystem
+     * @return array|null Array with 'soft' and 'hard' keys (in blocks), or null if no quota
+     */
+    protected static function getUserQuota($username, $web_root)
+    {
+        global $app;
+
+        if (empty($username) || !$app->system->is_user($username)) {
+            return null;
+        }
+
+        //* Determine filesystem type
+        exec('df -T ' . escapeshellarg($web_root) . ' 2>/dev/null | tail -1', $df_output);
+        if (empty($df_output[0])) {
+            return null;
+        }
+        $parts = preg_split('/\s+/', $df_output[0]);
+        $file_system = isset($parts[1]) ? $parts[1] : '';
+
+        if ($file_system == 'xfs') {
+            //* XFS quota
+            exec('xfs_quota -x -c "quota -u ' . escapeshellarg($username) . '" 2>/dev/null', $quota_output);
+            if (!empty($quota_output)) {
+                foreach ($quota_output as $line) {
+                    if (preg_match('/^\s*\S+\s+(\d+)\s+(\d+)\s+(\d+)/', $line, $matches)) {
+                        return array(
+                            'soft' => intval($matches[2]) * 1024,  //* XFS reports in KB, convert to blocks
+                            'hard' => intval($matches[3]) * 1024,
+                            'type' => 'xfs',
+                            'device' => isset($parts[0]) ? $parts[0] : ''
+                        );
+                    }
+                }
+            }
+        } else {
+            //* Standard quota (ext3/ext4/etc)
+            if (!$app->system->is_installed('repquota')) {
+                return null;
+            }
+            exec('repquota -u -p 2>/dev/null | grep "^' . escapeshellarg($username) . ' "', $quota_output);
+            if (empty($quota_output[0])) {
+                //* Try quota command instead
+                exec('quota -u ' . escapeshellarg($username) . ' 2>/dev/null', $quota_output);
+            }
+            if (!empty($quota_output[0])) {
+                //* Parse quota output: username -- blocks soft hard ...
+                if (preg_match('/\S+\s+[-+]+\s+(\d+)\s+(\d+)\s+(\d+)/', $quota_output[0], $matches)) {
+                    $soft = intval($matches[2]);
+                    $hard = intval($matches[3]);
+                    if ($soft > 0 || $hard > 0) {
+                        return array(
+                            'soft' => $soft,
+                            'hard' => $hard,
+                            'type' => 'standard'
+                        );
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Temporarily doubles the quota for a user to allow for backup extraction.
+     * Returns the original quota values so they can be restored later.
+     * @param string $username The system username
+     * @param string $web_root The web root path to determine filesystem
+     * @return array|null Original quota values to pass to restoreUserQuota(), or null if no change needed
+     */
+    protected static function doubleUserQuota($username, $web_root)
+    {
+        global $app;
+
+        $quota = self::getUserQuota($username, $web_root);
+        if ($quota === null || ($quota['soft'] == 0 && $quota['hard'] == 0)) {
+            return null;  //* No quota set, nothing to do
+        }
+
+        $new_soft = $quota['soft'] * 2;
+        $new_hard = $quota['hard'] * 2;
+
+        $app->log('Temporarily doubling quota for user ' . $username . ' (soft: ' . $quota['soft'] . ' -> ' . $new_soft . ', hard: ' . $quota['hard'] . ' -> ' . $new_hard . ')', LOGLEVEL_DEBUG);
+
+        if ($quota['type'] == 'xfs') {
+            //* XFS uses MB for limits
+            $mb_soft = intval($new_soft / 1024);
+            $mb_hard = intval($new_hard / 1024);
+            $app->system->exec_safe("xfs_quota -x -c ? ?", "limit -u bsoft=" . $mb_soft . "m bhard=" . $mb_hard . "m " . $username, $quota['device']);
+        } else {
+            //* Standard quota uses blocks
+            if ($app->system->is_installed('setquota')) {
+                $app->system->exec_safe('setquota -u ? ? ? 0 0 -a 2>/dev/null', $username, $new_soft, $new_hard);
+            }
+        }
+
+        return $quota;
+    }
+
+    /**
+     * Restores the original quota for a user after backup extraction.
+     * @param string $username The system username
+     * @param array $original_quota The original quota values from doubleUserQuota()
+     */
+    protected static function restoreUserQuota($username, $original_quota)
+    {
+        global $app;
+
+        if ($original_quota === null) {
+            return;
+        }
+
+        $app->log('Restoring original quota for user ' . $username . ' (soft: ' . $original_quota['soft'] . ', hard: ' . $original_quota['hard'] . ')', LOGLEVEL_DEBUG);
+
+        if ($original_quota['type'] == 'xfs') {
+            //* XFS uses MB for limits
+            $mb_soft = intval($original_quota['soft'] / 1024);
+            $mb_hard = intval($original_quota['hard'] / 1024);
+            $app->system->exec_safe("xfs_quota -x -c ? ?", "limit -u bsoft=" . $mb_soft . "m bhard=" . $mb_hard . "m " . $username, $original_quota['device']);
+        } else {
+            //* Standard quota uses blocks
+            if ($app->system->is_installed('setquota')) {
+                $app->system->exec_safe('setquota -u ? ? ? 0 0 -a 2>/dev/null', $username, $original_quota['soft'], $original_quota['hard']);
+            }
+        }
+    }
+
+    /**
      * Sets file ownership to $web_user for all files and folders except log, ssl and web/stats
      * @param string $web_document_root
      * @param string $web_user
@@ -117,14 +298,14 @@ class backup
 
         $blacklist = array('bin', 'dev', 'etc', 'home', 'lib', 'lib32', 'lib64', 'log', 'opt', 'proc', 'net', 'run', 'sbin', 'ssl', 'srv', 'sys', 'usr', 'var');
 
-	$find_excludes = '-not -path "." -and -not -path "./web/stats/*"';
+	$find_excludes = '-not -path "." -and -not -path "./web/stats/*" -and -not -path "./backup" -and -not -path "./backup/*"';
 
 	foreach ( $blacklist as $dir ) {
 		$find_excludes .= ' -and -not -path "./'.$dir.'" -and -not -path "./'.$dir.'/*"';
 	}
 
         $app->log('Restoring permissions for ' . $web_document_root, LOGLEVEL_DEBUG);
-        $app->system->exec_safe('cd ? && find . '.$find_excludes.' -exec chown ?:? {} \;', $web_document_root, $web_user, $web_group);
+        $app->system->exec_safe('cd ? && find . '.$find_excludes.' -exec chown -h ?:? {} \;', $web_document_root, $web_user, $web_group);
 
     }
 
@@ -323,6 +504,11 @@ class backup
         $result = false;
 
         $app->system->web_folder_protection($web_root, false);
+
+        //* Security: Ensure backup directory has correct ownership (root:group, 750)
+        $web_backup_dir = $web_root . '/backup';
+        self::secureBackupDir($web_backup_dir, $web_group);
+
         if (self::backupModeIsRepos($backup_mode)) {
             $backup_archive = $filename;
             $backup_repos_folder = self::getReposFolder($backup_mode, 'web');
@@ -333,20 +519,44 @@ class backup
 
             $archives = self::getReposArchives($backup_mode, $backup_repos_path, $password);
             if (is_array($archives) && in_array($backup_archive, $archives)) {
-                $retval = 0;
-                switch ($backup_mode) {
-                    case "borg":
-                        $command = 'cd ? && borg extract --nobsdflags ?';
-                        $app->system->exec_safe($command, $web_root, $full_archive_path);
-                        $retval = $app->system->last_exec_retcode();
-                        $success = ($retval == 0 || $retval == 1);
-                        break;
-                }
-                if ($success) {
-                    $app->log('Restored web backup ' . $full_archive_path, LOGLEVEL_DEBUG);
-                    $result = true;
+                //* Security: Extract to temporary directory first, then rsync with --safe-links
+                $tmp_restore_dir = $web_backup_dir . '/.restore_tmp_' . uniqid();
+
+                //* Temporarily double quota to accommodate temp extraction (files preserve original ownership)
+                $original_quota = self::doubleUserQuota($web_user, $web_root);
+
+                if (mkdir($tmp_restore_dir, 0700)) {
+                    $retval = 0;
+                    switch ($backup_mode) {
+                        case "borg":
+                            $command = 'cd ? && borg extract --nobsdflags ?';
+                            $app->system->exec_safe($command, $tmp_restore_dir, $full_archive_path);
+                            $retval = $app->system->last_exec_retcode();
+                            $success = ($retval == 0 || $retval == 1);
+                            break;
+                    }
+                    if ($success) {
+                        //* Use rsync with --safe-links to ignore symlinks pointing outside the tree
+                        $app->system->exec_safe('rsync -a --delete --safe-links ?/ ?/', $tmp_restore_dir, $web_root);
+                        $rsync_retval = $app->system->last_exec_retcode();
+                        if ($rsync_retval == 0) {
+                            $app->log('Restored web backup ' . $full_archive_path . ' via secure rsync', LOGLEVEL_DEBUG);
+                            $result = true;
+                        } else {
+                            $app->log('rsync failed during restore of ' . $full_archive_path . ', exit code ' . $rsync_retval, LOGLEVEL_ERROR);
+                        }
+                    } else {
+                        $app->log('Failed to extract web backup ' . $full_archive_path . ', exit code ' . $retval, LOGLEVEL_ERROR);
+                    }
+                    //* Cleanup temporary directory (--one-file-system prevents crossing filesystem boundaries)
+                    $app->system->exec_safe('rm -rf --one-file-system ?', $tmp_restore_dir);
+
+                    //* Restore original quota after cleanup
+                    self::restoreUserQuota($web_user, $original_quota);
                 } else {
-                    $app->log('Failed to restore web backup ' . $full_archive_path . ', exit code ' . $retval, LOGLEVEL_ERROR);
+                    $app->log('Failed to create temporary restore directory ' . $tmp_restore_dir, LOGLEVEL_ERROR);
+                    //* Restore original quota even if mkdir failed
+                    self::restoreUserQuota($web_user, $original_quota);
                 }
             } else {
                 $app->log('Web backup archive does not exist ' . $full_archive_path, LOGLEVEL_ERROR);
@@ -362,88 +572,150 @@ class backup
             $app->log('Restoring web backup ' . $full_filename . ', backup format "' . $backup_format . '", backup mode "' . $backup_mode . '"', LOGLEVEL_DEBUG);
 
             $user_mode = $backup_mode == 'userzip';
-            $filename = $user_mode ? ($web_root . '/backup/' . $filename) : $full_filename;
 
             if (file_exists($full_filename) && $web_root != '' && $web_root != '/' && !stristr($full_filename, '..') && !stristr($full_filename, 'etc')) {
-                if ($user_mode) {
-                    if (file_exists($filename)) rename($filename, $filename . '.bak');
-                    copy($full_filename, $filename);
-                    chgrp($filename, $web_group);
-                }
-                $user_prefix_cmd = $user_mode ? 'sudo -u ' . escapeshellarg($web_user) : '';
                 $success = false;
                 $retval = 0;
-                switch ($backup_format) {
-                    case "tar_gzip":
-                    case "tar_bzip2":
-                    case "tar_xz":
-                        $command = $user_prefix_cmd . ' tar xf ? --directory ?';
-                        $app->system->exec_safe($command, $filename, $web_root);
-                        $retval = $app->system->last_exec_retcode();
-                        $success = ($retval == 0 || $retval == 2);
-                        break;
-                    case "zip":
-                    case "zip_bzip2":
-                        $command = $user_prefix_cmd . ' unzip -qq -P ' . escapeshellarg($password) . ' -o ? -d ? 2> /dev/null';
-                        $app->system->exec_safe($command, $filename, $web_root);
-                        $retval = $app->system->last_exec_retcode();
-                        /*
-                         * Exit code 50 can happen when zip fails to overwrite files that do not
-                         * belong to selected user, so we can consider this situation as success
-                         * with warnings.
-                         */
-                        $success = ($retval == 0 || $retval == 50);
-                        if ($success) {
-                            self::restoreFileOwnership($web_root, $web_user, $web_group);
-                        }
-                        break;
-                    case 'rar':
-                        $options = self::getUnRarOptions($password);
-                        //First, test that the archive is correct and we have a correct password
-                        $command = $user_prefix_cmd . " rar t " . $options . " ? ?";
-                        //Rar requires trailing slash
-                        $app->system->exec_safe($command, $filename, $web_root . '/');
-                        $success = ($app->system->last_exec_retcode() == 0);
-                        if ($success) {
-                            //All good, now we can extract
-                            $app->log('Archive test passed for ' . $full_filename, LOGLEVEL_DEBUG);
-                            $command = $user_prefix_cmd . " rar x " . $options . " ? ?";
-                            //Rar requires trailing slash
-                            $app->system->exec_safe($command, $filename, $web_root . '/');
+
+                if ($user_mode) {
+                    //* User mode: extract directly to web_root with user privileges (less risky)
+                    $archive_file = $web_root . '/backup/' . basename($full_filename);
+                    if (file_exists($archive_file)) rename($archive_file, $archive_file . '.bak');
+                    copy($full_filename, $archive_file);
+                    chgrp($archive_file, $web_group);
+
+                    $user_prefix_cmd = 'sudo -u ' . escapeshellarg($web_user);
+                    switch ($backup_format) {
+                        case "tar_gzip":
+                        case "tar_bzip2":
+                        case "tar_xz":
+                            $command = $user_prefix_cmd . ' tar xf ? --directory ?';
+                            $app->system->exec_safe($command, $archive_file, $web_root);
                             $retval = $app->system->last_exec_retcode();
-                            //Exit code 9 can happen when we have file permission errors, in this case some
-                            //files will be skipped during extraction.
-                            $success = ($retval == 0 || $retval == 1 || $retval == 9);
-                        } else {
-                            $app->log('Archive test failed for ' . $full_filename, LOGLEVEL_DEBUG);
+                            $success = ($retval == 0 || $retval == 2);
+                            break;
+                        case "zip":
+                        case "zip_bzip2":
+                            $command = $user_prefix_cmd . ' unzip -qq -P ' . escapeshellarg($password) . ' -o ? -d ? 2> /dev/null';
+                            $app->system->exec_safe($command, $archive_file, $web_root);
+                            $retval = $app->system->last_exec_retcode();
+                            $success = ($retval == 0 || $retval == 50);
+                            break;
+                        case 'rar':
+                            $options = self::getUnRarOptions($password);
+                            $command = $user_prefix_cmd . " rar t " . $options . " ? ?";
+                            $app->system->exec_safe($command, $archive_file, $web_root . '/');
+                            if ($app->system->last_exec_retcode() == 0) {
+                                $command = $user_prefix_cmd . " rar x " . $options . " ? ?";
+                                $app->system->exec_safe($command, $archive_file, $web_root . '/');
+                                $retval = $app->system->last_exec_retcode();
+                                $success = ($retval == 0 || $retval == 1 || $retval == 9);
+                            }
+                            break;
+                    }
+                    if (strpos($backup_format, "tar_7z_") === 0) {
+                        $options = self::get7zDecompressOptions($password);
+                        $command = $user_prefix_cmd . " 7z t " . $options . " ?";
+                        $app->system->exec_safe($command, $archive_file);
+                        if ($app->system->last_exec_retcode() == 0) {
+                            $command = $user_prefix_cmd . " 7z x " . $options . " -so ? | tar xf - --directory ?";
+                            $app->system->exec_safe($command, $archive_file, $web_root);
+                            $retval = $app->system->last_exec_retcode();
+                            $success = ($retval == 0 || $retval == 2);
                         }
-                        break;
-                }
-                if (strpos($backup_format, "tar_7z_") === 0) {
-                    $options = self::get7zDecompressOptions($password);
-                    //First, test that the archive is correct and we have a correct password
-                    $command = $user_prefix_cmd . " 7z t " . $options . " ?";
-                    $app->system->exec_safe($command, $filename);
-                    $success = ($app->system->last_exec_retcode() == 0);
-                    if ($success) {
-                        //All good, now we can extract
-                        $app->log('Archive test passed for ' . $full_filename, LOGLEVEL_DEBUG);
-                        $command = $user_prefix_cmd . " 7z x " . $options . " -so ? | tar xf - --directory ?";
-                        $app->system->exec_safe($command, $filename, $web_root);
-                        $retval = $app->system->last_exec_retcode();
-                        $success = ($retval == 0 || $retval == 2);
+                    }
+                    unlink($archive_file);
+                    if (file_exists($archive_file . '.bak')) rename($archive_file . '.bak', $archive_file);
+                } else {
+                    //* Root mode: extract to temporary directory first, then rsync with --safe-links
+                    //* This prevents symlink attacks where malicious symlinks in the archive could
+                    //* overwrite system files or where pre-existing symlinks in web_root could be exploited
+                    $tmp_restore_dir = $web_backup_dir . '/.restore_tmp_' . uniqid();
+
+                    //* Temporarily double quota to accommodate temp extraction (files preserve original ownership)
+                    $original_quota = self::doubleUserQuota($web_user, $web_root);
+
+                    if (mkdir($tmp_restore_dir, 0700)) {
+                        switch ($backup_format) {
+                            case "tar_gzip":
+                            case "tar_bzip2":
+                            case "tar_xz":
+                                $command = 'tar xf ? --directory ?';
+                                $app->system->exec_safe($command, $full_filename, $tmp_restore_dir);
+                                $retval = $app->system->last_exec_retcode();
+                                $success = ($retval == 0 || $retval == 2);
+                                break;
+                            case "zip":
+                            case "zip_bzip2":
+                                $command = 'unzip -qq -P ' . escapeshellarg($password) . ' -o ? -d ? 2> /dev/null';
+                                $app->system->exec_safe($command, $full_filename, $tmp_restore_dir);
+                                $retval = $app->system->last_exec_retcode();
+                                $success = ($retval == 0 || $retval == 50);
+                                break;
+                            case 'rar':
+                                $options = self::getUnRarOptions($password);
+                                $command = "rar t " . $options . " ? ?";
+                                $app->system->exec_safe($command, $full_filename, $tmp_restore_dir . '/');
+                                if ($app->system->last_exec_retcode() == 0) {
+                                    $app->log('Archive test passed for ' . $full_filename, LOGLEVEL_DEBUG);
+                                    $command = "rar x " . $options . " ? ?";
+                                    $app->system->exec_safe($command, $full_filename, $tmp_restore_dir . '/');
+                                    $retval = $app->system->last_exec_retcode();
+                                    $success = ($retval == 0 || $retval == 1 || $retval == 9);
+                                } else {
+                                    $app->log('Archive test failed for ' . $full_filename, LOGLEVEL_DEBUG);
+                                }
+                                break;
+                        }
+                        if (strpos($backup_format, "tar_7z_") === 0) {
+                            $options = self::get7zDecompressOptions($password);
+                            $command = "7z t " . $options . " ?";
+                            $app->system->exec_safe($command, $full_filename);
+                            if ($app->system->last_exec_retcode() == 0) {
+                                $app->log('Archive test passed for ' . $full_filename, LOGLEVEL_DEBUG);
+                                $command = "7z x " . $options . " -so ? | tar xf - --directory ?";
+                                $app->system->exec_safe($command, $full_filename, $tmp_restore_dir);
+                                $retval = $app->system->last_exec_retcode();
+                                $success = ($retval == 0 || $retval == 2);
+                            } else {
+                                $app->log('Archive test failed for ' . $full_filename, LOGLEVEL_DEBUG);
+                            }
+                        }
+
+                        if ($success) {
+                            //* Use rsync with --safe-links to ignore symlinks pointing outside the tree
+                            //* This prevents symlink attacks where archive contains malicious symlinks
+                            $app->system->exec_safe('rsync -a --delete --safe-links ?/ ?/', $tmp_restore_dir, $web_root);
+                            $rsync_retval = $app->system->last_exec_retcode();
+                            if ($rsync_retval == 0) {
+                                $app->log('Restored web backup ' . $full_filename . ' via secure rsync', LOGLEVEL_DEBUG);
+                                //* Restore file ownership after rsync
+                                self::restoreFileOwnership($web_root, $web_user, $web_group);
+                                $result = true;
+                            } else {
+                                $app->log('rsync failed during restore of ' . $full_filename . ', exit code ' . $rsync_retval, LOGLEVEL_ERROR);
+                                $success = false;
+                            }
+                        } else {
+                            $app->log('Failed to extract web backup ' . $full_filename . ', exit code ' . $retval, LOGLEVEL_ERROR);
+                        }
+                        //* Cleanup temporary directory (--one-file-system prevents crossing filesystem boundaries)
+                        $app->system->exec_safe('rm -rf --one-file-system ?', $tmp_restore_dir);
+
+                        //* Restore original quota after cleanup
+                        self::restoreUserQuota($web_user, $original_quota);
                     } else {
-                        $app->log('Archive test failed for ' . $full_filename, LOGLEVEL_DEBUG);
+                        $app->log('Failed to create temporary restore directory ' . $tmp_restore_dir, LOGLEVEL_ERROR);
+                        //* Restore original quota even if mkdir failed
+                        self::restoreUserQuota($web_user, $original_quota);
                     }
                 }
-                if ($user_mode) {
-                    unlink($filename);
-                    if (file_exists($filename . '.bak')) rename($filename . '.bak', $filename);
-                }
-                if ($success) {
+
+                if ($success && !$result) {
+                    //* For user_mode, we didn't set result yet
                     $app->log('Restored web backup ' . $full_filename, LOGLEVEL_DEBUG);
                     $result = true;
-                } else {
+                } elseif (!$success) {
                     $app->log('Failed to restore web backup ' . $full_filename . ', exit code ' . $retval, LOGLEVEL_ERROR);
                 }
             }
@@ -527,6 +799,11 @@ class backup
         global $app;
 
         $success = false;
+        $web_backup_dir = $domain['document_root'] . '/backup';
+
+        //* Security: Ensure backup directory has correct ownership (root:group, 750)
+        //* This prevents web users from creating symlinks in the backup directory
+        self::secureBackupDir($web_backup_dir, $domain['system_group']);
 
         if (self::backupModeIsRepos($backup_mode)) {
             $backup_archive = $filename;
@@ -629,24 +906,22 @@ class backup
             }
         }
         //* Copy the backup file to the backup folder of the website
-        elseif(file_exists($backup_dir.'/'.$filename) && file_exists($domain['document_root'].'/backup/') && !stristr($backup_dir.'/'.$filename, '..') && !stristr($backup_dir.'/'.$filename, 'etc')) {
-            $success = copy($backup_dir.'/'.$filename, $domain['document_root'].'/backup/'.$filename);
+        elseif(file_exists($backup_dir.'/'.$filename) && file_exists($web_backup_dir) && !stristr($backup_dir.'/'.$filename, '..') && !stristr($backup_dir.'/'.$filename, 'etc')) {
+            //* Security: Remove any existing file or symlink before copying to prevent symlink attacks
+            $target_file = $web_backup_dir . '/' . $filename;
+            self::safeRemoveBackupFile($target_file);
+            $success = copy($backup_dir.'/'.$filename, $target_file);
         }
-        if (file_exists($domain['document_root'].'/backup') && fileowner($domain['document_root'].'/backup') === 0) {
-            // Fix old web backup dir permissions from before #6628
-            chown($domain['document_root'].'/backup', $domain['system_user']);
-            chgrp($domain['document_root'].'/backup', $domain['system_group']);
-            $app->log('Fixed old directory permissions from root:root to '.$domain['system_user'].':'.$domain['system_group'].' for backup dir '.$domain['document_root'].'/backup/', LOGLEVEL_DEBUG);
-        }
-        if (file_exists($domain['document_root'].'/backup/'.$filename)) {
-            // Change backup file permissions
-            chgrp($domain['document_root'].'/backup/'.$filename, $domain['system_group']);
-            chown($domain['document_root'].'/backup/'.$filename, $domain['system_user']);
-            chmod($domain['document_root'].'/backup/'.$filename,0600);
-            $app->log('Ready '.$domain['document_root'].'/backup/'.$filename, LOGLEVEL_DEBUG);
+        $target_file = $web_backup_dir . '/' . $filename;
+        if (file_exists($target_file)) {
+            //* Change backup file permissions - use lchown/lchgrp behavior via shell to not follow symlinks
+            //* Although with secured backup dir, symlinks should not be possible anymore
+            $app->system->exec_safe('chown -h ?:? ?', $domain['system_user'], $domain['system_group'], $target_file);
+            chmod($target_file, 0640);
+            $app->log('Ready ' . $target_file, LOGLEVEL_DEBUG);
             return true;
         } else {
-            $app->log('Failed download of '.$domain['document_root'].'/backup/'.$filename , LOGLEVEL_ERROR);
+            $app->log('Failed download of ' . $target_file, LOGLEVEL_ERROR);
             return false;
         }
     }

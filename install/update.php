@@ -431,6 +431,10 @@ else {
 	$inst->install_ispconfig_interface = false;
 }
 
+//* Check and install rsync (required for secure backup restoration)
+swriteln('Checking for rsync...');
+$inst->check_and_install_rsync();
+
 //** Shall the services be reconfigured during update
 $reconfigure_services_answer = $inst->simple_query('Reconfigure Services?', array('yes', 'no', 'selected'), 'yes','reconfigure_services');
 
