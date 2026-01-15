@@ -128,6 +128,67 @@ class installer_enterpriselinux extends installer_dist {
 
 		// Set SELinux contexts for ISPConfig directories
 		$this->set_selinux_contexts();
+
+		// Configure systemd httpd hardening workaround for ISPConfig
+		$this->configure_httpd_systemd_override();
+	}
+
+	public function configure_httpd_systemd_override() {
+		global $conf;
+
+		// Only apply if Apache is installed and systemd is in use
+		if($conf['apache']['installed'] == false) return;
+		if(!is_executable('/bin/systemctl') && !is_executable('/usr/bin/systemctl')) return;
+
+		// Check if httpd.service has ProtectSystem enabled
+		$protect_system = @exec('systemctl show httpd -p ProtectSystem --value 2>/dev/null');
+		if(empty($protect_system) || $protect_system == 'no' || $protect_system == 'false') {
+			return;
+		}
+
+		$install_dir = $conf['ispconfig_install_dir'];
+		$dropin_dir = '/etc/systemd/system/httpd.service.d';
+		$dropin_file = $dropin_dir.'/ispconfig.conf';
+
+		// Create drop-in directory if it doesn't exist
+		if(!is_dir($dropin_dir)) {
+			mkdir($dropin_dir, 0755, true);
+		}
+
+		// Directories that Apache needs write access to under /usr/local/ispconfig
+		$writable_paths = array(
+			$install_dir.'/interface/temp',
+			$install_dir.'/interface/web/temp',
+			$install_dir.'/interface/cache'
+		);
+
+		// Filter to only existing directories
+		$existing_paths = array();
+		foreach($writable_paths as $path) {
+			if(is_dir($path)) {
+				$existing_paths[] = $path;
+			}
+		}
+
+		if(count($existing_paths) == 0) {
+			return;
+		}
+
+		swriteln('Configuring systemd httpd override for ISPConfig writable directories...');
+
+		// Build the drop-in configuration content
+		$content = "[Service]\n";
+		foreach($existing_paths as $path) {
+			$content .= "ReadWritePaths=".$path."\n";
+		}
+
+		// Write the drop-in file
+		wf($dropin_file, $content);
+		chmod($dropin_file, 0644);
+
+		// Reload systemd to apply changes
+		$command = 'systemctl daemon-reload';
+		caselog($command.' &> /dev/null', __FILE__, __LINE__, "EXECUTED: $command", "Failed to execute the command $command");
 	}
 
 	public function set_selinux_contexts() {

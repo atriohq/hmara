@@ -230,16 +230,14 @@ $form['tabs']['users'] = array (
 			'validators' => array (  0 => array (    'type' => 'NOTEMPTY',
 					'errmsg'=> 'app_theme_empty'),
 				1 => array (    'type' => 'REGEX',
-					'regex' => '/^[a-z0-9\_]{0,64}$/',
+					'regex' => '/^[a-zA-Z0-9_-]{1,32}$/',
 					'errmsg'=> 'app_theme_regex'),
 			),
-			'regex' => '',
-			'errmsg' => '',
 			'default' => 'default',
 			'value' => $themes_list,
 			'separator' => '',
 			'width' => '30',
-			'maxlength' => '255',
+			'maxlength' => '32',
 			'rows' => '',
 			'cols' => ''
 		)

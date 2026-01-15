@@ -66,6 +66,52 @@ class installer_base extends stdClass {
 		return ($val == 0 ? true : false);
 	}
 
+	/**
+	 * Check if rsync is installed and install it if not.
+	 * rsync is required for secure backup restoration.
+	 * @return bool true if rsync is available
+	 */
+	public function check_and_install_rsync() {
+		global $conf;
+
+		if(is_installed('rsync')) {
+			swriteln('rsync is already installed.');
+			return true;
+		}
+
+		swriteln('rsync is not installed. Attempting to install...');
+
+		$ret = null;
+		$val = 1;
+
+		//* Detect package manager and install rsync
+		if(file_exists('/etc/debian_version')) {
+			//* Debian/Ubuntu
+			exec('apt-get update && apt-get -y install rsync 2>&1', $ret, $val);
+		} elseif(file_exists('/etc/redhat-release')) {
+			//* RHEL/CentOS/Fedora
+			if(is_installed('dnf')) {
+				exec('dnf -y install rsync 2>&1', $ret, $val);
+			} elseif(is_installed('yum')) {
+				exec('yum -y install rsync 2>&1', $ret, $val);
+			}
+		} elseif(file_exists('/etc/SuSE-release') || file_exists('/etc/SUSE-brand')) {
+			//* openSUSE/SLES
+			exec('zypper -n install rsync 2>&1', $ret, $val);
+		} elseif(file_exists('/etc/gentoo-release')) {
+			//* Gentoo
+			exec('emerge rsync 2>&1', $ret, $val);
+		}
+
+		if($val == 0 && is_installed('rsync')) {
+			swriteln('rsync installed successfully.');
+			return true;
+		} else {
+			$this->warning('Could not install rsync automatically. Please install rsync manually: apt-get install rsync (Debian/Ubuntu) or yum install rsync (RHEL/CentOS)');
+			return false;
+		}
+	}
+
 	//: TODO  Implement the translation function and language files for the installer.
 	public function lng($text) {
 		return $text;

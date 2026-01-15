@@ -816,7 +816,12 @@ class tform_base {
 				}
 				//* Validate record value
 				if(isset($field['validators']) && is_array($field['validators'])) {
-					$this->validateField($key, (isset($record[$key]))?$record[$key]:'', $field['validators']);
+					$validate_value = (isset($record[$key])) ? $record[$key] : '';
+					//* RADIO and CHECKBOX fields submit as arrays, convert to string for validation
+					if(($field['formtype'] == 'RADIO' || $field['formtype'] == 'CHECKBOX') && is_array($validate_value)) {
+						$validate_value = implode($field['separator'] ?? '', $validate_value);
+					}
+					$this->validateField($key, $validate_value, $field['validators']);
 				}
 
 				switch ($field['datatype']) {

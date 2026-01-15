@@ -563,7 +563,7 @@ class nginx_plugin {
 		if(!is_dir($data['new']['document_root'].'/ssl')) $app->system->mkdirpath($data['new']['document_root'].'/ssl');
 		if(!is_dir($data['new']['document_root'].'/cgi-bin')) $app->system->mkdirpath($data['new']['document_root'].'/cgi-bin');
 		if(!is_dir($data['new']['document_root'].'/tmp')) $app->system->mkdirpath($data['new']['document_root'].'/tmp');
-		if(!is_dir($data['new']['document_root'].'/backup')) $app->system->mkdirpath($data['new']['document_root'].'/backup', 0755, $username, $groupname);
+		if(!is_dir($data['new']['document_root'].'/backup')) $app->system->mkdirpath($data['new']['document_root'].'/backup', 0750, 'root', $groupname);
 		if(!is_dir($data['new']['document_root'].'/.composer')) $app->system->mkdirpath($data['new']['document_root'].'/.composer', 0750, $username, $groupname);
 
 		if(!is_dir($data['new']['document_root'].'/.ssh')) {
@@ -1992,6 +1992,8 @@ class nginx_plugin {
 				$htp_file = 'admin:'.trim($data['new']['stats_password']);
 				$app->system->file_put_contents($data['new']['document_root'].'/' . $stats_web_folder . '/stats/.htpasswd_stats', $htp_file);
 				$app->system->chmod($data['new']['document_root'].'/' . $stats_web_folder . '/stats/.htpasswd_stats', 0640);
+				$app->system->chown($data['new']['document_root'].'/' . $stats_web_folder . '/stats/.htpasswd_stats', $data['new']['system_user']);
+				$app->system->chgrp($data['new']['document_root'].'/' . $stats_web_folder . '/stats/.htpasswd_stats', $data['new']['system_group']);
 				unset($htp_file);
 			}
 		}

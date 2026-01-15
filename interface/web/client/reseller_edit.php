@@ -271,6 +271,10 @@ class page_action extends tform_actions {
 		$modules = $conf['interface_modules_enabled'] . ',client';
 		$startmodule = (stristr($modules, 'dashboard'))?'dashboard':'client';
 		$usertheme = $this->dataRecord["usertheme"];
+		// Validate theme name to prevent path traversal attacks
+		if(!preg_match('/^[a-zA-Z0-9_-]{1,32}$/', $usertheme)) {
+			$usertheme = 'default';
+		}
 		$type = 'user';
 		$active = 1;
 		$language = $this->dataRecord["language"];

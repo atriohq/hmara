@@ -322,10 +322,18 @@ class remoting_lib extends tform_base {
 			}
 		}
 		$usertheme = (isset($params["usertheme"]) && $params["usertheme"] != '')?$params["usertheme"]:'default';
+		// Validate theme name to prevent path traversal attacks
+		if(!preg_match('/^[a-zA-Z0-9_-]{1,32}$/', $usertheme)) {
+			$usertheme = 'default';
+		}
 		$type = 'user';
 		$active = 1;
 		$insert_id = $app->functions->intval($insert_id);
 		$language = $params["language"];
+		// Validate language code (2 lowercase letters)
+		if(!preg_match('/^[a-z]{2}$/', $language)) {
+			$language = 'en';
+		}
 		$groupid = $app->db->datalogInsert('sys_group', array("name" => $username, "description" => "", "client_id" => $insert_id), 'groupid');
 		$groups = $groupid;
 		if(!isset($params['_ispconfig_pw_crypted']) || $params['_ispconfig_pw_crypted'] != 1) $password = $app->auth->crypt_password(stripslashes($password));
@@ -339,6 +347,10 @@ class remoting_lib extends tform_base {
 		$username = $params["username"];
 		$clear_password = $params["password"];
 		$language = $params['language'];
+		// Validate language code (2 lowercase letters)
+		if(!empty($language) && !preg_match('/^[a-z]{2}$/', $language)) {
+			$language = '';
+		}
 		$modules = $params['modules'];
 		$client_id = $app->functions->intval($client_id);
 

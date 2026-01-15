@@ -322,11 +322,18 @@ class cron_plugin {
 					$cron_line .= $job['command'] . " " . $log_target;
 				}
 
+				// Sanitize domain name for cron comment - only add if it passes validation
+				// This prevents cron injection attacks via malicious domain names
+				$safe_domain_comment = '';
+				if(filter_var($job['domain'], FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME)) {
+					$safe_domain_comment = " #{$job['domain']}";
+				}
+
 				if($job['type'] == 'chrooted') {
-					$chr_cron_content .= $cron_line . " #{$job['domain']}\n";
+					$chr_cron_content .= $cron_line . $safe_domain_comment . "\n";
 					$chr_cmd_count++;
 				} else {
-					$cron_content .= $cron_line . " #{$job['domain']}\n";
+					$cron_content .= $cron_line . $safe_domain_comment . "\n";
 					$cmd_count++;
 				}
 			}

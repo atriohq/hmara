@@ -316,6 +316,10 @@ if($install_mode == 'expert' && strtolower($inst->simple_query('Shall this serve
 //* Create the mysql database
 $inst->configure_database();
 
+//* Check and install rsync (required for secure backup restoration)
+swriteln('Checking for rsync...');
+$inst->check_and_install_rsync();
+
 //* Check for Web-Server
 if(!$conf['apache']['installed'] && !$conf['nginx']['installed']) {
 	$conf['apache']['installed'] = $inst->force_configure_app('Apache', ($install_mode == 'expert'));
