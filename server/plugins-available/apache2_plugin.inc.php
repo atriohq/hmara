@@ -1983,6 +1983,8 @@ class apache2_plugin {
 					$app->system->file_put_contents($data['new']['document_root'].'/'.$web_folder.'/stats/.htpasswd_stats', $htp_file);
 					$app->system->web_folder_protection($data['new']['document_root'], true);
 					$app->system->chmod($data['new']['document_root'].'/'.$web_folder.'/stats/.htpasswd_stats', 0640);
+					$app->system->chown($data['new']['document_root'].'/'.$web_folder.'/stats/.htpasswd_stats', $data['new']['system_user']);
+					$app->system->chgrp($data['new']['document_root'].'/'.$web_folder.'/stats/.htpasswd_stats', $data['new']['system_group']);
 					unset($htp_file);
 				}
 			}
