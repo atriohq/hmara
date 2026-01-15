@@ -113,7 +113,7 @@ class backup
      * @param string $group The group name (client group)
      * @return bool true on success
      */
-    protected static function secureBackupDir($backup_path, $group)
+    protected static function secureBackupDir($backup_path, $group, $protection_already_disabled = false)
     {
         global $app;
 
@@ -125,12 +125,16 @@ class backup
         $current_perms = fileperms($backup_path) & 0777;
 
         if ($current_owner !== 0 || $current_perms !== 0750) {
-            $app->system->web_folder_protection(dirname($backup_path), false);
+            if (!$protection_already_disabled) {
+                $app->system->web_folder_protection(dirname($backup_path), false);
+            }
             $app->log('Securing backup directory ' . $backup_path . ' (owner: root, group: ' . $group . ', perms: 750)', LOGLEVEL_DEBUG);
             chown($backup_path, 'root');
             chgrp($backup_path, $group);
             chmod($backup_path, 0750);
-            $app->system->web_folder_protection(dirname($backup_path), true);
+            if (!$protection_already_disabled) {
+                $app->system->web_folder_protection(dirname($backup_path), true);
+            }
         }
 
         return true;
@@ -507,7 +511,7 @@ class backup
 
         //* Security: Ensure backup directory has correct ownership (root:group, 750)
         $web_backup_dir = $web_root . '/backup';
-        self::secureBackupDir($web_backup_dir, $web_group);
+        self::secureBackupDir($web_backup_dir, $web_group, true);
 
         if (self::backupModeIsRepos($backup_mode)) {
             $backup_archive = $filename;
@@ -519,25 +523,36 @@ class backup
 
             $archives = self::getReposArchives($backup_mode, $backup_repos_path, $password);
             if (is_array($archives) && in_array($backup_archive, $archives)) {
-                //* Security: Extract to temporary directory first, then rsync with --safe-links
-                $tmp_restore_dir = $web_backup_dir . '/.restore_tmp_' . uniqid();
+                //* Security: Use borg mount + rsync with --safe-links to restore safely
+                //* This avoids quota issues (no temp extraction) and prevents symlink attacks
+                //* Use ISPConfig's secure temp directory instead of /tmp for security
+                $tmp_mount_dir = '/usr/local/ispconfig/server/temp/.borg_mount_' . uniqid();
 
-                //* Temporarily double quota to accommodate temp extraction (files preserve original ownership)
-                $original_quota = self::doubleUserQuota($web_user, $web_root);
-
-                if (mkdir($tmp_restore_dir, 0700)) {
-                    $retval = 0;
+                if (mkdir($tmp_mount_dir, 0700)) {
+                    $success = false;
                     switch ($backup_mode) {
                         case "borg":
-                            $command = 'cd ? && borg extract --nobsdflags ?';
-                            $app->system->exec_safe($command, $tmp_restore_dir, $full_archive_path);
-                            $retval = $app->system->last_exec_retcode();
-                            $success = ($retval == 0 || $retval == 1);
+                            //* Mount the borg archive read-only (borg mount daemonizes by default)
+                            $app->system->exec_safe('borg mount ? ?', $full_archive_path, $tmp_mount_dir);
+                            $mount_retval = $app->system->last_exec_retcode();
+                            
+                            //* Check if mount succeeded
+                            if ($mount_retval === 0) {
+                                exec('mountpoint -q ' . escapeshellarg($tmp_mount_dir), $output, $mount_check);
+                                if ($mount_check === 0) {
+                                    $success = true;
+                                } else {
+                                    $app->log('borg mount returned success but mountpoint check failed for ' . $full_archive_path, LOGLEVEL_ERROR);
+                                }
+                            } else {
+                                $app->log('Failed to mount borg archive ' . $full_archive_path . ', exit code ' . $mount_retval, LOGLEVEL_ERROR);
+                            }
                             break;
                     }
                     if ($success) {
                         //* Use rsync with --safe-links to ignore symlinks pointing outside the tree
-                        $app->system->exec_safe('rsync -a --delete --safe-links ?/ ?/', $tmp_restore_dir, $web_root);
+                        //* Exclude backup directory to prevent rsync from deleting it (archive contains empty backup dir)
+                        $app->system->exec_safe('rsync -a --delete --safe-links --exclude=/backup ?/ ?/', $tmp_mount_dir, $web_root);
                         $rsync_retval = $app->system->last_exec_retcode();
                         if ($rsync_retval == 0) {
                             $app->log('Restored web backup ' . $full_archive_path . ' via secure rsync', LOGLEVEL_DEBUG);
@@ -545,18 +560,12 @@ class backup
                         } else {
                             $app->log('rsync failed during restore of ' . $full_archive_path . ', exit code ' . $rsync_retval, LOGLEVEL_ERROR);
                         }
-                    } else {
-                        $app->log('Failed to extract web backup ' . $full_archive_path . ', exit code ' . $retval, LOGLEVEL_ERROR);
+                        //* Unmount borg
+                        $app->system->exec_safe('borg umount ?', $tmp_mount_dir);
                     }
-                    //* Cleanup temporary directory (--one-file-system prevents crossing filesystem boundaries)
-                    $app->system->exec_safe('rm -rf --one-file-system ?', $tmp_restore_dir);
-
-                    //* Restore original quota after cleanup
-                    self::restoreUserQuota($web_user, $original_quota);
+                    @rmdir($tmp_mount_dir);
                 } else {
-                    $app->log('Failed to create temporary restore directory ' . $tmp_restore_dir, LOGLEVEL_ERROR);
-                    //* Restore original quota even if mkdir failed
-                    self::restoreUserQuota($web_user, $original_quota);
+                    $app->log('Failed to create temporary mount directory ' . $tmp_mount_dir, LOGLEVEL_ERROR);
                 }
             } else {
                 $app->log('Web backup archive does not exist ' . $full_archive_path, LOGLEVEL_ERROR);
@@ -685,7 +694,8 @@ class backup
                         if ($success) {
                             //* Use rsync with --safe-links to ignore symlinks pointing outside the tree
                             //* This prevents symlink attacks where archive contains malicious symlinks
-                            $app->system->exec_safe('rsync -a --delete --safe-links ?/ ?/', $tmp_restore_dir, $web_root);
+                            //* Exclude backup directory to prevent rsync from deleting it (archive contains empty backup dir)
+                            $app->system->exec_safe('rsync -a --delete --safe-links --exclude=/backup ?/ ?/', $tmp_restore_dir, $web_root);
                             $rsync_retval = $app->system->last_exec_retcode();
                             if ($rsync_retval == 0) {
                                 $app->log('Restored web backup ' . $full_filename . ' via secure rsync', LOGLEVEL_DEBUG);

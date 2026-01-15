@@ -85,9 +85,11 @@ class backup_plugin {
 				$backup_dir_is_ready = false;
 
 			if($backup_dir_is_ready){
+				$action_result = true;
+				
 				//* Make backup available for download
 				if($action_name == 'backup_download') {
-					backup::downloadBackup($backup['backup_format'], trim($backup['backup_password']), $backup_dir, $backup['filename'], $backup['backup_mode'], $backup['backup_type'], $web);
+					$action_result = backup::downloadBackup($backup['backup_format'], trim($backup['backup_password']), $backup_dir, $backup['filename'], $backup['backup_mode'], $backup['backup_type'], $web);
 				}
 
 				//* Restore a MongoDB backup
@@ -118,24 +120,31 @@ class backup_plugin {
 
 				//* Restore a mysql backup
 				if($action_name == 'backup_restore' && $backup['backup_type'] == 'mysql') {
-					backup::restoreBackupDatabase($backup['backup_format'], trim($backup['backup_password']), $backup_dir, $backup['filename'], $backup['backup_mode'], $backup['backup_type']);
+					$action_result = backup::restoreBackupDatabase($backup['backup_format'], trim($backup['backup_password']), $backup_dir, $backup['filename'], $backup['backup_mode'], $backup['backup_type']);
 				}
 
 				//* Restore a web backup
 				if($action_name == 'backup_restore' && $backup['backup_type'] == 'web') {
-					backup::restoreBackupWebFiles($backup['backup_format'], trim($backup['backup_password']), $backup_dir, $backup['filename'], $backup['backup_mode'], $backup['backup_type'], $web['document_root'], $web['system_user'], $web['system_group']);
+					$action_result = backup::restoreBackupWebFiles($backup['backup_format'], trim($backup['backup_password']), $backup_dir, $backup['filename'], $backup['backup_mode'], $backup['backup_type'], $web['document_root'], $web['system_user'], $web['system_group']);
 				}
 				
 				if($action_name == 'backup_delete') {
-					backup::deleteBackup($backup['backup_format'], trim($backup['backup_password']), $backup_dir, $backup['filename'], $backup['backup_mode'], $backup['backup_type'], $backup['parent_domain_id']);
+					$action_result = backup::deleteBackup($backup['backup_format'], trim($backup['backup_password']), $backup_dir, $backup['filename'], $backup['backup_mode'], $backup['backup_type'], $backup['parent_domain_id']);
 				}
 
 				backup::unmount_backup_dir($conf['server_id']);
+				
+				if($action_result === false) {
+					$app->log('Backup action '.$action_name.' failed for backup ID '.$backup_id, LOGLEVEL_ERROR);
+					return 'error';
+				}
 			} else {
 				$app->log('Backup directory not ready.', LOGLEVEL_DEBUG);
+				return 'error';
 			}
 		} else {
 			$app->log('No backup with ID '.$backup_id.' found.', LOGLEVEL_DEBUG);
+			return 'error';
 		}
 
 		return 'ok';
