@@ -291,29 +291,6 @@ class backup
     }
 
     /**
-     * Sets file ownership to $web_user for all files and folders except log, ssl and web/stats
-     * @param string $web_document_root
-     * @param string $web_user
-     * @author Ramil Valitov <ramilvalitov@gmail.com>
-     */
-    protected static function restoreFileOwnership($web_document_root, $web_user, $web_group)
-    {
-        global $app;
-
-        $blacklist = array('bin', 'dev', 'etc', 'home', 'lib', 'lib32', 'lib64', 'log', 'opt', 'proc', 'net', 'run', 'sbin', 'ssl', 'srv', 'sys', 'usr', 'var');
-
-	$find_excludes = '-not -path "." -and -not -path "./web/stats/*" -and -not -path "./backup" -and -not -path "./backup/*"';
-
-	foreach ( $blacklist as $dir ) {
-		$find_excludes .= ' -and -not -path "./'.$dir.'" -and -not -path "./'.$dir.'/*"';
-	}
-
-        $app->log('Restoring permissions for ' . $web_document_root, LOGLEVEL_DEBUG);
-        $app->system->exec_safe('cd ? && find . '.$find_excludes.' -exec chown -h ?:? {} \;', $web_document_root, $web_user, $web_group);
-
-    }
-
-    /**
      * Returns default backup format used in previous versions of ISPConfig
      * @param string $backup_mode can be 'userzip' or 'rootgz'
      * @param string $backup_type can be 'web' or 'mysql'
@@ -699,8 +676,7 @@ class backup
                             $rsync_retval = $app->system->last_exec_retcode();
                             if ($rsync_retval == 0) {
                                 $app->log('Restored web backup ' . $full_filename . ' via secure rsync', LOGLEVEL_DEBUG);
-                                //* Restore file ownership after rsync
-                                self::restoreFileOwnership($web_root, $web_user, $web_group);
+                                //* No need to restore ownership - tar preserves it and rsync -a keeps it
                                 $result = true;
                             } else {
                                 $app->log('rsync failed during restore of ' . $full_filename . ', exit code ' . $rsync_retval, LOGLEVEL_ERROR);
