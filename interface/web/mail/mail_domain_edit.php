@@ -240,11 +240,13 @@ class page_action extends tform_actions {
 			$app->tpl->setVar('relay_pass', $rec['relay_pass'], true);
 		}
 
-		$dns_key = str_replace(array('-----BEGIN PUBLIC KEY-----','-----END PUBLIC KEY-----',"\r","\n"), '', $this->dataRecord['dkim_public']);
-		$dkim_txt = 'v=DKIM1; t=s; p=' . $dns_key;
-		$dns_record = $this->dataRecord['dkim_selector'] . '._domainkey.' . $this->dataRecord['domain'] . '. 3600  IN  TXT   "' . $dkim_txt . '"';
+		if (!empty($this->dataRecord['dkim_public'])) {
+			$dns_key = str_replace(array('-----BEGIN PUBLIC KEY-----','-----END PUBLIC KEY-----',"\r","\n"), '', $this->dataRecord['dkim_public']);
+			$dkim_txt = 'v=DKIM1; t=s; p=' . $dns_key;
+			$dns_record = $this->dataRecord['dkim_selector'] . '._domainkey.' . $this->dataRecord['domain'] . '. 3600  IN  TXT   "' . $dkim_txt . '"';
+			$app->tpl->setVar('dns_record', $dns_record, true);
+		}
 
-		if (!empty($this->dataRecord['dkim_public'])) $app->tpl->setVar('dns_record', $dns_record, true);
 
 		$csrf_token = $app->auth->csrf_token_get('mail_domain_del');
 		$app->tpl->setVar('_csrf_id', $csrf_token['csrf_id']);
