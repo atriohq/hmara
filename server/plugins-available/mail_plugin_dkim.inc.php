@@ -213,7 +213,13 @@ class mail_plugin_dkim {
 			$app->log('Saved DKIM Private-key to '.$key_file.'.private', LOGLEVEL_DEBUG);
 
 			// Extract the dkim public key from the private.
-			$public_key = openssl_pkey_get_details(openssl_pkey_get_private($key_value))['key'];
+			$pkey = openssl_pkey_get_private($key_value);
+			if ($pkey === false) {
+				$app->log('Unable to parse DKIM private key for '.$key_domain, LOGLEVEL_ERROR);
+				return $success;
+			}
+			$details = openssl_pkey_get_details($pkey);
+			$public_key = $details['key'] ?? null;
 
 			// Save the DKIM Public-key in dkim-dir
 			if(!empty($public_key) && $app->system->file_put_contents($key_file.'.public', $public_key)) {
