@@ -290,7 +290,9 @@ class page_action extends tform_actions {
 
 		// Lookup translations with formatting for each type
 		foreach( $subs as &$sub) {
-			$sub['pretty'] = sprintf($app->tform->wordbook['dependant_' . $sub['type'] . '_txt'], $sub['source'], $sub['destination']);
+			$sub['pretty'] = $app->functions->htmlentities(sprintf($app->tform->wordbook['dependant_' . $sub['type'] . '_txt'], $sub['source'], $sub['destination']));
+			$sub['source'] = $app->functions->htmlentities($sub['source']);
+			$sub['destination'] = $app->functions->htmlentities($sub['destination']);
 		}
 
 		$app->tpl->setLoop('mail_forward_and_boxes_info', $subs);
