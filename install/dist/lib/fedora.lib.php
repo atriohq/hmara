@@ -632,7 +632,7 @@ class installer_dist extends installer_base {
 
 		$row = $this->db->queryOneRecord('SELECT * FROM ?? WHERE server_id = ?', $conf["mysql"]["database"] . '.firewall', $conf['server_id']);
 
-		if(trim($row["tcp_port"]) != '' || trim($row["udp_port"]) != ''){
+		if($row && (trim($row["tcp_port"] ?? '') != '' || trim($row["udp_port"] ?? '') != '')){
 			$tcp_public_services = trim(str_replace(',', ' ', $row["tcp_port"]));
 			$udp_public_services = trim(str_replace(',', ' ', $row["udp_port"]));
 		} else {
@@ -641,7 +641,7 @@ class installer_dist extends installer_base {
 		}
 		if(!stristr($tcp_public_services, $conf['apache']['vhost_port'])) {
 			$tcp_public_services .= ' '.intval($conf['apache']['vhost_port']);
-			if($row["tcp_port"] != '') $this->db->query("UPDATE firewall SET tcp_port = tcp_port + ? WHERE server_id = ?", ',' . intval($conf['apache']['vhost_port']), $conf['server_id']);
+			if($row && ($row["tcp_port"] ?? '') != '') $this->db->query("UPDATE firewall SET tcp_port = tcp_port + ? WHERE server_id = ?", ',' . intval($conf['apache']['vhost_port']), $conf['server_id']);
 		}
 
 		$content = str_replace("{TCP_PUBLIC_SERVICES}", $tcp_public_services, $content);

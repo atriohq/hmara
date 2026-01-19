@@ -521,6 +521,9 @@ if($conf['apparmor']['installed']){
 
 if($install_mode == 'standard' || strtolower($inst->simple_query('Configure Firewall Server', array('y', 'n'), 'y','configure_firewall')) == 'y') {
 	//* Check for Firewall
+	if(!isset($conf['ufw']['installed'])) {
+		$conf['ufw']['installed'] = false;
+	}
 	if(!isset($conf['firewall']['installed'])) {
 		$conf['firewall']['installed'] = false;
 	}
