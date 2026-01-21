@@ -41,20 +41,34 @@ $domain_id = $app->functions->idn_encode($_GET['domain_id']);
 
 if($type == 'create_dkim' && $domain_id != ''){
 	$dkim_selector = $_GET['dkim_selector'];
+
 	$domain = $domain_id;
 	if(is_numeric($domain_id)) {
 		$temp = $app->db->queryOneRecord("SELECT domain FROM domain WHERE domain_id = ? AND ".$app->tform->getAuthSQL('r'), $domain_id);
+		if (!$temp) {
+			header('Content-type: application/json');
+			echo json_encode(['error' => 'Domain not found']);
+			exit;
+		}
 		$domain = $temp['domain'];
 	}
 	$rec = $app->db->queryOneRecord("SELECT server_id FROM mail_domain WHERE domain = ?", $domain);
 	$server_id = $rec['server_id'];
 	unset($rec);
+
 	$mail_config = $app->getconf->get_server_config($server_id, 'mail');
 	$dkim_strength = $app->functions->intval($mail_config['dkim_strength']);
 	if ($dkim_strength == '' || $dkim_strength == 0 ) $dkim_strength = 2048;
 
 	// Generate a new private key.
 	$dkim_private = openssl_pkey_new(['private_key_bits' => $dkim_strength]);
+	if ($dkim_private === false) {
+		// Return error JSON or handle appropriately
+		header('Content-type: application/json');
+		echo json_encode(['error' => 'Failed to generate DKIM key']);
+		exit;
+	}
+
 	$dkim_private_pem = '';
 	openssl_pkey_export($dkim_private, $dkim_private_pem);
 	$dkim_public = openssl_pkey_get_details($dkim_private)['key'];
@@ -76,9 +90,12 @@ if($type == 'create_dkim' && $domain_id != ''){
 	];
 	header('Content-type: application/json');
 	echo json_encode($output);
+	exit;
 }
 else {
 	// Invalid
+	header('Content-type: application/json');
+	echo json_encode(['error' => 'Invalid request']);
 }
 
 function validate_selector($selector) {
