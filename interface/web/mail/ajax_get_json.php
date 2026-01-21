@@ -74,7 +74,7 @@ if($type == 'create_dkim' && $domain_id != ''){
 	$dkim_public = openssl_pkey_get_details($dkim_private)['key'];
 
 	if (!validate_selector($dkim_selector) ) {
-		$dkim_selector = 'invalid selector';
+		$dkim_selector = 'default';
 	}
 
 	$dns_key = str_replace(array('-----BEGIN PUBLIC KEY-----','-----END PUBLIC KEY-----',"\r","\n"), '', $dkim_public);
