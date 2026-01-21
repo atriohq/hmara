@@ -78,7 +78,7 @@ if($type == 'create_dkim' && $domain_id != ''){
 	openssl_pkey_export($dkim_private, $dkim_private_pem);
 	$dkim_public = openssl_pkey_get_details($dkim_private)['key'];
 
-	if (!validate_selector($dkim_selector) ) {
+	if (empty($dkim_selector) || !validate_selector($dkim_selector) ) {
 		$dkim_selector = 'default';
 	}
 
