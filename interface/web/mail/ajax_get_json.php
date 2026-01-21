@@ -52,6 +52,11 @@ if($type == 'create_dkim' && $domain_id != ''){
 		}
 		$domain = $temp['domain'];
 	}
+	elseif (!validate_domain($domain)) {
+			header('Content-type: application/json');
+			echo json_encode(['error' => 'Invalid domain']);
+			exit;
+	}
 	$rec = $app->db->queryOneRecord("SELECT server_id FROM mail_domain WHERE domain = ?", $domain);
 	$server_id = $rec['server_id'];
 	unset($rec);
@@ -96,6 +101,11 @@ else {
 	// Invalid
 	header('Content-type: application/json');
 	echo json_encode(['error' => 'Invalid request']);
+}
+
+function validate_domain($domain) {
+	$regex = '/^[\w\.\-]{1,255}\.[a-zA-Z0-9\-]{2,63}$/';
+	if ( preg_match($regex, $domain) === 1 ) return true; else return false;
 }
 
 function validate_selector($selector) {
