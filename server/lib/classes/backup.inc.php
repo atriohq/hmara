@@ -141,6 +141,129 @@ class backup
     }
 
     /**
+     * Unmounts the log bind mount for a website before restore.
+     * The log directory is bind-mounted from /var/log/ispconfig/httpd/$domain to $web_root/log.
+     * @param string $web_root The document root of the website
+     * @return bool true if unmounted or was not mounted
+     */
+    protected static function unmountLogDir($web_root)
+    {
+        global $app;
+
+        $log_dir = $web_root . '/log';
+        if (!is_dir($log_dir)) {
+            return true;
+        }
+
+        //* Check if log directory is a mountpoint
+        exec('mountpoint -q ' . escapeshellarg($log_dir), $output, $retval);
+        if ($retval !== 0) {
+            return true;  //* Not a mountpoint
+        }
+
+        $app->log('Unmounting log directory ' . $log_dir . ' before restore', LOGLEVEL_DEBUG);
+        $app->system->exec_safe('umount ?', $log_dir);
+        return ($app->system->last_exec_retcode() === 0);
+    }
+
+    /**
+     * Remounts the log bind mount for a website after restore.
+     * @param string $web_root The document root of the website
+     * @param string $domain The domain name for the log source path
+     * @return bool true if mounted successfully
+     */
+    protected static function remountLogDir($web_root, $domain)
+    {
+        global $app;
+
+        $log_dir = $web_root . '/log';
+        $log_source = '/var/log/ispconfig/httpd/' . $domain;
+
+        if (!is_dir($log_dir) || !is_dir($log_source)) {
+            return false;
+        }
+
+        //* Check if already mounted
+        exec('mountpoint -q ' . escapeshellarg($log_dir), $output, $retval);
+        if ($retval === 0) {
+            return true;  //* Already mounted
+        }
+
+        $app->log('Remounting log directory ' . $log_dir . ' after restore', LOGLEVEL_DEBUG);
+        $app->system->exec_safe('mount --bind ? ?', $log_source, $log_dir);
+        return ($app->system->last_exec_retcode() === 0);
+    }
+
+    /**
+     * Ensures the required web directory structure exists after restore.
+     * This prevents a malicious or misconfigured backup from breaking the website.
+     * Also fixes web root permissions which may be altered by rsync.
+     * @param string $web_root The document root of the website
+     * @param string $web_user The system user for the website
+     * @param string $web_group The system group for the website
+     * @return void
+     */
+    protected static function ensureWebDirectoryStructure($web_root, $web_user, $web_group)
+    {
+        global $app;
+
+        //* Safety checks to prevent attacks via malicious database entries
+        //* Validate web_root is a safe path (must be under /var/www/ with no path traversal)
+        if (empty($web_root) || strpos($web_root, '..') !== false || !preg_match('#^/var/www/[a-zA-Z0-9._/-]+$#', $web_root)) {
+            $app->log('Invalid web_root path in ensureWebDirectoryStructure: ' . $web_root, LOGLEVEL_ERROR);
+            return;
+        }
+
+        //* Check that web_root is not a symlink (could be used to attack other directories)
+        if (is_link($web_root)) {
+            $app->log('web_root is a symlink, refusing to modify: ' . $web_root, LOGLEVEL_ERROR);
+            return;
+        }
+
+        //* Verify web_root exists and is a directory
+        if (!is_dir($web_root)) {
+            $app->log('web_root does not exist or is not a directory: ' . $web_root, LOGLEVEL_ERROR);
+            return;
+        }
+
+        //* Fix web root permissions (rsync may change them based on temp directory)
+        $app->system->chmod($web_root, 0755);
+        $app->system->chown($web_root, 'root');
+        $app->system->chgrp($web_root, 'root');
+
+        //* Required directories with their ownership and permissions
+        //* Format: 'dirname' => array('owner', 'group', 'perms')
+        $required_dirs = array(
+            'web'       => array($web_user, $web_group, 0710),
+            'ssl'       => array('root', 'root', 0755),
+            'cgi-bin'   => array($web_user, $web_group, 0755),
+            'tmp'       => array($web_user, $web_group, 0770),
+            'webdav'    => array($web_user, $web_group, 0710),
+            'private'   => array($web_user, $web_group, 0710),
+            'log'       => array('root', $web_group, 0750),
+            'backup'    => array('root', $web_group, 0750),
+            '.ssh'      => array($web_user, $web_group, 0700),
+            '.composer' => array($web_user, $web_group, 0750),
+        );
+
+        foreach ($required_dirs as $dir => $props) {
+            $full_path = $web_root . '/' . $dir;
+            list($owner, $group, $perms) = $props;
+
+            //* Skip if path is a symlink (could be attack vector)
+            if (is_link($full_path)) {
+                $app->log('Skipping symlink in ensureWebDirectoryStructure: ' . $full_path, LOGLEVEL_WARN);
+                continue;
+            }
+
+            if (!is_dir($full_path)) {
+                $app->log('Recreating missing directory ' . $full_path . ' after restore', LOGLEVEL_WARN);
+                $app->system->mkdirpath($full_path, $perms, $owner, $group);
+            }
+        }
+    }
+
+    /**
      * Safely removes a file or symlink from the backup directory.
      * This is used before copying a backup file to ensure no symlink attack is possible.
      * @param string $filepath Full path to the file to remove
@@ -473,12 +596,13 @@ class backup
      * @param string $web_root
      * @param string $web_user
      * @param string $web_group
+     * @param string $domain The domain name (used for log directory remount)
      * @return bool true if succeed
      * @see backup_plugin::mount_backup_dir()
      * @author Ramil Valitov <ramilvalitov@gmail.com>
      * @author Jorge Muñoz <elgeorge2k@gmail.com>
      */
-    public static function restoreBackupWebFiles($backup_format, $password, $backup_dir, $filename, $backup_mode, $backup_type, $web_root, $web_user, $web_group)
+    public static function restoreBackupWebFiles($backup_format, $password, $backup_dir, $filename, $backup_mode, $backup_type, $web_root, $web_user, $web_group, $domain = '')
     {
         global $app;
 
@@ -489,6 +613,9 @@ class backup
         //* Security: Ensure backup directory has correct ownership (root:group, 750)
         $web_backup_dir = $web_root . '/backup';
         self::secureBackupDir($web_backup_dir, $web_group, true);
+
+        //* Unmount log bind mount before restore to avoid "Device busy" errors
+        self::unmountLogDir($web_root);
 
         if (self::backupModeIsRepos($backup_mode)) {
             $backup_archive = $filename;
@@ -527,13 +654,28 @@ class backup
                             break;
                     }
                     if ($success) {
-                        //* Use rsync with --safe-links to ignore symlinks pointing outside the tree
-                        //* Exclude backup directory to prevent rsync from deleting it (archive contains empty backup dir)
-                        $app->system->exec_safe('rsync -a --delete --safe-links --exclude=/backup ?/ ?/', $tmp_mount_dir, $web_root);
+                        //* Two-pass rsync for safety:
+                        //* 1. First pass: copy files without --delete (safe, won't remove anything)
+                        //* 2. Second pass: only if first succeeds, run with --delete to clean up old files
+                        //* This prevents data loss if rsync fails mid-transfer
+                        //* Use --safe-links to ignore symlinks pointing outside the tree
+                        //* Exclude system directories that are not part of the backup but managed by ISPConfig
+                        //* Also exclude chroot jail directories (bin, dev, etc, lib, usr, var, etc.)
+                        $rsync_excludes = '--exclude=/backup --exclude=/log --exclude=/ssl --exclude=/tmp --exclude=/bin --exclude=/dev --exclude=/etc --exclude=/lib --exclude=/lib32 --exclude=/lib64 --exclude=/opt --exclude=/sys --exclude=/usr --exclude=/var --exclude=/proc --exclude=/run';
+                        $app->system->exec_safe('rsync -a --safe-links ' . $rsync_excludes . ' ?/ ?/', $tmp_mount_dir, $web_root);
                         $rsync_retval = $app->system->last_exec_retcode();
                         if ($rsync_retval == 0) {
-                            $app->log('Restored web backup ' . $full_archive_path . ' via secure rsync', LOGLEVEL_DEBUG);
-                            $result = true;
+                            //* First pass succeeded, now run with --delete to remove old files
+                            $app->system->exec_safe('rsync -a --delete --safe-links ' . $rsync_excludes . ' ?/ ?/', $tmp_mount_dir, $web_root);
+                            $rsync_retval = $app->system->last_exec_retcode();
+                            if ($rsync_retval == 0) {
+                                $app->log('Restored web backup ' . $full_archive_path . ' via secure rsync', LOGLEVEL_DEBUG);
+                                $result = true;
+                            } else {
+                                //* Delete pass failed but files were copied - partial success
+                                $app->log('rsync delete pass failed for ' . $full_archive_path . ', exit code ' . $rsync_retval . ' - files restored but old files may remain', LOGLEVEL_WARN);
+                                $result = true;
+                            }
                         } else {
                             $app->log('rsync failed during restore of ' . $full_archive_path . ', exit code ' . $rsync_retval, LOGLEVEL_ERROR);
                         }
@@ -564,51 +706,96 @@ class backup
                 $retval = 0;
 
                 if ($user_mode) {
-                    //* User mode: extract directly to web_root with user privileges (less risky)
+                    //* User mode: extract to temp directory first, then rsync with --safe-links
+                    //* This prevents symlink attacks where pre-existing symlinks in web_root could be exploited
+                    $tmp_restore_dir = $web_backup_dir . '/.restore_tmp_' . uniqid();
                     $archive_file = $web_root . '/backup/' . basename($full_filename);
                     if (file_exists($archive_file)) rename($archive_file, $archive_file . '.bak');
                     copy($full_filename, $archive_file);
                     chgrp($archive_file, $web_group);
 
-                    $user_prefix_cmd = 'sudo -u ' . escapeshellarg($web_user);
-                    switch ($backup_format) {
-                        case "tar_gzip":
-                        case "tar_bzip2":
-                        case "tar_xz":
-                            $command = $user_prefix_cmd . ' tar xf ? --directory ?';
-                            $app->system->exec_safe($command, $archive_file, $web_root);
-                            $retval = $app->system->last_exec_retcode();
-                            $success = ($retval == 0 || $retval == 2);
-                            break;
-                        case "zip":
-                        case "zip_bzip2":
-                            $command = $user_prefix_cmd . ' unzip -qq -P ' . escapeshellarg($password) . ' -o ? -d ? 2> /dev/null';
-                            $app->system->exec_safe($command, $archive_file, $web_root);
-                            $retval = $app->system->last_exec_retcode();
-                            $success = ($retval == 0 || $retval == 50);
-                            break;
-                        case 'rar':
-                            $options = self::getUnRarOptions($password);
-                            $command = $user_prefix_cmd . " rar t " . $options . " ? ?";
-                            $app->system->exec_safe($command, $archive_file, $web_root . '/');
-                            if ($app->system->last_exec_retcode() == 0) {
-                                $command = $user_prefix_cmd . " rar x " . $options . " ? ?";
-                                $app->system->exec_safe($command, $archive_file, $web_root . '/');
+                    if (mkdir($tmp_restore_dir, 0755)) {
+                        chown($tmp_restore_dir, $web_user);
+                        chgrp($tmp_restore_dir, $web_group);
+
+                        $user_prefix_cmd = 'sudo -u ' . escapeshellarg($web_user);
+                        switch ($backup_format) {
+                            case "tar_gzip":
+                            case "tar_bzip2":
+                            case "tar_xz":
+                                $command = $user_prefix_cmd . ' tar xf ? --directory ?';
+                                $app->system->exec_safe($command, $archive_file, $tmp_restore_dir);
                                 $retval = $app->system->last_exec_retcode();
-                                $success = ($retval == 0 || $retval == 1 || $retval == 9);
-                            }
-                            break;
-                    }
-                    if (strpos($backup_format, "tar_7z_") === 0) {
-                        $options = self::get7zDecompressOptions($password);
-                        $command = $user_prefix_cmd . " 7z t " . $options . " ?";
-                        $app->system->exec_safe($command, $archive_file);
-                        if ($app->system->last_exec_retcode() == 0) {
-                            $command = $user_prefix_cmd . " 7z x " . $options . " -so ? | tar xf - --directory ?";
-                            $app->system->exec_safe($command, $archive_file, $web_root);
-                            $retval = $app->system->last_exec_retcode();
-                            $success = ($retval == 0 || $retval == 2);
+                                $success = ($retval == 0 || $retval == 2);
+                                break;
+                            case "zip":
+                            case "zip_bzip2":
+                                $command = $user_prefix_cmd . ' unzip -qq -P ' . escapeshellarg($password) . ' -o ? -d ? 2> /dev/null';
+                                $app->system->exec_safe($command, $archive_file, $tmp_restore_dir);
+                                $retval = $app->system->last_exec_retcode();
+                                $success = ($retval == 0 || $retval == 50);
+                                break;
+                            case 'rar':
+                                $options = self::getUnRarOptions($password);
+                                $command = $user_prefix_cmd . " rar t " . $options . " ? ?";
+                                $app->system->exec_safe($command, $archive_file, $tmp_restore_dir . '/');
+                                if ($app->system->last_exec_retcode() == 0) {
+                                    $command = $user_prefix_cmd . " rar x " . $options . " ? ?";
+                                    $app->system->exec_safe($command, $archive_file, $tmp_restore_dir . '/');
+                                    $retval = $app->system->last_exec_retcode();
+                                    $success = ($retval == 0 || $retval == 1 || $retval == 9);
+                                }
+                                break;
                         }
+                        if (strpos($backup_format, "tar_7z_") === 0) {
+                            $options = self::get7zDecompressOptions($password);
+                            $command = $user_prefix_cmd . " 7z t " . $options . " ?";
+                            $app->system->exec_safe($command, $archive_file);
+                            if ($app->system->last_exec_retcode() == 0) {
+                                $command = $user_prefix_cmd . " 7z x " . $options . " -so ? | tar xf - --directory ?";
+                                $app->system->exec_safe($command, $archive_file, $tmp_restore_dir);
+                                $retval = $app->system->last_exec_retcode();
+                                $success = ($retval == 0 || $retval == 2);
+                            }
+                        }
+
+                        if ($success) {
+                            //* Two-pass rsync for safety:
+                            //* 1. First pass: copy files without --delete (safe, won't remove anything)
+                            //* 2. Second pass: only if first succeeds, run with --delete to clean up old files
+                            //* This prevents data loss if rsync fails mid-transfer
+                            //* Use --safe-links to ignore symlinks pointing outside the tree
+                            //* Exclude system directories that are not part of the backup but managed by ISPConfig
+                            //* Also exclude chroot jail directories (bin, dev, etc, lib, usr, var, etc.)
+                            //* Run as web user to prevent deleting root-owned directories
+                            //* Note: rsync exit code 23 means some files/attrs couldn't be transferred (expected for
+                            //* permission errors on root-owned dirs when running as web user) - treat as success
+                            $rsync_excludes = '--exclude=/backup --exclude=/log --exclude=/ssl --exclude=/tmp --exclude=/bin --exclude=/dev --exclude=/etc --exclude=/lib --exclude=/lib32 --exclude=/lib64 --exclude=/opt --exclude=/sys --exclude=/usr --exclude=/var --exclude=/proc --exclude=/run';
+                            $app->system->exec_safe($user_prefix_cmd . ' rsync -a --safe-links ' . $rsync_excludes . ' ?/ ?/', $tmp_restore_dir, $web_root);
+                            $rsync_retval = $app->system->last_exec_retcode();
+                            if ($rsync_retval == 0 || $rsync_retval == 23) {
+                                //* First pass succeeded, now run with --delete to remove old files
+                                $app->system->exec_safe($user_prefix_cmd . ' rsync -a --delete --safe-links ' . $rsync_excludes . ' ?/ ?/', $tmp_restore_dir, $web_root);
+                                $rsync_retval = $app->system->last_exec_retcode();
+                                if ($rsync_retval == 0 || $rsync_retval == 23) {
+                                    $app->log('Restored web backup ' . $full_filename . ' via secure rsync', LOGLEVEL_DEBUG);
+                                    $result = true;
+                                } else {
+                                    //* Delete pass failed but files were copied - partial success
+                                    $app->log('rsync delete pass failed for ' . $full_filename . ', exit code ' . $rsync_retval . ' - files restored but old files may remain', LOGLEVEL_WARN);
+                                    $result = true;
+                                }
+                            } else {
+                                $app->log('rsync failed during restore of ' . $full_filename . ', exit code ' . $rsync_retval, LOGLEVEL_ERROR);
+                                $success = false;
+                            }
+                        } else {
+                            $app->log('Failed to extract web backup ' . $full_filename . ', exit code ' . $retval, LOGLEVEL_ERROR);
+                        }
+                        //* Cleanup temporary directory
+                        $app->system->exec_safe('rm -rf --one-file-system ?', $tmp_restore_dir);
+                    } else {
+                        $app->log('Failed to create temporary restore directory ' . $tmp_restore_dir, LOGLEVEL_ERROR);
                     }
                     unlink($archive_file);
                     if (file_exists($archive_file . '.bak')) rename($archive_file . '.bak', $archive_file);
@@ -616,6 +803,17 @@ class backup
                     //* Root mode: extract to temporary directory first, then rsync with --safe-links
                     //* This prevents symlink attacks where malicious symlinks in the archive could
                     //* overwrite system files or where pre-existing symlinks in web_root could be exploited
+
+                    //* Block zip/rar formats for rootgz mode - they don't preserve ownership
+                    if (in_array($backup_format, array('zip', 'zip_bzip2', 'rar'))) {
+                        $app->log('Backup format ' . $backup_format . ' is not supported for rootgz mode (does not preserve file ownership). Use tar formats instead.', LOGLEVEL_ERROR);
+                        if (!empty($domain)) {
+                            self::remountLogDir($web_root, $domain);
+                        }
+                        $app->system->web_folder_protection($web_root, true);
+                        return false;
+                    }
+
                     $tmp_restore_dir = $web_backup_dir . '/.restore_tmp_' . uniqid();
 
                     //* Temporarily double quota to accommodate temp extraction (files preserve original ownership)
@@ -630,27 +828,6 @@ class backup
                                 $app->system->exec_safe($command, $full_filename, $tmp_restore_dir);
                                 $retval = $app->system->last_exec_retcode();
                                 $success = ($retval == 0 || $retval == 2);
-                                break;
-                            case "zip":
-                            case "zip_bzip2":
-                                $command = 'unzip -qq -P ' . escapeshellarg($password) . ' -o ? -d ? 2> /dev/null';
-                                $app->system->exec_safe($command, $full_filename, $tmp_restore_dir);
-                                $retval = $app->system->last_exec_retcode();
-                                $success = ($retval == 0 || $retval == 50);
-                                break;
-                            case 'rar':
-                                $options = self::getUnRarOptions($password);
-                                $command = "rar t " . $options . " ? ?";
-                                $app->system->exec_safe($command, $full_filename, $tmp_restore_dir . '/');
-                                if ($app->system->last_exec_retcode() == 0) {
-                                    $app->log('Archive test passed for ' . $full_filename, LOGLEVEL_DEBUG);
-                                    $command = "rar x " . $options . " ? ?";
-                                    $app->system->exec_safe($command, $full_filename, $tmp_restore_dir . '/');
-                                    $retval = $app->system->last_exec_retcode();
-                                    $success = ($retval == 0 || $retval == 1 || $retval == 9);
-                                } else {
-                                    $app->log('Archive test failed for ' . $full_filename, LOGLEVEL_DEBUG);
-                                }
                                 break;
                         }
                         if (strpos($backup_format, "tar_7z_") === 0) {
@@ -669,15 +846,28 @@ class backup
                         }
 
                         if ($success) {
-                            //* Use rsync with --safe-links to ignore symlinks pointing outside the tree
-                            //* This prevents symlink attacks where archive contains malicious symlinks
-                            //* Exclude backup directory to prevent rsync from deleting it (archive contains empty backup dir)
-                            $app->system->exec_safe('rsync -a --delete --safe-links --exclude=/backup ?/ ?/', $tmp_restore_dir, $web_root);
+                            //* Two-pass rsync for safety:
+                            //* 1. First pass: copy files without --delete (safe, won't remove anything)
+                            //* 2. Second pass: only if first succeeds, run with --delete to clean up old files
+                            //* This prevents data loss if rsync fails mid-transfer
+                            //* Use --safe-links to ignore symlinks pointing outside the tree
+                            //* Exclude system directories that are not part of the backup but managed by ISPConfig
+                            //* Also exclude chroot jail directories (bin, dev, etc, lib, usr, var, etc.)
+                            $rsync_excludes = '--exclude=/backup --exclude=/log --exclude=/ssl --exclude=/tmp --exclude=/bin --exclude=/dev --exclude=/etc --exclude=/lib --exclude=/lib32 --exclude=/lib64 --exclude=/opt --exclude=/sys --exclude=/usr --exclude=/var --exclude=/proc --exclude=/run';
+                            $app->system->exec_safe('rsync -a --safe-links ' . $rsync_excludes . ' ?/ ?/', $tmp_restore_dir, $web_root);
                             $rsync_retval = $app->system->last_exec_retcode();
                             if ($rsync_retval == 0) {
-                                $app->log('Restored web backup ' . $full_filename . ' via secure rsync', LOGLEVEL_DEBUG);
-                                //* No need to restore ownership - tar preserves it and rsync -a keeps it
-                                $result = true;
+                                //* First pass succeeded, now run with --delete to remove old files
+                                $app->system->exec_safe('rsync -a --delete --safe-links ' . $rsync_excludes . ' ?/ ?/', $tmp_restore_dir, $web_root);
+                                $rsync_retval = $app->system->last_exec_retcode();
+                                if ($rsync_retval == 0) {
+                                    $app->log('Restored web backup ' . $full_filename . ' via secure rsync', LOGLEVEL_DEBUG);
+                                    $result = true;
+                                } else {
+                                    //* Delete pass failed but files were copied - partial success
+                                    $app->log('rsync delete pass failed for ' . $full_filename . ', exit code ' . $rsync_retval . ' - files restored but old files may remain', LOGLEVEL_WARN);
+                                    $result = true;
+                                }
                             } else {
                                 $app->log('rsync failed during restore of ' . $full_filename . ', exit code ' . $rsync_retval, LOGLEVEL_ERROR);
                                 $success = false;
@@ -708,6 +898,16 @@ class backup
         } else {
             $app->log('Failed to restore web backup ' . $filename . ', backup mode "' . $backup_mode . '" not recognized.', LOGLEVEL_DEBUG);
         }
+
+        //* Ensure required web directory structure exists after restore
+        //* This prevents a malicious or misconfigured backup from breaking the website
+        self::ensureWebDirectoryStructure($web_root, $web_user, $web_group);
+
+        //* Remount log bind mount after restore
+        if (!empty($domain)) {
+            self::remountLogDir($web_root, $domain);
+        }
+
         $app->system->web_folder_protection($web_root, true);
         return $result;
     }
@@ -2191,6 +2391,13 @@ class backup
         if ($backup_format_web == 'default') {
             $backup_format_web = self::getDefaultBackupFormat($backup_mode, 'web');
         }
+
+        //* Block zip/rar formats for rootgz mode - they don't preserve ownership and can't be restored properly
+        if ($backup_mode == 'rootgz' && in_array($backup_format_web, array('zip', 'zip_bzip2', 'rar'))) {
+            $app->log('Backup format ' . $backup_format_web . ' is not supported for rootgz mode (does not preserve file ownership). Falling back to tar_gzip.', LOGLEVEL_WARN);
+            $backup_format_web = 'tar_gzip';
+        }
+
         $password = ($web_domain['backup_encrypt'] == 'y') ? trim($web_domain['backup_password']) : '';
         $backup_extension_web = self::getBackupWebExtension($backup_format_web);
         if (empty($backup_extension_web)) {

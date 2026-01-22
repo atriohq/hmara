@@ -1,6 +1,6 @@
 ## ISPConfig 3.3.1 Beta 1 Released
 
-This version brings Debian 13 support with Dovecot 2.4 compatibility, RHEL 10 based distribution support (AlmaLinux 10, RockyLinux 10), PHP 8.5 compatibility, pgAdmin for PostgreSQL databases, improved DNS validation, and many bugfixes.
+This version brings Debian 13 support with Dovecot 2.4 compatibility, RHEL 10 based distribution support (AlmaLinux 10, RockyLinux 10), PHP 8.5 compatibility, pgAdmin for PostgreSQL databases, improved DNS validation, and many bugfixes. It also fixes 3 security issues.
 
 ## What's new in ISPConfig 3.3.1 Beta 1?
 
@@ -44,6 +44,16 @@ Improved updating with autoinstall.conf.php including better documentation and t
 ### Improved website logfile permissions
 
 Website logfiles are now created with stricter permissions (640) and ownership (root:clientX).
+
+### Security Fixes
+
+This release addresses three security vulnerabilities that could allow privilege escalation under certain conditions. The issues affect theme handling, backup restoration, and backup download functionality. We strongly recommend all users to update to this version as soon as possible.
+
+We would like to thank **SSD Secure Disclosure** for responsibly discovering and reporting these vulnerabilities.
+
+### Backup System Changes
+
+- Removed zip and rar archive formats from rootgz backup mode as they do not preserve file ownership. These formats will automatically fall back to tar_gzip when selected with rootgz mode. The zip and rar mode will stay available for userzip mode.
 
 ### Bugfixes & Minor Features
 
