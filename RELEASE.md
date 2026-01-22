@@ -1,8 +1,8 @@
-## ISPConfig 3.3.1 Beta 1 Released
+## ISPConfig 3.3.1 Released
 
 This version brings Debian 13 support with Dovecot 2.4 compatibility, RHEL 10 based distribution support (AlmaLinux 10, RockyLinux 10), PHP 8.5 compatibility, pgAdmin for PostgreSQL databases, improved DNS validation, and many bugfixes. It also fixes 3 security issues.
 
-## What's new in ISPConfig 3.3.1 Beta 1?
+## What's new in ISPConfig 3.3.1?
 
 ### Debian 13 Support
 
@@ -91,22 +91,22 @@ You can report bugs at https://git.ispconfig.org/ispconfig/ispconfig3/issues
 - RockyLinux 8 – 10
 - CentOS 8
 
-## Download ISPConfig 3.3.1 Beta 1
+## Download ISPConfig 3.3.1
 
-https://www.ispconfig.org/downloads/ISPConfig-3.3.1b1.tar.gz
+https://www.ispconfig.org/downloads/ISPConfig-3.3.1.tar.gz
 
 The installation instructions for ISPConfig can be found here:
 
 https://www.ispconfig.org/ispconfig-3/documentation/
 
-## How can I update to the ISPConfig 3.3.1 Beta 1?
+## How can I update to the ISPConfig 3.3.1?
 
 Run the following commands as root user on your ISPConfig server:
 
 ```
 cd /tmp
-wget https://www.ispconfig.org/downloads/ISPConfig-3.3.1b1.tar.gz
-tar xvfz ISPConfig-3.3.1b1.tar.gz
+wget https://www.ispconfig.org/downloads/ISPConfig-3.3.1.tar.gz
+tar xvfz ISPConfig-3.3.1.tar.gz
 cd ispconfig3_install/install
 php -q update.php
 ```
