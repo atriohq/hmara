@@ -125,7 +125,7 @@ class backup_plugin {
 
 				//* Restore a web backup
 				if($action_name == 'backup_restore' && $backup['backup_type'] == 'web') {
-					$action_result = backup::restoreBackupWebFiles($backup['backup_format'], trim($backup['backup_password']), $backup_dir, $backup['filename'], $backup['backup_mode'], $backup['backup_type'], $web['document_root'], $web['system_user'], $web['system_group']);
+					$action_result = backup::restoreBackupWebFiles($backup['backup_format'], trim($backup['backup_password']), $backup_dir, $backup['filename'], $backup['backup_mode'], $backup['backup_type'], $web['document_root'], $web['system_user'], $web['system_group'], $web['domain']);
 				}
 				
 				if($action_name == 'backup_delete') {
