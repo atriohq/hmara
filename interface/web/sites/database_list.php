@@ -60,18 +60,6 @@ class list_action extends listform_actions {
 		parent::onLoad();
 	}
 
-	function onShow() {
-		global $app, $conf;
-
-		if($this->global_config['dblist_phpmyadmin_link'] == 'y') {
-			$app->tpl->setVar('dblist_phpmyadmin_link', 1);
-		} else {
-			$app->tpl->setVar('dblist_phpmyadmin_link', 0);
-		}
-
-		parent::onShow();
-	}
-
 	function prepareDataRow($rec) {
 		global $app;
 
@@ -81,14 +69,14 @@ class list_action extends listform_actions {
 		$db_type = isset($rec['type']) ? $rec['type'] : 'mysql';
 
 		//* Show phpMyAdmin link only for MySQL/MariaDB databases
-		if($db_type == 'mysql' && $this->global_config['dblist_phpmyadmin_link'] == 'y') {
+		if(strtolower($db_type) == 'mysql' && $this->global_config['dblist_phpmyadmin_link'] == 'y') {
 			$rec['show_phpmyadmin_link'] = 1;
 		} else {
 			$rec['show_phpmyadmin_link'] = 0;
 		}
 
 		//* Show phpPgAdmin link only for PostgreSQL databases and only if URL is configured
-		if($db_type == 'pgsql' && !empty($this->global_config['phppgadmin_url'])) {
+		if(strtolower($db_type) == 'pgsql' && !empty($this->global_config['phppgadmin_url'])) {
 			$rec['show_phppgadmin_link'] = 1;
 		} else {
 			$rec['show_phppgadmin_link'] = 0;
