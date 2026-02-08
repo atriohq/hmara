@@ -21,7 +21,7 @@ mail_max_userip_connections = 100
 
 #log_debug = category=debug
 
-!include dovecot-sql.conf
+!include_try dovecot-sql.conf
 
 passdb sql {
   sql_driver = mysql
