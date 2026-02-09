@@ -50,13 +50,16 @@
 		ServerAdmin webmaster@<tmpl_var name='domain'>
 
 <tmpl_if name='ssl_enabled'>
+	<tmpl_if name='force_http11' op='==' value='y'>
+		Protocols http/1.1
+	<tmpl_else>
 		<IfModule mod_http2.c>
 			Protocols h2 http/1.1
 		</IfModule>
-
-		<IfModule mod_brotli.c>
-			AddOutputFilterByType BROTLI_COMPRESS text/html text/plain text/xml text/css text/javascript application/x-javascript application/javascript application/xml application/xml+rss application/atom+xml application/json application/x-font-ttf application/vnd.ms-fontobject image/x-icon
-		</IfModule>
+	</tmpl_if>
+	<IfModule mod_brotli.c>
+		AddOutputFilterByType BROTLI_COMPRESS text/html text/plain text/xml text/css text/javascript application/x-javascript application/javascript application/xml application/xml+rss application/atom+xml application/json application/x-font-ttf application/vnd.ms-fontobject image/x-icon
+	</IfModule>
 </tmpl_if>
 
 <tmpl_if name='logging' op='==' value='anon'>
