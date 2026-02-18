@@ -44,7 +44,7 @@
                 </thead>
                 <tbody>
                     <tmpl_loop name="records">
-                        <tr>
+                        <tr <tmpl_if name="warn_inactive"> class="danger" </tmpl_if> >
                             <td rowspan="2"><a href="#" data-load-content="sites/cron_edit.php?id={tmpl_var name='id'}">{tmpl_var name="active"}</a></td>
                             <td><a href="#" data-load-content="sites/cron_edit.php?id={tmpl_var name='id'}" data-toggle="tooltip" data-placement="bottom" title="{tmpl_var name='server_id'}">{tmpl_var name="server_id"}</a></td>
                             <td><a href="#" data-load-content="sites/cron_edit.php?id={tmpl_var name='id'}" data-toggle="tooltip" data-placement="bottom" title="{tmpl_var name='parent_domain_id'}">{tmpl_var name="parent_domain_id"}</a></td>
