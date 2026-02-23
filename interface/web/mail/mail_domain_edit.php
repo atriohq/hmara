@@ -579,7 +579,11 @@ class page_action extends tform_actions {
 							$app->db->datalogInsert('spamfilter_users', $insert_data, 'id');
 						}
 
-						$app->db->datalogUpdate('mail_user', array("maildir" => $maildir, "email" => $email, "sys_userid" => $client_user_id, "sys_groupid" => $sys_groupid), 'mailuser_id', $rec['mailuser_id']);
+						$update_data = array("maildir" => $maildir, "email" => $email, "sys_userid" => $client_user_id, "sys_groupid" => $sys_groupid);
+						if(isset($rec['login']) && strpos($rec['login'], '@' . $old_domain) !== false) {
+							$update_data['login'] = str_replace('@' . $old_domain, '@' . $domain, $rec['login']);
+						}
+						$app->db->datalogUpdate('mail_user', $update_data, 'mailuser_id', $rec['mailuser_id']);
 					}
 				}
 			}
