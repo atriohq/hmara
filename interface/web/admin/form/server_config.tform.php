@@ -726,12 +726,12 @@ $form["tabs"]['mail'] = array(
 			'formtype' => 'TEXT',
 			'default' => '',
 			'validators' => array (  0 => array ( 'type' => 'REGEX',
-					'regex' => '/^((([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)+([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])(,\s*(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)+([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9]))*)?$/',
+					'regex' => '/^((([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)+([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])(=(\d+|\[\d+\.\.\d+\])(\.(\d+|\[\d+\.\.\d+\])){3})?(,\s*(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)+([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])(=(\d+|\[\d+\.\.\d+\])(\.(\d+|\[\d+\.\.\d+\])){3})?)*)?$/',
 					'errmsg'=> 'rbl_error_regex'),
 			),
 			'value' => '',
 			'width' => '40',
-			'maxlength' => '255'
+			'maxlength' => '512'
 		),
 		'stress_adaptive' => array (
 			'datatype' => 'VARCHAR',

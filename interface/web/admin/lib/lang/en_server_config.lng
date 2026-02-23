@@ -197,7 +197,7 @@ $wb['add_web_users_to_sshusers_group_txt'] = 'Add web users to -sshusers- group'
 $wb['connect_userid_to_webid_txt'] = 'Connect Linux userid to webid';
 $wb['connect_userid_to_webid_start_txt'] = 'Start ID for userid/webid connect';
 $wb['realtime_blackhole_list_txt'] = 'Real-time Blackhole List';
-$wb['realtime_blackhole_list_note_txt'] = '(Separate RBL\'s with commas)';
+$wb['realtime_blackhole_list_note_txt'] = '(Separate RBL\'s with commas. Extended syntax supported, e.g. zen.spamhaus.org=127.0.0.[2..11])';
 $wb['stress_adaptive_txt'] = 'Adapt to temporary load spikes';
 $wb['tooltip_stress_adaptive_txt'] = 'Enables Postfix stress-adaptive behavior.';
 $wb['ssl_settings_txt'] = 'SSL Settings';
@@ -214,7 +214,7 @@ $wb['overtraffic_notify_admin_txt'] = 'Send overtraffic notification to admin';
 $wb['overtraffic_notify_reseller_txt'] = 'Send overtraffic notification to reseller';
 $wb['overtraffic_notify_client_txt'] = 'Send overtraffic notification to client';
 $wb['overtraffic_disable_web_txt'] = 'Disable websites that exceed traffic limit';
-$wb['rbl_error_regex'] = 'Please specify valid RBL hostnames.';
+$wb['rbl_error_regex'] = 'Please specify valid RBL hostnames, optionally with return code patterns (e.g. zen.spamhaus.org=127.0.0.[2..11]).';
 $wb['overquota_notify_threshold_txt'] = 'Quota warning usage level';
 $wb['overquota_notify_threshold_error'] = 'Quota warning usage level must be between 0-100%';
 $wb['overquota_notify_admin_txt'] = 'Send quota warnings to admin';
