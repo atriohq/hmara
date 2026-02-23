@@ -1257,7 +1257,7 @@ class installer_base extends stdClass {
 		$reject_sender_login_mismatch = '';
 		$reject_authenticated_sender_login_mismatch = '';
 		if(isset($server_ini_array['mail']['reject_sender_login_mismatch']) && ($server_ini_array['mail']['reject_sender_login_mismatch'] == 'y')) {
-			$reject_sender_login_mismatch = ',reject_sender_login_mismatch,';
+			$reject_sender_login_mismatch = ', reject_sender_login_mismatch,';
 			$reject_authenticated_sender_login_mismatch = 'reject_authenticated_sender_login_mismatch, ';
 		}
 
@@ -1267,11 +1267,11 @@ class installer_base extends stdClass {
 
 		$reject_unknown_client_hostname='';
 		if(isset($server_ini_array['mail']['reject_unknown']) && ($server_ini_array['mail']['reject_unknown'] == 'client' || $server_ini_array['mail']['reject_unknown'] == 'client_helo')) {
-			$reject_unknown_client_hostname=',reject_unknown_client_hostname';
+			$reject_unknown_client_hostname=', reject_unknown_client_hostname';
 		}
 		$reject_unknown_helo_hostname='';
 		if((!isset($server_ini_array['mail']['reject_unknown'])) || $server_ini_array['mail']['reject_unknown'] == 'helo' || $server_ini_array['mail']['reject_unknown'] == 'client_helo') {
-			$reject_unknown_helo_hostname=',reject_unknown_helo_hostname';
+			$reject_unknown_helo_hostname=', reject_unknown_helo_hostname';
 		}
 
 		unset($server_ini_array);
