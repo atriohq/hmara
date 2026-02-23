@@ -1,5 +1,5 @@
 -- Add last_password_change column to sys_user table
-ALTER TABLE `sys_user` ADD COLUMN `last_password_change` DATE NULL DEFAULT CURDATE();
+ALTER TABLE `sys_user` ADD COLUMN `last_password_change` DATE NULL DEFAULT (CURDATE());
 
 -- Set default php_cli_binary and php_jk_section values for known PHP versions (#6938).
 -- Only set the values if they are currently NULL - this will not work on all systems but it will not break anything more than it is with NULL.
