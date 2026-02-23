@@ -157,8 +157,7 @@ class cronjob_logfiles extends cronjob {
 			}
 			// compress current logfile
 			if(is_file($error_logfile)) {
-				$app->system->exec_safe("gzip ?", $error_logfile);
-				rename($error_logfile . '.gz', $error_logfile . '.1.gz');
+				$app->system->exec_safe("gzip -c ? > ?", $error_logfile, $error_logfile . '.1.gz');
 				$app->system->chgrp($error_logfile . '.1.gz', $rec['system_group']);
 				$app->system->chmod($error_logfile . '.1.gz', 0640);
 				$app->system->exec_safe("cat /dev/null > ?", $error_logfile);
