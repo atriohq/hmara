@@ -2916,13 +2916,12 @@ class installer_base extends stdClass {
 			$content = str_replace('{fpm_socket}', $fpm_socket, $content);
 			$content = str_replace('{cgi_socket}', $cgi_socket, $content);
 
-			if(	file_exists('/var/run/php5-fpm.sock')
-				|| file_exists('/var/run/php/php7.0-fpm.sock')
-				|| file_exists('/var/run/php/php7.1-fpm.sock')
-				|| file_exists('/var/run/php/php7.2-fpm.sock')
-				|| file_exists('/var/run/php/php7.3-fpm.sock')
-				|| file_exists('/var/run/php/php7.4-fpm.sock')
-			){
+			$php_fpm_sockets = array_merge(
+				(array)glob('/var/run/php5-fpm.sock'),
+				(array)glob('/var/lib/php5-fpm/apps.sock'),
+				(array)glob('/var/run/php/php*-fpm.sock')
+			);
+			if(!empty($php_fpm_sockets)){
 				$use_tcp = '#';
 				$use_socket = '';
 			} else {
@@ -2932,17 +2931,10 @@ class installer_base extends stdClass {
 			$content = str_replace('{use_tcp}', $use_tcp, $content);
 			$content = str_replace('{use_socket}', $use_socket, $content);
 
-			// Fix socket path on PHP 7 systems
-			if (file_exists('/var/run/php/php7.4-fpm.sock')) {
-				$content = str_replace('/var/run/php5-fpm.sock', '/var/run/php/php7.4-fpm.sock', $content);
-			} elseif(file_exists('/var/run/php/php7.3-fpm.sock')) {
-				$content = str_replace('/var/run/php5-fpm.sock', '/var/run/php/php7.3-fpm.sock', $content);
-			} elseif (file_exists('/var/run/php/php7.2-fpm.sock')) {
-				$content = str_replace('/var/run/php5-fpm.sock', '/var/run/php/php7.2-fpm.sock', $content);
-			} elseif (file_exists('/var/run/php/php7.1-fpm.sock')) {
-				$content = str_replace('/var/run/php5-fpm.sock', '/var/run/php/php7.1-fpm.sock', $content);
-			} elseif (file_exists('/var/run/php/php7.0-fpm.sock')) {
-				$content = str_replace('/var/run/php5-fpm.sock', '/var/run/php/php7.0-fpm.sock', $content);
+			// Fix socket path on newer PHP systems
+			$php_fpm_sock_files = glob('/var/run/php/php*-fpm.sock');
+			if(!empty($php_fpm_sock_files)) {
+				$content = str_replace('/var/run/php5-fpm.sock', end($php_fpm_sock_files), $content);
 			}
 
 			wf($vhost_conf_dir.'/apps.vhost', $content);
@@ -2953,6 +2945,7 @@ class installer_base extends stdClass {
 			$content = str_replace('{fpm_pool}', 'apps', $content);
 			//$content = str_replace('{fpm_port}', ($conf['nginx']['php_fpm_start_port']+1), $content);
 			$content = str_replace('{fpm_socket}', $fpm_socket, $content);
+			$content = str_replace('{fpm_domain}', 'apps', $content);
 			$content = str_replace('{fpm_user}', $apps_vhost_user, $content);
 			$content = str_replace('{fpm_group}', $apps_vhost_group, $content);
 			wf($conf['nginx']['php_fpm_pool_dir'].'/apps.conf', $content);
