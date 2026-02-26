@@ -95,7 +95,8 @@ class cronjob_mailbox_stats_hourly extends cronjob {
 		while ($line !== FALSE) {
 			$matches = [];
 			// Match pop3/imap logins, or alternately smtp logins.
-			if (preg_match('/(.*) (imap|pop3)-login: Login: user=\<([\w\.@-]+)\>/', $line, $matches) || preg_match('/(.*) sasl_method=PLAIN, sasl_username=([\w\.@-]+)/', $line, $matches)) {
+			if (preg_match('/(.*) (imap|pop3)-login: (?:Login|Logged in): user=\<([\w\.@-]+)\>/', $line, $matches)
+					|| preg_match('/(.*) sasl_method=PLAIN, sasl_username=([\w\.@-]+)/', $line, $matches)) {
 				$user = isset($matches[3]) ? $matches[3] : $matches[2];
 				$updatedUsers[] = $user;
 			}
