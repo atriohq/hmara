@@ -95,9 +95,19 @@ class cronjob_mailbox_stats_hourly extends cronjob {
 		while ($line !== FALSE) {
 			$matches = [];
 			// Match pop3/imap logins, or alternately smtp logins.
-			if (preg_match('/(.*) (imap|pop3)-login: Login: user=\<([\w\.@-]+)\>/', $line, $matches) || preg_match('/(.*) sasl_method=PLAIN, sasl_username=([\w\.@-]+)/', $line, $matches)) {
+			if (preg_match('/(.*) (imap|pop3)-login: (?:Login|Logged in): user=\<([\w\.@-]+)\>/', $line, $matches)
+					|| preg_match('/(.*) sasl_method=PLAIN, sasl_username=([\w\.@-]+)/', $line, $matches)) {
 				$user = isset($matches[3]) ? $matches[3] : $matches[2];
 				$updatedUsers[] = $user;
+
+				/**
+					Example log messages for pattern testing:
+					From Debian 12/dovecot 2.3
+					[date/time] server1 dovecot: imap-login: Login: user=<user@example.com>, method=PLAIN, rip=192.0.2.10, lip=192.0.2.42, mpid=3340551, TLS, session=<I9DKcgxL24KwedgB>
+
+					From Debian 13/dovecot 2.4:
+					[date/time]	server1 dovecot: imap-login: Logged in: user=<user@example.com>, method=PLAIN, rip=2001:db8::1:10, lip=2001:db8::1:42, mpid=42, TLS, session=<SWiT3r1LEe3mAxAfDAoUDQAAAAUAAAAF>
+				 */
 			}
 
 			// get the next line
