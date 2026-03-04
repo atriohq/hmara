@@ -475,6 +475,12 @@ if($reconfigure_services_answer == 'yes' || $reconfigure_services_answer == 'sel
 			$inst->configure_mailman('update');
 		}
 
+		//** Configure Sympa
+		if($conf['sympa']['installed'] == true && $inst->reconfigure_app('Sympa', $reconfigure_services_answer)) {
+			swriteln('Configuring Sympa');
+			$inst->configure_sympa('update');
+		}
+
 		//** Configure Spamasassin
 		if($inst->reconfigure_app('Spamassassin', $reconfigure_services_answer)) {
 			swriteln('Configuring Spamassassin');
@@ -671,6 +677,7 @@ if($reconfigure_services_answer == 'yes') {
 		}
 		if($conf['dovecot']['installed'] == true && isset($conf['dovecot']['init_script']) && $conf['dovecot']['init_script'] != '') system($inst->getinitcommand($conf['dovecot']['init_script'], 'restart'));
 		if($conf['mailman']['installed'] == true && isset($conf['mailman']['init_script']) && $conf['mailman']['init_script'] != '') system('nohup '.$inst->getinitcommand($conf['mailman']['init_script'], 'restart').' >/dev/null 2>&1 &');
+		if($conf['sympa']['installed'] == true && isset($conf['sympa']['init_script']) && $conf['sympa']['init_script'] != '') system('nohup '.$inst->getinitcommand($conf['sympa']['init_script'], 'restart').' >/dev/null 2>&1 &');
 	}
 	if($conf['services']['web'] || $inst->install_ispconfig_interface) {
 		if($conf['webserver']['server_type'] == 'apache') {
