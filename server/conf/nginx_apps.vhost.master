@@ -2,7 +2,9 @@ server {
         listen {apps_vhost_ip}{apps_vhost_port} {ssl_on};
         listen [::]:{apps_vhost_port} {ssl_on} ipv6only=on;
 
-        {ssl_comment}ssl_protocols TLSv1.2;
+        {ssl_http2_directive}
+
+        {ssl_comment}ssl_protocols {ssl_proto_version};
         {ssl_comment}ssl_certificate /usr/local/ispconfig/interface/ssl/ispserver.crt;
         {ssl_comment}ssl_certificate_key /usr/local/ispconfig/interface/ssl/ispserver.key;
 
@@ -40,7 +42,7 @@ server {
 
                fastcgi_param   GATEWAY_INTERFACE       CGI/1.1;
                fastcgi_param   SERVER_SOFTWARE         nginx/$nginx_version;
-			   fastcgi_param   HTTP_PROXY              "";
+		 fastcgi_param   HTTP_PROXY              "";
 
                fastcgi_param   REMOTE_ADDR             $remote_addr;
                fastcgi_param   REMOTE_PORT             $remote_port;

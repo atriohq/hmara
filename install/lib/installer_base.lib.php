@@ -304,7 +304,7 @@ class installer_base extends stdClass {
 		if(!function_exists('curl_init')) $msg .= "PHP Curl Module is missing.\n";
 		if(!function_exists('mysqli_connect')) $msg .= "PHP MySQLi Module is nmissing.\n";
 		if(!function_exists('mb_detect_encoding')) $msg .= "PHP Multibyte Module (MB) is missing.\n";
-        if(!function_exists('openssl_pkey_get_details')) $msg .= "PHP OpenSSL fiúnctions are missing.\n";
+		if(!function_exists('openssl_pkey_get_details')) $msg .= "PHP OpenSSL functions are missing.\n";
 
 		if($msg != '') die($msg);
 	}
@@ -2880,7 +2880,11 @@ class installer_base extends stdClass {
 
 			// Dont just copy over the virtualhost template but add some custom settings
 			$content = rfsel($conf['ispconfig_install_dir'].'/server/conf-custom/install/nginx_apps.vhost.master', 'tpl/nginx_apps.vhost.master');
+			$nginx_openssl_build_ver = exec('nginx -V 2>&1 | grep \'built with OpenSSL\' | sed \'s/.*built\([a-zA-Z ]*\)OpenSSL \([0-9.]*\).*/\2/\'');
+			$nginx_openssl_running_ver = exec('nginx -V 2>&1 | grep \'running with OpenSSL\' | sed \'s/.*running\([a-zA-Z ]*\)OpenSSL \([0-9.]*\).*/\2/\'');
+			$nginx_version = getnginxversion(true);
 
+			/*
 			// Enable SSL if a cert is in place.
 			if(is_file($conf['ispconfig_install_dir'].'/interface/ssl/ispserver.crt') && is_file($conf['ispconfig_install_dir'].'/interface/ssl/ispserver.key')) {
 				$content = str_replace('{ssl_on}', 'ssl http2', $content);
@@ -2888,6 +2892,31 @@ class installer_base extends stdClass {
 			} else {
 				$content = str_replace('{ssl_on}', '', $content);
 				$content = str_replace('{ssl_comment}', '#', $content);
+			}
+			*/
+
+			if(is_file($conf['ispconfig_install_dir'].'/interface/ssl/ispserver.crt') && is_file($conf['ispconfig_install_dir'].'/interface/ssl/ispserver.key')) {
+				$content = str_replace('{ssl_comment}', '', $content);
+				if(version_compare($nginx_version, '1.13.0', '>=')
+					&& version_compare($nginx_openssl_build_ver, '1.1.1', '>=')
+					&& (empty($nginx_openssl_running_ver) || version_compare($nginx_openssl_running_ver, '1.1.1', '>='))) {
+						$content = str_replace('{ssl_proto_version}', 'TLSv1.3 TLSv1.2', $content);
+					} else {
+						$content = str_replace('{ssl_proto_version}', 'TLSv1.2', $content);
+					}
+
+					if(version_compare($nginx_version, '1.25.1', '>=')) {
+						$content = str_replace('{ssl_on}', 'ssl', $content);
+						$content = str_replace('{ssl_http2_directive}', 'http2 on;', $content);
+					} else {
+						$content = str_replace('{ssl_on}', 'ssl http2', $content);
+						$content = str_replace('{ssl_http2_directive}', '', $content);
+					}
+
+			} else {
+				$content = str_replace('{ssl_comment}', '#', $content);
+				$content = preg_replace('/(\s)\{ssl_on\}/', '', $content);
+				$content = str_replace('{ssl_http2_directive}', '', $content);
 			}
 
 			if($conf['web']['apps_vhost_ip'] == '_default_'){
@@ -3872,6 +3901,7 @@ class installer_base extends stdClass {
 			//}
 		}
 
+
 		if($conf['nginx']['installed'] == true && $this->install_ispconfig_interface == true){
 			//* Copy the ISPConfig vhost for the controlpanel
 			$vhost_conf_dir = $conf['nginx']['vhost_conf_dir'];
@@ -3881,14 +3911,37 @@ class installer_base extends stdClass {
 			$content = rfsel($conf['ispconfig_install_dir'].'/server/conf-custom/install/nginx_ispconfig.vhost.master', 'tpl/nginx_ispconfig.vhost.master');
 			$content = str_replace('{vhost_port}', $conf['nginx']['vhost_port'], $content);
 
+			$nginx_openssl_build_ver = exec('nginx -V 2>&1 | grep \'built with OpenSSL\' | sed \'s/.*built\([a-zA-Z ]*\)OpenSSL \([0-9.]*\).*/\2/\'');
+			$nginx_openssl_running_ver = exec('nginx -V 2>&1 | grep \'running with OpenSSL\' | sed \'s/.*running\([a-zA-Z ]*\)OpenSSL \([0-9.]*\).*/\2/\'');
+			$nginx_version = getnginxversion(true);
+
+
 			if(is_file($install_dir.'/interface/ssl/ispserver.crt') && is_file($install_dir.'/interface/ssl/ispserver.key')) {
-				$content = str_replace('{ssl_on}', 'ssl http2', $content);
+
 				$content = str_replace('{ssl_comment}', '', $content);
 				$content = str_replace('{fastcgi_ssl}', 'on', $content);
+
+				if(version_compare($nginx_version, '1.13.0', '>=')
+					&& version_compare($nginx_openssl_build_ver, '1.1.1', '>=')
+					&& (empty($nginx_openssl_running_ver) || version_compare($nginx_openssl_running_ver, '1.1.1', '>='))) {
+						$content = str_replace('{ssl_proto_version}', 'TLSv1.3 TLSv1.2', $content);
+					} else {
+						$content = str_replace('{ssl_proto_version}', 'TLSv1.2', $content);
+					}
+
+					if(version_compare($nginx_version, '1.25.1', '>=')) {
+						$content = str_replace('{ssl_on}', 'ssl', $content);
+						$content = str_replace('{ssl_http2_directive}', 'http2 on;', $content);
+					} else {
+						$content = str_replace('{ssl_on}', 'ssl http2', $content);
+						$content = str_replace('{ssl_http2_directive}', '', $content);
+					}
+
 			} else {
 				$content = str_replace('{ssl_on}', '', $content);
 				$content = str_replace('{ssl_comment}', '#', $content);
 				$content = str_replace('{fastcgi_ssl}', 'off', $content);
+				$content = str_replace('{ssl_http2_directive}', '', $content);
 			}
 
 			$socket_dir = escapeshellcmd($conf['nginx']['php_fpm_socket_dir']);
