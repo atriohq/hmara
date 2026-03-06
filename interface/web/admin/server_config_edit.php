@@ -195,7 +195,7 @@ class page_action extends tform_actions {
 			&& $old_config['server']['monitor_system_updates'] != $this->dataRecord['monitor_system_updates']) {
 
 			$app->log('Turning off system update monitoring, and purging old monitor_data');
-			$app->db->query("DELETE FROM monitor_data WHERE type = ? AND server_id = ?", 'system_update', $this->dataRecord['id']);
+			$app->db->query("DELETE FROM monitor_data WHERE type = ? AND server_id = ?", 'system_update', $this->id);
 		}
 
 		if(isset($this->dataRecord['content_filter'])){
