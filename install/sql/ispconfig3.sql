@@ -1103,6 +1103,7 @@ CREATE TABLE `mail_user` (
   `last_access` int(11) NULL DEFAULT NULL,
   `disablequota-status` enum('n','y') NOT NULL default 'n',
   `disableindexer-worker` enum('n','y') NOT NULL default 'n',
+  `disablereplicator` enum('n','y') NOT NULL default 'n',
   `last_quota_notification` date NULL default NULL,
   `backup_interval` VARCHAR( 255 ) NOT NULL default 'none',
   `backup_copies` INT NOT NULL DEFAULT '1',
