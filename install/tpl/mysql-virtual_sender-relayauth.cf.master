@@ -6,5 +6,5 @@ query = SELECT CONCAT(relay_user,':',relay_pass) as credential
   FROM mail_domain
   WHERE domain = '%d'
   AND active = 'y'
-  AND concat(relay_host,relay_user,relay_pass) != ''
+  AND concat(relay_user,relay_pass) != ''
   AND server_id = {server_id}
