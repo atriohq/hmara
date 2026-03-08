@@ -41,6 +41,7 @@ $wb['otp_code_email_template_txt'] = 'Your One time login code is %s' . PHP_EOL 
 $wb['otp_code_resend_txt'] = 'Request new code';
 $wb['otp_code_email_sent_failed_txt'] = 'Failed sending an email to %s';
 $wb['otp_code_email_sent_wait_txt'] = 'Odota, koodin uudelleenlähetys on mahdollista vasta %s sekunnin kuluttua.';
+$wb['otp_error_code_incorrect'] = 'OTP code incorrect';
 $wb['force_password_change_title'] = 'Salasanan vaihto vaaditaan';
 $wb['force_password_change_message'] = 'Salasanasi on %d päivää vanha ja se täytyy vaihtaa. Salasanat täytyy vaihtaa joka %d päivä turvallisuussyistä.';
 $wb['new_password_txt'] = 'Uusi salasana';

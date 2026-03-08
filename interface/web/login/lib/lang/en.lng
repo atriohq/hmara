@@ -41,6 +41,7 @@ $wb['otp_code_email_template_txt'] = 'Your One time login code is %s' . PHP_EOL 
 $wb['otp_code_resend_txt'] = 'Request new code';
 $wb['otp_code_email_sent_failed_txt'] = 'Failed sending an email to %s';
 $wb['otp_code_email_sent_wait_txt'] = 'Please wait, re-sending the code is only possible after %s seconds.';
+$wb['otp_error_code_incorrect'] = 'OTP code incorrect';
 $wb['force_password_change_title'] = 'Password Change Required';
 $wb['force_password_change_message'] = 'Your password is %d days old and must be changed. Passwords must be changed every %d days for security reasons.';
 $wb['new_password_txt'] = 'New Password';

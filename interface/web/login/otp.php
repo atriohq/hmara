@@ -31,6 +31,9 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 require_once '../../lib/config.inc.php';
 require_once '../../lib/app.inc.php';
 require_once 'lib/password_check.inc.php';
+require_once '../../lib/classes/simpleAuthenticator.php';
+
+use SebastianDevs\SimpleAuthenticator;
 
 // Check if we have an active users ession.
 if($_SESSION['s']['user']['active'] == 1) {
@@ -50,6 +53,7 @@ $msg = '';
 $max_session_code_retry = 3;
 $max_global_code_retry = 10;
 $otp_recovery_code_length = 32;
+$max_time = 600; // time in seconds until the session gets invalidated
 
 // CSRF Check if we got POST data.
 if(count($_POST) >= 1) {
@@ -80,6 +84,8 @@ function finish_2fa_success($msg = '') {
 	die();
 }
 
+$sys_user = $app->db->queryOneRecord('SELECT otp_attempts FROM sys_user WHERE userid = ?', $_SESSION['s_pending']['user']['userid']);
+
 // Handle recovery code
 if(isset($_POST['code']) && strlen($_POST['code']) == $otp_recovery_code_length) {
 	//* TODO Recovery code handling
@@ -88,6 +94,7 @@ if(isset($_POST['code']) && strlen($_POST['code']) == $otp_recovery_code_length)
 
 	//* We allow one more try to enter recovery code
 	if($user['otp_attempts'] > $max_global_code_retry + 1) {
+		# TODO document what the admin can do.
 		die("Sorry, contact your administrator.");
 	}
 
@@ -99,13 +106,15 @@ if(isset($_POST['code']) && strlen($_POST['code']) == $otp_recovery_code_length)
 	}
 }
 
+if ($sys_user['otp_attempts'] > $max_global_code_retry) {
+	$app->error('OTP max attempts reached. Contact your administrator.', 'index.php');
+}
 
 // Begin 2fa via Email.
 if($_SESSION['otp']['type'] == 'email') {
 
 	//* Email 2fa handler settings
 	$max_code_resend = 3;
-	$max_time = 600; // time in seconds until the code gets invalidated
 	$code_length = 6;
 
 	if(isset($_POST['code']) && strlen($_POST['code']) == $code_length && isset($_SESSION['otp']['code_hash'])) {
@@ -120,21 +129,43 @@ if($_SESSION['otp']['type'] == 'email') {
 			) {
 			unset($_SESSION['otp']);
 			unset($_SESSION['s_pending']);
-			$app->error('2FA failed','index.php');
+			$app->error('2FA failed, please try again. ','index.php');
 		}
 
-		//* 2fa success
 		if(password_verify($_POST['code'], $_SESSION['otp']['code_hash'])) {
-			finish_2fa_success('with 2fa');
+			// 2fa success
+			finish_2fa_success('with email-2fa');
 		} else {
 			//* 2fa wrong code
 			$_SESSION['otp']['session_attempts']++;
 			$app->db->query('UPDATE `sys_user` SET otp_attempts=otp_attempts + 1 WHERE userid = ?', $_SESSION['s_pending']['user']['userid']);
+			$error = $wb['otp_error_code_incorrect'];
 		}
+	}
+	elseif(isset($_POST['code'])) {
+		$error = $wb['otp_error_code_incorrect'];
 	}
 
 	// Send code via email.
 	if (!isset($_SESSION['otp']['sent']) || $_GET['action'] == 'resend') {
+
+		// Handle otp_email_override.
+		$sys_user = $app->db->queryOneRecord('SELECT otp_data FROM sys_user WHERE userid = ?', $_SESSION['s_pending']['user']['userid']);
+		$data = json_decode($sys_user['otp_data'], TRUE);
+
+		if (!empty($data['otp_email_override'] )) {
+			$email_to = $data['otp_email_override'];
+		}
+		else {
+			$clientuser = $app->db->queryOneRecord('SELECT email FROM sys_user u LEFT JOIN client c ON (u.client_id=c.client_id) WHERE u.userid = ?', $_SESSION['s_pending']['user']['userid']);
+			if (!empty($clientuser['email'])) {
+				$email_to = $clientuser['email'];
+			}
+			else {
+				// Admin users are not related to a client, thus use the globally configured email address.
+				$email_to = $mail_config['admin_mail'];
+			}
+		}
 
 		$mail_otp_code_retry_timeout = 30;
 		if (isset($_SESSION['otp']['starttime']) && $_SESSION['otp']['starttime'] > time() - $mail_otp_code_retry_timeout) {
@@ -163,9 +194,6 @@ if($_SESSION['otp']['type'] == 'email') {
 				$mail_config['use_smtp'] = true;
 				$app->ispcmail->setOptions($mail_config);
 			}
-
-			$sys_user = $app->db->queryOneRecord('SELECT otp_data FROM sys_user WHERE userid = ?', $_SESSION['s_pending']['user']['userid']);
-			$data = json_decode($sys_user['otp_data'], TRUE);
 
 			if (!empty($data['otp_email_override'] )) {
 				// Handle otp_email_override.
@@ -200,7 +228,9 @@ if($_SESSION['otp']['type'] == 'email') {
 					$_SESSION['otp']['sent']++;
 				}
 
-				$token_sent_message = $wb['otp_code_email_sent_txt'] . ' ' . $email_to;
+				// Inform user that the code was sent.
+				// Email adress wil be masked, 'info@example.com' would look like 'i***@e******.c**'
+				$token_sent_message = $wb['otp_code_email_sent_txt'] . ' ' . preg_replace('/\B[^@.]/', '*', $email_to);
 			}
 			else {
 				$token_sent_message = sprintf($wb['otp_code_email_sent_failed_txt'], $email_to);
@@ -211,8 +241,57 @@ if($_SESSION['otp']['type'] == 'email') {
 	// Show form to enter email code
 	// ... below
 
+} elseif ($_SESSION['otp']['type'] == 'totp') {
+
+	// Get otp_data
+	$sys_user = $app->db->queryOneRecord('SELECT otp_data, otp_attempts FROM sys_user WHERE userid = ?', $_SESSION['s_pending']['user']['userid']);
+	$data = json_decode($sys_user['otp_data'], TRUE);
+
+	$code_length = 6;
+
+	if (isset($_POST['code']) && isset($data['totp_secret'])) {
+		if (strlen($_POST['code']) == $code_length && is_numeric($_POST['code'])) {
+
+			$auth = new SimpleAuthenticator($code_length, 'SHA1');
+
+			//* Check if we reached limits
+			if (
+				$_SESSION['otp']['session_attempts'] > $max_session_code_retry
+				|| $sys_user['otp_attempts'] > $max_global_code_retry
+				|| time() > $_SESSION['otp']['starttime'] + $max_time
+				) {
+				unset($_SESSION['otp']);
+				unset($_SESSION['s_pending']);
+				$app->error('2FA failed, please try again. ','index.php');
+			}
+
+			if ($auth->verifyCode($data['totp_secret'], $_POST['code'], 2)) {
+				// 2fa success
+				finish_2fa_success('with totp-2fa');
+			} else {
+				// Wrong 2FA code
+				$_SESSION['otp']['session_attempts']++;
+				$app->db->query('UPDATE `sys_user` SET otp_attempts=otp_attempts + 1 WHERE userid = ?', $_SESSION['s_pending']['user']['userid']);
+				$error = $wb['otp_error_code_incorrect'];
+			}
+		} else {
+			// Wrong 2FA code - incorrect format
+			$_SESSION['otp']['session_attempts']++;
+			$app->db->query('UPDATE `sys_user` SET otp_attempts=otp_attempts + 1 WHERE userid = ?', $_SESSION['s_pending']['user']['userid']);
+			$error = $wb['otp_error_code_incorrect'];
+		}
+
+	}
+	else {
+		$_SESSION['otp']['starttime'] = time();
+
+		// JUST FOR DEBUGGING - provide a sample totp code.
+		#$auth = new SimpleAuthenticator($code_length, 'SHA1');
+		#$_SESSION['otp']['sys_user'] = $sys_user;
+		#$_SESSION['otp']['sample_code'] = $auth->getCode($data['totp_secret']);
+	}
 } else {
-	$app->error('Otp method unknown', 'index.php');
+	$app->error('OTP method unknown', 'index.php');
 }
 
 
@@ -240,6 +319,8 @@ $csrf_token = $app->auth->csrf_token_get('otp');
 $app->tpl->setVar('_csrf_id',$csrf_token['csrf_id']);
 $app->tpl->setVar('_csrf_key',$csrf_token['csrf_key']);
 //$app->tpl->setVar('msg', print_r($_SESSION['otp'], 1)); // For DEBUG only.
+
+$app->tpl->setVar('error', $error);
 
 $app->tpl->setVar($wb);
 

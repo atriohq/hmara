@@ -97,6 +97,7 @@ while ($file = @readdir($handle)) {
 $otp_method_list = array(
 	'none' => 'none',
 	'email' => 'email',
+	'totp' => 'TOTP',
 );
 
 //* Load themes

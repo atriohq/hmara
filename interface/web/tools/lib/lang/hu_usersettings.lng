@@ -13,4 +13,9 @@ $wb['language_txt'] = 'Language';
 $wb['startmodule_txt'] = 'Startmodule';
 $wb['app_theme_txt'] = 'Design';
 $wb['otp_auth_txt'] = 'Two Factor Authentication';
+$wb['secret_txt'] = 'Secret';
+$wb['totp_verification_code_txt'] = 'Load the QR code in an authenticator app and enter a verification code to Save it.';
+$wb['url_txt'] = 'Url';
+$wb['totp_validated_stored'] = 'TOTP secret validated and stored, Two Factor Authentication is now enabled.';
+$wb['totp_verification_code_incorrect'] = 'The verification code is incorrect';
 ?>

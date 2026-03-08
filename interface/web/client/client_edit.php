@@ -480,7 +480,7 @@ class page_action extends tform_actions {
 			
 			// Update last_password_change date in sys_user table
 			$current_date = date('Y-m-d');
-			$sql = "UPDATE sys_user SET last_password_change = ? WHERE client_id = ?";
+			$sql = "UPDATE sys_user SET last_password_change = ?, otp_attempts=0 WHERE client_id = ?";
 			$app->db->query($sql, $current_date, $client_id);
 		}
 

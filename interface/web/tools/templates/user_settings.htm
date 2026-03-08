@@ -29,9 +29,17 @@
 <div class="form-group">
   <label for="2fa" class="col-sm-3 control-label">{tmpl_var name='otp_auth_txt'}</label>
   <div class="col-sm-9">
-    <select name="otp_type" id="otp_type" class="form-control">
+    <select name="otp_type" id="otp_type" class="form-control" OnChange="updateOtpPage();">
       {tmpl_var name='otp_type'}
     </select>
+	<button class="btn btn-default formbutton-success" type="button" id="reset_totp_button" OnClick="resetTotpSecret()" style="display: none;">Reset TOTP secret</button>
+	<div id="totp-form" style="display: none;">
+	  <input type="hidden" id="totp_secret" name="totp_secret" value="{tmpl_var name='totp_secret'}">
+	  <div id="qr_placeHolder"></div>
+	  <div id="url_placeHolder"></div>
+         <label for="totp_verification_code">{tmpl_var name='totp_verification_code_txt'}</label>
+      <input type="text" name="totp_verification_code" id="totp_verification_code" class="form-control" style="width: 150px;" autocomplete="off" placeholder="000000"/>
+    </div>
   </div>
 </div>
 <div class="form-group">
@@ -64,3 +72,74 @@
     <button class="btn btn-default formbutton-default" type="button" value="{tmpl_var name='btn_cancel_txt'}" data-load-content="tools/index.php">{tmpl_var name='btn_cancel_txt'}</button>
   </div>
 </div>
+<script type="text/javascript" src="../js/qrcode.js"></script>
+<script type="text/javascript">
+
+// Base32 encoder (RFC 4648, no padding)
+function base32Encode(bytes) {
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+  let bits = 0;
+  let value = 0;
+  let output = '';
+
+  for (let byte of bytes) {
+	value = (value << 8) | byte;
+	bits += 8;
+
+	while (bits >= 5) {
+	  output += alphabet[(value >>> (bits - 5)) & 31];
+	  bits -= 5;
+	}
+  }
+
+  if (bits > 0) {
+	output += alphabet[(value << (5 - bits)) & 31];
+  }
+
+  return output;
+}
+
+// Generate a random Base32 secret
+function generateTOTPSecret(length = 20) {
+  const array = new Uint8Array(length);
+  crypto.getRandomValues(array);
+  return base32Encode(array);
+}
+
+function updateOtpPage() {
+	type = jQuery('#otp_type').val();
+	if (type == 'totp') {
+		if (jQuery('#totp_secret').val() == '(already_set)') {
+			jQuery('#reset_totp_button').show();
+		} else {
+			resetTotpSecret();
+		}
+	} else {
+		jQuery('#totp-form').hide();
+		jQuery('#reset_totp_button').hide();
+	}
+}
+
+function resetTotpSecret() {
+	jQuery('#totp_secret').val(generateTOTPSecret());
+	draw_new_totp_info();
+	jQuery('#totp-form').show();
+	jQuery('#totp_verification_code').focus();
+}
+
+function draw_new_totp_info() {
+	// docs: https://github.com/kazuhikoarase/qrcode-generator/tree/master/js
+	var typeNumber = 0;
+	var errorCorrectionLevel = 'L';
+	var qr = qrcode(typeNumber, errorCorrectionLevel);
+
+	otpauth_url = 'otpauth://totp/' + encodeURIComponent('{tmpl_var name='cpuser'}') + '@' + encodeURIComponent('{tmpl_var name='server_domain'}') + '?secret=' + jQuery('#totp_secret').val() + '&issuer=ISPconfig';
+	qr.addData(otpauth_url);
+	qr.make();
+	document.getElementById('qr_placeHolder').innerHTML = qr.createImgTag(5, 2, 'QR code');
+       document.getElementById('url_placeHolder').innerHTML = '{tmpl_var name='secret_txt'}: ' + jQuery('#totp_secret').val() + '<br / >{tmpl_var name='url_txt'}: <a href=' + otpauth_url + '">' + otpauth_url + '</a>';
+}
+
+updateOtpPage();
+
+</script>

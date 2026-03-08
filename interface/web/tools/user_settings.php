@@ -40,6 +40,9 @@ $tform_def_file = "form/user_settings.tform.php";
 
 require_once '../../lib/config.inc.php';
 require_once '../../lib/app.inc.php';
+require_once '../../lib/classes/simpleAuthenticator.php';
+use SebastianDevs\SimpleAuthenticator;
+
 
 //* Check permissions for module
 $app->auth->check_module_permissions('tools');
@@ -74,6 +77,32 @@ class page_action extends tform_actions {
 		}
 	}
 
+	function onShowEdit() {
+		global $app, $conf;
+
+		$sys_user = $app->db->queryOneRecord('SELECT otp_type, otp_data FROM sys_user WHERE userid = ?', $this->id);
+		$data = json_decode($sys_user['otp_data'], TRUE);
+		$app->tpl->setVar('otp_type_value', $sys_user['otp_type']);
+		if (!empty($data['totp_secret'])) {
+			$app->tpl->setVar('totp_secret', '(already_set)');
+		}
+
+		$server_domain = (isset($_SERVER['SERVER_NAME']) ? $_SERVER['SERVER_NAME'] : $_SERVER['HTTP_HOST']);
+		if (!empty($conf['interface_base_url'])) {
+			$server_domain = parse_url($conf['interface_base_url'], PHP_URL_HOST);
+		}
+		$app->tpl->setVar('server_domain', $server_domain);
+		$app->tpl->setVar('cpuser', $_SESSION['s']['user']['username'], true);
+
+		// A message from the previous page onSubmit()?
+		if (isset($_SESSION['msg'])) {
+			$app->tpl->setVar('msg', $_SESSION['msg']);
+			unset($_SESSION['msg']);
+		}
+
+		parent::onShowEdit();
+	}
+
 	function onInsert() {
 		die('No inserts allowed.');
 	}
@@ -90,6 +119,34 @@ class page_action extends tform_actions {
 		$language = $app->functions->check_language($_POST['language']);
 		$_SESSION['s']['user']['language'] = $language;
 		$_SESSION['s']['language'] = $language;
+	}
+
+	function onSubmit() {
+		global $app, $conf;
+
+		if ($this->dataRecord['otp_type'] == 'totp' && !empty($this->dataRecord['totp_secret'])
+			&& $this->dataRecord['totp_secret'] != '(already_set)') {
+
+			$sys_user = $app->db->queryOneRecord('SELECT otp_type, otp_data FROM sys_user WHERE userid = ?', $_SESSION['s']['user']['userid']);
+
+			$code_length = 6;
+			$auth = new SimpleAuthenticator($code_length, 'SHA1');
+
+			if($auth->verifyCode($this->dataRecord['totp_secret'], $this->dataRecord['totp_verification_code'], 2)) {
+				$data = json_decode($sys_user['otp_data'], TRUE);
+
+				$data['totp_secret'] = $this->dataRecord['totp_secret'];
+				$app->db->query("UPDATE sys_user SET otp_data=? WHERE userid = ?", json_encode($data), $_SESSION['s']['user']['userid']);
+				$_SESSION['msg'] = $app->tform->lng('totp_validated_stored');
+			}
+			else {
+				$app->tform->errorMessage = $app->tform->lng('totp_verification_code_incorrect');
+				$this->dataRecord['totp_secret'] = ''; // Force reset...
+				$this->dataRecord['otp_type'] = $sys_user['otp_type'];
+			}
+		}
+
+		parent::onSubmit();
 	}
 
 	function onAfterUpdate() {

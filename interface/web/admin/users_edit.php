@@ -95,7 +95,12 @@ class page_action extends tform_actions {
 		if(isset($this->dataRecord['typ']) && in_array('user', $this->dataRecord['typ']) && $this->oldDataRecord['client_id'] == 0) {
 			$app->tform->errorMessage .= $app->tform->wordbook['no_user_insert'];
 		}
-		
+
+		//* TOTP setup is only supported from the user's form in tools/user_settings.php
+		if(isset($this->dataRecord['otp_type']) && $this->dataRecord['otp_type'] != $this->oldDataRecord['otp_type'] && $this->dataRecord['otp_type'] == 'totp') {
+			$app->tform->errorMessage .= $app->tform->lng('admin_totp_setup_not_supported');
+		}
+
 	}
 
 	/*
