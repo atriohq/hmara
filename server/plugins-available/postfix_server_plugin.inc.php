@@ -109,7 +109,9 @@ class postfix_server_plugin {
 			chmod('/etc/postfix/sasl_passwd', 0600);
 			chown('/etc/postfix/sasl_passwd', 'root');
 			chgrp('/etc/postfix/sasl_passwd', 'root');
-			exec("postconf -e 'smtp_sasl_password_maps = hash:/etc/postfix/sasl_passwd'");
+			$map_type = trim(shell_exec('postconf -h default_database_type 2>/dev/null'));
+			if ($map_type === '' || $map_type === false) $map_type = 'hash';
+			exec("postconf -e 'smtp_sasl_password_maps = " . $map_type . ":/etc/postfix/sasl_passwd'");
 			exec("postconf -e 'smtp_sasl_security_options ='");
 			exec('postmap /etc/postfix/sasl_passwd');
 			$postfix_restart=true;

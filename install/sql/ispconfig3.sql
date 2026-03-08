@@ -1103,6 +1103,7 @@ CREATE TABLE `mail_user` (
   `last_access` int(11) NULL DEFAULT NULL,
   `disablequota-status` enum('n','y') NOT NULL default 'n',
   `disableindexer-worker` enum('n','y') NOT NULL default 'n',
+  `disablereplicator` enum('n','y') NOT NULL default 'n',
   `last_quota_notification` date NULL default NULL,
   `backup_interval` VARCHAR( 255 ) NOT NULL default 'none',
   `backup_copies` INT NOT NULL DEFAULT '1',
@@ -1876,7 +1877,7 @@ CREATE TABLE `sys_user` (
   `otp_data` varchar(255) DEFAULT NULL,
   `otp_recovery` varchar(64) DEFAULT NULL,
   `otp_attempts` tinyint(4) NOT NULL DEFAULT 0,
-  `last_password_change` DATE NULL DEFAULT CURDATE(),
+  `last_password_change` DATE NULL DEFAULT (CURDATE()),
   PRIMARY KEY  (`userid`)
 ) DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1 ;
 

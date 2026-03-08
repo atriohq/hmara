@@ -6,5 +6,5 @@ query = SELECT relay_host as relayhost
   FROM mail_domain
   WHERE domain = '%d'
   AND active = 'y'
-  AND concat(relay_host,relay_user,relay_pass) != ''
+  AND relay_host != ''
   AND server_id = {server_id}

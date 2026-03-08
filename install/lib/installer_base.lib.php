@@ -1181,6 +1181,87 @@ class installer_base extends stdClass {
 		return $postfix_version;
 	}
 
+	public function get_postfix_map_type() {
+		$out = array();
+		exec('postconf -h default_database_type 2>/dev/null', $out);
+		$map_type = isset($out[0]) ? trim($out[0]) : '';
+		if ($map_type === '') $map_type = 'hash';
+		return $map_type;
+	}
+
+	public function migrate_postfix_db_files() {
+		global $conf;
+
+		$map_type = $this->get_postfix_map_type();
+
+		$extensions = array('hash' => '.db', 'lmdb' => '.lmdb', 'btree' => '.db', 'cdb' => '.cdb');
+		$new_ext = isset($extensions[$map_type]) ? $extensions[$map_type] : '';
+		if ($new_ext === '') return;
+
+		// Collect all old extensions that differ from the new one
+		$old_extensions = array();
+		foreach ($extensions as $type => $ext) {
+			if ($ext !== $new_ext && !in_array($ext, $old_extensions)) {
+				$old_extensions[] = $ext;
+			}
+		}
+
+		// Map source files that use postalias instead of postmap
+		$alias_files = array(
+			'/etc/aliases',
+			'/var/lib/mailman/data/aliases',
+		);
+
+		// All postfix map source files managed by ISPConfig
+		$postmap_files = array(
+			'/var/lib/mailman/data/virtual-mailman',
+			'/var/lib/mailman/data/transport-mailman',
+		);
+		if (isset($conf['postfix']['config_dir'])) {
+			$postmap_files[] = $conf['postfix']['config_dir'] . '/sasl_passwd';
+		}
+
+		// Process alias files with postalias
+		foreach ($alias_files as $source_file) {
+			if (!is_file($source_file)) continue;
+			if (is_file($source_file . $new_ext)) continue;
+
+			ilog("Migrating postfix map file $source_file to $map_type format");
+			exec('postalias ' . escapeshellarg($source_file) . ' 2>/dev/null', $out, $ret);
+			unset($out);
+			if ($ret == 0) {
+				foreach ($old_extensions as $old_ext) {
+					if (is_file($source_file . $old_ext)) {
+						ilog("Removing old format file $source_file$old_ext");
+						unlink($source_file . $old_ext);
+					}
+				}
+			} else {
+				ilog("WARNING: postalias failed for $source_file, keeping old files");
+			}
+		}
+
+		// Process postmap files
+		foreach ($postmap_files as $source_file) {
+			if (!is_file($source_file)) continue;
+			if (is_file($source_file . $new_ext)) continue;
+
+			ilog("Migrating postfix map file $source_file to $map_type format");
+			exec('postmap ' . escapeshellarg($source_file) . ' 2>/dev/null', $out, $ret);
+			unset($out);
+			if ($ret == 0) {
+				foreach ($old_extensions as $old_ext) {
+					if (is_file($source_file . $old_ext)) {
+						ilog("Removing old format file $source_file$old_ext");
+						unlink($source_file . $old_ext);
+					}
+				}
+			} else {
+				ilog("WARNING: postmap failed for $source_file, keeping old files");
+			}
+		}
+	}
+
 	public function configure_postfix($options = '') {
 		global $conf,$autoinstall;
 		$cf = $conf['postfix'];
@@ -1290,6 +1371,7 @@ class installer_base extends stdClass {
 			$stress_adaptive_placeholder => $stress_adaptive,
 			'{reject_unknown_client_hostname}' => $reject_unknown_client_hostname,
 			'{reject_unknown_helo_hostname}' => $reject_unknown_helo_hostname,
+			'{map_type}' => $this->get_postfix_map_type(),
 		);
 
 		$postconf_tpl = rfsel($conf['ispconfig_install_dir'].'/server/conf-custom/install/debian_postfix.conf.master', 'tpl/debian_postfix.conf.master');
@@ -1454,6 +1536,9 @@ class installer_base extends stdClass {
 
 		$command = 'chmod 600 '.$cf['vmail_mailbox_base'].'/.mailfilter';
 		caselog($command." &> /dev/null", __FILE__, __LINE__, "EXECUTED: $command", "Failed to execute the command $command");
+
+		//* Migrate postfix map files to the correct database format (e.g. hash -> lmdb)
+		$this->migrate_postfix_db_files();
 
 	}
 
@@ -2916,13 +3001,12 @@ class installer_base extends stdClass {
 			$content = str_replace('{fpm_socket}', $fpm_socket, $content);
 			$content = str_replace('{cgi_socket}', $cgi_socket, $content);
 
-			if(	file_exists('/var/run/php5-fpm.sock')
-				|| file_exists('/var/run/php/php7.0-fpm.sock')
-				|| file_exists('/var/run/php/php7.1-fpm.sock')
-				|| file_exists('/var/run/php/php7.2-fpm.sock')
-				|| file_exists('/var/run/php/php7.3-fpm.sock')
-				|| file_exists('/var/run/php/php7.4-fpm.sock')
-			){
+			$php_fpm_sockets = array_merge(
+				(array)glob('/var/run/php5-fpm.sock'),
+				(array)glob('/var/lib/php5-fpm/apps.sock'),
+				(array)glob('/var/run/php/php*-fpm.sock')
+			);
+			if(!empty($php_fpm_sockets)){
 				$use_tcp = '#';
 				$use_socket = '';
 			} else {
@@ -2932,17 +3016,10 @@ class installer_base extends stdClass {
 			$content = str_replace('{use_tcp}', $use_tcp, $content);
 			$content = str_replace('{use_socket}', $use_socket, $content);
 
-			// Fix socket path on PHP 7 systems
-			if (file_exists('/var/run/php/php7.4-fpm.sock')) {
-				$content = str_replace('/var/run/php5-fpm.sock', '/var/run/php/php7.4-fpm.sock', $content);
-			} elseif(file_exists('/var/run/php/php7.3-fpm.sock')) {
-				$content = str_replace('/var/run/php5-fpm.sock', '/var/run/php/php7.3-fpm.sock', $content);
-			} elseif (file_exists('/var/run/php/php7.2-fpm.sock')) {
-				$content = str_replace('/var/run/php5-fpm.sock', '/var/run/php/php7.2-fpm.sock', $content);
-			} elseif (file_exists('/var/run/php/php7.1-fpm.sock')) {
-				$content = str_replace('/var/run/php5-fpm.sock', '/var/run/php/php7.1-fpm.sock', $content);
-			} elseif (file_exists('/var/run/php/php7.0-fpm.sock')) {
-				$content = str_replace('/var/run/php5-fpm.sock', '/var/run/php/php7.0-fpm.sock', $content);
+			// Fix socket path on newer PHP systems
+			$php_fpm_sock_files = glob('/var/run/php/php*-fpm.sock');
+			if(!empty($php_fpm_sock_files)) {
+				$content = str_replace('/var/run/php5-fpm.sock', end($php_fpm_sock_files), $content);
 			}
 
 			wf($vhost_conf_dir.'/apps.vhost', $content);
@@ -2953,6 +3030,7 @@ class installer_base extends stdClass {
 			$content = str_replace('{fpm_pool}', 'apps', $content);
 			//$content = str_replace('{fpm_port}', ($conf['nginx']['php_fpm_start_port']+1), $content);
 			$content = str_replace('{fpm_socket}', $fpm_socket, $content);
+			$content = str_replace('{fpm_domain}', 'apps', $content);
 			$content = str_replace('{fpm_user}', $apps_vhost_user, $content);
 			$content = str_replace('{fpm_group}', $apps_vhost_group, $content);
 			wf($conf['nginx']['php_fpm_pool_dir'].'/apps.conf', $content);

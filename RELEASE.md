@@ -1,3 +1,39 @@
+## ISPConfig 3.3.1p1 Released
+
+This is a patch release that fixes several bugs discovered after the 3.3.1 release, including Debian 13 PHP socket issues, Rspamd spam header handling, MySQL 8.0.45 compatibility, and various other improvements.
+
+## What's new in ISPConfig 3.3.1p1?
+
+### Bugfixes
+
+- Fixed Debian 13 PHP socket issue in apps vhost and PHP-FPM pools (#6983)
+- Fixed Rspamd X-Spam-Status header not being added when using "Rewrite Subject" spam tag method, which caused spam to be forwarded via CC/redirect rules (#6979)
+- Fixed Apache error.log rotation causing logs to not being written after rotation (#6992)
+- Fixed phpMyAdmin link not showing in database list (#6981)
+- Fixed SimplePie PHP 8 compatibility for RSS feeds (#6982)
+- Fixed client creation via API failing with usertheme_syntax_incorrect error (#6990)
+- Fixed mail user login field not being updated when renaming mailbox (#6989)
+- Fixed Dovecot last_access log parsing pattern for Debian 13/Dovecot 2.4 (#6994)
+- Fixed vmail user permissions to dovecot-sql.conf for Debian 13 (#6976)
+- Fixed stale content.php file causing errors (#6974)
+- Fixed system_update warning remaining after disabling the Check for Linux updates feature (#6896)
+- Fixed harddisk storage monitoring trigger values (#6978)
+- Cleaned up bouncing space in postfix config (#6985)
+- Added missing disablereplicator column to mail_user table (#6993)
+
+### New Features
+
+- Added support for MySQL 8.0.45 (#6991)
+- Added support for extended RBL syntax for Spamhaus RBL (#6977)
+- Added support for per-domain mail relaying without username/password (#6877)
+- Added support for RHEL 10 postfix without hash map type (#6980)
+
+Please see changelog for a full list of features and bugfixes:
+
+https://git.ispconfig.org/ispconfig/ispconfig3/-/milestones/100
+
+---
+
 ## ISPConfig 3.3.1 Released
 
 This version brings Debian 13 support with Dovecot 2.4 compatibility, RHEL 10 based distribution support (AlmaLinux 10, RockyLinux 10), PHP 8.5 compatibility, pgAdmin for PostgreSQL databases, improved DNS validation, and many bugfixes. It also fixes 3 security issues.
@@ -91,22 +127,22 @@ You can report bugs at https://git.ispconfig.org/ispconfig/ispconfig3/issues
 - RockyLinux 8 – 10
 - CentOS 8
 
-## Download ISPConfig 3.3.1
+## Download ISPConfig 3.3.1p1
 
-https://www.ispconfig.org/downloads/ISPConfig-3.3.1.tar.gz
+https://www.ispconfig.org/downloads/ISPConfig-3.3.1p1.tar.gz
 
 The installation instructions for ISPConfig can be found here:
 
 https://www.ispconfig.org/ispconfig-3/documentation/
 
-## How can I update to the ISPConfig 3.3.1?
+## How can I update to ISPConfig 3.3.1p1?
 
 Run the following commands as root user on your ISPConfig server:
 
 ```
 cd /tmp
-wget https://www.ispconfig.org/downloads/ISPConfig-3.3.1.tar.gz
-tar xvfz ISPConfig-3.3.1.tar.gz
+wget https://www.ispconfig.org/downloads/ISPConfig-3.3.1p1.tar.gz
+tar xvfz ISPConfig-3.3.1p1.tar.gz
 cd ispconfig3_install/install
 php -q update.php
 ```

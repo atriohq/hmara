@@ -165,6 +165,7 @@ class remoting_client extends remoting {
 			throw new SoapFault('permission_denied', 'You do not have the permissions to access this function.');
 			return false;
 		}
+		if(!isset($params['usertheme'])) $params['usertheme'] = 'default';
 		if(!isset($params['parent_client_id']) || $params['parent_client_id'] == 0) $params['parent_client_id'] = $reseller_id;
 
 		if($params['parent_client_id']) {

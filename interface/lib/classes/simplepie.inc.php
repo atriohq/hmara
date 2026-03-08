@@ -11074,7 +11074,7 @@ class SimplePie_Misc
 		}
 	}
 
-	function atom_03_construct_type($attribs)
+	public static function atom_03_construct_type($attribs)
 	{
 		if (isset($attribs['']['mode']) && strtolower(trim($attribs['']['mode']) === 'base64'))
 		{
@@ -11132,7 +11132,7 @@ class SimplePie_Misc
 		return SIMPLEPIE_CONSTRUCT_TEXT;
 	}
 
-	function atom_10_content_construct_type($attribs)
+	public static function atom_10_content_construct_type($attribs)
 	{
 		if (isset($attribs['']['type']))
 		{

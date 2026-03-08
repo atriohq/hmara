@@ -1016,20 +1016,29 @@ class system{
 		return symlink($cfrom, $to);
 	}
 
-	function remove_broken_symlinks($path, $recursive=false) {
+	function remove_broken_symlinks($path, $recursive=false, $jail_root='') {
 		global $app;
 
 		if ($path != '/') {
 			$path = rtrim($path, '/');
 		}
+		if (strlen($jail_root) > 0) {
+			$jail_root = rtrim($jail_root, '/');
+			// Verify the path is within the jail root
+			$real_path = realpath($path);
+			if ($real_path !== false && strpos($real_path, $jail_root) !== 0) {
+				$app->log("remove_broken_symlinks: path $path resolves to $real_path which is outside jail root $jail_root, skipping", LOGLEVEL_WARN);
+				return;
+			}
+		}
 		if (is_dir($path)) {
 			$objects = array_diff(scandir($path), array('.', '..'));
 			foreach ($objects as $object) {
-				if (is_dir("$path/$object") && $recursive) {
-					$this->remove_broken_symlinks("$path/$object", $recursive);
-				} elseif (is_link("$path/$object") && !file_exists("$path/$object")) {
+				if (is_link("$path/$object") && !file_exists("$path/$object")) {
 					$app->log("removing broken symlink $path/$object", LOGLEVEL_DEBUG);
 					unlink ("$path/$object");
+				} elseif (is_dir("$path/$object") && !is_link("$path/$object") && $recursive) {
+					$this->remove_broken_symlinks("$path/$object", $recursive, $jail_root);
 				}
 			}
 		} elseif (is_link("$path") && !file_exists("$path")) {
@@ -1060,9 +1069,7 @@ class system{
 		if (is_dir($path)) {
 			$objects = array_diff(scandir($path), array('.', '..'));
 			foreach ($objects as $object) {
-				if (is_dir("$path/$object") && $recursive) {
-					$this->remove_recursive_symlinks("$path/$object", $chroot_basedir, $recursive);
-				} elseif (is_link("$path/$object")) {
+				if (is_link("$path/$object")) {
 					$realpath = realpath("$path/$object");
 					if (strlen($chroot_basedir) > 0 ) {
 						$root_path = substr("$path/$object", strlen($chroot_basedir));
@@ -1071,10 +1078,12 @@ class system{
 							unlink ("$path/$object");
 						}
 					}
-					if ($realpath = "" || $realpath == "$path/$object") {
+					if ($realpath == "" || $realpath == "$path/$object") {
 						$app->log("removing recursive symlink $path/$object", LOGLEVEL_DEBUG);
 						unlink ("$path/$object");
 					}
+				} elseif (is_dir("$path/$object") && !is_link("$path/$object") && $recursive) {
+					$this->remove_recursive_symlinks("$path/$object", $chroot_basedir, $recursive);
 				}
 			}
 		} elseif (is_link("$path")) {
@@ -1086,7 +1095,7 @@ class system{
 					unlink ($path);
 				}
 			}
-			if ($realpath = "" || $realpath == $path) {
+			if ($realpath == "" || $realpath == $path) {
 				$app->log("removing recursive symlink $path", LOGLEVEL_DEBUG);
 				unlink ($path);
 			}
@@ -2824,7 +2833,7 @@ class system{
 				continue;
 			}
 
-			$this->remove_broken_symlinks($jail_dir, true);
+			$this->remove_broken_symlinks($jail_dir, true, $home_dir);
 			$this->remove_recursive_symlinks($jail_dir, $home_dir, true);
 
 			// save list of hardlinked files
@@ -2855,7 +2864,7 @@ class system{
 				}
 
 				// remove broken symlinks a second time after hardlink cleanup
-				$this->remove_broken_symlinks($jail_dir, true);
+				$this->remove_broken_symlinks($jail_dir, true, $home_dir);
 			} else {
 				$app->log("update_jailkit_chroot: NOT searching for hardlinks in $jail_dir, options: ".print_r($options, true), LOGLEVEL_DEBUG);
 			}
