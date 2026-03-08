@@ -941,6 +941,50 @@ class monitor_tools {
 		return true;
 	}
 
+	/**
+	 * Forward metrics to graphite
+	 *
+	 * Install:
+	 * Add to the server/lib/config.inc.local.php file: `$conf['graphite_collector_ssh_remote_host'] = 'collector@graphite.local'; `$conf['graphite_collector_ssh_remote_command'] = 'dummy_netcat';`
+	 * Or `$conf['graphite_collector_nc_host'] = '127.0.0.1';` and `$conf['graphite_collector_nc_port'] = 2003;`
+	 *
+	 * On the remote graphite server create a user collector, with in the .ssh/authorized_keys: `command="nc -q0 127.0.0.1 2003" ssh-rsa ...` with the ssh public key of the root user on the webserver.
+	 * The dummy_netcat is replaced by the actual nc command, assuring that no other commands can be executed via this key.
+	 *
+	 * A Grafana dashboard example can be found in docs/examples/grafana_sites_disk_usage.json
+	 */
+	public function deliver_exported_metrics($metrics) {
+		global $app, $conf;
+
+		// Only ssh and nc are allowed for now.
+		if (!empty($conf['graphite_collector_ssh_remote_command']) && !empty($conf['graphite_collector_ssh_remote_host'])) {
+			$graphite_collector_command = 'ssh ' . escapeshellarg($conf['graphite_collector_ssh_remote_host']) . ' ' . escapeshellarg($conf['graphite_collector_ssh_remote_command']);
+		} elseif (!empty($conf['graphite_collector_nc_host']) && !empty($conf['graphite_collector_nc_port'])) {
+			$graphite_collector_command = 'nc -q0 ' . escapeshellarg($conf['graphite_collector_nc_host']) . ' ' . escapeshellarg($conf['graphite_collector_nc_port']);
+		} else {
+			return;
+		}
+
+		$descriptorspec = array(
+			0 => array("pipe", "r"),  // stdin is a pipe that the child will read from
+		);
+
+		$pipes = array();
+		$return_value = 0;
+		$process = proc_open(escapeshellcmd($graphite_collector_command), $descriptorspec, $pipes);
+
+		if (is_resource($process)) {
+			foreach($metrics as $key => $data) {
+				fwrite($pipes[0], "$key $data[value] $data[timestamp]" . PHP_EOL);
+			}
+
+			fclose($pipes[0]);
+			$return_value = proc_close($process);
+
+			echo "command returned $return_value\n";
+		}
+		return ($return_value == 0);
+	}
 }
 
 ?>

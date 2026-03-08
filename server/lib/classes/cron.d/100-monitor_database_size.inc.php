@@ -127,9 +127,31 @@ class cronjob_monitor_database_size extends cronjob {
 
 			//* The new data is written, now we can delete the old one
 			$this->_tools->delOldRecords($res['type'], $res['server_id']);
-		}
 
+			$this->export_metrics($data);
+		}
 		parent::onRunJob();
+	}
+
+	/**
+	 * Prepare data for Graphite.
+	 */
+	private function export_metrics($data) {
+		global $app, $conf;
+
+		if (!empty($data)) {
+			$server_config = $app->getconf->get_server_config($conf['server_id'], 'server');
+			$hostname = preg_replace('/\./', '_', $server_config['hostname']);
+
+			$metrics = array();
+			$timestamp = time();
+			foreach ($data as $i => $db) {
+				$database_name = preg_replace('/\./', '_', $db['database_name']);
+				$metrics["ispconfig.$hostname.monitor_data.database_quota.$database_name"] = array('value' => $data[$i]['size'], 'timestamp' => $timestamp);
+			}
+
+			return $this->_tools->deliver_exported_metrics($metrics);
+		}
 	}
 
 	/* this function is optional if it contains no custom code */
