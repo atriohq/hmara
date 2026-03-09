@@ -101,6 +101,21 @@ max-width: 1260px; }
 		padding: 0 2px;
 	font-size: 16px; }
 
+	#clear-search {
+		position: absolute;
+		display: none;
+		right: 45px;
+		top: 50%;
+		transform: translateY(-50%);
+		z-index: 2;
+		background: transparent;
+		border: none;
+		padding: 0;
+		cursor: pointer;
+		color: #888;
+		font-size: 18px;
+	}
+
 	#logout-button {
 		float: right;
 		margin-top: 16px;

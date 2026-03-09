@@ -61,6 +61,9 @@
 						<div>
 						  <div class='input-group'>
 							<input id='globalsearch' type='text' class='form-control' placeholder='{tmpl_var name="globalsearch_searchfield_watermark_txt"}' />
+							<span id="clear-search" class="input-group-text">
+								<span class="fa fa-times"></span>
+							</span>
 							<span class='input-group-btn'>
                 <button class='btn btn-default' title='{tmpl_var name="globalsearch_searchfield_watermark_txt"}'>
 								<span class='icon icon-lens'></span>
@@ -156,6 +159,22 @@
 			searchFieldWatermark: '<tmpl_var name="globalsearch_searchfield_watermark_txt">',
 			resultBoxPosition: ''
 		});
+
+		// Clear search input icon
+		var $input = $('#globalsearch');
+		var $clear = $('#clear-search');
+		$input.on('input', function() {
+			if ($input.val().length > 0) {
+				$clear.show();
+			} else {
+				$clear.hide();
+			}
+		});
+		$clear.on('click', function() {
+			$input.val('').focus();
+			$clear.hide();
+		});
+
 
     ISPConfig.loadInitContent();
 
