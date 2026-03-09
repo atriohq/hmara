@@ -3043,7 +3043,7 @@ class system{
 		// remove non-existent jails from /etc/jailkit/jk_socketd.ini
 		if (is_file('/etc/jailkit/jk_socketd.ini')) {
 			$rewrite = false;
-			$jk_socketd_ini = $app->ini_parser->parse_ini_file('/etc/jailkit/jk_socketd.ini');
+			$jk_socketd_ini = parse_ini_file('/etc/jailkit/jk_socketd.ini', true);
 			foreach ($jk_socketd_ini as $log => $settings) {
 				$jail = preg_replace('@/dev/log$@', '', $log);
 				if ($jail != $log && !is_dir($jail)) {
@@ -3053,7 +3053,7 @@ class system{
 			}
 			if ($rewrite) {
 				$app->log('update_jailkit_chroot: writing /etc/jailkit/jk_socketd.ini', LOGLEVEL_DEBUG);
-				$app->ini_parse->write_ini_file($jk_socketd_ini, '/etc/jailkit/jk_socketd.ini');
+				$app->ini_parser->write_ini_file($jk_socketd_ini, '/etc/jailkit/jk_socketd.ini');
 			}
 		}
 
@@ -3135,12 +3135,12 @@ class system{
 
 		// remove $home_dir from /etc/jailkit/jk_socketd.ini
 		if (is_file('/etc/jailkit/jk_socketd.ini')) {
-			$jk_socketd_ini = $app->ini_parser->parse_ini_file('/etc/jailkit/jk_socketd.ini');
+			$jk_socketd_ini = parse_ini_file('/etc/jailkit/jk_socketd.ini', true);
 			$log = $home . '/dev/log';
 			if (isset($jk_socketd_ini[$log])) {
 				unset($jk_socketd_ini[$log]);
 				$app->log('delete_jailkit_chroot: writing /etc/jailkit/jk_socketd.ini', LOGLEVEL_DEBUG);
-				$app->ini_parse->write_ini_file($jk_socketd_ini, '/etc/jailkit/jk_socketd.ini');
+				$app->ini_parser->write_ini_file($jk_socketd_ini, '/etc/jailkit/jk_socketd.ini');
 			}
 		}
 
