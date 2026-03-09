@@ -65,7 +65,7 @@ $liste["item"][] = array( 'field'  => "server_id",
 	'prefix' => "",
 	'suffix' => "",
 	'datasource' => array (  'type' => 'SQL',
-		'querystring' => 'SELECT server_id,server_name FROM server WHERE {AUTHSQL} AND mirror_server_id = 0 ORDER BY server_name',
+		'querystring' => 'SELECT DISTINCT a.server_id, a.server_name FROM server a, mail_access b WHERE (a.server_id = b.server_id) AND ({AUTHSQL-B}) ORDER BY a.server_name',
 		'keyfield'=> 'server_id',
 		'valuefield'=> 'server_name'
 	),
