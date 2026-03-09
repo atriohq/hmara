@@ -69,6 +69,7 @@ $wb['customer_no_start_txt'] = 'Valore iniziale del n° Cliente';
 $wb['customer_no_counter_txt'] = 'Contatore n° Clienti';
 $wb['session_timeout_txt'] = 'Timeout di sessione (minuti)';
 $wb['session_allow_endless_txt'] = 'Abilita  \\"rimani collegato\\"';
+$wb['show_ip_on_login_form_txt'] = 'Show IP on login form';
 $wb['No'] = 'No';
 $wb['min_password_length_txt'] = 'Lunghezza minima della password';
 $wb['min_password_strength_txt'] = 'Robustezza minima della password';

@@ -156,6 +156,13 @@ if(isset($_POST['username']) && is_string($_POST['username']) && $_POST['usernam
 
 			if($send_result !== false) {
 				$app->tpl->setVar("msg", $wb['pw_reset']);
+				$show_ip = $server_config_array['misc']['show_ip_on_login_form'] ?? 'n';
+				$app->tpl->setVar('show_ip_on_login_form', $show_ip);
+				if ($show_ip == 'y') {
+					$app->tpl->setVar('logging_in_from_txt', $wb['logging_in_from_txt']);
+					$app->tpl->setVar('remote_address', $app->functions->htmlentities($_SERVER['REMOTE_ADDR']), true);
+				}
+
 				$app->tpl->setInclude('content_tpl', 'templates/index.htm');
 			} else {
 				$app->tpl->setVar("error", $wb['pw_reset_error_smtp_connection']);

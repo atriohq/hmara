@@ -28,6 +28,7 @@ $wb['back_txt'] = '返回';
 $wb['error_maintenance_mode'] = '此 ISPConfig 安装当前正在维护中。我们很快就会回来。感谢您的耐心等待。';
 $wb['theme_not_compatible'] = '选择的主题与当前的 ISPConfig 版本不兼容。请检查主题的新版本。<br />默认主题已自动激活。';
 $wb['stay_logged_in_txt'] = '保持登录状态';
+$wb['logging_in_from_txt'] = 'Logging in from';
 $wb['lost_password_function_disabled_txt'] = '此用户不可用于找回密码功能。';
 $wb['lost_password_function_wait_txt'] = '您还不能请求新密码。请等待几分钟。';
 $wb['lost_password_function_expired_txt'] = '此激活链接已过期。请请求新的链接。';

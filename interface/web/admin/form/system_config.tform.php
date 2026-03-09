@@ -840,6 +840,12 @@ $form["tabs"]['misc'] = array (
 			'default' => 'n',
 			'value'  => array(0 => 'n', 1 => 'y')
 		),
+		'show_ip_on_login_form' => array (
+			'datatype' => 'VARCHAR',
+			'formtype' => 'CHECKBOX',
+			'default' => 'n',
+			'value'  => array(0 => 'n', 1 => 'y')
+		),
 		'min_password_length' => array(
 			'datatype' => 'INTEGER',
 			'formtype' => 'TEXT',

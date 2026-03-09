@@ -25,6 +25,7 @@ $wb['theme_not_compatible'] = 'Il tema selezionato non è compatibile con questa
 $wb['back_txt'] = 'Indietro';
 $wb['email_error'] = 'Email contiene caratteri non autorizzati o un formato non valido.';
 $wb['stay_logged_in_txt'] = 'Ricordami';
+$wb['logging_in_from_txt'] = 'Logging in from';
 $wb['lost_password_function_disabled_txt'] = 'Funzione di password persa non disponibile per questo utente.';
 $wb['pw_reset_act'] = 'Link per reset password. Prego visitare il link per confermare la password.';
 $wb['pw_reset_act_mail_title'] = 'Conferma reset password';

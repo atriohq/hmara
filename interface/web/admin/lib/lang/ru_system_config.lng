@@ -72,6 +72,7 @@ $wb['customer_no_start_txt'] = 'Начальное значение номера
 $wb['customer_no_counter_txt'] = 'Счётчик номера Клиента';
 $wb['session_timeout_txt'] = 'Тайм-аут сессии (в минутах)';
 $wb['session_allow_endless_txt'] = 'Включить \\"оставаться в системе\\"';
+$wb['show_ip_on_login_form_txt'] = 'Show IP on login form';
 $wb['No'] = 'Нет';
 $wb['min_password_length_txt'] = 'Минимальная длина пароля';
 $wb['min_password_strength_txt'] = 'Минимальная стойкость пароля';

@@ -25,6 +25,7 @@ $wb['theme_not_compatible'] = 'Wybrany temat nie jest kompatybilny z aktualną w
 $wb['back_txt'] = 'Wstecz';
 $wb['email_error'] = 'E-mail zawiera niedozwolone znaki lub ma nieprawidłowy format.';
 $wb['stay_logged_in_txt'] = 'Pozostaw mnie zalogowanym';
+$wb['logging_in_from_txt'] = 'Logging in from';
 $wb['lost_password_function_disabled_txt'] = 'Funkcja utraconego hasła nie jest dostępna dla tego użytkownika.';
 $wb['pw_reset_act'] = 'Został wysłany link aktywacyjny. Przejdź do linku, aby potwierdzić prośbę o podanie hasła.';
 $wb['pw_reset_act_mail_title'] = 'Confirm ISPConfig 3 Control panel password reset';

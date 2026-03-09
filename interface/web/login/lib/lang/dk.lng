@@ -25,6 +25,7 @@ $wb['back_txt'] = 'Tilbage';
 $wb['error_maintenance_mode'] = 'Denne ISPConfig installation er i øjeblikket under vedligeholdelse. Vi bør være tilbage snarest. Tak for din tålmodighed.';
 $wb['theme_not_compatible'] = 'Den valgte tema er ikke kompatibel med den aktuelle ISPConfig version. Kontroller for en ny version af temaet.<br />Standard tema er blevet aktiveret automatisk.';
 $wb['stay_logged_in_txt'] = 'Forbliv logget ind';
+$wb['logging_in_from_txt'] = 'Logging in from';
 $wb['pw_reset_act'] = 'You have been sent an activation link. Please visit the link to confirm your password request.';
 $wb['pw_reset_act_mail_title'] = 'Confirm ISPConfig 3 Control panel password reset';
 $wb['pw_reset_act_mail_msg'] = 'Please confirm that your want to reset your ISPConfig 3 control panel account password by visiting the following activation link: ';
