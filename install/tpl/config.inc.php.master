@@ -157,6 +157,14 @@ $conf['language'] = '{language}';
 $conf['debug_language'] = false;
 $conf['language_file_import_enabled'] = {language_file_import_enabled}; // Bool value: true / false
 
+
+//** Credentials used by ISPConfig to access /stats on client sites.
+//** When username is empty the panel just redirects to /stats on the client site.
+//** After changing this, be sure to re-sync all the sites to update the htpasswd file.
+//** These vars need to be duplicated in interface/lib/config.inc.local.php and server/lib/config.inc.local.php
+$conf['stats_proxy_username'] = '';
+$conf['stats_proxy_password'] = '';
+
 //* Complete timezone list: http://php.net/manual/en/timezones.php
 $conf['timezone'] = '{timezone}';
 

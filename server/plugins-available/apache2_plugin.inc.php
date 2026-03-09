@@ -1976,9 +1976,18 @@ class apache2_plugin {
 			$app->system->chgrp($data['new']['document_root'].'/' . $web_folder . '/stats/.htaccess', $data['new']['system_group']);
 			unset($ht_file);
 
-			if(!is_file($data['new']['document_root'].'/'.$web_folder.'/stats/.htpasswd_stats') || $data['new']['stats_password'] != $data['old']['stats_password']) {
+			if(!is_file($data['new']['document_root'].'/'.$web_folder.'/stats/.htpasswd_stats') || $data['new']['stats_password'] != $data['old']['stats_password']
+					|| isset($conf['stats_proxy_username'])) {
+				$htp_file = '';
 				if(isset($data['new']['stats_password']) && trim($data['new']['stats_password']) != '') {
-					$htp_file = 'admin:'.trim($data['new']['stats_password']);
+					$htp_file = 'admin:'.trim($data['new']['stats_password']) . PHP_EOL;
+				}
+				// Add proxy username and password if configured
+				if(isset($conf['stats_proxy_username']) && trim($conf['stats_proxy_username']) != '') {
+					$proxy_password = crypt(trim($conf['stats_proxy_password']), '$6$rounds=5000$' . base64_encode(random_bytes(22))); // Encrypt the proxy password
+					$htp_file .= $conf['stats_proxy_username'].':'.$proxy_password . PHP_EOL;
+				}
+				if (!empty($htp_file)) {
 					$app->system->web_folder_protection($data['new']['document_root'], false);
 					$app->system->file_put_contents($data['new']['document_root'].'/'.$web_folder.'/stats/.htpasswd_stats', $htp_file);
 					$app->system->web_folder_protection($data['new']['document_root'], true);

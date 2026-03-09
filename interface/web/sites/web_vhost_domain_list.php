@@ -67,9 +67,9 @@ $_SESSION['s']['var']['vhostdomain_type'] = $show_type;
 
 class list_action extends listform_actions {
 	function onShow() {
-		global $app;
+		global $app, $conf;
 		$app->tpl->setVar('vhostdomain_type', $_SESSION['s']['var']['vhostdomain_type'], true);
-		
+		$app->tpl->setVar('stats_proxy_username', $conf['stats_proxy_username']);
 		parent::onShow();
 	}
 
