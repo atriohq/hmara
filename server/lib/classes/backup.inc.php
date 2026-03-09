@@ -1657,7 +1657,7 @@ class backup
             switch ($backup_mode) {
                 case 'borg':
                     $repos_path = $backup_dir . '/' . $entry;
-                    if (is_dir($repos_path) && strncmp('borg_', $entry, 5) === 0) {
+                    if (is_dir($repos_path) && strncmp('borg_', $entry, 5) === 0 && strpos($entry, '_failed_') === false) { //ignore failed borg archive
                         $repos_archives = self::getReposArchives($backup_mode, $repos_path, $password, 'json');
                         if(is_array($repos_archives)) {
                             $archivesJson = json_decode(implode("", $repos_archives), TRUE);
