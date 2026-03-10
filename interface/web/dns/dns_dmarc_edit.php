@@ -116,9 +116,13 @@ class page_action extends tform_actions {
 				if (preg_match("/^adkim=/", $part)) $dmarc_adkim = str_replace('adkim=', '', $part);
 				if (preg_match("/^aspf=/", $part)) $dmarc_aspf = str_replace('aspf=', '', $part);
 				if (preg_match("/^rf=/", $part)) $dmarc_rf = str_replace('rf=', '', $part);
-				if (preg_match("/^(afrf:iodef|iodef:afrf)$/s", $dmarc_rf)) $dmarc_rf = str_replace(':', ' ', $dmarc_rf);
 				if (preg_match("/^pct=/", $part)) $dmarc_pct = str_replace('pct=', '', $part);
 				if (preg_match("/^ri=/", $part)) $dmarc_ri = str_replace('ri=', '', $part);
+			}
+			// After parsing rf= value
+			if (strpos($dmarc_rf, ':') !== false) {
+				// Legacy combined value - default to afrf (RFC default)
+				$dmarc_rf = 'afrf';
 			}
 		}
 
@@ -175,8 +179,17 @@ class page_action extends tform_actions {
 		}
 		$app->tpl->setVar('dmarc_aspf', $dmarc_aspf_list);
 
-		if ( strpos($dmarc_rf, 'afrf') !== false ) $app->tpl->setVar("dmarc_rf_afrf", 'CHECKED');
-		if ( strpos($dmarc_rf, 'iodef') !== false ) $app->tpl->setVar("dmarc_rf_iodef", 'CHECKED');
+		//create dmarc-rf-list
+		$dmarc_rf_value = array(
+			'afrf' => 'dmarc_rf_afrf_txt',
+			'iodef' => 'dmarc_rf_iodef_txt',
+		);
+		$dmarc_rf_list='';
+		foreach($dmarc_rf_value as $value => $txt) {
+			$selected = @($dmarc_rf == $value)?' selected':'';
+			$dmarc_rf_list .= "<option value='$value'$selected>".$app->tform->wordbook[$txt]."</option>\r\n";
+		}
+		$app->tpl->setVar('dmarc_rf', $dmarc_rf_list);
 
 		$app->tpl->setVar("dmarc_pct", $dmarc_pct, true);
 
@@ -301,6 +314,7 @@ class page_action extends tform_actions {
 			if ($rec != 'fo=0') $dmarc_record[] = 'fo='.implode(':', $fo_rec);
 			unset($rec);
 		}
+		unset($fo_rec);
 
 		if ($this->dataRecord['dmarc_adkim'] != 'r' )
 			$dmarc_record[] = 'adkim='.$this->dataRecord['dmarc_adkim'];
@@ -308,13 +322,9 @@ class page_action extends tform_actions {
 		if ($this->dataRecord['dmarc_aspf'] != 'r' )
 			$dmarc_record[] = 'aspf='.$this->dataRecord['dmarc_aspf'];
 
-		if (isset($this->dataRecord['dmarc_rf_afrf']) && isset($this->dataRecord['dmarc_rf_iodef']))
-			$dmarc_record[] = 'rf=afrf:iodef';
-		else {
-			 if (isset($this->dataRecord['dmarc_rf_iodef']))
-				$dmarc_record[] = 'rf=iodef';
+		if ($this->dataRecord['dmarc_rf'] == 'iodef') {
+			$dmarc_record[] = 'rf=iodef';
 		}
-		unset($fo_rec);
 
 		if (!empty($this->dataRecord['dmarc_pct']) && $this->dataRecord['dmarc_pct'] != 100)
 			$dmarc_record[] = 'pct='.$this->dataRecord['dmarc_pct'];
