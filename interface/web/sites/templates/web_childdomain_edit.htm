@@ -2,7 +2,7 @@
             <tmpl_if name="domain_option">
             <div class="form-group">
                 <label for="parent_domain_id" class="col-sm-3 control-label">{tmpl_var name='parent_domain_id_txt'}</label>
-                <div class="col-sm-9"><select id="parent_domain_id" name="parent_domain_id" class="form-control">{tmpl_var name='parent_domain_id'}</select></div>
+                <div class="col-sm-9"><select id="parent_domain_id" name="parent_domain_id" class="form-control" autofocus>{tmpl_var name='parent_domain_id'}</select></div>
             </div>
             </tmpl_if>
             <div class="form-group">
@@ -25,7 +25,7 @@
             <div class="form-group">
                 <tmpl_if name="domain_option">
                     <label for="domain" class="col-sm-3 control-label">{tmpl_var name='domain_txt'}</label>
-                    <div class="col-sm-9"><select name="domain" id="domain" class="form-control">
+                    <div class="col-sm-9"><select name="domain" id="domain" class="form-control" autofocus>
                         {tmpl_var name='domain_option'}
                     </select></div>
                 <tmpl_else>

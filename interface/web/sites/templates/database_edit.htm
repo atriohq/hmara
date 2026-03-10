@@ -8,7 +8,7 @@
                         <input type="hidden" name="server_id" value="{tmpl_var name='server_id_value'}" />
                         <tmpl_else>
                             <label for="server_id" class="col-sm-3 control-label">{tmpl_var name='server_id_txt'}</label>
-                            <div class="col-sm-9"><select name="server_id" id="server_id" class="form-control">
+                            <div class="col-sm-9"><select name="server_id" id="server_id" class="form-control" autofocus>
                                 {tmpl_var name='server_id'}
                             </select></div>
                     </tmpl_if>
@@ -26,7 +26,7 @@
                             <input type="hidden" name="server_id" value="{tmpl_var name='server_id_value'}" />
                             <tmpl_else>
                                 <label for="server_id" class="col-sm-3 control-label">{tmpl_var name='server_id_txt'}</label>
-                                <div class="col-sm-9"><select name="server_id" id="server_id" class="form-control">
+                                <div class="col-sm-9"><select name="server_id" id="server_id" class="form-control" autofocus>
                                     {tmpl_var name='server_id'}
                                 </select></div>
                         </tmpl_if>
@@ -35,7 +35,7 @@
             </tmpl_if>
             <div class="form-group">
                 <label for="parent_domain_id" class="col-sm-3 control-label">{tmpl_var name='parent_domain_id_txt'}</label>
-                <div class="col-sm-9"><select name="parent_domain_id" id="parent_domain_id" class="form-control">
+                <div class="col-sm-9"><select name="parent_domain_id" id="parent_domain_id" class="form-control"<tmpl_if name="is_admin" op="!=" value="1"><tmpl_if name="edit_disabled" value="0"><tmpl_if name="only_one_server"> autofocus</tmpl_if></tmpl_if></tmpl_if>>
                     {tmpl_var name='parent_domain_id'}
                 </select></div>
             </div>
