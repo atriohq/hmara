@@ -1,0 +1,11 @@
+<tmpl_if name='hostfact_debtor'>
+            <div class="form-group">
+                <label for="client_group_id" class="col-sm-3 control-label">Hostfact</label>
+                <div class="col-sm-9">
+<ul>
+<li>Debiteur: <a href="{tmpl_var name='hostfact_url'}Pro/debtors.php?page=show&id={tmpl_var name='hostfact_debtor'}" target="_blank">{tmpl_var name='hostfact_debtorcode'}</a></li>
+<li>Status: {tmpl_var name='hostfact_status_label'}
+</li>
+                </div>
+            </div>
+</tmpl_if>
