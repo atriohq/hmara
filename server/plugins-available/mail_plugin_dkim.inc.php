@@ -190,26 +190,27 @@ class mail_plugin_dkim {
 	 */
 	private function write_dkim_key($key_file, $key_value, $key_domain) {
 		global $app;
-		$success=false;
+		$success = false;
 		if ($key_file == '' || $key_value  == '' || $key_domain == '') {
 			$app->log('DKIM internal error for domain '.$key_domain, LOGLEVEL_ERROR);
 			return $success;
 		}
 		if ( $app->system->file_put_contents($key_file.'.private', $key_value) ) {
 			$app->log('Saved DKIM Private-key to '.$key_file.'.private', LOGLEVEL_DEBUG);
-			$success=true;
-			$pubkey = null;
-			$result = 0;
-			/* now we get the DKIM Public-key */
-			$app->system->exec_safe('cat ?|openssl rsa -pubout 2> /dev/null', $key_file.'.private');
-			$pubkey = $app->system->last_exec_out();
-			$public_key='';
-			foreach($pubkey as $values) {
-				$public_key = $public_key . $values . "\n";
+
+			// Extract the dkim public key from the private.
+			$pkey = openssl_pkey_get_private($key_value);
+			if ($pkey === false) {
+				$app->log('Unable to parse DKIM private key for '.$key_domain, LOGLEVEL_ERROR);
+				return $success;
 			}
-			/* save the DKIM Public-key in dkim-dir */
-			if($app->system->file_put_contents($key_file.'.public', $public_key)) {
+			$details = openssl_pkey_get_details($pkey);
+			$public_key = $details['key'] ?? null;
+
+			// Save the DKIM Public-key in dkim-dir
+			if(!empty($public_key) && $app->system->file_put_contents($key_file.'.public', $public_key)) {
 				$app->log('Saved DKIM Public to '.$key_domain.'.', LOGLEVEL_DEBUG);
+				$success = true;
 			} else {
 				$app->log('Unable to save DKIM Public to '.$key_domain.'.', LOGLEVEL_DEBUG);
 			}
