@@ -1108,7 +1108,8 @@ if (!defined('vlibTemplateClassLoaded')) {
 				$tmpresult = $app->plugin->raiseEvent($events[$e], array(
 					'name' => $name,
 					'module' => $module,
-					'form' => $form
+					'form' => $form,
+					'vars' => $this->getVars(),
 				), true);
 				if(!$tmpresult) $tmpresult = '';
 				else $tmpresult = $this->_getData($tmpresult, false, true);
