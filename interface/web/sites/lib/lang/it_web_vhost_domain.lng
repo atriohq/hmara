@@ -204,4 +204,5 @@ $wb['tooltip_delete_unused_jailkit_txt'] = 'Cancella l\'ambiente jailkit chroot 
 $wb['ssl_options_not_for_le_txt'] = 'Hai abilitato i certificati Let\'Encrypt per questo sito Web. Considera che tutte le opzioni di questa pagina si applicano a ai certificati non Let\'Encrypt solamente. Ricorda di deselezionare l\'opzione Let\'s Encrypt nella scheda principale se vuoi passare ad certificato differente.';
 $wb['disable_symlinknotowner_txt'] = 'Deactivate symlinks restriction of the web space';
 $wb['tooltip_disable_symlinknotowner_txt'] = 'WARNING: This function deactivates the restriction SymLinksIfOwnerMatch (Apache) and disable_symlinks if_not_owner (Nginx).';
-
+$wb['force_http11_txt'] = 'Force HTTP/1.1';
+$wb['tooltip_force_http11_txt'] = 'This option disables HTTP/2 and forces HTTP/1.1 for this website.';

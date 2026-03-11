@@ -2079,6 +2079,7 @@ CREATE TABLE `web_domain` (
   `last_jailkit_update` date NULL DEFAULT NULL,
   `last_jailkit_hash` varchar(255) DEFAULT NULL,
   `disable_symlinknotowner` enum('n','y') NOT NULL default 'n',
+  `force_http11` enum('n','y') NOT NULL default 'n',
   PRIMARY KEY  (`domain_id`),
   UNIQUE KEY `serverdomain` (  `server_id` , `ip_address`,  `domain` )
 ) ENGINE=InnoDB ROW_FORMAT=DYNAMIC DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1 ;
