@@ -276,6 +276,29 @@ class page_action extends tform_actions {
 		parent::onShowEnd();
 	 }
 
+	function onShowEdit() {
+		global $app;
+		$sql = "SELECT domain FROM mail_domain WHERE domain_id = ?";
+		$domainInfo = $app->db->queryOneRecord($sql, $this->id);
+		$domain = $domainInfo["domain"];
+
+		$sql = "SELECT source, type, destination FROM mail_forwarding WHERE source LIKE ? OR destination LIKE ? AND " . $app->tform->getAuthSQL('r');
+		$sql .= " UNION ALL ";
+		$sql .= "SELECT email, 'mailbox', '' FROM mail_user WHERE email LIKE ? AND " . $app->tform->getAuthSQL('r');
+		$sql .= " ORDER BY source ASC";
+		$subs = $app->db->queryAllRecords($sql, '%@'.$domain, '%@'.$domain, '%@'.$domain);
+
+		// Lookup translations with formatting for each type
+		foreach( $subs as &$sub) {
+			$sub['pretty'] = $app->functions->htmlentities(sprintf($app->tform->wordbook['dependant_' . $sub['type'] . '_txt'], $sub['source'], $sub['destination']));
+			$sub['source'] = $app->functions->htmlentities($sub['source']);
+			$sub['destination'] = $app->functions->htmlentities($sub['destination']);
+		}
+
+		$app->tpl->setLoop('mail_forward_and_boxes_info', $subs);
+		parent::onShowEdit();
+	}
+
 	function onSubmit() {
 		global $app, $conf;
 

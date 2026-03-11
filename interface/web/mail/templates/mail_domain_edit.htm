@@ -97,6 +97,15 @@
               </div>
             </tmpl_if>
             </tmpl_if>
+	    <tmpl_if name="mail_forward_and_boxes_info">
+            <div class="form-group">
+                   <label for="mail_forward_and_boxes" class="col-sm-3 control-label">{tmpl_var name='dependent_mail_addresses_txt'}</label>
+                   <div class="col-sm-9">
+                           <textarea name="mail_forward_and_boxes" rows=10 id="mail_forward_and_boxes" class="form-control" disabled="disabled"><tmpl_loop name="mail_forward_and_boxes_info">{tmpl_var name='pretty'}
+</tmpl_loop></textarea>
+                   </div>
+            </div>
+            </tmpl_if>
             <div class="form-group">
                 <label class="col-sm-3 control-label">{tmpl_var name='active_txt'}</label>
                 <div class="col-sm-9">
