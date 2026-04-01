@@ -1,8 +1,10 @@
-# ISPConfig - Hosting Control Panel
-![ISPConfig logo](https://www.ispconfig.org/wp-content/themes/ispconfig/images/ispconfig_logo.png "") \
-Development branch: [![pipeline status](https://git.ispconfig.org/ispconfig/ispconfig3/badges/develop/pipeline.svg)](https://git.ispconfig.org/ispconfig/ispconfig3/commits/develop)
+# Hmara
 
-## Functions
+Hmara is a hosting control panel based on ISPConfig, focused on modernization, improved UX, and extensibility.
+
+> This project is currently based on ISPConfig (BSD-3-Clause licensed).
+
+## Features
 - Manage multiple servers from one control panel
 - Single server, multiserver and mirrored clusters.
 - Webserver management
@@ -35,19 +37,31 @@ Development branch: [![pipeline status](https://git.ispconfig.org/ispconfig/ispc
 ## Supported PHP versions
 Multiple PHP versions are supported on the same server for hosted sites. But for the panel itself it's advised to stay with the version that comes with the OS.
 
-In general the ISPConfig panel supports PHP 7.4 - 8.4
+In general the Hmara panel supports PHP 7.4 - 8.4
 
 ## Auto-install script
-You can install the "Perfect Server" with ISPConfig using [our official autoinstaller](https://www.howtoforge.com/ispconfig-autoinstall-debian-ubuntu/)
+Documentation will be updated for Hmara in future releases.
 
 ## Migration tool
-The Migration Tool helps you to import data from other control panels (currently ISPConfig 2 and 3 – 3.2, Plesk 10 – 12.5, Plesk Onyx, CPanel[^2] and Confixx 3). For more information, see https://www.ispconfig.org/add-ons/ispconfig-migration-tool/
-
-[^2]: The Migration Toolkit now contains beta support for migrating CPanel to ISPConfig.
+Hmara inherits migration capabilities from ISPConfig.
+Support for additional systems will be improved in future versions.
 
 ## Documentation
-You can support ISPConfig development by buying the manual: https://www.ispconfig.org/documentation/
+Documentation for Hmara will be published as the project evolves.
 
 ## Contributing
-If you like to contribute to the ISPConfig development, please read the contributing guidelines: [CONTRIBUTING.MD](CONTRIBUTING.md)
+Hmara is an evolving project built on ISPConfig.
 
+Initial focus is on:
+- UI modernization
+- modular architecture
+- improved developer experience
+
+Contributions are welcome.
+
+## License
+
+Hmara is currently based on ISPConfig and distributed under the BSD-3-Clause license.
+
+Original ISPConfig code is © ISPConfig authors.  
+Modifications are © Atrio.
