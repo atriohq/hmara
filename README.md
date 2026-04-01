@@ -22,10 +22,8 @@ Hmara is a hosting control panel based on ISPConfig, focused on modernization, i
 - POP3/IMAP: Dovecot
 - Spamfilter: Rspamd and Amavis
 - FTP: PureFTPD
-- DNS: BIND9 and PowerDNS[^1]
+- DNS: BIND9 and PowerDNS
 - Database: MariaDB and MySQL
-
-[^1]: not actively tested
 
 ## Supported operating systems
 - Debian 11 - 13, and testing
